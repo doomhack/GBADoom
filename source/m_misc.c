@@ -99,26 +99,6 @@ extern const char* S_music_files[]; // cournia
 
 default_t defaults[] =
 {
-
-  {"Heads-up display settings",{NULL},{0},UL,UL,def_none,ss_none},
-  //jff 2/16/98 defaults for color ranges in hud and status
-  {"health_red",    {&health_red}   , {25},0,200, // below is red
-   def_int,ss_stat}, // amount of health for red to yellow transition
-  {"health_yellow", {&health_yellow}, {50},0,200, // below is yellow
-   def_int,ss_stat}, // amount of health for yellow to green transition
-  {"health_green",  {&health_green} , {100},0,200,// below is green, above blue
-   def_int,ss_stat}, // amount of health for green to blue transition
-  {"armor_red",     {&armor_red}    , {25},0,200, // below is red
-   def_int,ss_stat}, // amount of armor for red to yellow transition
-  {"armor_yellow",  {&armor_yellow} , {50},0,200, // below is yellow
-   def_int,ss_stat}, // amount of armor for yellow to green transition
-  {"armor_green",   {&armor_green}  , {100},0,200,// below is green, above blue
-   def_int,ss_stat}, // amount of armor for green to blue transition
-  {"ammo_red",      {&ammo_red}     , {25},0,100, // below 25% is red
-   def_int,ss_stat}, // percent of ammo for red to yellow transition
-  {"ammo_yellow",   {&ammo_yellow}  , {50},0,100, // below 50% is yellow, above green
-   def_int,ss_stat}, // percent of ammo for yellow to green transition
-
   //jff 2/16/98 HUD and status feature controls
   {"hud_active",    {&hud_active}, {2},0,2, // 0=off, 1=small, 2=full
    def_int,ss_none}, // 0 for HUD off, 1 for HUD small, 2 for full HUD
