@@ -55,7 +55,6 @@
 #include "i_system.h"
 #include "g_game.h"
 #include "r_demo.h"
-#include "r_fps.h"
 
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
@@ -480,7 +479,10 @@ static void R_SetupFrame (player_t *player)
     oviewer = player->mo;
   }
 
-  R_InterpolateView (player);
+  viewx = player->mo->x;
+  viewy = player->mo->y;
+  viewz = player->viewz;
+  viewangle = player->mo->angle;
 
   extralight = player->extralight;
 

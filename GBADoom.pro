@@ -83,7 +83,6 @@ SOURCES += \
         source/r_data.c \
         source/r_demo.c \
         source/r_draw.c \
-        source/r_fps.c \
         source/r_main.c \
         source/r_patch.c \
         source/r_plane.c \
@@ -182,7 +181,6 @@ HEADERS += \
     include/r_defs.h \
     include/r_demo.h \
     include/r_draw.h \
-    include/r_fps.h \
     include/r_main.h \
     include/r_patch.h \
     include/r_plane.h \
