@@ -47,9 +47,7 @@
 
 // global heads up display controls
 
-int hud_active = 2;       //jff 2/17/98 controls heads-up display mode
-int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
-int hud_nosecrets;    //jff 2/18/98 allows secrets line to be disabled in HUD
+int hud_displayed = 0;    //jff 2/23/98 turns heads-up display on/off
 const int hud_distributed = 0;  //jff 3/4/98 display HUD in different places on screen
 int hud_graph_keys=1; //jff 3/7/98 display HUD keys as graphics
 
@@ -679,7 +677,6 @@ void HU_Drawer(void)
   // killough 2/21/98: really allow new hud stuff to be turned off COMPLETELY
   if
   (
-    hud_active>0 &&                  // hud optioned on
     hud_displayed &&                 // hud on from fullscreen key
     viewheight==SCREENHEIGHT &&      // fullscreen mode is active
     !(automapmode & am_active)       // automap is not active
@@ -921,7 +918,7 @@ void HU_Drawer(void)
     // display the weapon widget every frame
     HUlib_drawTextLine(&w_weapon, false);
 
-    if (doit && hud_active>1)
+    if (doit)
     {
       int k;
 
@@ -1097,7 +1094,6 @@ void HU_Drawer(void)
       }
     }
     // display the keys/frags line each frame
-    if (hud_active>1)
     {
       HUlib_clearTextLine(&w_keys);      // clear the widget strings
       HUlib_clearTextLine(&w_gkeys);
@@ -1121,9 +1117,8 @@ void HU_Drawer(void)
     }
 
     // display the hud kills/items/secret display if optioned
-    if (!hud_nosecrets)
     {
-      if (hud_active>1 && doit)
+      if (doit)
       {
         // clear the internal widget text buffer
         HUlib_clearTextLine(&w_monsec);
@@ -1143,7 +1138,7 @@ void HU_Drawer(void)
           HUlib_addCharToTextLine(&w_monsec, *(s++));
       }
       // display the kills/items/secrets each frame, if optioned
-      if (hud_active>1)
+
         HUlib_drawTextLine(&w_monsec, false);
     }
   }

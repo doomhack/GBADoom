@@ -868,7 +868,6 @@ void M_ChangeMessages(int choice)
 // CHANGE DISPLAY SIZE
 //
 // jff 2/23/98 restored to pre-HUD state
-// hud_active controlled soley by F5=key_detail (key_hud)
 // hud_displayed is toggled by + or = in fullscreen
 // hud_displayed is cleared by -
 

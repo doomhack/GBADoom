@@ -99,33 +99,6 @@ extern const char* S_music_files[]; // cournia
 
 default_t defaults[] =
 {
-  //jff 2/23/98
-  {"hud_displayed", {&hud_displayed},  {0},0,1, // whether hud is displayed
-   def_bool,ss_none}, // enables display of HUD
-  {"hud_nosecrets", {&hud_nosecrets},  {0},0,1, // no secrets/items/kills HUD line
-   def_bool,ss_stat}, // disables display of kills/items/secrets on HUD
-
-  {"Weapon preferences",{NULL},{0},UL,UL,def_none,ss_none},
-  // killough 2/8/98: weapon preferences set by user:
-  {"weapon_choice_1", {&weapon_preferences[0][0]}, {6}, 0,9,
-   def_int,ss_weap}, // first choice for weapon (best)
-  {"weapon_choice_2", {&weapon_preferences[0][1]}, {9}, 0,9,
-   def_int,ss_weap}, // second choice for weapon
-  {"weapon_choice_3", {&weapon_preferences[0][2]}, {4}, 0,9,
-   def_int,ss_weap}, // third choice for weapon
-  {"weapon_choice_4", {&weapon_preferences[0][3]}, {3}, 0,9,
-   def_int,ss_weap}, // fourth choice for weapon
-  {"weapon_choice_5", {&weapon_preferences[0][4]}, {2}, 0,9,
-   def_int,ss_weap}, // fifth choice for weapon
-  {"weapon_choice_6", {&weapon_preferences[0][5]}, {8}, 0,9,
-   def_int,ss_weap}, // sixth choice for weapon
-  {"weapon_choice_7", {&weapon_preferences[0][6]}, {5}, 0,9,
-   def_int,ss_weap}, // seventh choice for weapon
-  {"weapon_choice_8", {&weapon_preferences[0][7]}, {7}, 0,9,
-   def_int,ss_weap}, // eighth choice for weapon
-  {"weapon_choice_9", {&weapon_preferences[0][8]}, {1}, 0,9,
-   def_int,ss_weap}, // ninth choice for weapon (worst)
-
   // cournia - support for arbitrary music file (defaults are mp3)
   {"Music", {NULL},{0},UL,UL,def_none,ss_none},
   {"mus_e1m1", {0,&S_music_files[mus_e1m1]}, {0,"e1m1.mp3"},UL,UL,

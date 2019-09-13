@@ -82,7 +82,7 @@ typedef struct
   fixed_t sy;
 } pspdef_t;
 
-extern int weapon_preferences[2][NUMWEAPONS+1];      /* killough 5/2/98 */
+extern const int weapon_preferences[NUMWEAPONS+1];      /* killough 5/2/98 */
 int P_WeaponPreferred(int w1, int w2);
 
 struct player_s;

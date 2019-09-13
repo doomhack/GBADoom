@@ -142,9 +142,9 @@ WEAPONBOTTOM+FRACUNIT*2;
 // in DOOM2 to bring up the weapon, i.e. 6 = plasma gun. These    //    |
 // are NOT the wp_* constants.                                    //    V
 
-int weapon_preferences[2][NUMWEAPONS+1] = {
-  {6, 9, 4, 3, 2, 8, 5, 7, 1, 0},  // !compatibility preferences
-  {6, 9, 4, 3, 2, 8, 5, 7, 1, 0},  //  compatibility preferences
+const int weapon_preferences[NUMWEAPONS+1] =
+{
+    {6, 9, 4, 3, 2, 8, 5, 7, 1, 0},  // !compatibility preferences
 };
 
 // P_SwitchWeapon checks current ammo levels and gives you the
@@ -155,7 +155,7 @@ int weapon_preferences[2][NUMWEAPONS+1] = {
 
 int P_SwitchWeapon(player_t *player)
 {
-  int *prefer = weapon_preferences[0]; // killough 3/22/98
+  int *prefer = &weapon_preferences[0]; // killough 3/22/98
   int currentweapon = player->readyweapon;
   int newweapon = currentweapon;
   int i = NUMWEAPONS+1;   // killough 5/2/98
@@ -215,14 +215,14 @@ int P_SwitchWeapon(player_t *player)
 int P_WeaponPreferred(int w1, int w2)
 {
   return
-    (weapon_preferences[0][0] != ++w2 && (weapon_preferences[0][0] == ++w1 ||
-    (weapon_preferences[0][1] !=   w2 && (weapon_preferences[0][1] ==   w1 ||
-    (weapon_preferences[0][2] !=   w2 && (weapon_preferences[0][2] ==   w1 ||
-    (weapon_preferences[0][3] !=   w2 && (weapon_preferences[0][3] ==   w1 ||
-    (weapon_preferences[0][4] !=   w2 && (weapon_preferences[0][4] ==   w1 ||
-    (weapon_preferences[0][5] !=   w2 && (weapon_preferences[0][5] ==   w1 ||
-    (weapon_preferences[0][6] !=   w2 && (weapon_preferences[0][6] ==   w1 ||
-    (weapon_preferences[0][7] !=   w2 && (weapon_preferences[0][7] ==   w1
+    (weapon_preferences[0] != ++w2 && (weapon_preferences[0] == ++w1 ||
+    (weapon_preferences[1] !=   w2 && (weapon_preferences[1] ==   w1 ||
+    (weapon_preferences[2] !=   w2 && (weapon_preferences[2] ==   w1 ||
+    (weapon_preferences[3] !=   w2 && (weapon_preferences[3] ==   w1 ||
+    (weapon_preferences[4] !=   w2 && (weapon_preferences[4] ==   w1 ||
+    (weapon_preferences[5] !=   w2 && (weapon_preferences[5] ==   w1 ||
+    (weapon_preferences[6] !=   w2 && (weapon_preferences[6] ==   w1 ||
+    (weapon_preferences[7] !=   w2 && (weapon_preferences[7] ==   w1
    ))))))))))))))));
 }
 
