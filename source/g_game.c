@@ -559,11 +559,6 @@ void G_Ticker (void)
   int i;
   static gamestate_t prevgamestate;
 
-  // CPhipps - player colour changing
-  if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me)
-  {
-    G_ChangedPlayerColour(consoleplayer, mapcolor_me);
-  }
   P_MapStart();
   // do player reborns if needed
   for (i=0 ; i<MAXPLAYERS ; i++)
@@ -778,21 +773,7 @@ static void G_PlayerFinishLevel(int player)
 
 void G_ChangedPlayerColour(int pn, int cl)
 {
-  int i;
 
-  if (!netgame) return;
-
-  mapcolor_plyr[pn] = cl;
-
-  // Rebuild colour translation tables accordingly
-  R_InitTranslationTables();
-  // Change translations on existing player mobj's
-  for (i=0; i<MAXPLAYERS; i++) {
-    if ((gamestate == GS_LEVEL) && playeringame[i] && (players[i].mo != NULL)) {
-      players[i].mo->flags &= ~MF_TRANSLATION;
-      players[i].mo->flags |= playernumtotrans[i] << MF_TRANSSHIFT;
-    }
-  }
 }
 
 //

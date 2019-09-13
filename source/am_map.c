@@ -51,37 +51,35 @@
 #include "g_game.h"
 
 
-const int mapcolor_me = 112;    // cph
+static const int mapcolor_me = 112;    // cph
+static const int mapcolor_back = 247;    // map background
+static const int mapcolor_grid = 104;    // grid lines color
+static const int mapcolor_wall = 23;    // normal 1s wall color
+static const int mapcolor_fchg = 55;    // line at floor height change color
+static const int mapcolor_cchg = 215;    // line at ceiling height change color
+static const int mapcolor_clsd = 208;    // line at sector with floor=ceiling color
+static const int mapcolor_rkey = 175;    // red key color
+static const int mapcolor_bkey = 204;    // blue key color
+static const int mapcolor_ykey = 231;    // yellow key color
+static const int mapcolor_rdor = 175;    // red door color  (diff from keys to allow option)
+static const int mapcolor_bdor = 204;    // blue door color (of enabling one but not other )
+static const int mapcolor_ydor = 231;    // yellow door color
+static const int mapcolor_tele = 119;    // teleporter line color
+static const int mapcolor_secr = 252;    // secret sector boundary color
+static const int mapcolor_exit = 0;    // jff 4/23/98 add exit line color
+static const int mapcolor_unsn = 104;    // computer map unseen line color
+static const int mapcolor_flat = 88;    // line with no floor/ceiling changes
+static const int mapcolor_sprt = 112;    // general sprite color
+static const int mapcolor_item = 231;    // item sprite color
+static const int mapcolor_hair = 208;    // crosshair color
+static const int mapcolor_sngl = 208;    // single player arrow color
+static const int mapcolor_enemy = 177;   // enemy sprite color
+static const int mapcolor_frnd = 112;    // friendly sprite color
+static const int map_secret_after = 0;
+static const int mapcolor_plyr[4] = { 112, 88, 64, 32 }; // colors for player arrows in multiplayer
 
-
-//jff 1/7/98 default automap colors added
-int mapcolor_back;    // map background
-int mapcolor_grid;    // grid lines color
-int mapcolor_wall;    // normal 1s wall color
-int mapcolor_fchg;    // line at floor height change color
-int mapcolor_cchg;    // line at ceiling height change color
-int mapcolor_clsd;    // line at sector with floor=ceiling color
-int mapcolor_rkey;    // red key color
-int mapcolor_bkey;    // blue key color
-int mapcolor_ykey;    // yellow key color
-int mapcolor_rdor;    // red door color  (diff from keys to allow option)
-int mapcolor_bdor;    // blue door color (of enabling one but not other )
-int mapcolor_ydor;    // yellow door color
-int mapcolor_tele;    // teleporter line color
-int mapcolor_secr;    // secret sector boundary color
-int mapcolor_exit;    // jff 4/23/98 add exit line color
-int mapcolor_unsn;    // computer map unseen line color
-int mapcolor_flat;    // line with no floor/ceiling changes
-int mapcolor_sprt;    // general sprite color
-int mapcolor_item;    // item sprite color
-int mapcolor_frnd;    // friendly sprite color
-int mapcolor_enemy;   // enemy sprite color
-int mapcolor_hair;    // crosshair color
-int mapcolor_sngl;    // single player arrow color
-int mapcolor_plyr[4] = { 112, 88, 64, 32 }; // colors for player arrows in multiplayer
 
 //jff 3/9/98 add option to not show secret sectors until entered
-int map_secret_after;
 //jff 4/3/98 add symbols for "no-color" for disable and "black color" for black
 #define NC 0
 #define BC 247
@@ -121,7 +119,7 @@ typedef struct
 //   starting from the middle.
 //
 #define R ((8*PLAYERRADIUS)/7)
-mline_t player_arrow[] =
+const mline_t player_arrow[] =
 {
   { { -R+R/8, 0 }, { R, 0 } }, // -----
   { { R, 0 }, { R-R/2, R/4 } },  // ----->
@@ -135,7 +133,7 @@ mline_t player_arrow[] =
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
 #define R ((8*PLAYERRADIUS)/7)
-mline_t cheat_player_arrow[] =
+const mline_t cheat_player_arrow[] =
 { // killough 3/22/98: He's alive, Jim :)
   { { -R+R/8, 0 }, { R, 0 } }, // -----
   { { R, 0 }, { R-R/2, R/4 } },  // ----->
@@ -156,7 +154,7 @@ mline_t cheat_player_arrow[] =
 #define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
 
 #define R (FRACUNIT)
-mline_t triangle_guy[] =
+const mline_t triangle_guy[] =
 {
 { { (fixed_t)(-.867*R), (fixed_t)(-.5*R) }, { (fixed_t)( .867*R), (fixed_t)(-.5*R) } },
 { { (fixed_t)( .867*R), (fixed_t)(-.5*R) }, { (fixed_t)(0      ), (fixed_t)(    R) } },
@@ -167,7 +165,7 @@ mline_t triangle_guy[] =
 
 //jff 1/5/98 new symbol for keys on automap
 #define R (FRACUNIT)
-mline_t cross_mark[] =
+const mline_t cross_mark[] =
 {
   { { -R, 0 }, { R, 0} },
   { { 0, -R }, { 0, R } },
@@ -177,7 +175,7 @@ mline_t cross_mark[] =
 //jff 1/5/98 end of new symbol
 
 #define R (FRACUNIT)
-mline_t thintriangle_guy[] =
+const mline_t thintriangle_guy[] =
 {
 { { (fixed_t)(-.5*R), (fixed_t)(-.7*R) }, { (fixed_t)(    R), (fixed_t)(    0) } },
 { { (fixed_t)(    R), (fixed_t)(    0) }, { (fixed_t)(-.5*R), (fixed_t)( .7*R) } },
@@ -190,7 +188,7 @@ int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
 static int leveljuststarted = 1;       // kluge until AM_LevelInit() is called
 
-enum automapmode_e automapmode; // Mode that the automap is in
+enum automapmode_e automapmode = 0; // Mode that the automap is in
 
 // location of window on screen
 static int  f_x;

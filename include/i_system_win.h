@@ -63,7 +63,7 @@ class DoomWindow : public QWidget
         if(event->key() == Qt::Key_Escape)
             ev.data1 = 27;
 
-        if(event->key() == Qt::Key_Enter)
+        if(event->key() == Qt::Key_Return)
             ev.data1 = 13;
 
         if(event->key() == Qt::Key_Up)
@@ -77,6 +77,42 @@ class DoomWindow : public QWidget
 
         if(event->key() == Qt::Key_Right)
             ev.data1 = 0xae;
+
+        if(event->key() == Qt::Key_Tab)
+            ev.data1 = 9;
+
+        if(event->key() == Qt::Key_Y)
+            ev.data1 = 'y';
+
+        if(event->key() == Qt::Key_Space)
+            ev.data1 = ' ';
+
+        if(event->key() == Qt::Key_Control)
+            ev.data1 = (0x80+0x1d);
+
+        if(event->key() == Qt::Key_1)
+            ev.data1 = '1';
+
+        if(event->key() == Qt::Key_2)
+            ev.data1 = '2';
+
+        if(event->key() == Qt::Key_3)
+            ev.data1 = '3';
+
+        if(event->key() == Qt::Key_4)
+            ev.data1 = '4';
+
+        if(event->key() == Qt::Key_5)
+            ev.data1 = '5';
+
+        if(event->key() == Qt::Key_6)
+            ev.data1 = '6';
+
+        if(event->key() == Qt::Key_7)
+            ev.data1 = '7';
+
+        if(event->key() == Qt::Key_8)
+            ev.data1 = '8';
 
         ev.data2 = 0;
         ev.data3 = 0;
@@ -111,6 +147,41 @@ class DoomWindow : public QWidget
         if(event->key() == Qt::Key_Right)
             ev.data1 = 0xae;
 
+        if(event->key() == Qt::Key_Tab)
+            ev.data1 = 9;
+
+        if(event->key() == Qt::Key_Y)
+            ev.data1 = 'y';
+
+        if(event->key() == Qt::Key_Space)
+            ev.data1 = ' ';
+
+        if(event->key() == Qt::Key_Control)
+            ev.data1 = (0x80+0x1d);
+
+        if(event->key() == Qt::Key_1)
+            ev.data1 = '1';
+
+        if(event->key() == Qt::Key_2)
+            ev.data1 = '2';
+
+        if(event->key() == Qt::Key_3)
+            ev.data1 = '3';
+
+        if(event->key() == Qt::Key_4)
+            ev.data1 = '4';
+
+        if(event->key() == Qt::Key_5)
+            ev.data1 = '5';
+
+        if(event->key() == Qt::Key_6)
+            ev.data1 = '6';
+
+        if(event->key() == Qt::Key_7)
+            ev.data1 = '7';
+
+        if(event->key() == Qt::Key_8)
+            ev.data1 = '8';
 
         ev.data2 = 0;
         ev.data3 = 0;
