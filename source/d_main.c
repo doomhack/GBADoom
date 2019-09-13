@@ -1075,11 +1075,6 @@ static void DoLooseFiles(void)
   myargc = tmyargc;
 }
 
-
-
-// CPhipps - misc screen stuff
-unsigned int desired_screenwidth, desired_screenheight;
-
 static void L_SetupConsoleMasks(void) {
   int p;
   int i;
@@ -1316,46 +1311,8 @@ static void D_DoomMainSetup(void)
     G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
     // jff 3/24/98 this sets startskill if it was -1
 
-    // Video stuff
-    if ((p = M_CheckParm("-width")))
-        if (myargv[p+1])
-            desired_screenwidth = atoi(myargv[p+1]);
+    I_CalculateRes(240, 160);
 
-    if ((p = M_CheckParm("-height")))
-        if (myargv[p+1])
-            desired_screenheight = atoi(myargv[p+1]);
-
-    if ((p = M_CheckParm("-fullscreen")))
-        use_fullscreen = 1;
-
-    if ((p = M_CheckParm("-nofullscreen")))
-        use_fullscreen = 0;
-
-    // e6y
-    // New command-line options for setting a window (-window)
-    // or fullscreen (-nowindow) mode temporarily which is not saved in cfg.
-    // It works like "-geom" switch
-    desired_fullscreen = use_fullscreen;
-    if ((p = M_CheckParm("-window")))
-        desired_fullscreen = 0;
-
-    if ((p = M_CheckParm("-nowindow")))
-        desired_fullscreen = 1;
-
-    { // -geometry handling, change screen size for this session only
-        // e6y: new code by me
-        int w, h;
-
-        if (!(p = M_CheckParm("-geom")))
-            p = M_CheckParm("-geometry");
-
-        if (!(p && (p+1<myargc) && sscanf(myargv[p+1], "%dx%d", &w, &h) == 2))
-        {
-            w = desired_screenwidth;
-            h = desired_screenheight;
-        }
-        I_CalculateRes(w, h);
-    }
 
     //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"V_Init: allocate screens.\n");

@@ -63,9 +63,6 @@
 
 #include "i_system_e32.h"
 
-int use_fullscreen;
-int desired_fullscreen;
-
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -279,15 +276,11 @@ int I_GetModeFromString(const char *modestr)
 
 void I_UpdateVideoMode(void)
 {
-  int i;
   video_mode_t mode;
 
-  lprintf(LO_INFO, "I_UpdateVideoMode: %dx%d (%s)\n", SCREENWIDTH, SCREENHEIGHT, desired_fullscreen ? "fullscreen" : "nofullscreen");
+  lprintf(LO_INFO, "I_UpdateVideoMode: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
-  mode = I_GetModeFromString(default_videomode);
-  if ((i=M_CheckParm("-vidmode")) && i<myargc-1) {
-    mode = I_GetModeFromString(myargv[i+1]);
-  }
+  mode = I_GetModeFromString("");
 
   V_InitMode(mode);
   V_FreeScreens();

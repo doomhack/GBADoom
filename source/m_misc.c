@@ -100,26 +100,9 @@ extern const char* S_music_files[]; // cournia
 
 default_t defaults[] =
 {
-  {"Game settings",{NULL},{0},UL,UL,def_none,ss_none},
-
-  {"Sound settings",{NULL},{0},UL,UL,def_none,ss_none},
-
-  {"sfx_volume",{&snd_SfxVolume},{8},0,15, def_int,ss_none},
-  {"music_volume",{&snd_MusicVolume},{8},0,15, def_int,ss_none},
-  {"snd_channels",{&default_numChannels},{8},1,8,
-   def_int,ss_none}, // number of audio events simultaneously // killough
 
   {"Video settings",{NULL},{0},UL,UL,def_none,ss_none},
 
-  {"videomode",{NULL, &default_videomode},{0,"8"},UL,UL,def_str,ss_none},
-
-  /* 640x480 default resolution */
-  {"screen_width",{&desired_screenwidth},{320}, 320, MAX_SCREENWIDTH,
-   def_int,ss_none},
-  {"screen_height",{&desired_screenheight},{240},200,MAX_SCREENHEIGHT,
-   def_int,ss_none},
-  {"use_fullscreen",{&use_fullscreen},{1},0,1, /* proff 21/05/2000 */
-   def_bool,ss_none},
   {"usegamma",{&usegamma},{3},0,4, //jff 3/6/98 fix erroneous upper limit in range
    def_int,ss_none}, // gamma correction level // killough 1/18/98
   {"uncapped_framerate", {&movement_smooth},  {0},0,1,

@@ -110,9 +110,6 @@ extern  boolean deathmatch;
 extern int snd_SfxVolume;      // maximum volume for sound
 extern int snd_MusicVolume;    // maximum volume for music
 
-// CPhipps - screen parameters
-extern unsigned int desired_screenwidth, desired_screenheight;
-
 // -------------------------
 // Status flags for refresh.
 //

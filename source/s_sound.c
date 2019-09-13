@@ -78,10 +78,10 @@ static channel_t *channels;
 // These are not used, but should be (menu).
 // Maximum volume of a sound effect.
 // Internal default is max out of 0-15.
-int snd_SfxVolume = 15;
+int snd_SfxVolume = 8;
 
 // Maximum volume of music. Useless so far.
-int snd_MusicVolume = 15;
+int snd_MusicVolume = 8;
 
 // whether songs are mus_paused
 static boolean mus_paused;
@@ -92,8 +92,7 @@ static musicinfo_t *mus_playing;
 // following is set
 //  by the defaults code in M_misc:
 // number of channels available
-unsigned int default_numChannels;
-unsigned int numChannels;
+const unsigned int numChannels = 8;
 
 //jff 3/17/98 to keep track of last IDMUS specified music num
 int idmusnum;
@@ -116,7 +115,6 @@ static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup);
 void S_Init(int sfxVolume, int musicVolume)
 {
   //jff 1/22/98 skip sound init if sound not enabled
-  numChannels = default_numChannels;
   if (!nosfxparm)
   {
     int i;
