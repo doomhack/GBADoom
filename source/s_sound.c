@@ -62,8 +62,6 @@
 // Adjustable by menu.
 #define NORM_PRIORITY 64
 
-const char* S_music_files[NUMMUSIC]; // cournia - stores music file names
-
 typedef struct
 {
   sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
@@ -438,8 +436,6 @@ void S_StartMusic(int m_id)
 void S_ChangeMusic(int musicnum, int looping)
 {
   musicinfo_t *music;
-  int music_file_failed; // cournia - if true load the default MIDI music
-  char* music_filename;  // cournia
 
   //jff 1/22/98 return if music is not enabled
   if (nomusicparm)
@@ -464,29 +460,11 @@ void S_ChangeMusic(int musicnum, int looping)
       music->lumpnum = W_GetNumForName(namebuf);
     }
 
-  music_file_failed = 1;
-
-  // proff_fs - only load when from IWAD
-  if (lumpinfo[music->lumpnum].source == source_iwad)
-    {
-      // cournia - check to see if we can play a higher quality music file
-      //           rather than the default MIDI
-      music_filename = I_FindFile(S_music_files[musicnum], "");
-      if (music_filename)
-        {
-          music_file_failed = I_RegisterMusic(music_filename, music);
-          free(music_filename);
-        }
-    }
-
-  if (music_file_failed)
-    {
-      //cournia - could not load music file, play default MIDI music
 
       // load & register it
       music->data = W_CacheLumpNum(music->lumpnum);
       music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
-    }
+
 
   // play it
   I_PlaySong(music->handle, looping);
