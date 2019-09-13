@@ -290,14 +290,6 @@ void P_PlayerThink (player_t* player)
   ticcmd_t*    cmd;
   weapontype_t newweapon;
 
-  if (movement_smooth && players && &players[displayplayer] == player)
-  {
-    original_view_vars.viewx = player->mo->x;
-    original_view_vars.viewy = player->mo->y;
-    original_view_vars.viewz = player->viewz;
-    original_view_vars.viewangle = R_SmoothPlaying_Get(player->mo->angle) + viewangleoffset;
-  }
-
   // killough 2/8/98, 3/21/98:
   if (player->cheats & CF_NOCLIP)
     player->mo->flags |= MF_NOCLIP;

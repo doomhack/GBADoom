@@ -103,11 +103,6 @@ default_t defaults[] =
 
   {"Video settings",{NULL},{0},UL,UL,def_none,ss_none},
 
-  {"usegamma",{&usegamma},{3},0,4, //jff 3/6/98 fix erroneous upper limit in range
-   def_int,ss_none}, // gamma correction level // killough 1/18/98
-  {"uncapped_framerate", {&movement_smooth},  {0},0,1,
-   def_bool,ss_stat},
-
   //jff 4/3/98 allow unlimited sensitivity
 
 // For key bindings, the values stored in the key_* variables       // phares

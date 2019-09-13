@@ -324,7 +324,6 @@ static void D_DoomLoop(void)
 {
 	for (;;)
 	{
-		WasRenderedInTryRunTics = false;
 		// frame syncronous IO operations
 		
 		I_StartFrame();
@@ -356,7 +355,7 @@ static void D_DoomLoop(void)
 		if (players[displayplayer].mo) // cph 2002/08/10
 			S_UpdateSounds(players[displayplayer].mo);// move positional sounds
 
-		if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate)
+        //if (gamestate != wipegamestate)
         {
 			// Update display, next frame, with current state.
 			D_Display();

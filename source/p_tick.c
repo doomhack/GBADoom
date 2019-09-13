@@ -178,7 +178,6 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
 
 void P_RemoveThinker(thinker_t *thinker)
 {
-  R_StopInterpolationIfNeeded(thinker);
   thinker->function = P_RemoveThinkerDelayed;
 
   P_UpdateThinker(thinker);
@@ -244,8 +243,6 @@ static void P_RunThinkers (void)
        currentthinker != &thinkercap;
        currentthinker = currentthinker->next)
   {
-    if (newthinkerpresent)
-      R_ActivateThinkerInterpolations(currentthinker);
     if (currentthinker->function)
       currentthinker->function(currentthinker);
   }
@@ -272,8 +269,6 @@ void P_Ticker (void)
   if (paused || (menuactive && !demoplayback && !netgame &&
      players[consoleplayer].viewz != 1))
     return;
-
-  R_UpdateInterpolations ();
 
   P_MapStart();
                // not if this is an intermission screen

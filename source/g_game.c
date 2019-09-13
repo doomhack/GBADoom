@@ -616,7 +616,6 @@ boolean G_Responder (event_t* ev)
     ST_Start();    // killough 3/7/98: switch status bar views too
     HU_Start();
     S_UpdateSounds(players[displayplayer].mo);
-    R_ActivateSectorInterpolations();
     R_SmoothPlaying_Reset(NULL);
   }
       return true;

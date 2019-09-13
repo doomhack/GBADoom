@@ -273,37 +273,9 @@ int I_Filelength(int handle)
   return fileinfo.st_size;
 }
 
-
-
-fixed_t I_GetTimeFrac (void)
-{
-  unsigned long now;
-  fixed_t frac;
-
-  now = 0;
-
-  if (tic_vars.step == 0)
-    return FRACUNIT;
-  else
-  {
-    frac = (fixed_t)((now - tic_vars.start + displaytime) * FRACUNIT / tic_vars.step);
-    if (frac < 0)
-      frac = 0;
-    if (frac > FRACUNIT)
-      frac = FRACUNIT;
-    return frac;
-  }
-}
-
-
 void I_GetTime_SaveMS(void)
 {
-  if (!movement_smooth)
     return;
-
-  tic_vars.start = 0;
-  tic_vars.next = (unsigned int) ((tic_vars.start * tic_vars.msec + 1.0f) / tic_vars.msec);
-  tic_vars.step = tic_vars.next - tic_vars.start;
 }
 
 

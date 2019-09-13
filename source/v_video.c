@@ -50,8 +50,6 @@ screeninfo_t screens[NUM_SCREENS];
 /* jff 4/24/98 initialize this at runtime */
 const byte *colrngs[CR_LIMIT];
 
-int usegamma;
-
 // killough 5/2/98: tiny engine driven by table above
 void V_InitColorTranslation(void)
 {
