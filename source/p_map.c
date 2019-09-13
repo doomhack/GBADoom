@@ -221,8 +221,7 @@ boolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, boolean boss)
   subsector_t*  newsubsec;
 
   /* killough 8/9/98: make telefragging more consistent, preserve compatibility */
-  telefrag = thing->player ||
-    (!comp[comp_telefrag] ? boss : (gamemap==30));
+  telefrag = thing->player || boss;
 
   // kill anything occupying the position
 
@@ -1678,7 +1677,7 @@ void P_UseLines (player_t*  player)
   // This added test makes the "oof" sound work on 2s lines -- killough:
 
   if (P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse ))
-    if (!comp[comp_sound] && !P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_NoWayTraverse ))
+    if (!P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_NoWayTraverse ))
       S_StartSound (usething, sfx_noway);
   }
 
@@ -1895,9 +1894,6 @@ boolean P_ChangeSector(sector_t* sector,boolean crunch)
 boolean P_CheckSector(sector_t* sector,boolean crunch)
   {
   msecnode_t *n;
-
-  if (comp[comp_floors]) /* use the old routine for old demos though */
-    return P_ChangeSector(sector,crunch);
 
   nofit = false;
   crushchange = crunch;

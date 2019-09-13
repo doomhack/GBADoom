@@ -693,7 +693,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
 
 void A_FireCGun(player_t *player, pspdef_t *psp)
 {
-  if (player->ammo[weaponinfo[player->readyweapon].ammo] || comp[comp_sound])
+  if (player->ammo[weaponinfo[player->readyweapon].ammo])
     S_StartSound(player->mo, sfx_pistol);
 
   if (!player->ammo[weaponinfo[player->readyweapon].ammo])

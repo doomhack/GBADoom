@@ -401,7 +401,7 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
        * Boom v2.02 and LxDoom return good && (P_Random(pr_trywalk)&3)
        * MBF plays even more games
        */
-      if (!good || comp[comp_doorstuck]) return good;
+      if (!good) return good;
   return ((P_Random(pr_opendoor) >= 230) ^ (good & 1));
     }
   else
@@ -427,8 +427,7 @@ static boolean P_SmartMove(mobj_t *actor)
   int on_lift, dropoff = false, under_damage;
 
   /* killough 9/12/98: Stay on a lift if target is on one */
-  on_lift = !comp[comp_staylift]
-    && target && target->health > 0
+  on_lift = target && target->health > 0
     && target->subsector->sector->tag==actor->subsector->sector->tag &&
     P_IsOnLift(actor);
 
@@ -628,7 +627,6 @@ static void P_NewChaseDir(mobj_t *actor)
     if (actor->floorz - actor->dropoffz > FRACUNIT*24 &&
   actor->z <= actor->floorz &&
   !(actor->flags & (MF_DROPOFF|MF_FLOAT)) &&
-  !comp[comp_dropoff] &&
   P_AvoidDropoff(actor)) /* Move away from dropoff */
       {
   P_DoNewChaseDir(actor, dropoff_deltax, dropoff_deltay);
@@ -810,7 +808,6 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
       /* killough 9/9/98: give monsters a threshold towards getting players
        * (we don't want it to be too easy for a player with dogs :)
        */
-      if (!comp[comp_pursuit])
   actor->threshold = 60;
 
       return true;
@@ -1142,7 +1139,7 @@ void A_Chase(mobj_t *actor)
    *  try to find a new one; return if sucessful */
 
   if (!(actor->target && actor->target->health > 0 &&
-        ((comp[comp_pursuit] && !netgame) ||
+        (
          (((actor->target->flags ^ actor->flags) & MF_FRIEND ||
      (!(actor->flags & MF_FRIEND))) &&
     P_CheckSight(actor, actor->target))))
@@ -1539,13 +1536,6 @@ static boolean PIT_VileCheck(mobj_t *thing)
 
     corpsehit = thing;
     corpsehit->momx = corpsehit->momy = 0;
-    if (comp[comp_vile])                                            // phares
-      {                                                             //   |
-        corpsehit->height <<= 2;                                    //   V
-        check = P_CheckPosition(corpsehit,corpsehit->x,corpsehit->y);
-        corpsehit->height >>= 2;
-      }
-    else
       {
         int height,radius;
 
@@ -1613,9 +1603,6 @@ void A_VileChase(mobj_t* actor)
 
                   P_SetMobjState(corpsehit,info->raisestate);
 
-                  if (comp[comp_vile])                              // phares
-                    corpsehit->height <<= 2;                        //   |
-                  else                                              //   V
                     {
                       corpsehit->height = info->height; // fix Ghost bug
                       corpsehit->radius = info->radius; // fix Ghost bug
@@ -1880,19 +1867,6 @@ static void A_PainShootSkull(mobj_t *actor, angle_t angle)
 // and wouldn't spit another one if there were. If not in           // phares
 // compatibility mode, we remove the limit.                         // phares
                                                                     // phares
-  if (comp[comp_pain]) /* killough 10/98: compatibility-optioned */
-    {
-      // count total number of skulls currently on the level
-      int count = 0;
-      thinker_t *currentthinker = NULL;
-      while ((currentthinker = P_NextThinker(currentthinker,th_all)) != NULL)
-        if ((currentthinker->function == P_MobjThinker)
-            && ((mobj_t *)currentthinker)->type == MT_SKULL)
-          count++;
-      if (count > 20)                                               // phares
-        return;                                                     // phares
-    }
-
   // okay, there's room for another one
 
   an = angle >> ANGLETOFINESHIFT;
@@ -1902,10 +1876,7 @@ static void A_PainShootSkull(mobj_t *actor, angle_t angle)
   x = actor->x + FixedMul(prestep, finecosine[an]);
   y = actor->y + FixedMul(prestep, finesine[an]);
   z = actor->z + 8*FRACUNIT;
-
-  if (comp[comp_skull])   /* killough 10/98: compatibility-optioned */
-    newmobj = P_SpawnMobj(x, y, z, MT_SKULL);                     // phares
-  else                                                            //   V
+                                                           //   V
     {
       // Check whether the Lost Soul is being fired through a 1-sided
       // wall or an impassible line, or a "monsters can't cross" line.
@@ -2052,23 +2023,6 @@ void A_BossDeath(mobj_t *mo)
     }
   else
     {
-      // e6y
-      // Additional check of gameepisode is necessary, because 
-      // there is no right or wrong solution for E4M6 in original EXEs,
-      // there's nothing to emulate.
-      if (comp[comp_666] && gameepisode < 4)
-      {
-        // e6y
-        // Only following checks are present in doom2.exe ver. 1.666 and 1.9
-        // instead of separate checks for each episode in doomult.exe, plutonia.exe and tnt.exe
-        // There is no more desync on doom.wad\episode3.lmp
-        // http://www.doomworld.com/idgames/index.php?id=6909
-        if (gamemap != 8)
-          return;
-        if (mo->type == MT_BRUISER && gameepisode != 1) 
-          return;
-      }
-      else
       {
       switch(gameepisode)
         {

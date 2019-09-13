@@ -623,8 +623,6 @@ static void ST_updateFaceWidget(void)
 
 }
 
-int sts_traditional_keys; // killough 2/28/98: traditional status bar keys
-
 static void ST_updateWidgets(void)
 {
   static int  largeammo = 1994; // means "n/a"

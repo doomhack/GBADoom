@@ -124,7 +124,6 @@ boolean         singledemo;           // quit after playing a demo from cmdline
 wbstartstruct_t wminfo;               // parms for world map / intermission
 boolean         haswolflevels = false;// jff 4/18/98 wolf levels present
 static byte     *savebuffer;          // CPhipps - static
-int             autorun = false;      // always running?          // phares
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int		longtics;
 
@@ -152,7 +151,6 @@ int     key_speed;
 int     key_escape = KEYD_ESCAPE;                           // phares 4/13/98
 int     key_savegame;                                               // phares
 int     key_loadgame;                                               //    |
-int     key_autorun;                                                //    V
 int     key_reverse;
 int     key_zoomin;
 int     key_zoomout;
@@ -286,8 +284,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
 
   strafe = gamekeydown[key_strafe] || joybuttons[joybstrafe];
-  //e6y: the "RUN" key inverts the autorun state
-  speed = (gamekeydown[key_speed] || joybuttons[joybspeed] ? !autorun : autorun); // phares
+
+  speed = (gamekeydown[key_speed]); // phares
 
   forward = side = 0;
 
@@ -1448,31 +1446,6 @@ static void G_LoadGameErr(const char *msg)
 // CPhipps - size of version header
 #define VERSIONSIZE   16
 
-const char * comp_lev_str[MAX_COMPATIBILITY_LEVEL] =
-{ "doom v1.2", "doom v1.666", "doom/doom2 v1.9", "ultimate doom", "final doom",
-  "dosdoom compatibility", "tasdoom compatibility", "\"boom compatibility\"", "boom v2.01", "boom v2.02", "lxdoom v1.3.2+",
-  "MBF", "PrBoom 2.03beta", "PrBoom v2.1.0-2.1.1", "PrBoom v2.1.2-v2.2.6",
-  "PrBoom v2.3.x", "PrBoom 2.4.0", "Current PrBoom"  };
-
-// comp_options_by_version removed - see G_Compatibility
-
-static byte map_old_comp_levels[] =
-{ 0, 1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-
-static const struct {
-  int comp_level;
-  const char* ver_printf;
-  int version;
-} version_headers[] = {
-  /* cph - we don't need a new version_header for prboom_3_comp/v2.1.1, since
-   *  the file format is unchanged. */
-  { prboom_3_compatibility, "PrBoom %d", 210},
-  { prboom_5_compatibility, "PrBoom %d", 211},
-  { prboom_6_compatibility, "PrBoom %d", 212}
-};
-
-static const size_t num_version_headers = sizeof(version_headers) / sizeof(version_headers[0]);
-
 void G_DoLoadGame(void)
 {
   int  length, i;
@@ -1489,25 +1462,6 @@ void G_DoLoadGame(void)
     I_Error("Couldn't read file %s: %s", name, "(Unknown Error)");
   save_p = savebuffer + SAVESTRINGSIZE;
 
-  // CPhipps - read the description field, compare with supported ones
-  for (i=0; (size_t)i<num_version_headers; i++) {
-    char vcheck[VERSIONSIZE];
-    // killough 2/22/98: "proprietary" version string :-)
-    sprintf (vcheck, version_headers[i].ver_printf, version_headers[i].version);
-
-    if (!strncmp(save_p, vcheck, VERSIONSIZE)) {
-      savegame_compatibility = version_headers[i].comp_level;
-      i = num_version_headers;
-    }
-  }
-  if (savegame_compatibility == -1) {
-    if (forced_loadgame) {
-      savegame_compatibility = MAX_COMPATIBILITY_LEVEL-1;
-    } else {
-      G_LoadGameErr("Unrecognised savegame version!\nAre you sure? (y/n) ");
-      return;
-    }
-  }
 
   save_p += VERSIONSIZE;
 
@@ -1686,15 +1640,6 @@ static void G_DoSaveGame (boolean menu)
   save_p += SAVESTRINGSIZE;
   memset (name2,0,sizeof(name2));
 
-  // CPhipps - scan for the version header
-  for (i=0; (size_t)i<num_version_headers; i++)
-    if (version_headers[i].comp_level == best_compatibility) {
-      // killough 2/22/98: "proprietary" version string :-)
-      sprintf (name2,version_headers[i].ver_printf,version_headers[i].version);
-      memcpy (save_p, name2, VERSIONSIZE);
-      i = num_version_headers+1;
-    }
-
   save_p += VERSIONSIZE;
 
   { /* killough 3/16/98, 12/98: store lump name checksum */
@@ -1800,88 +1745,6 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
   gameaction = ga_newgame;
 }
 
-/* cph -
- * G_Compatibility
- *
- * Initialises the comp[] array based on the compatibility_level
- * For reference, MBF did:
- * for (i=0; i < COMP_TOTAL; i++)
- *   comp[i] = compatibility;
- *
- * Instead, we have a lookup table showing at what version a fix was
- *  introduced, and made optional (replaces comp_options_by_version)
- */
-
-void G_Compatibility(void)
-{
-  static const struct {
-    complevel_t fix; // level at which fix/change was introduced
-    complevel_t opt; // level at which fix/change was made optional
-  } levels[] =
-  {
-    // comp_telefrag - monsters used to telefrag only on MAP30, now they do it for spawners only
-    { mbf_compatibility, mbf_compatibility },
-    // comp_dropoff - MBF encourages things to drop off of overhangs
-    { mbf_compatibility, mbf_compatibility },
-    // comp_vile - original Doom archville bugs like ghosts
-    { boom_compatibility, mbf_compatibility },
-    // comp_pain - original Doom limits Pain Elementals from spawning too many skulls
-    { boom_compatibility, mbf_compatibility },
-    // comp_skull - original Doom let skulls be spit through walls by Pain Elementals
-    { boom_compatibility, mbf_compatibility },
-    // comp_blazing - original Doom duplicated blazing door sound
-    { boom_compatibility, mbf_compatibility },
-    // e6y: "Tagged doors don't trigger special lighting" handled wrong
-    // http://sourceforge.net/tracker/index.php?func=detail&aid=1411400&group_id=148658&atid=772943
-    // comp_doorlight - MBF made door lighting changes more gradual
-    { boom_compatibility, mbf_compatibility },
-    // comp_model - improvements to the game physics
-    { boom_compatibility, mbf_compatibility },
-    // comp_god - fixes to God mode
-    { boom_compatibility, mbf_compatibility },
-    // comp_falloff - MBF encourages things to drop off of overhangs
-    { mbf_compatibility, mbf_compatibility },
-    // comp_floors - fixes for moving floors bugs
-    { boom_compatibility_compatibility, mbf_compatibility },
-    // comp_skymap
-    { boom_compatibility, mbf_compatibility },
-    // comp_pursuit - MBF AI change, limited pursuit?
-    { mbf_compatibility, mbf_compatibility },
-    // comp_doorstuck - monsters stuck in doors fix
-    { boom_202_compatibility, mbf_compatibility },
-    // comp_staylift - MBF AI change, monsters try to stay on lifts
-    { mbf_compatibility, mbf_compatibility },
-    // comp_zombie - prevent dead players triggering stuff
-    { lxdoom_1_compatibility, mbf_compatibility },
-    // comp_stairs - see p_floor.c
-    { boom_compatibility_compatibility, mbf_compatibility },
-    // comp_infcheat - FIXME
-    { mbf_compatibility, mbf_compatibility },
-    // comp_zerotags - allow zero tags in wads */
-    { boom_compatibility, mbf_compatibility },
-    // comp_moveblock - enables keygrab and mancubi shots going thru walls
-    { lxdoom_1_compatibility, prboom_2_compatibility },
-    // comp_respawn - objects which aren't on the map at game start respawn at (0,0)
-    { prboom_2_compatibility, prboom_2_compatibility },
-    // comp_sound - see s_sound.c
-    { boom_compatibility_compatibility, prboom_3_compatibility },
-    // comp_666 - enables tag 666 in non-ExM8 levels
-    { ultdoom_compatibility, prboom_4_compatibility },
-    // comp_soul - enables lost souls bouncing (see P_ZMovement)
-    { prboom_4_compatibility, prboom_4_compatibility },
-    // comp_maskedanim - 2s mid textures don't animate
-    { doom_1666_compatibility, prboom_4_compatibility },
-  };
-  int i;
-
-  if (sizeof(levels)/sizeof(*levels) != COMP_NUM)
-    I_Error("G_Compatibility: consistency error");
-
-  for (i = 0; i < sizeof(levels)/sizeof(*levels); i++)
-    if (compatibility_level < levels[i].opt)
-      comp[i] = (compatibility_level < levels[i].fix);
-}
-
 // killough 3/1/98: function to reload all the default parameter
 // settings before a new game begins
 
@@ -1907,9 +1770,6 @@ void G_ReloadDefaults(void)
   memset(playeringame+1, 0, sizeof(*playeringame)*(MAXPLAYERS-1));
 
   consoleplayer = 0;
-
-    memcpy(comp, default_comp, sizeof comp);
-  G_Compatibility();
 
   rngseed += I_GetRandomTimeSeed() + gametic; // CPhipps
 }
@@ -2200,12 +2060,6 @@ byte *G_WriteOptions(byte *demo_p)
 
   *demo_p++ = 0;
 
-  {   // killough 10/98: a compatibility vector now
-    int i;
-    for (i=0; i < COMP_TOTAL; i++)
-      *demo_p++ = comp[i] != 0;
-  }
-
   *demo_p++ = 0; // cph 2002/07/20
 
   //----------------
@@ -2281,17 +2135,8 @@ const byte *G_ReadOptions(const byte *demo_p)
 
       demo_p++;
 
-      {   // killough 10/98: a compatibility vector now
-  int i;
-  for (i=0; i < COMP_TOTAL; i++)
-    comp[i] = *demo_p++;
-      }
-
       forceOldBsp = *demo_p++; // cph 2002/07/20
 
-
-
-  G_Compatibility();
   return target;
 }
 
@@ -2362,24 +2207,6 @@ void G_DeferedPlayDemo (const char* name)
 }
 
 static int demolumpnum = -1;
-
-static int G_GetOriginalDoomCompatLevel(int ver)
-{
-  {
-    int lev;
-    int i = M_CheckParm("-complevel");
-    if (i && (i+1 < myargc))
-    {
-      lev = atoi(myargv[i+1]);
-      if (lev>=0)
-        return lev;
-    }
-  }
-  if (ver < 107) return doom_1666_compatibility;
-  if (gamemode == retail) return ultdoom_compatibility;
-  if (gamemission >= pack_tnt) return finaldoom_compatibility;
-  return doom2_19_compatibility;
-}
 
 //e6y: Check for overrun
 static boolean CheckForOverrun(const byte *start_p, const byte *current_p, size_t maxsize, size_t size, boolean failonerror)
@@ -2467,7 +2294,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
           deathmatch = respawnparm = fastparm =
             nomonsters = consoleplayer = 0;
         }
-      G_Compatibility();
+
     }
   else    // new versions of demos
     {
@@ -2535,9 +2362,6 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
       if (demover == 200)              // killough 6/3/98: partially fix v2.00 demos
         demo_p += 256-GAME_OPTION_SIZE;
     }
-
-  if (sizeof(comp_lev_str)/sizeof(comp_lev_str[0]) != MAX_COMPATIBILITY_LEVEL)
-    I_Error("G_ReadDemoHeader: compatibility level strings incomplete");
 
       //e6y: check for overrun
       if (CheckForOverrun(header_p, demo_p, size, MAXPLAYERS, failonerror))

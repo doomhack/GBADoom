@@ -103,11 +103,6 @@ result_e T_MovePlane
       /* cph - make more compatible with original Doom, by
        *  reintroducing this code. This means floors can't lower
        *  if objects are stuck in the ceiling */
-      if ((flag == true) && comp[comp_floors]) {
-        sector->floorheight = lastpos;
-        P_ChangeSector(sector,crush);
-        return crushed;
-      }
           }
           break;
 
@@ -115,7 +110,7 @@ result_e T_MovePlane
           // Moving a floor up
           // jff 02/04/98 keep floor from moving thru ceilings
           // jff 2/22/98 weaken check to demo_compatibility
-          destheight = (comp[comp_floors] || dest<sector->ceilingheight)?
+          destheight = (dest<sector->ceilingheight)?
                           dest : sector->ceilingheight;
           if (sector->floorheight + speed > destheight)
           {
@@ -137,11 +132,7 @@ result_e T_MovePlane
             flag = P_CheckSector(sector,crush); //jff 3/19/98 use faster chk
             if (flag == true)
             {
-        /* jff 1/25/98 fix floor crusher */
-              if (comp[comp_floors]) {
-                if (crush == true)
-                  return crushed;
-              }
+
               sector->floorheight = lastpos;
               P_CheckSector(sector,crush);      //jff 3/19/98 use faster chk
               return crushed;
@@ -159,7 +150,7 @@ result_e T_MovePlane
           // moving a ceiling down
           // jff 02/04/98 keep ceiling from moving thru floors
           // jff 2/22/98 weaken check to demo_compatibility
-          destheight = (comp[comp_floors] || dest>sector->floorheight)?
+          destheight = (dest>sector->floorheight)?
                           dest : sector->floorheight;
           if (sector->ceilingheight - speed < destheight)
           {
@@ -568,7 +559,8 @@ int EV_DoFloor
           side_t*     side;
 
     /* jff 3/13/98 no ovf */
-          if (!comp[comp_model]) minsize = 32000<<FRACBITS;
+
+            minsize = 32000<<FRACBITS;
           floor->direction = 1;
           floor->sector = sec;
           floor->speed = FLOORSPEED;
@@ -578,21 +570,16 @@ int EV_DoFloor
             {
               side = getSide(secnum,i,0);
               // jff 8/14/98 don't scan texture 0, its not real
-              if (side->bottomtexture > 0 ||
-                  (comp[comp_model] && !side->bottomtexture))
+              if (side->bottomtexture > 0)
                 if (textureheight[side->bottomtexture] < minsize)
                   minsize = textureheight[side->bottomtexture];
               side = getSide(secnum,i,1);
               // jff 8/14/98 don't scan texture 0, its not real
-              if (side->bottomtexture > 0 ||
-                  (comp[comp_model] && !side->bottomtexture))
+              if (side->bottomtexture > 0)
                 if (textureheight[side->bottomtexture] < minsize)
                   minsize = textureheight[side->bottomtexture];
             }
           }
-          if (comp[comp_model])
-            floor->floordestheight = floor->sector->floorheight + minsize;
-          else
           {
             floor->floordestheight =
               (floor->sector->floorheight>>FRACBITS) + (minsize>>FRACBITS);
@@ -876,22 +863,14 @@ int EV_DoDonut(line_t*  line)
 
     /* do not start the donut if the pool is already moving
      * cph - DEMOSYNC - was !compatibility */
-    if (!comp[comp_floors] && P_SectorActive(floor_special,s2))
+    if (P_SectorActive(floor_special,s2))
       continue;                           //jff 5/7/98
 
     // find a two sided line around the pool whose other side isn't the pillar
     for (i = 0;i < s2->linecount;i++)
     {
-      //jff 3/29/98 use true two-sidedness, not the flag
-      // killough 4/5/98: changed demo_compatibility to compatibility
-      if (comp[comp_model])
-      {
-        if ((!s2->lines[i]->flags & ML_TWOSIDED) ||
-            (s2->lines[i]->backsector == s1))
-          continue;
-      }
-      else if (!s2->lines[i]->backsector || s2->lines[i]->backsector == s1)
-        continue;
+        if (!s2->lines[i]->backsector || s2->lines[i]->backsector == s1)
+            continue;
 
       rtn = 1; //jff 1/26/98 no donut action - no switch change on return
 

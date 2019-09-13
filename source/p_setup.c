@@ -1355,13 +1355,6 @@ static int P_GroupLines (void)
                                   // I can sue the old code unchanged
     int block;
 
-    // set the degenmobj_t to the middle of the bounding box
-    if (comp[comp_sound])
-    {
-      sector->soundorg.x = (bbox[BOXRIGHT]+bbox[BOXLEFT])/2;
-      sector->soundorg.y = (bbox[BOXTOP]+bbox[BOXBOTTOM])/2;
-    }
-    else
     {
       //e6y: fix sound origin for large levels
       sector->soundorg.x = bbox[BOXRIGHT]/2+bbox[BOXLEFT]/2;

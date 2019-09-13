@@ -40,9 +40,6 @@
 #include "r_main.h"
 #include "lprintf.h"
 
-int sts_always_red;      //jff 2/18/98 control to disable status color changes
-int sts_pct_always_gray; // killough 2/21/98: always gray %'s? bug or feature?
-
 //
 // STlib_init()
 //
@@ -145,16 +142,14 @@ static void STlib_drawNum
   // in the special case of 0, you draw 0
   if (!num)
     // CPhipps - patch drawing updated, reformatted
-    V_DrawNumPatch(x - w, n->y, FG, n->p[0].lumpnum, cm,
-       (((cm!=CR_DEFAULT) && !sts_always_red) ? VPT_TRANS : VPT_NONE) | VPT_STRETCH);
+    V_DrawNumPatch(x - w, n->y, FG, n->p[0].lumpnum, cm, VPT_STRETCH);
 
   // draw the new number
   //jff 2/16/98 add color translation to digit output
   while (num && numdigits--) {
     // CPhipps - patch drawing updated, reformatted
     x -= w;
-    V_DrawNumPatch(x, n->y, FG, n->p[num % 10].lumpnum, cm,
-       (((cm!=CR_DEFAULT) && !sts_always_red) ? VPT_TRANS : VPT_NONE) | VPT_STRETCH);
+    V_DrawNumPatch(x, n->y, FG, n->p[num % 10].lumpnum, cm, VPT_STRETCH);
     num /= 10;
   }
 
@@ -162,8 +157,7 @@ static void STlib_drawNum
   //jff 2/16/98 add color translation to digit output
   // cph - patch drawing updated, load by name instead of acquiring pointer earlier
   if (neg)
-    V_DrawNamePatch(x - w, n->y, FG, "STTMINUS", cm,
-       (((cm!=CR_DEFAULT) && !sts_always_red) ? VPT_TRANS : VPT_NONE) | VPT_STRETCH);
+    V_DrawNamePatch(x - w, n->y, FG, "STTMINUS", cm, VPT_STRETCH);
 }
 
 /*
@@ -225,13 +219,12 @@ void STlib_updatePercent
   int cm,
   int refresh )
 {
-  if (*per->n.on && (refresh || (per->n.oldnum != *per->n.num))) {
+  if (*per->n.on && (refresh || (per->n.oldnum != *per->n.num)))
+  {
     // killough 2/21/98: fix percents not updated;
     /* CPhipps - make %'s only be updated if number changed */
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(per->n.x, per->n.y, FG, per->p->lumpnum,
-       sts_pct_always_gray ? CR_GRAY : cm,
-       (sts_always_red ? VPT_NONE : VPT_TRANS) | VPT_STRETCH);
+    V_DrawNumPatch(per->n.x, per->n.y, FG, per->p->lumpnum, CR_GRAY, VPT_STRETCH);
   }
 
   STlib_updateNum(&per->n, cm, refresh);

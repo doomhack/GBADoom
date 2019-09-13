@@ -425,7 +425,7 @@ P_UseSpecialLine
       /* Exit level
        * killough 10/98: prevent zombies from exiting levels
        */
-      if (thing->player && thing->player->health <= 0 && !comp[comp_zombie])
+      if (thing->player && thing->player->health <= 0)
       {
         S_StartSound(thing, sfx_noway);
         return false;
@@ -505,7 +505,7 @@ P_UseSpecialLine
       /* Secret EXIT
        * killough 10/98: prevent zombies from exiting levels
        */
-      if (thing->player && thing->player->health <= 0 && !comp[comp_zombie])
+      if (thing->player && thing->player->health <= 0)
       {
         S_StartSound(thing, sfx_noway);
         return false;

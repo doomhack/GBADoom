@@ -65,43 +65,6 @@ extern GameMission_t  gamemission;
 // Set if homebrew PWAD stuff has been added.
 extern  boolean modifiedgame;
 
-// CPhipps - new compatibility handling
-extern const complevel_t compatibility_level;
-
-// -------------------------------------------
-// killough 10/98: compatibility vector
-
-enum {
-  comp_telefrag,
-  comp_dropoff,
-  comp_vile,
-  comp_pain,
-  comp_skull,
-  comp_blazing,
-  comp_doorlight,
-  comp_model,
-  comp_god,
-  comp_falloff,
-  comp_floors,
-  comp_skymap,
-  comp_pursuit,
-  comp_doorstuck,
-  comp_staylift,
-  comp_zombie,
-  comp_stairs,
-  comp_infcheat,
-  comp_zerotags,
-  comp_moveblock,
-  comp_respawn,  /* cph - this is the inverse of comp_respawnfix from eternity */
-  comp_sound,
-  comp_666,
-  comp_soul,
-  comp_maskedanim,
-  COMP_NUM,      /* cph - should be last in sequence */
-  COMP_TOTAL=32  // Some extra room for additional variables
-};
-
-extern int comp[COMP_TOTAL], default_comp[COMP_TOTAL];
 
 // -------------------------------------------
 // Language.

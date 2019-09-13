@@ -108,7 +108,6 @@ extern int  key_speed;
 extern int  key_escape;                                             // phares
 extern int  key_savegame;                                           //    |
 extern int  key_loadgame;                                           //    V
-extern int  key_autorun;
 extern int  key_reverse;
 extern int  key_zoomin;
 extern int  key_zoomout;
@@ -157,7 +156,6 @@ extern int  key_map_grid;                                           // phares
 extern int  key_map_rotate; // cph - map rotation
 extern int  key_map_overlay;// cph - map overlay
 extern int  key_screenshot;    // killough 2/22/98 -- add key for screenshot
-extern int  autorun;           // always running?                   // phares
 
 extern boolean haswolflevels;  //jff 4/18/98 wolf levels present
 

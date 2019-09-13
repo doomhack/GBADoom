@@ -134,9 +134,6 @@ void T_PlatRaise(plat_t* plat)
         //only affects plats that raise and bounce
         //killough 1/31/98: relax compatibility to demo_compatibility
 
-        // remove the plat if its a pure raise type
-        if (!comp[comp_floors])
-        {
           switch(plat->type)
           {
             case raiseAndChange:
@@ -145,7 +142,7 @@ void T_PlatRaise(plat_t* plat)
             default:
               break;
           }
-        }
+
       }
       break;
 

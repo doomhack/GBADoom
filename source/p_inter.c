@@ -188,7 +188,7 @@ static boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropp
       /* cph 20028/10 - for old-school DM addicts, allow old behavior
        * where only consoleplayer's pickup sounds are heard */
       // displayplayer, not consoleplayer, for viewing multiplayer demos
-      if (!comp[comp_sound] || player == &players[displayplayer])
+      if (player == &players[displayplayer])
         S_StartSound (player->mo, sfx_wpnup|PICKUP_SOUND); // killough 4/25/98
       return false;
     }
@@ -610,7 +610,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   /* cph 20028/10 - for old-school DM addicts, allow old behavior
    * where only consoleplayer's pickup sounds are heard */
   // displayplayer, not consoleplayer, for viewing multiplayer demos
-  if (!comp[comp_sound] || player == &players[displayplayer])
+  if (player == &players[displayplayer])
     S_StartSound (player->mo, sound | PICKUP_SOUND);   // killough 4/25/98
 }
 
@@ -809,7 +809,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       // ignore damage in GOD mode, or with INVUL power.
       // killough 3/26/98: make god mode 100% god mode in non-compat mode
 
-      if ((damage < 1000 || (!comp[comp_god] && (player->cheats&CF_GODMODE))) &&
+      if ((damage < 1000 || ((player->cheats&CF_GODMODE))) &&
           (player->cheats&CF_GODMODE || player->powers[pw_invulnerability]))
         return;
 

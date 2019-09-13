@@ -395,7 +395,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 		   * Because of this hack, sky is not affected by INVUL inverse mapping.
 		   * Until Boom fixed this. Compat option added in MBF. */
 			
-			if (comp[comp_skymap] || !(dcvars.colormap = fixedcolormap))
+            if (!(dcvars.colormap = fixedcolormap))
 				dcvars.colormap = fullcolormap;          // killough 3/20/98
 			
 			// proff 09/21/98: Changed for high-res

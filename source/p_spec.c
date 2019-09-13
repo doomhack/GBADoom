@@ -276,10 +276,7 @@ int twoSided
   //jff 1/26/98 return what is actually needed, whether the line
   //has two sidedefs, rather than whether the 2S flag is set
 
-  return comp[comp_model] ?
-    (sectors[sector].lines[line])->flags & ML_TWOSIDED
-    :
-    (sectors[sector].lines[line])->sidenum[1] != NO_INDEX;
+  return (sectors[sector].lines[line])->sidenum[1] != NO_INDEX;
 }
 
 
@@ -294,18 +291,11 @@ sector_t* getNextSector
 ( line_t*       line,
   sector_t*     sec )
 {
-  //jff 1/26/98 check unneeded since line->backsector already
-  //returns NULL if the line is not two sided, and does so from
-  //the actual two-sidedness of the line, rather than its 2S flag
 
-  if (comp[comp_model])
+
+  if (line->frontsector == sec)
   {
-    if (!(line->flags & ML_TWOSIDED))
-      return NULL;
-  }
-
-  if (line->frontsector == sec) {
-    if (comp[comp_model] || line->backsector!=sec)
+    if (line->backsector!=sec)
       return line->backsector; //jff 5/3/98 don't retn sec unless compatibility
     else                       // fixes an intra-sector line breaking functions
       return NULL;             // like floor->highest floor
@@ -360,8 +350,7 @@ fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
 
   //jff 1/26/98 Fix initial value for floor to not act differently
   //in sections of wad that are below -500 units
-  if (!comp[comp_model])       /* jff 3/12/98 avoid ovf */
-    floor = -32000*FRACUNIT;   // in height calculations
+  floor = -32000*FRACUNIT;   // in height calculations
 
   for (i=0 ;i < sec->linecount ; i++)
   {
@@ -523,7 +512,7 @@ fixed_t P_FindLowestCeilingSurrounding(sector_t* sec)
   fixed_t             height = INT_MAX;
 
   /* jff 3/12/98 avoid ovf in height calculations */
-  if (!comp[comp_model]) height = 32000*FRACUNIT;
+    height = 32000*FRACUNIT;
 
   for (i=0 ;i < sec->linecount ; i++)
   {
@@ -559,7 +548,7 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t* sec)
   /* jff 1/26/98 Fix initial value for floor to not act differently
    * in sections of wad that are below 0 units
    * jff 3/12/98 avoid ovf in height calculations */
-  if (!comp[comp_model]) height = -32000*FRACUNIT;
+    height = -32000*FRACUNIT;
 
   for (i=0 ;i < sec->linecount ; i++)
   {
@@ -594,7 +583,6 @@ fixed_t P_FindShortestTextureAround(int secnum)
   int i;
   sector_t *sec = &sectors[secnum];
 
-  if (!comp[comp_model])
     minsize = 32000<<FRACBITS; //jff 3/13/98 prevent overflow in height calcs
 
   for (i = 0; i < sec->linecount; i++)
@@ -633,7 +621,6 @@ fixed_t P_FindShortestUpperAround(int secnum)
   int i;
   sector_t *sec = &sectors[secnum];
 
-  if (!comp[comp_model])
     minsize = 32000<<FRACBITS; //jff 3/13/98 prevent overflow
                                // in height calcs
   for (i = 0; i < sec->linecount; i++)
@@ -1014,7 +1001,7 @@ int P_CheckTag(line_t *line)
 {
   /* tag not zero, allowed, or
    * killough 11/98: compatibility option */
-  if (comp[comp_zerotags] || line->tag)
+  if (line->tag)
     return 1;
 
   switch(line->special)
@@ -1420,7 +1407,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
     case 52:
       // EXIT!
       // killough 10/98: prevent zombies from exiting levels
-      if (!(thing->player && thing->player->health <= 0 && !comp[comp_zombie]))
+      if (!(thing->player && thing->player->health <= 0))
   G_ExitLevel ();
       break;
 
@@ -1506,7 +1493,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
       // Secret EXIT
       // killough 10/98: prevent zombies from exiting levels
       // CPhipps - change for lxdoom's compatibility handling
-      if (!(thing->player && thing->player->health <= 0 && !comp[comp_zombie]))
+      if (!(thing->player && thing->player->health <= 0))
   G_SecretExitLevel ();
       break;
 
@@ -2162,7 +2149,7 @@ void P_ShootSpecialLine
           case 197:
             // Exit to next level
             // killough 10/98: prevent zombies from exiting levels
-            if(thing->player && thing->player->health<=0 && !comp[comp_zombie])
+            if(thing->player && thing->player->health<=0)
               break;
             P_ChangeSwitchTexture(line,0);
             G_ExitLevel();
@@ -2171,7 +2158,7 @@ void P_ShootSpecialLine
           case 198:
             // Exit to secret level
             // killough 10/98: prevent zombies from exiting levels
-            if(thing->player && thing->player->health<=0 && !comp[comp_zombie])
+            if(thing->player && thing->player->health<=0)
               break;
             P_ChangeSwitchTexture(line,0);
             G_SecretExitLevel();
@@ -2241,10 +2228,6 @@ void P_PlayerInSpecialSector (player_t* player)
         break;
 
       case 11:
-        // Exit on health < 11, take 10/20 damage per 31 ticks
-        if (comp[comp_god]) /* killough 2/21/98: add compatibility switch */
-          player->cheats &= ~CF_GODMODE; // on godmode cheat clearing
-                                         // does not affect invulnerability
         if (!(leveltime&0x1f))
           P_DamageMobj (player->mo, NULL, NULL, 20);
 

@@ -49,11 +49,6 @@ boolean modifiedgame;
 
 //-----------------------------------------------------------------------------
 
-// CPhipps - compatibility vars
-const complevel_t compatibility_level = best_compatibility;
-
-int comp[COMP_TOTAL], default_comp[COMP_TOTAL];    // killough 10/98
-
 // killough 8/8/98: distance friends tend to move towards players
 int distfriend = 128, default_distfriend = 128;
 

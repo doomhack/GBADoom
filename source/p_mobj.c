@@ -188,8 +188,7 @@ static void P_XYMovement (mobj_t* mo)
         // CPhipps - compatibility optioned
 
         if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2 ||
-                (!comp[comp_moveblock]
-                 && (xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2)))
+                ((xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2)))
         {
             ptryx = mo->x + xmove/2;
             ptryy = mo->y + ymove/2;
@@ -541,7 +540,7 @@ floater:
      * Lost souls were meant to bounce off of ceilings;
      *  new comp_soul compatibility option added
      */
-    if (!comp[comp_soul] && mo->flags & MF_SKULLFLY)
+    if (mo->flags & MF_SKULLFLY)
       mo->momz = -mo->momz; // the skull slammed into something
 
     // hit the ceiling
@@ -550,14 +549,6 @@ floater:
       mo->momz = 0;
 
     mo->z = mo->ceilingz - mo->height;
-
-    /* cph 2001/04/15 - 
-     * We might have hit a ceiling but had downward momentum (e.g. ceiling is 
-     *  lowering on us), so for old demos we must still do the buggy 
-     *  momentum reversal here
-     */
-    if (comp[comp_soul] && mo->flags & MF_SKULLFLY)
-      mo->momz = -mo->momz; // the skull slammed into something
 
     if ( (mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP) )
       {
@@ -595,7 +586,7 @@ static void P_NightmareRespawn(mobj_t* mobj)
    *   and the logic is reversed (i.e. like the rest of comp_ it *disables*
    *   the fix)
    */
-  if(!comp[comp_respawn] && !x && !y)
+  if(!x && !y)
   {
      // spawnpoint was zeroed out, so use point of death instead
      x = mobj->x;
@@ -692,8 +683,8 @@ void P_MobjThinker (mobj_t* mobj)
   // slightly push off of ledge if hanging more than halfway off
 
   if (mobj->z > mobj->dropoffz &&      // Only objects contacting dropoff
-      !(mobj->flags & MF_NOGRAVITY) && // Only objects which fall
-      !comp[comp_falloff]) // Not in old demos
+      !(mobj->flags & MF_NOGRAVITY) // Only objects which fall
+          ) // Not in old demos
     P_ApplyTorque(mobj);               // Apply torque
   else
     mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque

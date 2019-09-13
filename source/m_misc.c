@@ -102,43 +102,6 @@ default_t defaults[] =
 {
   {"Game settings",{NULL},{0},UL,UL,def_none,ss_none},
 
-   /* End of MBF AI extras */
-
-  {"sts_always_red",{&sts_always_red},{1},0,1, // no color changes on status bar
-   def_bool,ss_stat},
-  {"sts_pct_always_gray",{&sts_pct_always_gray},{0},0,1, // 2/23/98 chg default
-   def_bool,ss_stat}, // makes percent signs on status bar always gray
-  {"sts_traditional_keys",{&sts_traditional_keys},{0},0,1,  // killough 2/28/98
-   def_bool,ss_stat}, // disables doubled card and skull key display on status bar
-  {"autorun",{&autorun},{0},0,1,  // killough 3/6/98: preserve autorun across games
-   def_bool,ss_none},
-
-  {"Compatibility settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"comp_zombie",{&default_comp[comp_zombie]},{0},0,1,def_bool,ss_comp,&comp[comp_zombie]},
-  {"comp_infcheat",{&default_comp[comp_infcheat]},{0},0,1,def_bool,ss_comp,&comp[comp_infcheat]},
-  {"comp_stairs",{&default_comp[comp_stairs]},{0},0,1,def_bool,ss_comp,&comp[comp_stairs]},
-  {"comp_telefrag",{&default_comp[comp_telefrag]},{0},0,1,def_bool,ss_comp,&comp[comp_telefrag]},
-  {"comp_dropoff",{&default_comp[comp_dropoff]},{0},0,1,def_bool,ss_comp,&comp[comp_dropoff]},
-  {"comp_falloff",{&default_comp[comp_falloff]},{0},0,1,def_bool,ss_comp,&comp[comp_falloff]},
-  {"comp_staylift",{&default_comp[comp_staylift]},{0},0,1,def_bool,ss_comp,&comp[comp_staylift]},
-  {"comp_doorstuck",{&default_comp[comp_doorstuck]},{0},0,1,def_bool,ss_comp,&comp[comp_doorstuck]},
-  {"comp_pursuit",{&default_comp[comp_pursuit]},{0},0,1,def_bool,ss_comp,&comp[comp_pursuit]},
-  {"comp_vile",{&default_comp[comp_vile]},{0},0,1,def_bool,ss_comp,&comp[comp_vile]},
-  {"comp_pain",{&default_comp[comp_pain]},{0},0,1,def_bool,ss_comp,&comp[comp_pain]},
-  {"comp_skull",{&default_comp[comp_skull]},{0},0,1,def_bool,ss_comp,&comp[comp_skull]},
-  {"comp_blazing",{&default_comp[comp_blazing]},{0},0,1,def_bool,ss_comp,&comp[comp_blazing]},
-  {"comp_doorlight",{&default_comp[comp_doorlight]},{0},0,1,def_bool,ss_comp,&comp[comp_doorlight]},
-  {"comp_god",{&default_comp[comp_god]},{0},0,1,def_bool,ss_comp,&comp[comp_god]},
-  {"comp_skymap",{&default_comp[comp_skymap]},{0},0,1,def_bool,ss_comp,&comp[comp_skymap]},
-  {"comp_floors",{&default_comp[comp_floors]},{0},0,1,def_bool,ss_comp,&comp[comp_floors]},
-  {"comp_model",{&default_comp[comp_model]},{0},0,1,def_bool,ss_comp,&comp[comp_model]},
-  {"comp_zerotags",{&default_comp[comp_zerotags]},{0},0,1,def_bool,ss_comp,&comp[comp_zerotags]},
-  {"comp_moveblock",{&default_comp[comp_moveblock]},{0},0,1,def_bool,ss_comp,&comp[comp_moveblock]},
-  {"comp_sound",{&default_comp[comp_sound]},{0},0,1,def_bool,ss_comp,&comp[comp_sound]},
-  {"comp_666",{&default_comp[comp_666]},{0},0,1,def_bool,ss_comp,&comp[comp_666]},
-  {"comp_soul",{&default_comp[comp_soul]},{0},0,1,def_bool,ss_comp,&comp[comp_soul]},
-  {"comp_maskedanim",{&default_comp[comp_maskedanim]},{0},0,1,def_bool,ss_comp,&comp[comp_maskedanim]},
-
   {"Sound settings",{NULL},{0},UL,UL,def_none,ss_none},
 
   {"sfx_volume",{&snd_SfxVolume},{8},0,15, def_int,ss_none},
@@ -230,8 +193,6 @@ default_t defaults[] =
    0,MAX_KEY,def_key,ss_keys}, // key to view from another coop player's view
   {"key_pause",       {&key_pause},          {KEYD_PAUSE}     ,
    0,MAX_KEY,def_key,ss_keys}, // key to pause the game
-  {"key_autorun",     {&key_autorun},        {KEYD_CAPSLOCK}  ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle always run mode
   {"key_chat",        {&key_chat},           {'t'}            ,
    0,MAX_KEY,def_key,ss_keys}, // key to enter a chat message
   {"key_backspace",   {&key_backspace},      {KEYD_BACKSPACE} ,
