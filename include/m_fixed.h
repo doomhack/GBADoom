@@ -53,7 +53,7 @@ typedef int fixed_t;
  * killough 9/05/98: better code seems to be gotten from using inlined C
  */
 
-inline static const int CONSTFUNC D_abs(fixed_t x)
+inline static int CONSTFUNC D_abs(fixed_t x)
 {
   fixed_t _t = (x),_s;
   _s = _t >> (8*sizeof _t-1);
@@ -67,7 +67,7 @@ inline static const int CONSTFUNC D_abs(fixed_t x)
 /* CPhipps - made __inline__ to inline, as specified in the gcc docs
  * Also made const */
 
-inline static const fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
+inline static fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
 {
 	//GCC3 does a good job here.
 	//smull -> mov -> orr. Same as hand optimized code.
@@ -85,7 +85,7 @@ inline static const fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
 /* CPhipps - made __inline__ to inline, as specified in the gcc docs
  * Also made const */
 
-inline static const fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
+inline static fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
 {
   return ((unsigned)D_abs(a)>>14) >= (unsigned)D_abs(b) ? ((a^b)>>31) ^ INT_MAX :
     (fixed_t)(((int_64_t) a << FRACBITS) / b);
@@ -96,7 +96,7 @@ inline static const fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
  * (notice that the C standard for % does not guarantee this)
  */
 
-inline static const fixed_t CONSTFUNC FixedMod(fixed_t a, fixed_t b)
+inline static fixed_t CONSTFUNC FixedMod(fixed_t a, fixed_t b)
 {
   if (b & (b-1)) {
     fixed_t r = a % b;

@@ -52,17 +52,12 @@
 
 #include "doomtype.h"
 #include "m_fixed.h"
-#include "r_fps.h"
 #include "i_system.h"
 #include "doomdef.h"
 #include "lprintf.h"
 
 #include "i_system.h"
 #include "i_system_e32.h"
-
-
-static unsigned int start_displaytime;
-static unsigned int displaytime;
 
 int ms_to_next_tick;
 

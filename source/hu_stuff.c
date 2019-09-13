@@ -191,9 +191,6 @@ const int hudcolor_list = 5;  // list of messages color
 const int hud_msg_lines = 1;  // number of message lines in window
 
 //jff 2/16/98 initialization strings for ammo, health, armor widgets
-static char hud_coordstrx[32];
-static char hud_coordstry[32];
-static char hud_coordstrz[32];
 static char hud_ammostr[80];
 static char hud_healthstr[80];
 static char hud_armorstr[80];

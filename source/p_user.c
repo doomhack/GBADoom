@@ -40,7 +40,6 @@
 #include "p_spec.h"
 #include "p_user.h"
 #include "r_demo.h"
-#include "r_fps.h"
 
 // Index of the special effects (INVUL inverse) map.
 

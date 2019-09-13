@@ -34,7 +34,6 @@
 
 #include "doomstat.h"
 #include "r_demo.h"
-#include "r_fps.h"
 
 void R_SmoothPlaying_Reset(player_t *player)
 {
