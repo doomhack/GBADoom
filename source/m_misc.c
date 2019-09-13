@@ -102,23 +102,6 @@ default_t defaults[] =
 
   {"Heads-up display settings",{NULL},{0},UL,UL,def_none,ss_none},
   //jff 2/16/98 defaults for color ranges in hud and status
-  {"hudcolor_titl", {&hudcolor_titl}, {5},0,9,  // gold range
-   def_int,ss_auto}, // color range used for automap level title
-  {"hudcolor_xyco", {&hudcolor_xyco}, {3},0,9,  // green range
-   def_int,ss_auto}, // color range used for automap coordinates
-  {"hudcolor_mesg", {&hudcolor_mesg}, {6},0,9,  // red range
-   def_int,ss_mess}, // color range used for messages during play
-  {"hudcolor_chat", {&hudcolor_chat}, {5},0,9,  // gold range
-   def_int,ss_mess}, // color range used for chat messages and entry
-  {"hudcolor_list", {&hudcolor_list}, {5},0,9,  // gold range  //jff 2/26/98
-   def_int,ss_mess}, // color range used for message review
-  {"hud_msg_lines", {&hud_msg_lines}, {1},1,16,  // 1 line scrolling window
-   def_int,ss_mess}, // number of messages in review display (1=disable)
-  {"hud_list_bgon", {&hud_list_bgon}, {0},0,1,  // solid window bg ena //jff 2/26/98
-   def_bool,ss_mess}, // enables background window behind message review
-  {"hud_distributed",{&hud_distributed},{0},0,1, // hud broken up into 3 displays //jff 3/4/98
-   def_bool,ss_none}, // splits HUD into three 2 line displays
-
   {"health_red",    {&health_red}   , {25},0,200, // below is red
    def_int,ss_stat}, // amount of health for red to yellow transition
   {"health_yellow", {&health_yellow}, {50},0,200, // below is yellow

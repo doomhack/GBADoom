@@ -50,7 +50,7 @@
 int hud_active;       //jff 2/17/98 controls heads-up display mode
 int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
 int hud_nosecrets;    //jff 2/18/98 allows secrets line to be disabled in HUD
-int hud_distributed;  //jff 3/4/98 display HUD in different places on screen
+const int hud_distributed = 0;  //jff 3/4/98 display HUD in different places on screen
 int hud_graph_keys=1; //jff 3/7/98 display HUD keys as graphics
 
 //
@@ -179,15 +179,16 @@ extern boolean    automapactive;
 static boolean    headsupactive = false;
 
 //jff 2/16/98 hud supported automap colors added
-int hudcolor_titl;  // color range of automap level title
-int hudcolor_xyco;  // color range of new coords on automap
+const int hudcolor_titl = 5;  // color range of automap level title
+const int hudcolor_xyco = 3;  // color range of new coords on automap
 //jff 2/16/98 hud text colors, controls added
-int hudcolor_mesg;  // color range of scrolling messages
-int hudcolor_chat;  // color range of chat lines
-int hud_msg_lines;  // number of message lines in window
+const int hudcolor_mesg = 6;  // color range of scrolling messages
+const int hudcolor_chat = 5;  // color range of chat lines
+
 //jff 2/26/98 hud text colors, controls added
-int hudcolor_list;  // list of messages color
-int hud_list_bgon;  // enable for solid window background for message list
+const int hudcolor_list = 5;  // list of messages color
+
+const int hud_msg_lines = 1;  // number of message lines in window
 
 //jff 2/16/98 initialization strings for ammo, health, armor widgets
 static char hud_coordstrx[32];
@@ -487,10 +488,6 @@ void HU_Start(void)
     CR_GRAY
   );
 
-  // create the hud text refresh widget
-  // scrolling display of last hud_msg_lines messages received
-  if (hud_msg_lines>HU_MAXMESSAGES)
-    hud_msg_lines=HU_MAXMESSAGES;
   //jff 4/21/98 if setup has disabled message list while active, turn it off
   message_list = hud_msg_lines > 1; //jff 8/8/98 initialize both ways
   //jff 2/26/98 add the text refresh widget initialization

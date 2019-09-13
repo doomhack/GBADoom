@@ -423,7 +423,7 @@ void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
     (
       &m->l[i],
       x,
-      y + (hud_list_bgon? i+1 : i)*HU_REFRESHSPACING,
+      y + (i)*HU_REFRESHSPACING,
       font,
       startchar,
       cm
@@ -533,8 +533,7 @@ void HUlib_drawMText(hu_mtext_t* m)
     return; // if not on, don't draw
 
   // draw everything
-  if (hud_list_bgon)
-    HUlib_drawMBg(m->x,m->y,m->w,m->h,m->bg);
+
   y = m->y + HU_REFRESHSPACING;
   for (i=0 ; i<m->nl ; i++)
   {
@@ -543,12 +542,7 @@ void HUlib_drawMText(hu_mtext_t* m)
       idx += m->nl; // handle queue of lines
 
     l = &m->l[idx];
-    if (hud_list_bgon)
-    {
-      l->x = m->x + 4;
-      l->y = m->y + (i+1)*HU_REFRESHSPACING;
-    }
-    else
+
     {
       l->x = m->x;
       l->y = m->y + i*HU_REFRESHSPACING;
@@ -606,9 +600,6 @@ static void HUlib_eraseMBg(hu_mtext_t* m)
 void HUlib_eraseMText(hu_mtext_t* m)
 {
   int i;
-
-  if (hud_list_bgon)
-    HUlib_eraseMBg(m);
 
   for (i=0 ; i< m->nl ; i++)
   {
