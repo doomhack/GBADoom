@@ -638,31 +638,10 @@ boolean AM_Responder
           m_paninc.y = -FTOM(F_PANINC);
       else
           rc = false;
-    else if (ch == key_map_zoomout)
-    {
-      mtof_zoommul = M_ZOOMOUT;
-      ftom_zoommul = M_ZOOMIN;
-    }
-    else if (ch == key_map_zoomin)
-    {
-      mtof_zoommul = M_ZOOMIN;
-      ftom_zoommul = M_ZOOMOUT;
-    }
     else if (ch == key_map)
     {
       bigstate = 0;
       AM_Stop ();
-    }
-    else if (ch == key_map_gobig)
-    {
-      bigstate = !bigstate;
-      if (bigstate)
-      {
-        AM_saveScaleAndLoc();
-        AM_minOutWindowScale();
-      }
-      else
-        AM_restoreScaleAndLoc();
     }
     else if (ch == key_map_follow)
     {
@@ -670,25 +649,7 @@ boolean AM_Responder
       f_oldloc.x = INT_MAX;
       // Ty 03/27/98 - externalized
       plr->message = (automapmode & am_follow) ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF;
-    }
-    else if (ch == key_map_grid)
-    {
-      automapmode ^= am_grid;      // CPhipps
-      // Ty 03/27/98 - *not* externalized
-      plr->message = (automapmode & am_grid) ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF;
-    }
-    else if (ch == key_map_mark)
-    {
-      /* Ty 03/27/98 - *not* externalized     
-       * cph 2001/11/20 - use doom_printf so we don't have our own buffer */
-      doom_printf("%s %d", s_AMSTR_MARKEDSPOT, markpointnum);
-      AM_addMark();
-    }
-    else if (ch == key_map_clear)
-    {
-      AM_clearMarks();  // Ty 03/27/98 - *not* externalized
-      plr->message = s_AMSTR_MARKSCLEARED;                      //    ^
-    }                                                           //    |
+    }                                                         //    |
     else if (ch == key_map_rotate) {
       automapmode ^= am_rotate;
       plr->message = (automapmode & am_rotate) ? s_AMSTR_ROTATEON : s_AMSTR_ROTATEOFF;
@@ -726,11 +687,6 @@ boolean AM_Responder
     {
       if (!(automapmode & am_follow))
           m_paninc.y = 0;
-    }
-    else if ((ch == key_map_zoomout) || (ch == key_map_zoomin))
-    {
-      mtof_zoommul = FRACUNIT;
-      ftom_zoommul = FRACUNIT;
     }
   }
   return rc;

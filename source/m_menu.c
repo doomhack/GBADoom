@@ -59,7 +59,6 @@
 #include "i_video.h"
 #include "i_sound.h"
 #include "r_demo.h"
-#include "r_fps.h"
 
 extern patchnum_t hu_font[HU_FONTSIZE];
 extern boolean  message_dontfuckwithme;

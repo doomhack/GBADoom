@@ -51,7 +51,6 @@
 #include "lprintf.h" //jff 10/6/98 for debug outputs
 #include "v_video.h"
 #include "r_demo.h"
-#include "r_fps.h"
 
 //
 // MAP related Lookup tables.

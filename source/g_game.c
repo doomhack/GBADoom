@@ -78,7 +78,6 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "r_demo.h"
-#include "r_fps.h"
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
@@ -131,75 +130,46 @@ int		longtics;
 // controls (have defaults)
 //
 
-int     key_right;
-int     key_left;
-int     key_up;
-int     key_down;
-int     key_menu_right;                                      // phares 3/7/98
-int     key_menu_left;                                       //     |
-int     key_menu_up;                                         //     V
-int     key_menu_down;
-int     key_menu_backspace;                                  //     ^
-int     key_menu_escape;                                     //     |
-int     key_menu_enter;                                      // phares 3/7/98
-int     key_strafeleft;
-int     key_straferight;
-int     key_fire;
-int     key_use;
-int     key_strafe;
-int     key_speed;
-int     key_escape = KEYD_ESCAPE;                           // phares 4/13/98
-int     key_savegame;                                               // phares
-int     key_loadgame;                                               //    |
-int     key_reverse;
-int     key_zoomin;
-int     key_zoomout;
-int     key_chat;
-int     key_backspace;
-int     key_enter;
-int     key_map_right;
-int     key_map_left;
-int     key_map_up;
-int     key_map_down;
-int     key_map_zoomin;
-int     key_map_zoomout;
-int     key_map;
-int     key_map_gobig;
-int     key_map_follow;
-int     key_map_mark;
-int     key_map_clear;
-int     key_map_grid;
-int     key_map_overlay; // cph - map overlay
-int     key_map_rotate;  // cph - map rotation
-int     key_help = KEYD_F1;                                 // phares 4/13/98
-int     key_soundvolume;
-int     key_hud;
-int     key_quicksave;
-int     key_endgame;
-int     key_messages;
-int     key_quickload;
-int     key_quit;
-int     key_gamma;
-int     key_spy;
-int     key_pause;
-int     key_setup;
-int     destination_keys[MAXPLAYERS];
-int     key_weapontoggle;
-int     key_weapon1;
-int     key_weapon2;
-int     key_weapon3;
-int     key_weapon4;
-int     key_weapon5;
-int     key_weapon6;
-int     key_weapon7;                                                //    ^
-int     key_weapon8;                                                //    |
-int     key_weapon9;                                                // phares
-
-int     key_screenshot;             // killough 2/22/98: screenshot key
-int     joybfire;
-int     joybstrafe;
-int     joybuse;
-int     joybspeed;
+const int     key_right = KEYD_RIGHTARROW;
+const int     key_left = KEYD_LEFTARROW;
+const int     key_up = KEYD_UPARROW;
+const int     key_down = KEYD_DOWNARROW;
+const int     key_menu_right = KEYD_RIGHTARROW;                                      // phares 3/7/98
+const int     key_menu_left = KEYD_LEFTARROW;                                       //     |
+const int     key_menu_up = KEYD_UPARROW;                                         //     V
+const int     key_menu_down = KEYD_DOWNARROW;
+const int     key_menu_backspace = KEYD_BACKSPACE;                                  //     ^
+const int     key_menu_escape = KEYD_ESCAPE;                                     //     |
+const int     key_menu_enter = KEYD_ENTER;                                      // phares 3/7/98
+const int     key_strafeleft = ',';
+const int     key_straferight = '.';
+const int     key_fire = KEYD_RCTRL;
+const int     key_use = ' ';
+const int     key_strafe = KEYD_RALT;
+const int     key_speed = KEYD_RSHIFT;
+const int     key_escape = KEYD_ESCAPE;                           // phares 4/13/98
+const int     key_backspace = KEYD_BACKSPACE;
+const int     key_enter = KEYD_ENTER;
+const int     key_map_right = KEYD_RIGHTARROW;
+const int     key_map_left = KEYD_LEFTARROW;
+const int     key_map_up = KEYD_UPARROW;
+const int     key_map_down = KEYD_DOWNARROW;
+const int     key_map = KEYD_TAB;
+const int     key_map_follow = 'f';
+const int     key_map_overlay = 'o'; // cph - map overlay
+const int     key_map_rotate = 'r';  // cph - map rotation
+const int     key_pause = KEYD_PAUSE;
+const int     destination_keys[MAXPLAYERS];
+const int     key_weapontoggle = '0';
+const int     key_weapon1 = '1';
+const int     key_weapon2 = '2';
+const int     key_weapon3 = '3';
+const int     key_weapon4 = '4';
+const int     key_weapon5 = '5';
+const int     key_weapon6 = '6';
+const int     key_weapon7 = '7';                                                //    ^
+const int     key_weapon8 = '8';                                                //    |
+const int     key_weapon9 = '9';                                                // phares
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -214,25 +184,6 @@ fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 // CPhipps - made lots of key/button state vars static
 static boolean gamekeydown[NUMKEYS];
 static int     turnheld;       // for accelerative turning
-
-static boolean mousearray[4];
-static boolean *mousebuttons = &mousearray[1];    // allow [-1]
-
-// mouse values are used once
-static int   mousex;
-static int   mousey;
-static int   dclicktime;
-static int   dclickstate;
-static int   dclicks;
-static int   dclicktime2;
-static int   dclickstate2;
-static int   dclicks2;
-
-// joystick values are repeated
-static int   joyxmove;
-static int   joyymove;
-static boolean joyarray[5];
-static boolean *joybuttons = &joyarray[1];    // allow [-1]
 
 // Game events info
 static buttoncode_t special_event; // Event triggered by local player, to send
@@ -283,7 +234,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   memset(cmd,0,sizeof*cmd);
   cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
 
-  strafe = gamekeydown[key_strafe] || joybuttons[joybstrafe];
+  strafe = gamekeydown[key_strafe];
 
   speed = (gamekeydown[key_speed]); // phares
 
@@ -291,8 +242,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
     // use two stage accelerative turning
     // on the keyboard and joystick
-  if (joyxmove < 0 || joyxmove > 0 ||
-      gamekeydown[key_right] || gamekeydown[key_left])
+  if (gamekeydown[key_right] || gamekeydown[key_left])
     turnheld += ticdup;
   else
     turnheld = 0;
@@ -302,14 +252,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   else
     tspeed = speed;
 
-  // turn 180 degrees in one keystroke?                           // phares
-                                                                  //    |
-  if (gamekeydown[key_reverse])                                   //    V
-    {
-      cmd->angleturn += QUICKREVERSE;                             //    ^
-      gamekeydown[key_reverse] = false;                           //    |
-    }                                                             // phares
-
   // let movement keys cancel each other out
 
   if (strafe)
@@ -318,10 +260,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         side += sidemove[speed];
       if (gamekeydown[key_left])
         side -= sidemove[speed];
-      if (joyxmove > 0)
-        side += sidemove[speed];
-      if (joyxmove < 0)
-        side -= sidemove[speed];
     }
   else
     {
@@ -329,19 +267,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         cmd->angleturn -= angleturn[tspeed];
       if (gamekeydown[key_left])
         cmd->angleturn += angleturn[tspeed];
-      if (joyxmove > 0)
-        cmd->angleturn -= angleturn[tspeed];
-      if (joyxmove < 0)
-        cmd->angleturn += angleturn[tspeed];
     }
 
   if (gamekeydown[key_up])
     forward += forwardmove[speed];
   if (gamekeydown[key_down])
-    forward -= forwardmove[speed];
-  if (joyymove < 0)
-    forward += forwardmove[speed];
-  if (joyymove > 0)
     forward -= forwardmove[speed];
   if (gamekeydown[key_straferight])
     side += sidemove[speed];
@@ -351,15 +281,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     // buttons
   cmd->chatchar = HU_dequeueChatChar();
 
-  if (gamekeydown[key_fire] ||
-      joybuttons[joybfire])
+  if (gamekeydown[key_fire])
     cmd->buttons |= BT_ATTACK;
 
-  if (gamekeydown[key_use] || joybuttons[joybuse])
+  if (gamekeydown[key_use])
     {
       cmd->buttons |= BT_USE;
-      // clear double clicks if hit use button
-      dclicks = 0;
     }
 
   // Toggle between the top 2 favorite weapons.                   // phares
@@ -437,34 +364,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       cmd->buttons |= BT_CHANGE;
       cmd->buttons |= newweapon<<BT_WEAPONSHIFT;
     }
-
-  bstrafe = joybuttons[joybstrafe];
-  if (bstrafe != dclickstate2 && dclicktime2 > 1 )
-    {
-      dclickstate2 = bstrafe;
-      if (dclickstate2)
-        dclicks2++;
-      if (dclicks2 == 2)
-        {
-          cmd->buttons |= BT_USE;
-          dclicks2 = 0;
-        }
-      else
-        dclicktime2 = 0;
-    }
-  else
-    if ((dclicktime2 += ticdup) > 20)
-      {
-        dclicks2 = 0;
-        dclickstate2 = 0;
-      }
-  forward += mousey;
-  if (strafe)
-    side += mousex / 4;       /* mead  Don't want to strafe as fast as turns.*/
-  else
-    cmd->angleturn -= mousex; /* mead now have enough dynamic range 2-10-00 */
-
-  mousex = mousey = 0;
 
   if (forward > MAXPLMOVE)
     forward = MAXPLMOVE;
@@ -576,11 +475,8 @@ static void G_DoLoadLevel (void)
 
   // clear cmd building stuff
   memset (gamekeydown, 0, sizeof(gamekeydown));
-  joyxmove = joyymove = 0;
-  mousex = mousey = 0;
+
   special_event = 0; paused = false;
-  memset (mousebuttons, 0, sizeof(mousebuttons));
-  memset (joybuttons, 0, sizeof(joybuttons));
 
   // killough 5/13/98: in case netdemo has consoleplayer other than green
   ST_Start();
@@ -595,32 +491,6 @@ static void G_DoLoadLevel (void)
 
 boolean G_Responder (event_t* ev)
 {
-  // allow spy mode changes even during the demo
-  // killough 2/22/98: even during DM demo
-  //
-  // killough 11/98: don't autorepeat spy mode switch
-
-  if (ev->data1 == key_spy && netgame && (demoplayback || !deathmatch) &&
-      gamestate == GS_LEVEL)
-    {
-      if (ev->type == ev_keyup)
-  gamekeydown[key_spy] = false;
-      if (ev->type == ev_keydown && !gamekeydown[key_spy])
-  {
-    gamekeydown[key_spy] = true;
-    do                                          // spy mode
-      if (++displayplayer >= MAXPLAYERS)
-        displayplayer = 0;
-    while (!playeringame[displayplayer] && displayplayer!=consoleplayer);
-
-    ST_Start();    // killough 3/7/98: switch status bar views too
-    HU_Start();
-    S_UpdateSounds(players[displayplayer].mo);
-    R_SmoothPlaying_Reset(NULL);
-  }
-      return true;
-    }
-
   // any other key pops up menu if in demos
   //
   // killough 8/2/98: enable automap in -timedemo demos
@@ -672,16 +542,6 @@ boolean G_Responder (event_t* ev)
       if (ev->data1 <NUMKEYS)
         gamekeydown[ev->data1] = false;
       return false;   // always let key up events filter down
-
-
-    case ev_joystick:
-      joybuttons[0] = ev->data1 & 1;
-      joybuttons[1] = ev->data1 & 2;
-      joybuttons[2] = ev->data1 & 4;
-      joybuttons[3] = ev->data1 & 8;
-      joyxmove = ev->data2;
-      joyymove = ev->data3;
-      return true;    // eat events
 
     default:
       break;

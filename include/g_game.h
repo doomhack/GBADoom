@@ -87,75 +87,74 @@ void doom_printf(const char *, ...) __attribute__((format(printf,1,2)));
 
 // killough 5/2/98: moved from m_misc.c:
 
-extern int  key_right;
-extern int  key_left;
-extern int  key_up;
-extern int  key_down;
-extern int  key_menu_right;                                  // phares 3/7/98
-extern int  key_menu_left;                                   //     |
-extern int  key_menu_up;                                     //     V
-extern int  key_menu_down;
-extern int  key_menu_backspace;                              //     ^
-extern int  key_menu_escape;                                 //     |
-extern int  key_menu_enter;                                  // phares 3/7/98
-extern int  key_strafeleft;
-extern int  key_straferight;
-
-extern int  key_fire;
-extern int  key_use;
-extern int  key_strafe;
-extern int  key_speed;
-extern int  key_escape;                                             // phares
-extern int  key_savegame;                                           //    |
-extern int  key_loadgame;                                           //    V
-extern int  key_reverse;
-extern int  key_zoomin;
-extern int  key_zoomout;
-extern int  key_chat;
-extern int  key_backspace;
-extern int  key_enter;
-extern int  key_help;
-extern int  key_soundvolume;
-extern int  key_hud;
-extern int  key_quicksave;
-extern int  key_endgame;
-extern int  key_messages;
-extern int  key_quickload;
-extern int  key_quit;
-extern int  key_gamma;
-extern int  key_spy;
-extern int  key_pause;
-extern int  key_setup;
-extern int  key_forward;
-extern int  key_leftturn;
-extern int  key_rightturn;
-extern int  key_backward;
-extern int  key_weapontoggle;
-extern int  key_weapon1;
-extern int  key_weapon2;
-extern int  key_weapon3;
-extern int  key_weapon4;
-extern int  key_weapon5;
-extern int  key_weapon6;
-extern int  key_weapon7;
-extern int  key_weapon8;
-extern int  key_weapon9;
-extern int  destination_keys[MAXPLAYERS];
-extern int  key_map_right;
-extern int  key_map_left;
-extern int  key_map_up;
-extern int  key_map_down;
-extern int  key_map_zoomin;
-extern int  key_map_zoomout;
-extern int  key_map;
-extern int  key_map_gobig;
-extern int  key_map_follow;
-extern int  key_map_mark;                                           //    ^
-extern int  key_map_clear;                                          //    |
-extern int  key_map_grid;                                           // phares
-extern int  key_map_rotate; // cph - map rotation
-extern int  key_map_overlay;// cph - map overlay
-extern int  key_screenshot;    // killough 2/22/98 -- add key for screenshot
+extern const int  key_right;
+extern const int  key_left;
+extern const int  key_up;
+extern const int  key_down;
+extern const int  key_menu_right;                                  // phares 3/7/98
+extern const int  key_menu_left;                                   //     |
+extern const int  key_menu_up;                                     //     V
+extern const int  key_menu_down;
+extern const int  key_menu_backspace;                              //     ^
+extern const int  key_menu_escape;                                 //     |
+extern const int  key_menu_enter;                                  // phares 3/7/98
+extern const int  key_strafeleft;
+extern const int  key_straferight;
+extern const int  key_fire;
+extern const int  key_use;
+extern const int  key_strafe;
+extern const int  key_speed;
+extern const int  key_escape;                                             // phares
+extern const int  key_savegame;                                           //    |
+extern const int  key_loadgame;                                           //    V
+extern const int  key_reverse;
+extern const int  key_zoomin;
+extern const int  key_zoomout;
+extern const int  key_chat;
+extern const int  key_backspace;
+extern const int  key_enter;
+extern const int  key_help;
+extern const int  key_soundvolume;
+extern const int  key_hud;
+extern const int  key_quicksave;
+extern const int  key_endgame;
+extern const int  key_messages;
+extern const int  key_quickload;
+extern const int  key_quit;
+extern const int  key_gamma;
+extern const int  key_spy;
+extern const int  key_pause;
+extern const int  key_setup;
+extern const int  key_forward;
+extern const int  key_leftturn;
+extern const int  key_rightturn;
+extern const int  key_backward;
+extern const int  key_weapontoggle;
+extern const int  key_weapon1;
+extern const int  key_weapon2;
+extern const int  key_weapon3;
+extern const int  key_weapon4;
+extern const int  key_weapon5;
+extern const int  key_weapon6;
+extern const int  key_weapon7;
+extern const int  key_weapon8;
+extern const int  key_weapon9;
+extern const int  destination_keys[MAXPLAYERS];
+extern const int  key_map_right;
+extern const int  key_map_left;
+extern const int  key_map_up;
+extern const int  key_map_down;
+extern const int  key_map_zoomin;
+extern const int  key_map_zoomout;
+extern const int  key_map;
+extern const int  key_map_gobig;
+extern const int  key_map_follow;
+extern const int  key_map_mark;                                           //    ^
+extern const int  key_map_clear;                                          //    |
+extern const int  key_map_grid;                                           // phares
+extern const int  key_map_rotate; // cph - map rotation
+extern const int  key_map_overlay;// cph - map overlay
+extern const int  key_screenshot;    // killough 2/22/98 -- add key for screenshot
 
 extern boolean haswolflevels;  //jff 4/18/98 wolf levels present
 
