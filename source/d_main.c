@@ -508,13 +508,11 @@ void D_DoAdvanceDemo(void)
   pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
   gamestate = GS_DEMOSCREEN;
 
-  if (netgame && !demoplayback) {
-    demosequence = 0;
-  } else
-   if (!demostates[++demosequence][gamemode].func)
-    demosequence = 0;
+
+  if (!demostates[++demosequence][gamemode].func)
+      demosequence = 0;
   demostates[demosequence][gamemode].func
-    (demostates[demosequence][gamemode].name);
+          (demostates[demosequence][gamemode].name);
 }
 
 //
@@ -1156,12 +1154,6 @@ static void D_DoomMainSetup(void)
 
     devparm = M_CheckParm ("-devparm");
 
-    if (M_CheckParm ("-altdeath"))
-        deathmatch = 2;
-    else
-        if (M_CheckParm ("-deathmatch"))
-            deathmatch = 1;
-
     {
         // CPhipps - localise title variable
         // print title for every printed line
@@ -1244,17 +1236,6 @@ static void D_DoomMainSetup(void)
         startmap = 1;
         autostart = true;
     }
-
-    if ((p = M_CheckParm ("-timer")) && p < myargc-1 && deathmatch)
-    {
-        int time = atoi(myargv[p+1]);
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"Levels will end after %d minute%s.\n", time, time>1 ? "s" : "");
-    }
-
-    if ((p = M_CheckParm ("-avg")) && p < myargc-1 && deathmatch)
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"Austin Virtual Gaming: Levels will end after 20 minutes\n");
 
     if ((p = M_CheckParm ("-warp")) ||      // killough 5/2/98
             (p = M_CheckParm ("-wart")))
@@ -1509,7 +1490,7 @@ static void D_DoomMainSetup(void)
     else
         if (!singledemo)
         {                  /* killough 12/98 */
-            if (autostart || netgame)
+            if (autostart)
             {
                 G_InitNew(startskill, startepisode, startmap);
                 if (demorecording)

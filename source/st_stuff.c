@@ -390,12 +390,6 @@ static void ST_refreshBackground(void)
 		if (st_armson)
 			V_DrawNumPatch(ST_ARMSBGX, y, BG, armsbg.lumpnum, CR_DEFAULT, VPT_STRETCH);
 		
-		// killough 3/7/98: make face background change with displayplayer
-		if (netgame)
-		{
-			V_DrawNumPatch(ST_FX, y, BG, faceback.lumpnum, displayplayer ? CR_LIMIT+displayplayer : CR_DEFAULT, displayplayer ? (VPT_TRANS | VPT_STRETCH) : VPT_STRETCH);
-		}
-		
 		V_CopyRect(ST_X, y, BG, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, ST_X, ST_SCALED_Y, FG, VPT_NONE);
 	}
 }
@@ -667,13 +661,13 @@ static void ST_updateWidgets(void)
   ST_updateFaceWidget();
 
   // used by the w_armsbg widget
-  st_notdeathmatch = !deathmatch;
+  st_notdeathmatch = true;
 
   // used by w_arms[] widgets
-  st_armson = st_statusbaron && !deathmatch;
+  st_armson = st_statusbaron;
 
   // used by w_frags widget
-  st_fragson = deathmatch && st_statusbaron;
+  st_fragson = false;
   st_fragscount = 0;
 
   for (i=0 ; i<MAXPLAYERS ; i++)
@@ -749,10 +743,10 @@ static void ST_drawWidgets(boolean refresh)
   int i;
 
   // used by w_arms[] widgets
-  st_armson = st_statusbaron && !deathmatch;
+  st_armson = st_statusbaron;
 
   // used by w_frags widget
-  st_fragson = deathmatch && st_statusbaron;
+  st_fragson = false;
 
   //jff 2/16/98 make color of ammo depend on amount
   if (*w_ready.num*100 < ammo_red*plyr->maxammo[weaponinfo[w_ready.data].ammo])

@@ -2410,34 +2410,8 @@ void P_SpawnSpecials (void)
   // See if -timer needs to be used.
   levelTimer = false;
 
-  i = M_CheckParm("-avg");   // Austin Virtual Gaming 20 min timer on DM play
-  if (i && deathmatch)
-  {
-    levelTimer = true;
-    levelTimeCount = 20 * 60 * TICRATE;
-  }
-
-  i = M_CheckParm("-timer"); // user defined timer on game play
-  if (i && deathmatch)
-  {
-    int time;
-    time = atoi(myargv[i+1]) * 60 * TICRATE;
-    levelTimer = true;
-    levelTimeCount = time;
-  }
-
   // See if -frags has been used
   levelFragLimit = false;
-  i = M_CheckParm("-frags");  // Ty 03/18/98 Added -frags support
-  if (i && deathmatch)
-  {
-    int frags;
-    frags = atoi(myargv[i+1]);
-    if (frags <= 0) frags = 10;  // default 10 if no count provided
-    levelFragLimit = true;
-    levelFragLimitCount = frags;
-  }
-
 
   //  Init special sectors.
   sector = sectors;

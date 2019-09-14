@@ -904,59 +904,6 @@ static PUREFUNC int P_FindDoomedNum(unsigned type)
 
 void P_RespawnSpecials (void)
   {
-  fixed_t       x;
-  fixed_t       y;
-  fixed_t       z;
-  subsector_t*  ss;
-  mobj_t*       mo;
-  mapthing_t*   mthing;
-  int           i;
-
-  // only respawn items in deathmatch
-
-  if (deathmatch != 2)
-    return;
-
-  // nothing left to respawn?
-
-  if (iquehead == iquetail)
-    return;
-
-  // wait at least 30 seconds
-
-  if (leveltime - itemrespawntime[iquetail] < 30*35)
-    return;
-
-  mthing = &itemrespawnque[iquetail];
-
-  x = mthing->x << FRACBITS;
-  y = mthing->y << FRACBITS;
-
-  // spawn a teleport fog at the new spot
-
-  ss = R_PointInSubsector (x,y);
-  mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_IFOG);
-  S_StartSound (mo, sfx_itmbk);
-
-  // find which type to spawn
-
-  /* killough 8/23/98: use table for faster lookup */
-  i = P_FindDoomedNum(mthing->type);
-
-  // spawn it
-
-  if (mobjinfo[i].flags & MF_SPAWNCEILING)
-    z = ONCEILINGZ;
-  else
-    z = ONFLOORZ;
-
-  mo = P_SpawnMobj (x,y,z, i);
-  mo->spawnpoint = *mthing;
-  mo->angle = ANG45 * (mthing->angle/45);
-
-  // pull it from the queue
-
-  iquetail = (iquetail+1)&(ITEMQUESIZE-1);
   }
 
 //
@@ -1022,11 +969,6 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
 
   P_SetupPsprites (p);
 
-  // give all cards in death match mode
-
-  if (deathmatch)
-    for (i = 0 ; i < NUMCARDS ; i++)
-      p->cards[i] = true;
 
   if (mthing->type-1 == consoleplayer)
     {
@@ -1139,35 +1081,6 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 
   if (mthing->type <= 4 && mthing->type > 0)  // killough 2/26/98 -- fix crashes
     {
-#ifdef DOGS
-      // killough 7/19/98: Marine's best friend :)
-      if (!netgame && mthing->type > 1 && mthing->type <= dogs+1 &&
-    !players[mthing->type-1].secretcount)
-  {  // use secretcount to avoid multiple dogs in case of multiple starts
-    players[mthing->type-1].secretcount = 1;
-
-    // killough 10/98: force it to be a friend
-    options |= MTF_FRIEND;
-    if(HelperThing != -1) // haleyjd 9/22/99: deh substitution
-    {
-      int type = HelperThing - 1;
-      if(type >= 0 && type < NUMMOBJTYPES)
-      {
-        i = type;
-      }
-      else
-      {
-        doom_printf("Invalid value %i for helper, ignored.", HelperThing);
-        i = MT_DOGS;
-      }
-    }
-    else {
-      i = MT_DOGS;
-    }
-    goto spawnit;
-  }
-#endif
-
     // save spots for respawning in coop games
     playerstarts[mthing->type-1] = *mthing;
     /* cph 2006/07/24 - use the otherwise-unused options field to flag that
@@ -1176,25 +1089,15 @@ void P_SpawnMapThing (const mapthing_t* mthing)
      * the playerstarts version with this field set */
     playerstarts[mthing->type-1].options = 1;
 
-    if (!deathmatch)
-      P_SpawnPlayer (mthing->type-1, &playerstarts[mthing->type-1]);
+    P_SpawnPlayer (mthing->type-1, &playerstarts[mthing->type-1]);
+
     return;
     }
 
   // check for apropriate skill level
 
   /* jff "not single" thing flag */
-  if (!netgame && options & MTF_NOTSINGLE)
-    return;
-
-  //jff 3/30/98 implement "not deathmatch" thing flag
-
-  if (netgame && deathmatch && options & MTF_NOTDM)
-    return;
-
-  //jff 3/30/98 implement "not cooperative" thing flag
-
-  if (netgame && !deathmatch && options & MTF_NOTCOOP)
+  if (options & MTF_NOTSINGLE)
     return;
 
   // killough 11/98: simplify
@@ -1219,20 +1122,10 @@ void P_SpawnMapThing (const mapthing_t* mthing)
     return;
     }
 
-  // don't spawn keycards and players in deathmatch
-
-  if (deathmatch && mobjinfo[i].flags & MF_NOTDMATCH)
-    return;
-
   // don't spawn any monsters if -nomonsters
 
   if (nomonsters && (i == MT_SKULL || (mobjinfo[i].flags & MF_COUNTKILL)))
     return;
-
-  // spawn it
-#ifdef DOGS
-spawnit:
-#endif
 
   x = mthing->x << FRACBITS;
   y = mthing->y << FRACBITS;

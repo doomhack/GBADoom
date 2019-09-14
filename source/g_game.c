@@ -107,8 +107,6 @@ boolean         fastdemo;      // if true, run at full speed -- killough
 boolean         nodrawers;     // for comparative timing purposes
 boolean         noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
-boolean         deathmatch;    // only if started as net death
-boolean         netgame;       // only true if packets are broadcast
 boolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
 int             consoleplayer; // player taking events and displaying
@@ -603,7 +601,7 @@ void G_Ticker (void)
         }
     }
 
-  if (paused & 2 || (!demoplayback && menuactive && !netgame))
+  if (paused & 2 || (!demoplayback && menuactive))
     basetic++;  // For revenant tracers and RNG -- we must maintain sync
   else {
     // get commands, check consistancy, and build new consistancy check
@@ -624,24 +622,12 @@ void G_Ticker (void)
           // check for turbo cheats
           // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
 
-          if ((netgame || demoplayback) && cmd->forwardmove > TURBOTHRESHOLD &&
+          if ((demoplayback) && cmd->forwardmove > TURBOTHRESHOLD &&
               !(gametic&31) && ((gametic>>5)&3) == i )
             {
         extern char *player_names[];
         /* cph - don't use sprintf, use doom_printf */
               doom_printf ("%s is turbo!", player_names[i]);
-            }
-
-          if (netgame && !netdemo && !(gametic) )
-            {
-              if (gametic > BACKUPTICS
-                  && consistancy[i][buf] != cmd->consistancy)
-                I_Error("G_Ticker: Consistency failure (%i should be %i)",
-            cmd->consistancy, consistancy[i][buf]);
-              if (players[i].mo)
-                consistancy[i][buf] = players[i].mo->x;
-              else
-                consistancy[i][buf] = 0; // killough 2/14/98
             }
         }
     }
@@ -675,7 +661,7 @@ void G_Ticker (void)
                   savegameslot =
                     (players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
                   gameaction = ga_loadgame;
-      forced_loadgame = netgame; // Force if a netgame
+      forced_loadgame = false; // Force if a netgame
       command_loadgame = false;
                   break;
 
@@ -940,40 +926,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 
 void G_DoReborn (int playernum)
 {
-  if (!netgame)
     gameaction = ga_loadlevel;      // reload the level from scratch
-  else
-    {                               // respawn at the start
-      int i;
-
-      // first dissasociate the corpse
-      players[playernum].mo->player = NULL;
-
-      // spawn at random spot if in death match
-      if (deathmatch)
-        {
-          G_DeathMatchSpawnPlayer (playernum);
-          return;
-        }
-
-      if (G_CheckSpot (playernum, &playerstarts[playernum]) )
-        {
-          P_SpawnPlayer (playernum, &playerstarts[playernum]);
-          return;
-        }
-
-      // try to spawn at one of the other players spots
-      for (i=0 ; i<MAXPLAYERS ; i++)
-        {
-          if (G_CheckSpot (playernum, &playerstarts[i]) )
-            {
-              P_SpawnPlayer (playernum, &playerstarts[i]);
-              return;
-            }
-          // he's going to be inside something.  Too bad.
-        }
-      P_SpawnPlayer (playernum, &playerstarts[playernum]);
-    }
 }
 
 // DOOM Par Times
@@ -1254,16 +1207,13 @@ void G_LoadGame(int slot, boolean command)
     //         - store info in special_event
     special_event = BT_SPECIAL | (BTS_LOADGAME & BT_SPECIALMASK) |
       ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
-    forced_loadgame = netgame; // CPhipps - always force load netgames
+    forced_loadgame = false; // CPhipps - always force load netgames
   } else {
     // Do the old thing, immediate load
     gameaction = ga_loadgame;
     forced_loadgame = false;
     savegameslot = slot;
     demoplayback = false;
-    // Don't stay in netgame state if loading single player save
-    // while watching multiplayer demo
-    netgame = false;
   }
   command_loadgame = command;
   R_SmoothPlaying_Reset(NULL); // e6y
@@ -1617,8 +1567,6 @@ void G_ReloadDefaults(void)
 void G_DoNewGame (void)
 {
   G_ReloadDefaults();            // killough 3/1/98
-  netgame = false;               // killough 3/29/98
-  deathmatch = false;
   G_InitNew (d_skill, d_episode, d_map);
   gameaction = ga_nothing;
 
@@ -2011,7 +1959,7 @@ void G_BeginRecording (void)
     *demo_p++ = gameskill;
     *demo_p++ = gameepisode;
     *demo_p++ = gamemap;
-    *demo_p++ = deathmatch;
+    *demo_p++ = 0;
     *demo_p++ = consoleplayer;
 
     demo_p = G_WriteOptions(demo_p); // killough 3/1/98: Save game options
@@ -2117,7 +2065,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
           skill = *demo_p++;
           episode = *demo_p++;
           map = *demo_p++;
-          deathmatch = *demo_p++;
+          demo_p++;
           respawnparm = *demo_p++;
           fastparm = *demo_p++;
           nomonsters = *demo_p++;
@@ -2131,7 +2079,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
 
           episode = *demo_p++;
           map = *demo_p++;
-          deathmatch = respawnparm = fastparm =
+          respawnparm = fastparm =
             nomonsters = consoleplayer = 0;
         }
 
@@ -2188,7 +2136,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
       skill = *demo_p++;
       episode = *demo_p++;
       map = *demo_p++;
-      deathmatch = *demo_p++;
+      demo_p++;
       consoleplayer = *demo_p++;
 
 	option_p = demo_p;
@@ -2211,12 +2159,6 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
         playeringame[i] = *demo_p++;
       demo_p += MIN_MAXPLAYERS - MAXPLAYERS;
 
-
-  if (playeringame[1])
-    {
-      netgame = true;
-      netdemo = true;
-    }
 
   if (gameaction != ga_loadgame) { /* killough 12/98: support -loadgame */
     G_InitNew(skill, episode, map);
@@ -2289,8 +2231,6 @@ boolean G_CheckDemoStatus (void)
   demolumpnum = -1;
       }
       G_ReloadDefaults();    // killough 3/1/98
-      netgame = false;       // killough 3/29/98
-      deathmatch = false;
       D_AdvanceDemo ();
       return true;
     }

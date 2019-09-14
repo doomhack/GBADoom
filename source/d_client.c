@@ -69,26 +69,19 @@ ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
 static ticcmd_t* localcmds;
 int maketic;
 
-doomcom_t*      doomcom;
-
-
 
 void D_InitNetGame (void)
 {
-  int i;
+    int i;
 
-  doomcom = Z_Malloc(sizeof *doomcom, PU_STATIC, NULL);
-  doomcom->consoleplayer = 0;
-  doomcom->numnodes = 0; doomcom->numplayers = 1;
-  localcmds = netcmds[consoleplayer];
-  netgame = (M_CheckParm("-solo-net") != 0);
+    localcmds = netcmds[consoleplayer];
 
-  for (i=0; i<doomcom->numplayers; i++)
-    playeringame[i] = true;
-  for (; i<MAXPLAYERS; i++)
-    playeringame[i] = false;
+    playeringame[0] = true;
 
-  consoleplayer = displayplayer = doomcom->consoleplayer;
+    for (i=1; i<MAXPLAYERS; i++)
+        playeringame[i] = false;
+
+    consoleplayer = displayplayer;
 }
 
 void D_BuildNewTiccmds(void)
@@ -98,47 +91,47 @@ void D_BuildNewTiccmds(void)
     lastmadetic += newtics;
     while (newtics--)
     {
-      I_StartTic();
-      if (maketic - gametic > BACKUPTICS/2) break;
-      G_BuildTiccmd(&localcmds[maketic%BACKUPTICS]);
-      maketic++;
+        I_StartTic();
+        if (maketic - gametic > BACKUPTICS/2) break;
+        G_BuildTiccmd(&localcmds[maketic%BACKUPTICS]);
+        maketic++;
     }
 }
 
 void TryRunTics (void)
 {
-	int runtics;
-	int entertime = I_GetTime();
+    int runtics;
+    int entertime = I_GetTime();
 
-	// Wait for tics to run
-	while (1) 
-	{
+    // Wait for tics to run
+    while (1)
+    {
 
-		D_BuildNewTiccmds();
+        D_BuildNewTiccmds();
 
         runtics = (maketic) - gametic;
-		if (!runtics)
-		{
-			if (I_GetTime() - entertime > 10)
-			{
-				M_Ticker(); 
-				return;
-			}
-		}
-		else
-			break;
-	}
+        if (!runtics)
+        {
+            if (I_GetTime() - entertime > 10)
+            {
+                M_Ticker();
+                return;
+            }
+        }
+        else
+            break;
+    }
 
-	while (runtics--)
-	{
+    while (runtics--)
+    {
 
-		if (advancedemo)
-			D_DoAdvanceDemo ();
+        if (advancedemo)
+            D_DoAdvanceDemo ();
 
-	    M_Ticker ();
-		I_GetTime_SaveMS();
-		G_Ticker ();
-		P_Checksum(gametic);
-		gametic++;
-	}
+        M_Ticker ();
+        I_GetTime_SaveMS();
+        G_Ticker ();
+        P_Checksum(gametic);
+        gametic++;
+    }
 }

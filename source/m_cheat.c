@@ -680,25 +680,24 @@ boolean M_FindCheats(int key)
   sr = (sr<<5) + key;                   // shift this key into shift register
 
   for (matchedbefore = ret = i = 0; cheat[i].cheat; i++)
-    if ((sr & cheat[i].mask) == cheat[i].code &&      // if match found
-        !(cheat[i].when & not_dm   && deathmatch) &&  // and if cheat allowed
-        !(cheat[i].when & not_coop && netgame && !deathmatch) &&
-        !(cheat[i].when & not_demo && (demorecording || demoplayback)) &&
-        !(cheat[i].when & not_menu && menuactive) &&
-        !(cheat[i].when & not_deh  && M_CheckParm("-deh"))) {
-      if (cheat[i].arg < 0)               // if additional args are required
-        {
-          cht = i;                        // remember this cheat code
-          arg = argbuf;                   // point to start of arg buffer
-          argsleft = -cheat[i].arg;       // number of args expected
-          ret = 1;                        // responder has eaten key
-        }
-      else
-        if (!matchedbefore)               // allow only one cheat at a time
+      if ((sr & cheat[i].mask) == cheat[i].code &&      // if match found
+              !(cheat[i].when & not_demo && (demorecording || demoplayback)) &&
+              !(cheat[i].when & not_menu && menuactive) &&
+              !(cheat[i].when & not_deh  && M_CheckParm("-deh")))
+      {
+          if (cheat[i].arg < 0)               // if additional args are required
           {
-            matchedbefore = ret = 1;      // responder has eaten key
-            cheat[i].func(cheat[i].arg);  // call cheat handler
+              cht = i;                        // remember this cheat code
+              arg = argbuf;                   // point to start of arg buffer
+              argsleft = -cheat[i].arg;       // number of args expected
+              ret = 1;                        // responder has eaten key
           }
-    }
+          else
+              if (!matchedbefore)               // allow only one cheat at a time
+              {
+                  matchedbefore = ret = 1;      // responder has eaten key
+                  cheat[i].func(cheat[i].arg);  // call cheat handler
+              }
+      }
   return ret;
 }

@@ -173,26 +173,6 @@ static boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropp
   boolean gaveammo;
   boolean gaveweapon;
 
-  if (netgame && deathmatch!=2 && !dropped)
-    {
-      // leave placed weapons forever on net games
-      if (player->weaponowned[weapon])
-        return false;
-
-      player->bonuscount += BONUSADD;
-      player->weaponowned[weapon] = true;
-
-      P_GiveAmmo(player, weaponinfo[weapon].ammo, deathmatch ? 5 : 2);
-
-      player->pendingweapon = weapon;
-      /* cph 20028/10 - for old-school DM addicts, allow old behavior
-       * where only consoleplayer's pickup sounds are heard */
-      // displayplayer, not consoleplayer, for viewing multiplayer demos
-      if (player == &players[displayplayer])
-        S_StartSound (player->mo, sfx_wpnup|PICKUP_SOUND); // killough 4/25/98
-      return false;
-    }
-
   if (weaponinfo[weapon].ammo != am_noammo)
     {
       // give one clip with a dropped weapon,
@@ -372,49 +352,37 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->cards[it_bluecard])
         player->message = s_GOTBLUECARD; // Ty 03/22/98 - externalized
       P_GiveCard (player, it_bluecard);
-      if (!netgame)
         break;
-      return;
 
     case SPR_YKEY:
       if (!player->cards[it_yellowcard])
         player->message = s_GOTYELWCARD; // Ty 03/22/98 - externalized
       P_GiveCard (player, it_yellowcard);
-      if (!netgame)
         break;
-      return;
 
     case SPR_RKEY:
       if (!player->cards[it_redcard])
         player->message = s_GOTREDCARD; // Ty 03/22/98 - externalized
       P_GiveCard (player, it_redcard);
-      if (!netgame)
         break;
-      return;
 
     case SPR_BSKU:
       if (!player->cards[it_blueskull])
         player->message = s_GOTBLUESKUL; // Ty 03/22/98 - externalized
       P_GiveCard (player, it_blueskull);
-      if (!netgame)
         break;
-      return;
 
     case SPR_YSKU:
       if (!player->cards[it_yellowskull])
         player->message = s_GOTYELWSKUL; // Ty 03/22/98 - externalized
       P_GiveCard (player, it_yellowskull);
-      if (!netgame)
         break;
-      return;
 
     case SPR_RSKU:
       if (!player->cards[it_redskull])
         player->message = s_GOTREDSKULL; // Ty 03/22/98 - externalized
       P_GiveCard (player, it_redskull);
-      if (!netgame)
         break;
-      return;
 
       // medikits, heals
     case SPR_STIM:
@@ -644,46 +612,14 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
       if (target->player)
         source->player->frags[target->player-players]++;
     }
-    else
-      if (target->flags & MF_COUNTKILL)
-      { /* Add to kills tally */
+  else if (target->flags & MF_COUNTKILL)
+  { /* Add to kills tally */
 
-  if (!netgame)
-  {
       // count all monster deaths,
       // even those caused by other monsters
       players[0].killcount++;
+
   }
-  else
-    if (!deathmatch)
-    {
-      // try and find a player to give the kill to, otherwise give the
-      // kill to a random player.  this fixes the missing monsters bug
-      // in coop - rain
-      // CPhipps - not a bug as such, but certainly an inconsistency.
-      if (target->lastenemy && target->lastenemy->health > 0
-    && target->lastenemy->player) // Fighting a player
-          target->lastenemy->player->killcount++;
-        else {
-        // cph - randomely choose a player in the game to be credited
-        //  and do it uniformly between the active players
-        unsigned int activeplayers = 0, player, i;
-
-        for (player = 0; player<MAXPLAYERS; player++)
-    if (playeringame[player])
-      activeplayers++;
-
-        if (activeplayers) {
-    player = P_Random(pr_friends) % activeplayers;
-
-    for (i=0; i<MAXPLAYERS; i++)
-      if (playeringame[i])
-        if (!player--)
-          players[i].killcount++;
-        }
-      }
-    }
-      }
 
   if (target->player)
     {

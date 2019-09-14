@@ -75,7 +75,6 @@ static const int mapcolor_sngl = 208;    // single player arrow color
 static const int mapcolor_enemy = 177;   // enemy sprite color
 static const int mapcolor_frnd = 112;    // friendly sprite color
 static const int map_secret_after = 0;
-static const int mapcolor_plyr[4] = { 112, 88, 64, 32 }; // colors for player arrows in multiplayer
 
 
 //jff 3/9/98 add option to not show secret sectors until entered
@@ -1183,57 +1182,33 @@ static void AM_drawLineCharacter
 // AM_drawPlayers()
 //
 // Draws the player arrow in single player,
-// or all the player arrows in a netgame.
 //
 // Passed nothing, returns nothing
 //
 static void AM_drawPlayers(void)
-{
-  int   i;
-
-  if (!netgame)
-  {
+{    
     if (ddt_cheating)
-      AM_drawLineCharacter
-      (
-        cheat_player_arrow,
-        NUMCHEATPLYRLINES,
-        0,
-        plr->mo->angle,
-        mapcolor_sngl,      //jff color
-        plr->mo->x >> FRACTOMAPBITS,//e6y
-        plr->mo->y >> FRACTOMAPBITS//e6y
-      );
+        AM_drawLineCharacter
+                (
+                    cheat_player_arrow,
+                    NUMCHEATPLYRLINES,
+                    0,
+                    plr->mo->angle,
+                    mapcolor_sngl,      //jff color
+                    plr->mo->x >> FRACTOMAPBITS,//e6y
+                    plr->mo->y >> FRACTOMAPBITS//e6y
+                    );
     else
-      AM_drawLineCharacter
-      (
-        player_arrow,
-        NUMPLYRLINES,
-        0,
-        plr->mo->angle,
-        mapcolor_sngl,      //jff color
-        plr->mo->x >> FRACTOMAPBITS,//e6y
-        plr->mo->y >> FRACTOMAPBITS);//e6y
-    return;
-  }
+        AM_drawLineCharacter
+                (
+                    player_arrow,
+                    NUMPLYRLINES,
+                    0,
+                    plr->mo->angle,
+                    mapcolor_sngl,      //jff color
+                    plr->mo->x >> FRACTOMAPBITS,//e6y
+                    plr->mo->y >> FRACTOMAPBITS);//e6y
 
-  for (i=0;i<MAXPLAYERS;i++) {
-    player_t* p = &players[i];
-
-    if ( (deathmatch && !demoplayback) && p != plr)
-      continue;
-
-    if (playeringame[i]) {
-      fixed_t x = p->mo->x >> FRACTOMAPBITS, y = p->mo->y >> FRACTOMAPBITS;//e6y
-      if (automapmode & am_rotate)
-        AM_rotate(&x, &y, ANG90-plr->mo->angle, plr->mo->x, plr->mo->y);
-
-      AM_drawLineCharacter (player_arrow, NUMPLYRLINES, 0, p->mo->angle,
-          p->powers[pw_invisibility] ? 246 /* *close* to black */
-          : mapcolor_plyr[i], //jff 1/6/98 use default color
-          x, y);
-    }
-  }
 }
 
 //

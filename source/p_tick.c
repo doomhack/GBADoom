@@ -265,7 +265,7 @@ void P_Ticker (void)
    * All of this complicated mess is used to preserve demo sync.
    */
 
-  if (paused || (menuactive && !demoplayback && !netgame &&
+  if (paused || (menuactive && !demoplayback &&
      players[consoleplayer].viewz != 1))
     return;
 

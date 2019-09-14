@@ -654,7 +654,7 @@ void M_SaveSelect(int choice)
 void M_SaveGame (int choice)
 {
   // killough 10/6/98: allow savegames during single-player demo playback
-  if (!usergame && (!demoplayback || netgame))
+  if (!usergame && (!demoplayback))
     {
     M_StartMessage(s_SAVEDEAD,NULL,false); // Ty 03/27/98 - externalized
     return;
@@ -836,11 +836,6 @@ static void M_EndGameResponse(int ch)
 
 void M_EndGame(int choice)
 {
-  if (netgame)
-    {
-    M_StartMessage(s_NETEND,NULL,false); // Ty 03/27/98 - externalized
-    return;
-    }
   M_StartMessage(s_ENDGAME,M_EndGameResponse,true); // Ty 03/27/98 - externalized
 }
 

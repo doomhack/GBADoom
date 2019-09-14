@@ -797,11 +797,6 @@ static void WI_drawTime(int x, int y, int t)
 //
 void WI_End(void)
 {
-  if (deathmatch)
-    WI_endDeathmatchStats();
-  else if (netgame)
-    WI_endNetgameStats();
-  else
     WI_endStats();
 }
 
@@ -1795,9 +1790,7 @@ void WI_Ticker(void)
   switch (state)
   {
     case StatCount:
-         if (deathmatch) WI_updateDeathmatchStats();
-         else if (netgame) WI_updateNetgameStats();
-         else WI_updateStats();
+         WI_updateStats();
          break;
 
     case ShowNextLoc:
@@ -1876,11 +1869,6 @@ void WI_Drawer (void)
   switch (state)
   {
     case StatCount:
-         if (deathmatch)
-           WI_drawDeathmatchStats();
-         else if (netgame)
-           WI_drawNetgameStats();
-         else
            WI_drawStats();
          break;
 
@@ -1954,10 +1942,5 @@ void WI_Start(wbstartstruct_t* wbstartstruct)
   WI_initVariables(wbstartstruct);
   WI_loadData();
 
-  if (deathmatch)
-    WI_initDeathmatchStats();
-  else if (netgame)
-    WI_initNetgameStats();
-  else
     WI_initStats();
 }

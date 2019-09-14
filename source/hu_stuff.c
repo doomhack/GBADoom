@@ -576,10 +576,8 @@ void HU_Start(void)
     HUlib_addCharToTextLine(&w_weapon, *(s++));
 
   //jff 2/17/98 initialize keys widget
-  if (!deathmatch) //jff 3/17/98 show frags in deathmatch mode
     strcpy(hud_keysstr,"KEY ");
-  else
-    strcpy(hud_keysstr,"FRG ");
+
   s = hud_keysstr;
   while (*s)
     HUlib_addCharToTextLine(&w_keys, *(s++));
@@ -924,7 +922,7 @@ void HU_Drawer(void)
 
       hud_keysstr[4] = '\0';    //jff 3/7/98 make sure deleted keys go away
       //jff add case for graphic key display
-      if (!deathmatch && hud_graph_keys)
+      if (hud_graph_keys)
       {
         i=0;
         hud_gkeysstr[i] = '\0'; //jff 3/7/98 init graphic keys widget string
@@ -945,100 +943,6 @@ void HU_Drawer(void)
       {
         i=4;
         hud_keysstr[i] = '\0';  //jff 3/7/98 make sure deleted keys go away
-
-        // if deathmatch, build string showing top four frag counts
-        if (deathmatch) //jff 3/17/98 show frags, not keys, in deathmatch
-        {
-          int top1=-999,top2=-999,top3=-999,top4=-999;
-          int idx1=-1,idx2=-1,idx3=-1,idx4=-1;
-          int fragcount,m;
-          char numbuf[32];
-
-          // scan thru players
-          for (k=0;k<MAXPLAYERS;k++)
-          {
-            // skip players not in game
-            if (!playeringame[k])
-              continue;
-
-            fragcount = 0;
-            // compute number of times they've fragged each player
-            // minus number of times they've been fragged by them
-            for (m=0;m<MAXPLAYERS;m++)
-            {
-              if (!playeringame[m]) continue;
-              fragcount += (m!=k)?  players[k].frags[m] : -players[k].frags[m];
-            }
-
-            // very primitive sort of frags to find top four
-            if (fragcount>top1)
-            {
-              top4=top3; top3=top2; top2 = top1; top1=fragcount;
-              idx4=idx3; idx3=idx2; idx2 = idx1; idx1=k;
-            }
-            else if (fragcount>top2)
-            {
-              top4=top3; top3=top2; top2=fragcount;
-              idx4=idx3; idx3=idx2; idx2=k;
-            }
-            else if (fragcount>top3)
-            {
-              top4=top3; top3=fragcount;
-              idx4=idx3; idx3=k;
-            }
-            else if (fragcount>top4)
-            {
-              top4=fragcount;
-              idx4=k;
-            }
-          }
-          // if the biggest number exists, put it in the init string
-          if (idx1>-1)
-          {
-            sprintf(numbuf,"%5d",top1);
-            // make frag count in player's color via escape code
-            hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-            hud_keysstr[i++] = '0'+plyrcoltran[idx1&3];
-            s = numbuf;
-            while (*s)
-              hud_keysstr[i++] = *(s++);
-          }
-          // if the second biggest number exists, put it in the init string
-          if (idx2>-1)
-          {
-            sprintf(numbuf,"%5d",top2);
-            // make frag count in player's color via escape code
-            hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-            hud_keysstr[i++] = '0'+plyrcoltran[idx2&3];
-            s = numbuf;
-            while (*s)
-              hud_keysstr[i++] = *(s++);
-          }
-          // if the third biggest number exists, put it in the init string
-          if (idx3>-1)
-          {
-            sprintf(numbuf,"%5d",top3);
-            // make frag count in player's color via escape code
-            hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-            hud_keysstr[i++] = '0'+plyrcoltran[idx3&3];
-            s = numbuf;
-            while (*s)
-              hud_keysstr[i++] = *(s++);
-          }
-          // if the fourth biggest number exists, put it in the init string
-          if (idx4>-1)
-          {
-            sprintf(numbuf,"%5d",top4);
-            // make frag count in player's color via escape code
-            hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-            hud_keysstr[i++] = '0'+plyrcoltran[idx4&3];
-            s = numbuf;
-            while (*s)
-              hud_keysstr[i++] = *(s++);
-          }
-          hud_keysstr[i] = '\0';
-        } //jff 3/17/98 end of deathmatch clause
-        else // build alphabetical key display (not used currently)
         {
           // scan the keys
           for (k=0;k<6;k++)
@@ -1104,16 +1008,13 @@ void HU_Drawer(void)
         HUlib_addCharToTextLine(&w_keys, *(s++));
       HUlib_drawTextLine(&w_keys, false);
 
-      //jff 3/17/98 show graphic keys in non-DM only
-      if (!deathmatch) //jff 3/7/98 display graphic keys
-      {
         // transfer the graphic key text to the widget
         s = hud_gkeysstr;
         while (*s)
           HUlib_addCharToTextLine(&w_gkeys, *(s++));
         // display the widget
         HUlib_drawTextLine(&w_gkeys, false);
-      }
+
     }
 
     // display the hud kills/items/secret display if optioned
@@ -1191,9 +1092,6 @@ static int bscounter;
 
 void HU_Ticker(void)
 {
-  int i, rc;
-  char c;
-
   // tick down message counter if message is up
   if (message_counter && !--message_counter)
   {
@@ -1225,49 +1123,6 @@ void HU_Ticker(void)
       message_nottobefuckedwith = message_dontfuckwithme;
       // clear the flag that "Messages Off" is being posted
       message_dontfuckwithme = 0;
-    }
-  }
-
-  // check for incoming chat characters
-  if (netgame)
-  {
-    for (i=0; i<MAXPLAYERS; i++)
-    {
-      if (!playeringame[i])
-        continue;
-      if (i != consoleplayer
-          && (c = players[i].cmd.chatchar))
-      {
-        if (c <= HU_BROADCAST)
-          chat_dest[i] = c;
-        else
-        {
-          if (c >= 'a' && c <= 'z')
-            c = (char) shiftxform[(unsigned char) c];
-          rc = HUlib_keyInIText(&w_inputbuffer[i], c);
-          if (rc && c == KEYD_ENTER)
-          {
-            if (w_inputbuffer[i].l.len
-                && (chat_dest[i] == consoleplayer+1
-                || chat_dest[i] == HU_BROADCAST))
-            {
-              HUlib_addMessageToSText(&w_message,
-                                      player_names[i],
-                                      w_inputbuffer[i].l.l);
-
-              message_nottobefuckedwith = true;
-              message_on = true;
-              message_counter = HU_MSGTIMEOUT;
-              if ( gamemode == commercial )
-                S_StartSound(0, sfx_radio);
-              else
-                S_StartSound(0, sfx_tink);
-            }
-            HUlib_resetIText(&w_inputbuffer[i]);
-          }
-        }
-        players[i].cmd.chatchar = 0;
-      }
     }
   }
 }

@@ -1590,17 +1590,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   P_LoadThings(lumpnum+ML_THINGS);
 
-  // if deathmatch, randomly spawn the active players
-  if (deathmatch)
-  {
-    for (i=0; i<MAXPLAYERS; i++)
-      if (playeringame[i])
-        {
-          players[i].mo = NULL; // not needed? - done before P_LoadThings
-          G_DeathMatchSpawnPlayer(i);
-        }
-  }
-  else // if !deathmatch, check all necessary player starts actually exist
   {
     for (i=0; i<MAXPLAYERS; i++)
       if (playeringame[i] && !players[i].mo)
