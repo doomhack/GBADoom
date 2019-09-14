@@ -56,6 +56,8 @@
 #include "g_game.h"
 #include "r_demo.h"
 
+#include "global_data.h"
+
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
 
@@ -470,7 +472,7 @@ static void R_SetupFrame (player_t *player)
 
   viewplayer = player;
 
-  if (player->mo != oviewer || (paused || (menuactive && !demoplayback)))
+  if (player->mo != oviewer || (_g->paused || (menuactive && !demoplayback)))
   {
     oviewer = player->mo;
   }

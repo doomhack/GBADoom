@@ -116,11 +116,4 @@ typedef enum
 } buttoncode_t;
 
 
-//
-// GLOBAL VARIABLES
-//
-
-extern gameaction_t gameaction;
-
-
 #endif

@@ -48,6 +48,8 @@
 #include "dstrings.h"
 #include "r_draw.h"
 
+#include "global_data.h"
+
 //
 // STATUS BAR DATA
 //
@@ -926,7 +928,7 @@ static void ST_initData(void)
   int i;
 
   st_firsttime = true;
-  plyr = &players[displayplayer];            // killough 3/7/98
+  plyr = &_g->players[displayplayer];            // killough 3/7/98
 
   st_clock = 0;
   st_chatstate = StartChatState;

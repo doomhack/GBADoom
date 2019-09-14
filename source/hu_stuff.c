@@ -57,10 +57,10 @@ int hud_graph_keys=1; //jff 3/7/98 display HUD keys as graphics
 //
 // Ty 03/28/98 -
 // These four shortcuts modifed to reflect char ** of mapnamesx[]
-#define HU_TITLE  (mapnames[(gameepisode-1)*9+gamemap-1])
-#define HU_TITLE2 (mapnames2[gamemap-1])
-#define HU_TITLEP (mapnamesp[gamemap-1])
-#define HU_TITLET (mapnamest[gamemap-1])
+#define HU_TITLE  (mapnames[(_g->gameepisode-1)*9+_g->gamemap-1])
+#define HU_TITLE2 (mapnames2[_g->gamemap-1])
+#define HU_TITLEP (mapnamesp[_g->gamemap-1])
+#define HU_TITLET (mapnamest[_g->gamemap-1])
 #define HU_TITLEHEIGHT  1
 #define HU_TITLEX 0
 //jff 2/16/98 change 167 to ST_Y-1
@@ -519,7 +519,7 @@ void HU_Start(void)
   if (headsupactive)                    // stop before starting
     HU_Stop();
 
-  plr = &players[displayplayer];        // killough 3/7/98
+  plr = &_g->players[displayplayer];        // killough 3/7/98
   message_on = false;
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
@@ -660,7 +660,7 @@ void HU_Start(void)
   );
 
   // initialize the automap's level title widget
-  if (gamestate == GS_LEVEL) /* cph - stop SEGV here when not in level */
+  if (_g->gamestate == GS_LEVEL) /* cph - stop SEGV here when not in level */
   switch (_g->gamemode)
   {
     case shareware:
@@ -820,7 +820,7 @@ void HU_Drawer(void)
   char armorstr[80]; //jff
   int i,doit;
 
-  plr = &players[displayplayer];         // killough 3/7/98
+  plr = &_g->players[displayplayer];         // killough 3/7/98
   // draw the automap widgets if automap is displayed
   if (_g->automapmode & am_active)
   {
@@ -1332,7 +1332,7 @@ boolean HU_Responder(event_t *ev)
 
     numplayers = 0;
     for (i=0 ; i<MAXPLAYERS ; i++)
-        numplayers += playeringame[i];
+        numplayers += _g->playeringame[i];
 
     if (ev->data1 == key_shift)
     {

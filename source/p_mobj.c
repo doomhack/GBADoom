@@ -712,7 +712,7 @@ void P_MobjThinker (mobj_t* mobj)
     if (! (mobj->flags & MF_COUNTKILL) )
       return;
 
-    if (!respawnmonsters)
+    if (!_g->respawnmonsters)
       return;
 
     mobj->movecount++;
@@ -757,7 +757,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 
   mobj->health = info->spawnhealth;
 
-  if (gameskill != sk_nightmare)
+  if (_g->gameskill != sk_nightmare)
     mobj->reactiontime = info->reactiontime;
 
   mobj->lastlook = P_Random (pr_lastlook) % MAXPLAYERS;
@@ -927,10 +927,10 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
 
   // not playing?
 
-  if (!playeringame[n])
+  if (!_g->playeringame[n])
     return;
 
-  p = &players[n];
+  p = &_g->players[n];
 
   if (p->playerstate == PST_REBORN)
     G_PlayerReborn (mthing->type-1);
@@ -1102,9 +1102,9 @@ void P_SpawnMapThing (const mapthing_t* mthing)
     return;
 
   // killough 11/98: simplify
-  if (gameskill == sk_baby || gameskill == sk_easy ?
+  if (_g->gameskill == sk_baby || _g->gameskill == sk_easy ?
       !(options & MTF_EASY) :
-      gameskill == sk_hard || gameskill == sk_nightmare ?
+      _g->gameskill == sk_hard || _g->gameskill == sk_nightmare ?
       !(options & MTF_HARD) : !(options & MTF_NORMAL))
     return;
 

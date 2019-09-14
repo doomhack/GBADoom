@@ -58,6 +58,8 @@
 #include "r_plane.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 //
 // Animating textures and planes
 // There is another anim_t used in wi_stuff, unrelated.
@@ -2318,12 +2320,12 @@ void P_UpdateSpecials (void)
     int k,m,fragcount,exitflag=false;
     for (k=0;k<MAXPLAYERS;k++)
     {
-      if (!playeringame[k]) continue;
+      if (!_g->playeringame[k]) continue;
       fragcount = 0;
       for (m=0;m<MAXPLAYERS;m++)
       {
-        if (!playeringame[m]) continue;
-          fragcount += (m!=k)?  players[k].frags[m] : -players[k].frags[m];
+        if (!_g->playeringame[m]) continue;
+          fragcount += (m!=k)?  _g->players[k].frags[m] : -_g->players[k].frags[m];
       }
       if (fragcount >= levelFragLimitCount) exitflag = true;
       if (exitflag == true) break; // skip out of the loop--we're done

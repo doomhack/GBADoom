@@ -755,10 +755,10 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
       // Go back to a player, no matter whether it's visible or not
       for (anyone=0; anyone<=1; anyone++)
   for (c=0; c<MAXPLAYERS; c++)
-    if (playeringame[c] && players[c].playerstate==PST_LIVE &&
-        (anyone || P_IsVisible(actor, players[c].mo, allaround)))
+    if (_g->playeringame[c] && _g->players[c].playerstate==PST_LIVE &&
+        (anyone || P_IsVisible(actor, _g->players[c].mo, allaround)))
       {
-        P_SetTarget(&actor->target, players[c].mo);
+        P_SetTarget(&actor->target, _g->players[c].mo);
 
         // killough 12/98:
         // get out of refiring loop, to avoid hitting player accidentally
@@ -784,7 +784,7 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
   for (;; actor->lastlook = (actor->lastlook+1)&(MAXPLAYERS-1))
     {
-      if (!playeringame[actor->lastlook])
+      if (!_g->playeringame[actor->lastlook])
   continue;
 
       // killough 2/15/98, 9/9/98:
@@ -797,7 +797,7 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
         return false;
       }
 
-      player = &players[actor->lastlook];
+      player = &_g->players[actor->lastlook];
 
       if (player->health <= 0)
   continue;               // dead
@@ -1095,7 +1095,7 @@ void A_Chase(mobj_t *actor)
   if (actor->flags & MF_JUSTATTACKED)
     {
       actor->flags &= ~MF_JUSTATTACKED;
-      if (gameskill != sk_nightmare)
+      if (_g->gameskill != sk_nightmare)
         P_NewChaseDir(actor);
       return;
     }
@@ -1115,7 +1115,7 @@ void A_Chase(mobj_t *actor)
 
   // check for missile attack
   if (actor->info->missilestate)
-    if (!(gameskill < sk_nightmare && actor->movecount))
+    if (!(_g->gameskill < sk_nightmare && actor->movecount))
       if (P_CheckMissileRange(actor))
         {
           P_SetMobjState(actor, actor->info->missilestate);
@@ -2016,7 +2016,7 @@ void A_BossDeath(mobj_t *mo)
 
   if (_g->gamemode == commercial)
     {
-      if (gamemap != 7)
+      if (_g->gamemap != 7)
         return;
 
       if ((mo->type != MT_FATSO)
@@ -2026,10 +2026,10 @@ void A_BossDeath(mobj_t *mo)
   else
     {
       {
-      switch(gameepisode)
+      switch(_g->gameepisode)
         {
         case 1:
-          if (gamemap != 8)
+          if (_g->gamemap != 8)
             return;
 
           if (mo->type != MT_BRUISER)
@@ -2037,7 +2037,7 @@ void A_BossDeath(mobj_t *mo)
           break;
 
         case 2:
-          if (gamemap != 8)
+          if (_g->gamemap != 8)
             return;
 
           if (mo->type != MT_CYBORG)
@@ -2045,7 +2045,7 @@ void A_BossDeath(mobj_t *mo)
           break;
 
         case 3:
-          if (gamemap != 8)
+          if (_g->gamemap != 8)
             return;
 
           if (mo->type != MT_SPIDER)
@@ -2054,7 +2054,7 @@ void A_BossDeath(mobj_t *mo)
           break;
 
         case 4:
-          switch(gamemap)
+          switch(_g->gamemap)
             {
             case 6:
               if (mo->type != MT_CYBORG)
@@ -2073,7 +2073,7 @@ void A_BossDeath(mobj_t *mo)
           break;
 
         default:
-          if (gamemap != 8)
+          if (_g->gamemap != 8)
             return;
           break;
         }
@@ -2083,7 +2083,7 @@ void A_BossDeath(mobj_t *mo)
 
   // make sure there is a player alive for victory
   for (i=0; i<MAXPLAYERS; i++)
-    if (playeringame[i] && players[i].health > 0)
+    if (_g->playeringame[i] && _g->players[i].health > 0)
       break;
 
   if (i==MAXPLAYERS)
@@ -2102,7 +2102,7 @@ void A_BossDeath(mobj_t *mo)
   // victory!
   if ( _g->gamemode == commercial)
     {
-      if (gamemap == 7)
+      if (_g->gamemap == 7)
         {
           if (mo->type == MT_FATSO)
             {
@@ -2121,28 +2121,25 @@ void A_BossDeath(mobj_t *mo)
     }
   else
     {
-      switch(gameepisode)
+      switch(_g->gameepisode)
         {
         case 1:
           junk.tag = 666;
           EV_DoFloor(&junk, lowerFloorToLowest);
           return;
-          break;
 
         case 4:
-          switch(gamemap)
+          switch(_g->gamemap)
             {
             case 6:
               junk.tag = 666;
               EV_DoDoor(&junk, blazeOpen);
               return;
-              break;
 
             case 8:
               junk.tag = 666;
               EV_DoFloor(&junk, lowerFloorToLowest);
               return;
-              break;
             }
         }
     }
@@ -2275,7 +2272,7 @@ void A_BrainSpit(mobj_t *mo)
     return;
 
   brain.easy ^= 1;          // killough 3/26/98: use brain struct
-  if (gameskill <= sk_easy && !brain.easy)
+  if (_g->gameskill <= sk_easy && !brain.easy)
     return;
 
   // shoot a cube at current target

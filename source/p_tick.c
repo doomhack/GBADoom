@@ -37,6 +37,8 @@
 #include "p_tick.h"
 #include "p_map.h"
 
+#include "global_data.h"
+
 int leveltime;
 
 static boolean newthinkerpresent;
@@ -265,16 +267,16 @@ void P_Ticker (void)
    * All of this complicated mess is used to preserve demo sync.
    */
 
-  if (paused || (menuactive && !demoplayback &&
-     players[consoleplayer].viewz != 1))
+  if (_g->paused || (menuactive && !demoplayback &&
+     _g->players[consoleplayer].viewz != 1))
     return;
 
   P_MapStart();
                // not if this is an intermission screen
-  if(gamestate==GS_LEVEL)
+  if(_g->gamestate==GS_LEVEL)
   for (i=0; i<MAXPLAYERS; i++)
-    if (playeringame[i])
-      P_PlayerThink(&players[i]);
+    if (_g->playeringame[i])
+      P_PlayerThink(&_g->players[i]);
 
   P_RunThinkers();
   P_UpdateSpecials();

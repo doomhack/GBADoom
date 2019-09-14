@@ -58,14 +58,14 @@ void P_ArchivePlayers (void)
 
   CheckSaveGame(sizeof(player_t) * MAXPLAYERS); // killough
   for (i=0 ; i<MAXPLAYERS ; i++)
-    if (playeringame[i])
+    if (_g->playeringame[i])
       {
         int      j;
         player_t *dest;
 
         PADSAVEP();
         dest = (player_t *) save_p;
-        memcpy(dest, &players[i], sizeof(player_t));
+        memcpy(dest, &_g->players[i], sizeof(player_t));
         save_p += sizeof(player_t);
         for (j=0; j<NUMPSPRITES; j++)
           if (dest->psprites[j].state)
@@ -82,24 +82,24 @@ void P_UnArchivePlayers (void)
   int i;
 
   for (i=0 ; i<MAXPLAYERS ; i++)
-    if (playeringame[i])
+    if (_g->playeringame[i])
       {
         int j;
 
         PADSAVEP();
 
-        memcpy(&players[i], save_p, sizeof(player_t));
+        memcpy(&_g->players[i], save_p, sizeof(player_t));
         save_p += sizeof(player_t);
 
         // will be set when unarc thinker
-        players[i].mo = NULL;
-        players[i].message = NULL;
-        players[i].attacker = NULL;
+        _g->players[i].mo = NULL;
+        _g->players[i].message = NULL;
+        _g->players[i].attacker = NULL;
 
         for (j=0 ; j<NUMPSPRITES ; j++)
-          if (players[i]. psprites[j].state)
-            players[i]. psprites[j].state =
-              &states[ (int)players[i].psprites[j].state ];
+          if (_g->players[i]. psprites[j].state)
+            _g->players[i]. psprites[j].state =
+              &states[ (int)_g->players[i].psprites[j].state ];
       }
 }
 
@@ -372,7 +372,7 @@ void P_ArchiveThinkers (void)
         save_p += 5*sizeof(void*);
 
         if (mobj->player)
-          mobj->player = (player_t *)((mobj->player-players) + 1);
+          mobj->player = (player_t *)((mobj->player-_g->players) + 1);
       }
 
   // add a terminating marker
@@ -501,7 +501,7 @@ void P_UnArchiveThinkers (void)
       mobj->state = states + (int) mobj->state;
 
       if (mobj->player)
-        (mobj->player = &players[(int) mobj->player - 1]) -> mo = mobj;
+        (mobj->player = &_g->players[(int) mobj->player - 1]) -> mo = mobj;
 
       P_SetThingPosition (mobj);
       mobj->info = &mobjinfo[mobj->type];

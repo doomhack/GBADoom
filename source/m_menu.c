@@ -643,13 +643,13 @@ void M_SaveSelect(int choice)
 void M_SaveGame (int choice)
 {
   // killough 10/6/98: allow savegames during single-player demo playback
-  if (!usergame && (!demoplayback))
+  if (!_g->usergame && (!demoplayback))
     {
     M_StartMessage(SAVEDEAD,NULL,false); // Ty 03/27/98 - externalized
     return;
     }
 
-  if (gamestate != GS_LEVEL)
+  if (_g->gamestate != GS_LEVEL)
     return;
 
   M_SetupNextMenu(&SaveDef);
@@ -840,9 +840,9 @@ void M_ChangeMessages(int choice)
   showMessages = 1 - showMessages;
 
   if (!showMessages)
-    players[consoleplayer].message = MSGOFF; // Ty 03/27/98 - externalized
+    _g->players[consoleplayer].message = MSGOFF; // Ty 03/27/98 - externalized
   else
-    players[consoleplayer].message = MSGON ; // Ty 03/27/98 - externalized
+    _g->players[consoleplayer].message = MSGON ; // Ty 03/27/98 - externalized
 
   message_dontfuckwithme = true;
 }

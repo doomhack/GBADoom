@@ -8,6 +8,8 @@
 #include "doomstat.h" /* players{,ingame} */
 #include "lprintf.h"
 
+#include "global_data.h"
+
 /* forward decls */
 static void p_checksum_cleanup(void);
 void checksum_gamestate(int tic);
@@ -79,12 +81,12 @@ void checksum_gamestate(int tic) {
     /* based on "ArchivePlayers" */
     MD5Init(&md5ctx);
     for (i=0 ; i<MAXPLAYERS ; i++) {
-        if (!playeringame[i]) continue;
+        if (!_g->playeringame[i]) continue;
 
 #ifdef HAVE_SNPRINTF
         snprintf (buffer, sizeof(buffer), "%d", players[i].health);
 #else
-        sprintf (buffer, "%d", players[i].health);
+        sprintf (buffer, "%d", _g->players[i].health);
 #endif
         buffer[sizeof(buffer)-1] = 0;
 

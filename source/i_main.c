@@ -89,7 +89,7 @@ int (*I_GetTime)(void) = I_GetTime_Error;
 void I_Init(void)
 {
   /* killough 4/14/98: Adjustable speedup based on realtic_clock_rate */
-  if (fastdemo)
+  if (_g->fastdemo)
     I_GetTime = I_GetTime_FastDemo;
   else
   {

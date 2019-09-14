@@ -128,8 +128,29 @@ int  laststage;
 //g_game.c
 //******************************************************************************
 
+const byte *demobuffer;   /* cph - only used for playback */
+int demolength; // check for overrun (missing DEMOMARKER)
 
+const byte *demo_p;
 
+gameaction_t    gameaction;
+gamestate_t     gamestate;
+skill_t         gameskill;
+boolean         respawnmonsters;
+int             gameepisode;
+int             gamemap;
+boolean         paused;
+
+// CPhipps - moved *_loadgame vars here
+boolean command_loadgame;
+
+boolean         usergame;      // ok to save / end game
+boolean         timingdemo;    // if true, exit with report on completion
+boolean         fastdemo;      // if true, run at full speed -- killough
+boolean         nodrawers;     // for comparative timing purposes
+int             starttime;     // for comparative timing purposes
+boolean         playeringame[MAXPLAYERS];
+player_t        players[MAXPLAYERS];
 
 //******************************************************************************
 

@@ -183,7 +183,7 @@ void S_Start(void)
     mnum = idmusnum; //jff 3/17/98 reload IDMUS music if not -1
   else
     if (_g->gamemode == commercial)
-      mnum = mus_runnin + gamemap - 1;
+      mnum = mus_runnin + _g->gamemap - 1;
     else
       {
         static const int spmus[] =     // Song - Who? - Where?
@@ -199,10 +199,10 @@ void S_Start(void)
           mus_e1m9      // Tim          e4m9
         };
 
-        if (gameepisode < 4)
-          mnum = mus_e1m1 + (gameepisode-1)*9 + gamemap-1;
+        if (_g->gameepisode < 4)
+          mnum = mus_e1m1 + (_g->gameepisode-1)*9 + _g->gamemap-1;
         else
-          mnum = spmus[gamemap-1];
+          mnum = spmus[_g->gamemap-1];
       }
   S_ChangeMusic(mnum, true);
 }
@@ -246,11 +246,11 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
   // Check to see if it is audible, modify the params
   // killough 3/7/98, 4/25/98: code rearranged slightly
 
-  if (!origin || origin == players[displayplayer].mo)
+  if (!origin || origin == _g->players[displayplayer].mo)
   {
     volume *= 8;
   } else
-    if (!S_AdjustSoundParams(players[displayplayer].mo, origin, &volume))
+    if (!S_AdjustSoundParams(_g->players[displayplayer].mo, origin, &volume))
       return;
 
   // kill old sound

@@ -60,15 +60,6 @@ extern  const skill_t   startskill;
 extern  const int       startepisode;
 extern  const int       startmap;
 
-// Selected by user.
-extern  skill_t         gameskill;
-extern  int   gameepisode;
-extern  int   gamemap;
-
-// Nightmare mode flag, single player.
-extern  boolean         respawnmonsters;
-
-
 // ------------------------------------------
 // Internal parameters for sound rendering.
 // These have been taken from the DOS version,
@@ -97,8 +88,6 @@ enum automapmode_e {
 extern enum automapmode_e automapmode; // Mode that the automap is in
 
 extern  boolean menuactive;    // Menu overlayed?
-extern  boolean paused;        // Game Pause?
-extern  boolean nodrawers;
 
 // Player taking events, and displaying.
 extern const int consoleplayer;
@@ -119,18 +108,11 @@ extern  int leveltime;  // tics in game play for par
 // --------------------------------------
 // DEMO playback/recording related stuff.
 
-extern  boolean usergame;
 extern  boolean demoplayback;
 extern  int demover;
 
 // Quit after playing a demo from cmdline.
 extern  boolean   singledemo;
-// Print timing information after quitting.  killough
-extern  boolean   timingdemo;
-// Run tick clock at fastest speed possible while playing demo.  killough
-extern  boolean   fastdemo;
-
-extern  gamestate_t  gamestate;
 
 //-----------------------------
 // Internal parameters, fixed.
@@ -139,13 +121,6 @@ extern  gamestate_t  gamestate;
 //  WAD, partly set at startup time.
 
 extern  int   gametic;
-
-
-// Bookkeeping on players - state.
-extern  player_t  players[MAXPLAYERS];
-
-// Alive? Disconnected?
-extern  boolean   playeringame[MAXPLAYERS];
 
 extern  mapthing_t *deathmatchstarts;     // killough
 extern  size_t     num_deathmatchstarts; // killough

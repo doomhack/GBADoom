@@ -70,8 +70,8 @@ extern int acceleratestage;          // accelerate intermission screens
 //
 void F_StartFinale (void)
 {
-  gameaction = ga_nothing;
-  gamestate = GS_FINALE;
+  _g->gameaction = ga_nothing;
+  _g->gamestate = GS_FINALE;
   _g->automapmode &= ~am_active;
 
   // killough 3/28/98: clear accelerative text flags
@@ -89,7 +89,7 @@ void F_StartFinale (void)
   {
       S_ChangeMusic(mus_victor, true);
 
-      switch (gameepisode)
+      switch (_g->gameepisode)
       {
       case 1:
           _g->finaleflat = "FLOOR4_8";
@@ -120,7 +120,7 @@ void F_StartFinale (void)
       S_ChangeMusic(mus_read_m, true);
 
       // Ty 08/27/98 - added the gamemission logic
-      switch (gamemap)
+      switch (_g->gamemap)
       {
         case 6:
              _g->finaleflat = "SLIME16";
@@ -228,16 +228,16 @@ void F_Ticker(void)
             _g->finalecount = 0;
             _g->finalestage = 1;
             _g->wipegamestate = -1;         // force a wipe
-            if (gameepisode == 3)
+            if (_g->gameepisode == 3)
               S_StartMusic(mus_bunny);
           }
         else   // you must press a button to continue in Doom 2
           if (_g->midstage)
             {
-              if (gamemap == 30)
+              if (_g->gamemap == 30)
                 F_StartCast();              // cast of Doom 2 characters
               else
-                gameaction = ga_worlddone;  // next level, e.g. MAP07
+                _g->gameaction = ga_worlddone;  // next level, e.g. MAP07
             }
       }
     }
@@ -625,7 +625,7 @@ void F_Drawer (void)
     F_TextWrite ();
   else
   {
-    switch (gameepisode)
+    switch (_g->gameepisode)
     {
       // CPhipps - patch drawing updated
       case 1:

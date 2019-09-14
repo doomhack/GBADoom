@@ -294,12 +294,12 @@ static void AM_initVariables(void)
   _g->m_h = FTOM(_g->f_h);
 
   // find player to center on initially
-  if (!playeringame[pnum = consoleplayer])
+  if (!_g->playeringame[pnum = consoleplayer])
   for (pnum=0;pnum<MAXPLAYERS;pnum++)
-    if (playeringame[pnum])
+    if (_g->playeringame[pnum])
   break;
 
-  _g->plr = &players[pnum];
+  _g->plr = &_g->players[pnum];
    _g->m_x = (_g->plr->mo->x >> FRACTOMAPBITS) - _g->m_w/2;//e6y
    _g->m_y = (_g->plr->mo->y >> FRACTOMAPBITS) - _g->m_h/2;//e6y
   AM_changeWindowLoc();
@@ -377,11 +377,11 @@ void AM_Start(void)
   if (!_g->stopped)
     AM_Stop();
   _g->stopped = false;
-  if (_g->lastlevel != gamemap || _g->lastepisode != gameepisode)
+  if (_g->lastlevel != _g->gamemap || _g->lastepisode != _g->gameepisode)
   {
     AM_LevelInit();
-    _g->lastlevel = gamemap;
-    _g->lastepisode = gameepisode;
+    _g->lastlevel = _g->gamemap;
+    _g->lastepisode = _g->gameepisode;
   }
   AM_initVariables();
 }

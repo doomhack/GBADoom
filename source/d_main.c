@@ -109,7 +109,7 @@ void D_PostEvent(event_t *ev)
       return;
 
   M_Responder(ev) ||
-	  (gamestate == GS_LEVEL && (
+      (_g->gamestate == GS_LEVEL && (
 				     HU_Responder(ev) ||
 				     ST_Responder(ev) ||
 				     AM_Responder(ev)
@@ -165,17 +165,17 @@ void D_Display (void)
   boolean wipe;
   boolean viewactive = false, isborder = false;
 
-  if (nodrawers)                    // for comparative timing / profiling
+  if (_g->nodrawers)                    // for comparative timing / profiling
     return;
 
   if (!I_StartDisplay())
     return;
 
   // save the current screen if about to wipe
-  if (wipe = gamestate != _g->wipegamestate)
+  if (wipe = _g->gamestate != _g->wipegamestate)
     wipe_StartScreen();
 
-  if (gamestate != GS_LEVEL) { // Not a level
+  if (_g->gamestate != GS_LEVEL) { // Not a level
     switch (_g->oldgamestate) {
     case -1:
     case GS_LEVEL:
@@ -184,7 +184,7 @@ void D_Display (void)
       break;
     }
 
-    switch (gamestate) {
+    switch (_g->gamestate) {
     case GS_INTERMISSION:
       WI_Drawer();
       break;
@@ -228,7 +228,7 @@ void D_Display (void)
 
     // Now do the drawing
     if (viewactive)
-      R_RenderPlayerView (&players[displayplayer]);
+      R_RenderPlayerView (&_g->players[displayplayer]);
     if (_g->automapmode & am_active)
       AM_Drawer();
     ST_Drawer((viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), redrawborderstuff);
@@ -237,10 +237,10 @@ void D_Display (void)
   }
 
   _g->isborderstate      = isborder;
-  _g->oldgamestate = _g->wipegamestate = gamestate;
+  _g->oldgamestate = _g->wipegamestate = _g->gamestate;
 
   // draw pause pic
-  if (paused) {
+  if (_g->paused) {
     // Simplified the "logic" here and no need for x-coord caching - POPE
     V_DrawNamePatch((320 - V_NamePatchWidth("M_PAUSE"))/2, 4,
                     0, "M_PAUSE", CR_DEFAULT, VPT_STRETCH);
@@ -302,8 +302,8 @@ static void D_DoomLoop(void)
 			TryRunTics (); // will run at least one tic
 		
 		// killough 3/16/98: change consoleplayer to displayplayer
-		if (players[displayplayer].mo) // cph 2002/08/10
-			S_UpdateSounds(players[displayplayer].mo);// move positional sounds
+        if (_g->players[displayplayer].mo) // cph 2002/08/10
+            S_UpdateSounds(_g->players[displayplayer].mo);// move positional sounds
 
         // Update display, next frame, with current state.
         D_Display();
@@ -451,12 +451,12 @@ const demostates[][4] =
 
 void D_DoAdvanceDemo(void)
 {
-  players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
-  _g->advancedemo = usergame = paused = false;
-  gameaction = ga_nothing;
+  _g->players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
+  _g->advancedemo = _g->usergame = _g->paused = false;
+  _g->gameaction = ga_nothing;
 
   _g->pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
-  gamestate = GS_DEMOSCREEN;
+  _g->gamestate = GS_DEMOSCREEN;
 
 
   if (!demostates[++_g->demosequence][_g->gamemode].func)
@@ -470,7 +470,7 @@ void D_DoAdvanceDemo(void)
 //
 void D_StartTitle (void)
 {
-  gameaction = ga_nothing;
+  _g->gameaction = ga_nothing;
   _g->demosequence = -1;
   D_AdvanceDemo();
 }
@@ -748,7 +748,7 @@ static void D_DoomMainSetup(void)
     if (timedemo)
     {
         _g->singletics = true;
-        timingdemo = true;            // show stats after quit
+        _g->timingdemo = true;            // show stats after quit
         G_DeferedPlayDemo(timedemo);
         singledemo = true;            // quit after one demo
     }

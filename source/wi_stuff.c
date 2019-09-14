@@ -872,7 +872,7 @@ static boolean    snl_pointeron = false;
 //
 void WI_initShowNextLoc(void)
 {
-  if ((_g->gamemode != commercial) && (gamemap == 8)) {
+  if ((_g->gamemode != commercial) && (_g->gamemap == 8)) {
     G_WorldDone();
     return;
   }
@@ -982,7 +982,7 @@ int WI_fragSum(int playernum)
 
   for (i=0 ; i<MAXPLAYERS ; i++)
   {
-    if (playeringame[i]  // is this player playing?
+    if (_g->playeringame[i]  // is this player playing?
        && i!=playernum) // and it's not the player we're calculating
     {
       frags += plrs[playernum].frags[i];
@@ -1024,7 +1024,7 @@ void WI_initDeathmatchStats(void)
 
   for (i=0 ; i<MAXPLAYERS ; i++)
   {
-    if (playeringame[i])
+    if (_g->playeringame[i])
     {
       // CPhipps - allocate frags line
       dm_frags[i] = calloc(MAXPLAYERS, sizeof(**dm_frags)); // set all counts to zero
@@ -1074,10 +1074,10 @@ void WI_updateDeathmatchStats(void)
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      if (playeringame[i])
+      if (_g->playeringame[i])
       {
         for (j=0 ; j<MAXPLAYERS ; j++)
-          if (playeringame[j])
+          if (_g->playeringame[j])
             dm_frags[i][j] = plrs[i].frags[j];
 
         dm_totals[i] = WI_fragSum(i);
@@ -1099,11 +1099,11 @@ void WI_updateDeathmatchStats(void)
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      if (playeringame[i])
+      if (_g->playeringame[i])
       {
         for (j=0 ; j<MAXPLAYERS ; j++)
         {
-          if (playeringame[j]
+          if (_g->playeringame[j]
              && dm_frags[i][j] != plrs[i].frags[j])
           {
             if (plrs[i].frags[j] < 0)
@@ -1199,7 +1199,7 @@ void WI_drawDeathmatchStats(void)
 
   for (i=0 ; i<MAXPLAYERS ; i++)
   {
-    if (playeringame[i]) {
+    if (_g->playeringame[i]) {
       //int trans = playernumtotrans[i];
       V_DrawNamePatch(x-halfface, DM_MATRIXY - WI_SPACINGY,
          FB, facebackp, i ? CR_LIMIT+i : CR_DEFAULT,
@@ -1228,11 +1228,11 @@ void WI_drawDeathmatchStats(void)
   {
     x = DM_MATRIXX + DM_SPACINGX;
 
-    if (playeringame[i])
+    if (_g->playeringame[i])
     {
       for (j=0 ; j<MAXPLAYERS ; j++)
       {
-        if (playeringame[j])
+        if (_g->playeringame[j])
           WI_drawNum(x+w, y, dm_frags[i][j], 2);
 
         x += DM_SPACINGX;
@@ -1291,7 +1291,7 @@ void WI_initNetgameStats(void)
   cnt_frags = calloc(MAXPLAYERS, sizeof(*cnt_frags));
 
   for (i=0 ; i<MAXPLAYERS ; i++)
-    if (playeringame[i])
+    if (_g->playeringame[i])
       dofrags += WI_fragSum(i);
 
   dofrags = !!dofrags; // set to true or false - did we have frags?
@@ -1322,7 +1322,7 @@ void WI_updateNetgameStats(void)
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      if (!playeringame[i])
+      if (!_g->playeringame[i])
         continue;
 
       cnt_kills[i] = (plrs[i].skills * 100) / wbs->maxkills;
@@ -1347,7 +1347,7 @@ void WI_updateNetgameStats(void)
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      if (!playeringame[i])
+      if (!_g->playeringame[i])
         continue;
 
       cnt_kills[i] += 2;
@@ -1373,7 +1373,7 @@ void WI_updateNetgameStats(void)
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      if (!playeringame[i])
+      if (!_g->playeringame[i])
         continue;
 
       cnt_items[i] += 2;
@@ -1398,7 +1398,7 @@ void WI_updateNetgameStats(void)
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      if (!playeringame[i])
+      if (!_g->playeringame[i])
         continue;
 
       cnt_secret[i] += 2;
@@ -1426,7 +1426,7 @@ void WI_updateNetgameStats(void)
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      if (!playeringame[i])
+      if (!_g->playeringame[i])
         continue;
 
       cnt_frags[i] += 1;
@@ -1508,7 +1508,7 @@ void WI_drawNetgameStats(void)
   for (i=0 ; i<MAXPLAYERS ; i++)
   {
     //int trans = playernumtotrans[i];
-    if (!playeringame[i])
+    if (!_g->playeringame[i])
       continue;
 
     x = NG_STATSX;
@@ -1739,9 +1739,9 @@ void WI_checkForAccelerate(void)
   player_t  *player;
 
   // check for button presses to skip delays
-  for (i=0, player = players ; i<MAXPLAYERS ; i++, player++)
+  for (i=0, player = _g->players ; i<MAXPLAYERS ; i++, player++)
   {
-    if (playeringame[i])
+    if (_g->playeringame[i])
     {
       if (player->cmd.buttons & BT_ATTACK)
       {

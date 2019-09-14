@@ -74,10 +74,10 @@ void D_InitNetGame (void)
 
     _g->localcmds = _g->netcmds[consoleplayer];
 
-    playeringame[0] = true;
+    _g->playeringame[0] = true;
 
     for (i=1; i<MAXPLAYERS; i++)
-        playeringame[i] = false;
+        _g->playeringame[i] = false;
 }
 
 void D_BuildNewTiccmds(void)

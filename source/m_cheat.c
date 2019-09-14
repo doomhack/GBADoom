@@ -48,7 +48,7 @@
 
 #include "global_data.h"
 
-#define plyr (players+consoleplayer)     /* the console player */
+#define plyr (_g->players+consoleplayer)     /* the console player */
 
 //-----------------------------------------------------------------------------
 //
@@ -437,7 +437,7 @@ static void cheat_clev(char buf[3])
 
   plyr->message = STSTR_CLEV; // Ty 03/27/98 - externalized
 
-  G_DeferedInitNew(gameskill, epsd, map);
+  G_DeferedInitNew(_g->gameskill, epsd, map);
 }
 
 // 'mypos' for player position
@@ -445,10 +445,10 @@ static void cheat_clev(char buf[3])
 static void cheat_mypos()
 {
   doom_printf("Position (%d,%d,%d)\tAngle %-.0f",
-          players[consoleplayer].mo->x >> FRACBITS,
-          players[consoleplayer].mo->y >> FRACBITS,
-          players[consoleplayer].mo->z >> FRACBITS,
-          players[consoleplayer].mo->angle * (90.0/ANG90));
+          _g->players[consoleplayer].mo->x >> FRACBITS,
+          _g->players[consoleplayer].mo->y >> FRACBITS,
+          _g->players[consoleplayer].mo->z >> FRACBITS,
+          _g->players[consoleplayer].mo->angle * (90.0/ANG90));
 }
 
 // cph - cheat to toggle frame rate/rendering stats display
