@@ -46,14 +46,6 @@
 extern int  key_backspace;                                          // phares
 extern int  key_enter;                                              // phares
 
-//
-// not used currently
-// code to initialize HUlib would go here if needed
-//
-static void HUlib_init(void)
-{
-}
-
 ////////////////////////////////////////////////////////
 //
 // Basic text line widget
@@ -554,42 +546,6 @@ void HUlib_drawMText(hu_mtext_t* m)
 }
 
 //
-// HUlib_eraseMBg()
-//
-// Erases background behind hu_mtext_t widget, when the screen is not fullsize
-//
-// Passed a hu_mtext_t
-// Returns nothing
-//
-static void HUlib_eraseMBg(hu_mtext_t* m)
-{
-  int     lh;
-  int     y;
-
-  // Only erases when NOT in automap and the screen is reduced,
-  // and the text must either need updating or refreshing
-  // (because of a recent change back from the automap)
-
-  if (!(automapmode & am_active) && viewwindowx)
-  {
-    lh = m->l[0].f[0].height + 1;
-    for (y=m->y; y<m->y+lh*(hud_msg_lines+2) ; y++)
-    {
-      if (y < viewwindowy || y >= viewwindowy + viewheight)
-        R_VideoErase(0, y, SCREENWIDTH); // erase entire line
-      else
-      {
-        // erase left border
-        R_VideoErase(0, y, viewwindowx);
-        // erase right border
-        R_VideoErase(viewwindowx + viewwidth, y, viewwindowx);
-
-      }
-    }
-  }
-}
-
-//
 // HUlib_eraseMText()
 //
 // Erases a hu_mtext_t widget, when the screen is not fullsize
@@ -651,20 +607,6 @@ void HUlib_initIText
 static void HUlib_delCharFromIText(hu_itext_t* it)
 {
   if (it->l.len != it->lm)
-    HUlib_delCharFromTextLine(&it->l);
-}
-
-//
-// HUlib_eraseLineFromIText()
-//
-// Deletes all characters from a hu_itext_t widget
-//
-// Passed the hu_itext_t
-// Returns nothing
-//
-static void HUlib_eraseLineFromIText(hu_itext_t* it)
-{
-  while (it->lm != it->l.len)
     HUlib_delCharFromTextLine(&it->l);
 }
 

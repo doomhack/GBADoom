@@ -80,8 +80,6 @@ void D_InitNetGame (void)
 
     for (i=1; i<MAXPLAYERS; i++)
         playeringame[i] = false;
-
-    consoleplayer = displayplayer;
 }
 
 void D_BuildNewTiccmds(void)

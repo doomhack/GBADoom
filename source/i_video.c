@@ -302,9 +302,7 @@ void I_UpdateVideoMode(void)
 // Calculates the screen resolution, possibly using the supplied guide
 void I_CalculateRes(unsigned int width, unsigned int height)
 {
-	SCREENWIDTH = I_GetVideoWidth_e32();
-	SCREENHEIGHT = I_GetVideoHeight_e32();
-	SCREENPITCH = SCREENWIDTH;
+
 }
 
 

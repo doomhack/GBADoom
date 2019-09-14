@@ -47,8 +47,8 @@ extern char basesavegame[];     // killough 2/16/98: savegame path
 
 //jff end of external declaration of command line playmode
 
-extern boolean nosfxparm;
-extern boolean nomusicparm;
+extern const boolean nosfxparm;
+extern const boolean nomusicparm;
 
 // Called by IO functions when input is detected.
 void D_PostEvent(event_t* ev);

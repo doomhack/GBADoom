@@ -81,23 +81,20 @@ static void D_PageDrawer(void);
 boolean singletics = false; // debug flag to cancel adaptiveness
 
 //jff 1/22/98 parms for disabling music and sound
-boolean nosfxparm = false;
-boolean nomusicparm = false;
+const boolean nosfxparm = false;
+const boolean nomusicparm = false;
 
 const skill_t startskill = sk_medium;
 const int startepisode = 1;
 const int startmap = 1;
-FILE    *debugfile;
+
+static const char* timedemo = NULL;
 
 boolean advancedemo;
-
-char    wadfile[PATH_MAX+1];       // primary wad file
-char    mapdir[PATH_MAX+1];        // directory of development maps
-char    baseiwad[PATH_MAX+1];      // jff 3/23/98: iwad directory
 char    basesavegame[PATH_MAX+1];  // killough 2/16/98: savegame directory
 
 //jff 4/19/98 list of standard IWAD names
-const char *const standard_iwads[]=
+static const char *const standard_iwads[]=
 {
   "doom2f.wad",
   "doom2.wad",
@@ -123,7 +120,9 @@ void D_PostEvent(event_t *ev)
 {
   /* cph - suppress all input events at game start
    * FIXME: This is a lousy kludge */
-  if (gametic < 3) return;
+  if (gametic < 3)
+      return;
+
   M_Responder(ev) ||
 	  (gamestate == GS_LEVEL && (
 				     HU_Responder(ev) ||
@@ -283,11 +282,6 @@ void D_Display (void)
   I_EndDisplay();
 }
 
-// CPhipps - Auto screenshot Variables
-
-static int auto_shot_count, auto_shot_time;
-static const char *auto_shot_fname;
-
 //
 //  D_DoomLoop()
 //
@@ -403,9 +397,11 @@ static void D_DrawTitle2(const char *name)
 
 static struct
 {
-  void (*func)(const char *);
-  const char *name;
-} const demostates[][4] =
+    void (*func)(const char *);
+    const char *name;
+}
+
+const demostates[][4] =
   {
     {
       {D_DrawTitle1, "TITLEPIC"},
@@ -535,16 +531,6 @@ void D_AddFile (const char *file, wad_source_t source)
     }
 }
 
-// killough 10/98: support -dehout filename
-// cph - made const, don't cache results
-static const char *D_dehout(void)
-{
-  int p = M_CheckParm("-dehout");
-  if (!p)
-    p = M_CheckParm("-bexout");
-  return (p && ++p < myargc ? myargv[p] : NULL);
-}
-
 //
 // CheckIWAD
 //
@@ -643,31 +629,6 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
     I_Error("CheckIWAD: IWAD %s not readable", iwadname);
 }
 
-
-
-// NormalizeSlashes
-//
-// Remove trailing slashes, translate backslashes to slashes
-// The string to normalize is passed and returned in str
-//
-// jff 4/19/98 Make killoughs slash fixer a subroutine
-//
-static void NormalizeSlashes(char *str)
-{
-  int l;
-
-  // killough 1/18/98: Neater / \ handling.
-  // Remove trailing / or \ to prevent // /\ \/ \\, and change \ to /
-
-  if (!str || !(l = strlen(str)))
-    return;
-  if (str[--l]=='/' || str[l]=='\\')     // killough 1/18/98
-    str[l]=0;
-  while (l--)
-    if (str[l]=='\\')
-      str[l]='/';
-}
-
 /*
  * FindIWADFIle
  *
@@ -721,7 +682,6 @@ static char *FindIWADFile(void)
 static void IdentifyVersion (void)
 {
 	int		  i;	//jff 3/24/98 index of args on commandline
-	struct stat sbuf; //jff 3/24/98 used to test save path for existence
 	char *iwad;
 	
 	// set save path to -save parm or current dir
@@ -764,9 +724,8 @@ static void IdentifyVersion (void)
 		  case commercial:
 			i = strlen(iwad);
 			gamemission = doom2;
-			if (i>=10 && !strnicmp(iwad+i-10,"doom2f.wad",10))
-			  language=french;
-			else if (i>=7 && !strnicmp(iwad+i-7,"tnt.wad",7))
+
+            if (i>=7 && !strnicmp(iwad+i-7,"tnt.wad",7))
 			  gamemission = pack_tnt;
 			else if (i>=12 && !strnicmp(iwad+i-12,"plutonia.wad",12))
 			  gamemission = pack_plut;
@@ -794,286 +753,6 @@ static void IdentifyVersion (void)
 
 }
 
-
-
-// killough 5/3/98: old code removed
-//
-// Find a Response File
-//
-
-#define MAXARGVS 100
-
-static void FindResponseFile (void)
-{
-  int i;
-
-  for (i = 1;i < myargc;i++)
-    if (myargv[i][0] == '@')
-      {
-        int  size;
-        int  index;
-	int indexinfile;
-        byte *file = NULL;
-        const char **moreargs = malloc(myargc * sizeof(const char*));
-        const char **newargv;
-        // proff 04/05/2000: Added for searching responsefile
-        char fname[PATH_MAX+1];
-
-        strcpy(fname,&myargv[i][1]);
-        AddDefaultExtension(fname,".rsp");
-
-        // READ THE RESPONSE FILE INTO MEMORY
-        // proff 04/05/2000: changed for searching responsefile
-        // cph 2002/08/09 - use M_ReadFile for simplicity
-	size = M_ReadFile(fname, &file);
-        // proff 04/05/2000: Added for searching responsefile
-        if (size < 0)
-        {
-          strcat(strcpy(fname,I_DoomExeDir()),&myargv[i][1]);
-          AddDefaultExtension(fname,".rsp");
-	  size = M_ReadFile(fname, &file);
-        }
-        if (size < 0)
-        {
-            /* proff 04/05/2000: Changed from LO_FATAL
-             * proff 04/05/2000: Simply removed the exit(1);
-       * cph - made fatal, don't drop through and SEGV
-       */
-            I_Error("No such response file: %s",fname);
-        }
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"Found response file %s\n",fname);
-        // proff 04/05/2000: Added check for empty rsp file
-        if (size<=0)
-        {
-	  int k;
-          lprintf(LO_ERROR,"\nResponse file empty!\n");
-
-	  newargv = calloc(sizeof(char *),MAXARGVS);
-	  newargv[0] = myargv[0];
-          for (k = 1,index = 1;k < myargc;k++)
-          {
-            if (i!=k)
-              newargv[index++] = myargv[k];
-          }
-          myargc = index; myargv = newargv;
-          return;
-        }
-
-        // KEEP ALL CMDLINE ARGS FOLLOWING @RESPONSEFILE ARG
-	memcpy((void *)moreargs,&myargv[i+1],(index = myargc - i - 1) * sizeof(myargv[0]));
-
-	{
-	  const char *firstargv = myargv[0];
-	  newargv = calloc(sizeof(char *),MAXARGVS);
-	  newargv[0] = firstargv;
-	}
-
-        {
-	  byte *infile = file;
-	  indexinfile = 0;
-	  indexinfile++;  // SKIP PAST ARGV[0] (KEEP IT)
-	  do {
-	    while (size > 0 && isspace(*infile)) { infile++; size--; }
-	    if (size > 0) {
-	      char *s = malloc(size+1);
-	      char *p = s;
-	      int quoted = 0; 
-
-	      while (size > 0) {
-		// Whitespace terminates the token unless quoted
-		if (!quoted && isspace(*infile)) break;
-		if (*infile == '\"') {
-		  // Quotes are removed but remembered
-		  infile++; size--; quoted ^= 1; 
-		} else {
-		  *p++ = *infile++; size--;
-		}
-	      }
-	      if (quoted) I_Error("Runaway quoted string in response file");
-
-	      // Terminate string, realloc and add to argv
-	      *p = 0;
-	      newargv[indexinfile++] = realloc(s,strlen(s)+1);
-	    }
-	  } while(size > 0);
-	}
-	free(file);
-
-	memcpy((void *)&newargv[indexinfile],moreargs,index*sizeof(moreargs[0]));
-	free((void *)moreargs);
-
-        myargc = indexinfile+index; myargv = newargv;
-
-        // DISPLAY ARGS
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"%d command-line args:\n",myargc);
-	for (index=1;index<myargc;index++)
-	  //jff 9/3/98 use logical output routine
-          lprintf(LO_CONFIRM,"%s\n",myargv[index]);
-        break;
-      }
-}
-
-//
-// DoLooseFiles
-//
-// Take any file names on the command line before the first switch parm
-// and insert the appropriate -file, -deh or -playdemo switch in front
-// of them.
-//
-// Note that more than one -file, etc. entry on the command line won't
-// work, so we have to go get all the valid ones if any that show up
-// after the loose ones.  This means that boom fred.wad -file wilma
-// will still load fred.wad and wilma.wad, in that order.
-// The response file code kludges up its own version of myargv[] and
-// unfortunately we have to do the same here because that kludge only
-// happens if there _is_ a response file.  Truth is, it's more likely
-// that there will be a need to do one or the other so it probably
-// isn't important.  We'll point off to the original argv[], or the
-// area allocated in FindResponseFile, or our own areas from strdups.
-//
-// CPhipps - OUCH! Writing into *myargv is too dodgy, damn
-
-static void DoLooseFiles(void)
-{
-  char *wads[MAXARGVS];  // store the respective loose filenames
-  char *lmps[MAXARGVS];
-  char *dehs[MAXARGVS];
-  int wadcount = 0;      // count the loose filenames
-  int lmpcount = 0;
-  int dehcount = 0;
-  int i,j,p;
-  const char **tmyargv;  // use these to recreate the argv array
-  int tmyargc;
-  boolean skip[MAXARGVS]; // CPhipps - should these be skipped at the end
-
-  for (i=0; i<MAXARGVS; i++)
-    skip[i] = false;
-
-  for (i=1;i<myargc;i++)
-  {
-    if (*myargv[i] == '-') break;  // quit at first switch
-
-    // so now we must have a loose file.  Find out what kind and store it.
-    j = strlen(myargv[i]);
-    if (!stricmp(&myargv[i][j-4],".wad"))
-      wads[wadcount++] = strdup(myargv[i]);
-    if (!stricmp(&myargv[i][j-4],".lmp"))
-      lmps[lmpcount++] = strdup(myargv[i]);
-    if (!stricmp(&myargv[i][j-4],".deh"))
-      dehs[dehcount++] = strdup(myargv[i]);
-    if (!stricmp(&myargv[i][j-4],".bex"))
-      dehs[dehcount++] = strdup(myargv[i]);
-    if (myargv[i][j-4] != '.')  // assume wad if no extension
-      wads[wadcount++] = strdup(myargv[i]);
-    skip[i] = true; // nuke that entry so it won't repeat later
-  }
-
-  // Now, if we didn't find any loose files, we can just leave.
-  if (wadcount+lmpcount+dehcount == 0) return;  // ******* early return ****
-
-  if ((p = M_CheckParm ("-file")))
-  {
-    skip[p] = true;    // nuke the entry
-    while (++p != myargc && *myargv[p] != '-')
-    {
-      wads[wadcount++] = strdup(myargv[p]);
-      skip[p] = true;  // null any we find and save
-    }
-  }
-
-  if ((p = M_CheckParm ("-deh")))
-  {
-    skip[p] = true;    // nuke the entry
-    while (++p != myargc && *myargv[p] != '-')
-    {
-      dehs[dehcount++] = strdup(myargv[p]);
-      skip[p] = true;  // null any we find and save
-    }
-  }
-
-  if ((p = M_CheckParm ("-playdemo")))
-  {
-    skip[p] = true;    // nuke the entry
-    while (++p != myargc && *myargv[p] != '-')
-    {
-      lmps[lmpcount++] = strdup(myargv[p]);
-      skip[p] = true;  // null any we find and save
-    }
-  }
-
-  // Now go back and redo the whole myargv array with our stuff in it.
-  // First, create a new myargv array to copy into
-  tmyargv = calloc(sizeof(char *),MAXARGVS);
-  tmyargv[0] = myargv[0]; // invocation
-  tmyargc = 1;
-
-  // put our stuff into it
-  if (wadcount > 0)
-  {
-    tmyargv[tmyargc++] = strdup("-file"); // put the switch in
-    for (i=0;i<wadcount;)
-      tmyargv[tmyargc++] = wads[i++]; // allocated by strdup above
-  }
-
-  // for -deh
-  if (dehcount > 0)
-  {
-    tmyargv[tmyargc++] = strdup("-deh");
-    for (i=0;i<dehcount;)
-      tmyargv[tmyargc++] = dehs[i++];
-  }
-
-  // for -playdemo
-  if (lmpcount > 0)
-  {
-    tmyargv[tmyargc++] = strdup("-playdemo");
-    for (i=0;i<lmpcount;)
-      tmyargv[tmyargc++] = lmps[i++];
-  }
-
-  // then copy everything that's there now
-  for (i=1;i<myargc;i++)
-  {
-    if (!skip[i])  // skip any zapped entries
-      tmyargv[tmyargc++] = myargv[i];  // pointers are still valid
-  }
-  // now make the global variables point to our array
-  myargv = tmyargv;
-  myargc = tmyargc;
-}
-
-static void L_SetupConsoleMasks(void) {
-  int p;
-  int i;
-  const char *cena="ICWEFDA",*pos;  //jff 9/3/98 use this for parsing console masks // CPhipps - const char*'s
-
-  //jff 9/3/98 get mask for console output filter
-  if ((p = M_CheckParm ("-cout"))) {
-    lprintf(LO_DEBUG, "mask for stdout console output: ");
-    if (++p != myargc && *myargv[p] != '-')
-      for (i=0,cons_output_mask=0;(size_t)i<strlen(myargv[p]);i++)
-        if ((pos = strchr(cena,toupper(myargv[p][i])))) {
-          cons_output_mask |= (1<<(pos-cena));
-          lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
-        }
-    lprintf(LO_DEBUG, "\n");
-  }
-
-  //jff 9/3/98 get mask for redirected console error filter
-  if ((p = M_CheckParm ("-cerr"))) {
-    lprintf(LO_DEBUG, "mask for stderr console output: ");
-    if (++p != myargc && *myargv[p] != '-')
-      for (i=0,cons_error_mask=0;(size_t)i<strlen(myargv[p]);i++)
-        if ((pos = strchr(cena,toupper(myargv[p][i])))) {
-          cons_error_mask |= (1<<(pos-cena));
-          lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
-        }
-    lprintf(LO_DEBUG, "\n");
-  }
-}
-
 //
 // D_DoomMainSetup
 //
@@ -1082,38 +761,11 @@ static void L_SetupConsoleMasks(void) {
 
 static void D_DoomMainSetup(void)
 {
-    int p,slot;
-
-    L_SetupConsoleMasks();
-
-    setbuf(stdout,NULL);
-
-    // proff 04/05/2000: Added support for include response files
-    /* proff 2001/7/1 - Moved up, so -config can be in response files */
-    {
-        boolean rsp_found;
-        int i;
-
-        do {
-            rsp_found=false;
-            for (i=0; i<myargc; i++)
-                if (myargv[i][0]=='@')
-                    rsp_found=true;
-            FindResponseFile();
-        } while (rsp_found==true);
-    }
+    int p;
 
     lprintf(LO_INFO,"M_LoadDefaults: Load system defaults.\n");
+
     M_LoadDefaults();              // load before initing other systems
-
-    // figgi 09/18/00-- added switch to force classic bsp nodes
-    if (M_CheckParm ("-forceoldbsp"))
-    {
-        extern boolean forceOldBsp;
-        forceOldBsp = true;
-    }
-
-    DoLooseFiles();  // Ty 08/29/98 - handle "loose" files on command line
 
     IdentifyVersion();
 
@@ -1162,44 +814,6 @@ static void D_DoomMainSetup(void)
                 version_date, doomverstr);
     }
 
-    // turbo option
-    if ((p=M_CheckParm ("-turbo")))
-    {
-        int scale = 200;
-        extern int forwardmove[2];
-        extern int sidemove[2];
-
-        if (p<myargc-1)
-            scale = atoi(myargv[p+1]);
-        if (scale < 10)
-            scale = 10;
-        if (scale > 400)
-            scale = 400;
-        //jff 9/3/98 use logical output routine
-        lprintf (LO_CONFIRM,"turbo scale: %i%%\n",scale);
-        forwardmove[0] = forwardmove[0]*scale/100;
-        forwardmove[1] = forwardmove[1]*scale/100;
-        sidemove[0] = sidemove[0]*scale/100;
-        sidemove[1] = sidemove[1]*scale/100;
-    }
-
-    modifiedgame = false;
-
-    //jff end of sound/music command line parms
-
-    // killough 3/2/98: allow -nodraw -noblit generally
-    nodrawers = M_CheckParm ("-nodraw");
-    noblit = M_CheckParm ("-noblit");
-
-    //proff 11/22/98: Added setting of viewangleoffset
-    p = M_CheckParm("-viewangle");
-    if (p)
-    {
-        viewangleoffset = atoi(myargv[p+1]);
-        viewangleoffset = viewangleoffset<0 ? 0 : (viewangleoffset>7 ? 7 : viewangleoffset);
-        viewangleoffset = (8-viewangleoffset) * ANG45;
-    }
-
     // init subsystems
 
     G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
@@ -1211,43 +825,6 @@ static void D_DoomMainSetup(void)
     //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"V_Init: allocate screens.\n");
     V_Init();
-
-    // ty 03/09/98 end of do dehacked stuff
-
-    // add any files specified on the command line with -file wadfile
-    // to the wad list
-
-    // killough 1/31/98, 5/2/98: reload hack removed, -wart same as -warp now.
-
-    if ((p = M_CheckParm ("-file")))
-    {
-        // the parms after p are wadfile/lump names,
-        // until end of parms or another - preceded parm
-        modifiedgame = true;            // homebrew levels
-        while (++p != myargc && *myargv[p] != '-')
-            D_AddFile(myargv[p],source_pwad);
-    }
-
-    if (!(p = M_CheckParm("-playdemo")) || p >= myargc-1) {   /* killough */
-        if ((p = M_CheckParm ("-fastdemo")) && p < myargc-1)    /* killough */
-            fastdemo = true;             // run at fastest speed possible
-        else
-            p = M_CheckParm ("-timedemo");
-    }
-
-    if (p && p < myargc-1)
-    {
-        char file[PATH_MAX+1];      // cph - localised
-        strcpy(file,myargv[p+1]);
-        AddDefaultExtension(file,".lmp");     // killough
-        D_AddFile (file,source_lmp);
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"Playing demo %s\n",file);
-
-    }
-
-
-    // 1/18/98 killough: Z_Init() call moved to i_main.c
 
     // CPhipps - move up netgame init
     //jff 9/3/98 use logical output routine
@@ -1286,8 +863,7 @@ static void D_DoomMainSetup(void)
     lprintf(LO_INFO,"HU_Init: Setting up heads up display.\n");
     HU_Init();
 
-    if (!(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
-        I_InitGraphics();
+    I_InitGraphics();
 
     //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"ST_Init: Init status bar.\n");
@@ -1295,51 +871,15 @@ static void D_DoomMainSetup(void)
 
     idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
-    // CPhipps - auto screenshots
-    if ((p = M_CheckParm("-autoshot")) && (p < myargc-2))
-        if ((auto_shot_count = auto_shot_time = atoi(myargv[p+1])))
-            auto_shot_fname = myargv[p+2];
-
-    // start the apropriate game based on parms
-
-    if ((p = M_CheckParm ("-checksum")) && ++p < myargc)
+    if (timedemo)
     {
-        P_RecordChecksum (myargv[p]);
+        singletics = true;
+        timingdemo = true;            // show stats after quit
+        G_DeferedPlayDemo(timedemo);
+        singledemo = true;            // quit after one demo
     }
 
-    if ((p = M_CheckParm ("-fastdemo")) && ++p < myargc)
-    {                                 // killough
-        fastdemo = true;                // run at fastest speed possible
-        timingdemo = true;              // show stats after quit
-        G_DeferedPlayDemo(myargv[p]);
-        singledemo = true;              // quit after one demo
-    }
-    else
-        if ((p = M_CheckParm("-timedemo")) && ++p < myargc)
-        {
-            singletics = true;
-            timingdemo = true;            // show stats after quit
-            G_DeferedPlayDemo(myargv[p]);
-            singledemo = true;            // quit after one demo
-        }
-        else
-            if ((p = M_CheckParm("-playdemo")) && ++p < myargc)
-            {
-                G_DeferedPlayDemo(myargv[p]);
-                singledemo = true;          // quit after one demo
-            }
-
-    if (slot && ++slot < myargc)
-    {
-        slot = atoi(myargv[slot]);        // killough 3/16/98: add slot info
-        G_LoadGame(slot, true);           // killough 5/15/98: add command flag // cph - no filename
-    }
-    else
-        if (!singledemo)
-        {                  /* killough 12/98 */
-
-                D_StartTitle();                 // start up intro loop
-        }
+    D_StartTitle();                 // start up intro loop
 }
 
 //
@@ -1348,9 +888,9 @@ static void D_DoomMainSetup(void)
 
 void D_DoomMain(void)
 {
-  D_DoomMainSetup(); // CPhipps - setup out of main execution stack
+    D_DoomMainSetup(); // CPhipps - setup out of main execution stack
 
-  D_DoomLoop ();  // never returns
+    D_DoomLoop ();  // never returns
 }
 
 //
@@ -1361,71 +901,71 @@ void D_DoomMain(void)
 
 void GetFirstMap(int *ep, int *map)
 {
-  int i,j; // used to generate map name
-  boolean done = false;  // Ty 09/13/98 - to exit inner loops
-  char test[6];  // MAPxx or ExMx plus terminator for testing
-  char name[6];  // MAPxx or ExMx plus terminator for display
-  boolean newlevel = false;  // Ty 10/04/98 - to test for new level
-  int ix;  // index for lookup
+    int i,j; // used to generate map name
+    boolean done = false;  // Ty 09/13/98 - to exit inner loops
+    char test[6];  // MAPxx or ExMx plus terminator for testing
+    char name[6];  // MAPxx or ExMx plus terminator for display
+    boolean newlevel = false;  // Ty 10/04/98 - to test for new level
+    int ix;  // index for lookup
 
-  strcpy(name,""); // initialize
-  if (*map == 0) // unknown so go search for first changed one
-  {
-    *ep = 1;
-    *map = 1; // default E1M1 or MAP01
-    if (gamemode == commercial)
+    strcpy(name,""); // initialize
+    if (*map == 0) // unknown so go search for first changed one
     {
-      for (i=1;!done && i<33;i++)  // Ty 09/13/98 - add use of !done
-      {
-        sprintf(test,"MAP%02d",i);
-        ix = W_CheckNumForName(test);
-        if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
+        *ep = 1;
+        *map = 1; // default E1M1 or MAP01
+        if (gamemode == commercial)
         {
-          if (lumpinfo[ix].source == source_pwad)
-          {
-            *map = i;
-            strcpy(name,test);  // Ty 10/04/98
-            done = true;  // Ty 09/13/98
-            newlevel = true; // Ty 10/04/98
-          }
-          else
-          {
-            if (!*name)  // found one, not pwad.  First default.
-               strcpy(name,test);
-          }
+            for (i=1;!done && i<33;i++)  // Ty 09/13/98 - add use of !done
+            {
+                sprintf(test,"MAP%02d",i);
+                ix = W_CheckNumForName(test);
+                if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
+                {
+                    if (lumpinfo[ix].source == source_pwad)
+                    {
+                        *map = i;
+                        strcpy(name,test);  // Ty 10/04/98
+                        done = true;  // Ty 09/13/98
+                        newlevel = true; // Ty 10/04/98
+                    }
+                    else
+                    {
+                        if (!*name)  // found one, not pwad.  First default.
+                            strcpy(name,test);
+                    }
+                }
+            }
         }
-      }
-    }
-    else // one of the others
-    {
-      strcpy(name,"E1M1");  // Ty 10/04/98 - default for display
-      for (i=1;!done && i<5;i++)  // Ty 09/13/98 - add use of !done
-      {
-        for (j=1;!done && j<10;j++)  // Ty 09/13/98 - add use of !done
+        else // one of the others
         {
-          sprintf(test,"E%dM%d",i,j);
-          ix = W_CheckNumForName(test);
-          if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
-          {
-            if (lumpinfo[ix].source == source_pwad)
+            strcpy(name,"E1M1");  // Ty 10/04/98 - default for display
+            for (i=1;!done && i<5;i++)  // Ty 09/13/98 - add use of !done
             {
-              *ep = i;
-              *map = j;
-              strcpy(name,test); // Ty 10/04/98
-              done = true;  // Ty 09/13/98
-              newlevel = true; // Ty 10/04/98
+                for (j=1;!done && j<10;j++)  // Ty 09/13/98 - add use of !done
+                {
+                    sprintf(test,"E%dM%d",i,j);
+                    ix = W_CheckNumForName(test);
+                    if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
+                    {
+                        if (lumpinfo[ix].source == source_pwad)
+                        {
+                            *ep = i;
+                            *map = j;
+                            strcpy(name,test); // Ty 10/04/98
+                            done = true;  // Ty 09/13/98
+                            newlevel = true; // Ty 10/04/98
+                        }
+                        else
+                        {
+                            if (!*name)  // found one, not pwad.  First default.
+                                strcpy(name,test);
+                        }
+                    }
+                }
             }
-            else
-            {
-              if (!*name)  // found one, not pwad.  First default.
-                 strcpy(name,test);
-            }
-          }
         }
-      }
+        //jff 9/3/98 use logical output routine
+        lprintf(LO_CONFIRM,"Auto-warping to first %slevel: %s\n",
+                newlevel ? "new " : "", name);  // Ty 10/04/98 - new level test
     }
-    //jff 9/3/98 use logical output routine
-    lprintf(LO_CONFIRM,"Auto-warping to first %slevel: %s\n",
-      newlevel ? "new " : "", name);  // Ty 10/04/98 - new level test
-  }
 }

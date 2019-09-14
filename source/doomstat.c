@@ -42,14 +42,13 @@ GameMode_t gamemode = indetermined;
 GameMission_t   gamemission = doom;
 
 // Language.
-Language_t   language = english;
+const Language_t   language = english;
 
-// Set if homebrew PWAD stuff has been added.
-boolean modifiedgame;
 
 //-----------------------------------------------------------------------------
 
 // killough 8/8/98: distance friends tend to move towards players
-int distfriend = 128, default_distfriend = 128;
+const int distfriend = 128;
+
 
 

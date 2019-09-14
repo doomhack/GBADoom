@@ -59,11 +59,7 @@
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
 
-// killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
-// had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
-// node, by d_net.c, to set up a L/M/R session.
 
-int viewangleoffset;
 int validcount = 1;         // increment every time a check is made
 const lighttable_t *fixedcolormap;
 int      centerx, centery;

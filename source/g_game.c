@@ -108,8 +108,8 @@ boolean         noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
 boolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
-int             consoleplayer; // player taking events and displaying
-int             displayplayer; // view being displayed
+const int       consoleplayer = 0; // player taking events and displaying
+const int       displayplayer = 0; // view being displayed
 int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
@@ -465,8 +465,7 @@ static void G_DoLoadLevel (void)
   }
 
   P_SetupLevel (gameepisode, gamemap, 0, gameskill);
-  if (!demoplayback) // Don't switch views if playing a demo
-    displayplayer = consoleplayer;    // view the guy you are playing
+
   gameaction = ga_nothing;
   Z_CheckHeap ();
 
@@ -929,7 +928,7 @@ void G_DoReborn (int playernum)
 }
 
 // DOOM Par Times
-int pars[4][10] = {
+const int pars[4][10] = {
   {0},
   {0,30,75,120,90,165,180,180,30,165},
   {0,90,90,90,120,90,360,240,30,170},
@@ -937,7 +936,7 @@ int pars[4][10] = {
 };
 
 // DOOM II Par Times
-int cpars[32] = {
+const int cpars[32] = {
   30,90,120,120,90,150,120,120,270,90,  //  1-10
   210,150,150,150,210,150,420,150,210,150,  // 11-20
   240,150,180,150,150,300,330,420,300,180,  // 21-30
@@ -1240,7 +1239,6 @@ void G_DoLoadGame(void)
   int  length, i;
   // CPhipps - do savegame filename stuff here
   char name[PATH_MAX+1];     // killough 3/22/98
-  int savegame_compatibility = -1;
 
   G_SaveGameName(name,sizeof(name),savegameslot, demoplayback);
 
@@ -1543,16 +1541,12 @@ void G_ReloadDefaults(void)
   // (allows functions above to load different values for demos
   // and savegames without messing up defaults).
 
-  distfriend = default_distfriend;                 // killough 8/8/98
-
   demoplayback = false;
   singledemo = false;            // killough 9/29/98: don't stop after 1 demo
   netdemo = false;
 
   // killough 2/21/98:
   memset(playeringame+1, 0, sizeof(*playeringame)*(MAXPLAYERS-1));
-
-  consoleplayer = 0;
 
   rngseed += I_GetRandomTimeSeed() + gametic; // CPhipps
 }
@@ -1898,8 +1892,8 @@ const byte *G_ReadOptions(const byte *demo_p)
 
       demo_p += 2;
 
-      distfriend = *demo_p++ << 8;      // killough 8/8/98
-      distfriend+= *demo_p++;
+      demo_p++;      // killough 8/8/98
+      demo_p++;
 
       demo_p++;     // killough 9/8/98
 
@@ -2061,7 +2055,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
           demo_p++;
           demo_p++;
           demo_p++;
-          consoleplayer = *demo_p++;
+          demo_p++;
         }
       else
         {
@@ -2071,7 +2065,6 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
 
           episode = *demo_p++;
           map = *demo_p++;
-          consoleplayer = 0;
         }
 
     }
@@ -2128,7 +2121,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
       episode = *demo_p++;
       map = *demo_p++;
       demo_p++;
-      consoleplayer = *demo_p++;
+      demo_p++;
 
 	option_p = demo_p;
 

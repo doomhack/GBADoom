@@ -78,9 +78,6 @@ const char *sprnames[NUMSPRITES+1] = {
   "COL5","TBLU","TGRN","TRED","SMBT","SMGT","SMRT","HDB1","HDB2","HDB3",
   "HDB4","HDB5","HDB6","POB1","POB2","BRS1","TLMP","TLP2",
   "TNT1", // invisible sprite                                 phares 3/9/98
-#ifdef DOGS
-  "DOGS", /* killough 7/19/98: Marine's best friend :) */
-#endif
   NULL
 };
 

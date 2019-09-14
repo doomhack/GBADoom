@@ -67,16 +67,6 @@
  * killough 4/13/98: Make clock rate adjustable by scale factor
  * cphipps - much made static
  */
-
-static int_64_t I_GetTime_Scale = 1<<24;
-
-static int I_GetTime_Scaled(void)
-{
-  return (int)( (int_64_t) I_GetTime_RealTime() * I_GetTime_Scale >> 24);
-}
-
-
-
 static int  I_GetTime_FastDemo(void)
 {
   static int fasttic;
@@ -111,42 +101,6 @@ void I_Init(void)
       I_InitSound();
   }
 }
-
-
-/* killough 2/22/98: Add support for ENDBOOM, which is PC-specific
- *
- * this converts BIOS color codes to ANSI codes.
- * Its not pretty, but it does the job - rain
- * CPhipps - made static
- */
-
-inline static int convert(int color, int *bold)
-{
-  if (color > 7) {
-    color -= 8;
-    *bold = 1;
-  }
-  switch (color) {
-  case 0:
-    return 0;
-  case 1:
-    return 4;
-  case 2:
-    return 2;
-  case 3:
-    return 6;
-  case 4:
-    return 1;
-  case 5:
-    return 5;
-  case 6:
-    return 3;
-  case 7:
-    return 7;
-  }
-  return 0;
-}
-
 
 static void PrintVer(void)
 {
@@ -221,31 +175,11 @@ static int has_exited;
 
 void I_SafeExit(int rc)
 {
-	I_Quit_e32();
-
   if (!has_exited)    /* If it hasn't exited yet, exit now -- killough */
     {
       has_exited=rc ? 2 : 1;
       exit(rc);
     }
-}
-
-static void I_Quit (void)
-{
-  if (!has_exited)
-    has_exited=1;   /* Prevent infinitely recursive exits -- killough */
-
-  if (has_exited == 1)
-  {
-	  I_EndDoom();
-	  
-	  if (demorecording)
-		  G_CheckDemoStatus();
-	  
-	  M_SaveDefaults ();
-  }
-
-  I_Quit_e32();
 }
 
 int main(int argc, const char * const * argv)

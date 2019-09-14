@@ -211,7 +211,6 @@ static float Get_TextSpeed(void)
 
 void F_Ticker(void)
 {
-  int i;
 
     WI_checkForAccelerate();  // killough 3/28/98: check for acceleration
 

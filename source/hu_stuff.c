@@ -1290,26 +1290,6 @@ static int  head = 0;
 static int  tail = 0;
 
 //
-// HU_queueChatChar()
-//
-// Add an incoming character to the circular chat queue
-//
-// Passed the character to queue, returns nothing
-//
-static void HU_queueChatChar(char c)
-{
-  if (((head + 1) & (QUEUESIZE-1)) == tail)
-  {
-    plr->message = HUSTR_MSGU;
-  }
-  else
-  {
-    chatchars[head] = c;
-    head = (head + 1) & (QUEUESIZE-1);
-  }
-}
-
-//
 // HU_dequeueChatChar()
 //
 // Remove the earliest added character from the circular chat queue

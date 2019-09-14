@@ -53,13 +53,9 @@
 extern GameMode_t gamemode;
 extern GameMission_t  gamemission;
 
-// Set if homebrew PWAD stuff has been added.
-extern  boolean modifiedgame;
-
-
 // -------------------------------------------
 // Language.
-extern  Language_t   language;
+extern const Language_t   language;
 
 // -------------------------------------------
 // Selected skill type, map etc.
@@ -111,13 +107,9 @@ extern  boolean paused;        // Game Pause?
 extern  boolean nodrawers;
 extern  boolean noblit;
 
-// This one is related to the 3-screen display mode.
-// ANG90 = left side, ANG270 = right
-extern  int viewangleoffset;
-
 // Player taking events, and displaying.
-extern  int consoleplayer;
-extern  int displayplayer;
+extern const int consoleplayer;
+extern const int displayplayer;
 
 // -------------------------------------
 // Scores, rating.
@@ -162,7 +154,6 @@ extern  player_t  players[MAXPLAYERS];
 
 // Alive? Disconnected?
 extern  boolean   playeringame[MAXPLAYERS];
-extern  boolean   realplayeringame[MAXPLAYERS];
 
 extern  mapthing_t *deathmatchstarts;     // killough
 extern  size_t     num_deathmatchstarts; // killough
@@ -179,9 +170,6 @@ extern wbstartstruct_t wminfo;
 //-----------------------------------------
 // Internal parameters, used for engine.
 //
-
-// File handling stuff.
-extern  FILE   *debugfile;
 
 // wipegamestate can be set to -1
 //  to force a wipe on the next draw
@@ -207,8 +195,6 @@ extern  ticcmd_t   netcmds[][BACKUPTICS];
 //-----------------------------------------------------------------------------
 
 /* killough 8/8/98: distance friendly monsters tend to stay from player */
-extern int distfriend, default_distfriend;
-
-extern int HelperThing;          // type of thing to use for helper
+extern const int distfriend;
 
 #endif
