@@ -51,7 +51,6 @@
 #include "g_game.h"
 
 
-static const int mapcolor_me = 112;    // cph
 static const int mapcolor_back = 247;    // map background
 static const int mapcolor_grid = 104;    // grid lines color
 static const int mapcolor_wall = 23;    // normal 1s wall color
@@ -119,7 +118,7 @@ typedef struct
 //   starting from the middle.
 //
 #define R ((8*PLAYERRADIUS)/7)
-const mline_t player_arrow[] =
+static const mline_t player_arrow[] =
 {
   { { -R+R/8, 0 }, { R, 0 } }, // -----
   { { R, 0 }, { R-R/2, R/4 } },  // ----->
@@ -133,7 +132,7 @@ const mline_t player_arrow[] =
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
 #define R ((8*PLAYERRADIUS)/7)
-const mline_t cheat_player_arrow[] =
+static const mline_t cheat_player_arrow[] =
 { // killough 3/22/98: He's alive, Jim :)
   { { -R+R/8, 0 }, { R, 0 } }, // -----
   { { R, 0 }, { R-R/2, R/4 } },  // ----->
@@ -153,19 +152,9 @@ const mline_t cheat_player_arrow[] =
 #undef R
 #define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
 
-#define R (FRACUNIT)
-const mline_t triangle_guy[] =
-{
-{ { (fixed_t)(-.867*R), (fixed_t)(-.5*R) }, { (fixed_t)( .867*R), (fixed_t)(-.5*R) } },
-{ { (fixed_t)( .867*R), (fixed_t)(-.5*R) }, { (fixed_t)(0      ), (fixed_t)(    R) } },
-{ { (fixed_t)(0      ), (fixed_t)(    R) }, { (fixed_t)(-.867*R), (fixed_t)(-.5*R) } }
-};
-#undef R
-#define NUMTRIANGLEGUYLINES (sizeof(triangle_guy)/sizeof(mline_t))
-
 //jff 1/5/98 new symbol for keys on automap
 #define R (FRACUNIT)
-const mline_t cross_mark[] =
+static const mline_t cross_mark[] =
 {
   { { -R, 0 }, { R, 0} },
   { { 0, -R }, { 0, R } },
@@ -175,7 +164,7 @@ const mline_t cross_mark[] =
 //jff 1/5/98 end of new symbol
 
 #define R (FRACUNIT)
-const mline_t thintriangle_guy[] =
+static const mline_t thintriangle_guy[] =
 {
 { { (fixed_t)(-.5*R), (fixed_t)(-.7*R) }, { (fixed_t)(    R), (fixed_t)(    0) } },
 { { (fixed_t)(    R), (fixed_t)(    0) }, { (fixed_t)(-.5*R), (fixed_t)( .7*R) } },
@@ -199,8 +188,8 @@ static int  f_w;
 static int  f_h;
 
 static mpoint_t m_paninc;    // how far the window pans each tic (map coords)
-static fixed_t mtof_zoommul; // how far the window zooms each tic (map coords)
-static fixed_t ftom_zoommul; // how far the window zooms each tic (fb coords)
+static const fixed_t mtof_zoommul = FRACUNIT; // how far the window zooms each tic (map coords)
+static const fixed_t ftom_zoommul = FRACUNIT; // how far the window zooms each tic (fb coords)
 
 static fixed_t m_x, m_y;     // LL x,y window location on the map (map coords)
 static fixed_t m_x2, m_y2;   // UR x,y window location on the map (map coords)
@@ -220,17 +209,8 @@ static fixed_t  max_y;
 static fixed_t  max_w;          // max_x-min_x,
 static fixed_t  max_h;          // max_y-min_y
 
-// based on player size
-static fixed_t  min_w;
-static fixed_t  min_h;
-
-
 static fixed_t  min_scale_mtof; // used to tell when to stop zooming out
 static fixed_t  max_scale_mtof; // used to tell when to stop zooming in
-
-// old stuff for recovery later
-static fixed_t old_m_w, old_m_h;
-static fixed_t old_m_x, old_m_y;
 
 // old location used by the Follower routine
 static mpoint_t f_oldloc;
@@ -271,75 +251,6 @@ static void AM_activateNewScale(void)
 }
 
 //
-// AM_saveScaleAndLoc()
-//
-// Saves the current center and zoom
-// Affects the variables that remember old scale and loc
-//
-// Passed nothing, returns nothing
-//
-static void AM_saveScaleAndLoc(void)
-{
-  old_m_x = m_x;
-  old_m_y = m_y;
-  old_m_w = m_w;
-  old_m_h = m_h;
-}
-
-//
-// AM_restoreScaleAndLoc()
-//
-// restores the center and zoom from locally saved values
-// Affects global variables for location and scale
-//
-// Passed nothing, returns nothing
-//
-static void AM_restoreScaleAndLoc(void)
-{
-  m_w = old_m_w;
-  m_h = old_m_h;
-  if (!(automapmode & am_follow))
-  {
-    m_x = old_m_x;
-    m_y = old_m_y;
-  }
-  else
-  {
-    m_x = (plr->mo->x >> FRACTOMAPBITS) - m_w/2;//e6y
-    m_y = (plr->mo->y >> FRACTOMAPBITS) - m_h/2;//e6y
-  }
-  m_x2 = m_x + m_w;
-  m_y2 = m_y + m_h;
-
-  // Change the scaling multipliers
-  scale_mtof = FixedDiv(f_w<<FRACBITS, m_w);
-  scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
-}
-
-//
-// AM_addMark()
-//
-// Adds a marker at the current location
-// Affects global variables for marked points
-//
-// Passed nothing, returns nothing
-//
-static void AM_addMark(void)
-{
-  // killough 2/22/98:
-  // remove limit on automap marks
-
-  if (markpointnum >= markpointnum_max)
-    markpoints = realloc(markpoints,
-                        (markpointnum_max = markpointnum_max ?
-                         markpointnum_max*2 : 16) * sizeof(*markpoints));
-
-  markpoints[markpointnum].x = m_x + m_w/2;
-  markpoints[markpointnum].y = m_y + m_h/2;
-  markpointnum++;
-}
-
-//
 // AM_findMinMaxBoundaries()
 //
 // Determines bounding box of all vertices,
@@ -371,9 +282,6 @@ static void AM_findMinMaxBoundaries(void)
 
   max_w = (max_x >>= FRACTOMAPBITS) - (min_x >>= FRACTOMAPBITS);//e6y
   max_h = (max_y >>= FRACTOMAPBITS) - (min_y >>= FRACTOMAPBITS);//e6y
-
-  min_w = 2*PLAYERRADIUS; // const? never changed?
-  min_h = 2*PLAYERRADIUS;
 
   a = FixedDiv(f_w<<FRACBITS, max_w);
   b = FixedDiv(f_h<<FRACBITS, max_h);
@@ -434,8 +342,6 @@ static void AM_initVariables(void)
   f_oldloc.x = INT_MAX;
 
   m_paninc.x = m_paninc.y = 0;
-  ftom_zoommul = FRACUNIT;
-  mtof_zoommul = FRACUNIT;
 
   m_w = FTOM(f_w);
   m_h = FTOM(f_h);
@@ -451,30 +357,8 @@ static void AM_initVariables(void)
   m_y = (plr->mo->y >> FRACTOMAPBITS) - m_h/2;//e6y
   AM_changeWindowLoc();
 
-  // for saving & restoring
-  old_m_x = m_x;
-  old_m_y = m_y;
-  old_m_w = m_w;
-  old_m_h = m_h;
-
   // inform the status bar of the change
   ST_Responder(&st_notify);
-}
-
-//
-// AM_loadPics()
-//
-static void AM_loadPics(void)
-{
-  // cph - mark numbers no longer needed cached
-}
-
-//
-// AM_unloadPics()
-//
-static void AM_unloadPics(void)
-{
-  // cph - mark numbers no longer needed cached
 }
 
 //
@@ -526,7 +410,6 @@ void AM_Stop (void)
 {
   static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED, 0 };
 
-  AM_unloadPics();
   automapmode &= ~am_active;
   ST_Responder(&st_notify);
   stopped = true;
@@ -556,7 +439,6 @@ void AM_Start(void)
     lastepisode = gameepisode;
   }
   AM_initVariables();
-  AM_loadPics();
 }
 
 //
@@ -598,8 +480,8 @@ boolean AM_Responder
 ( event_t*  ev )
 {
   int rc;
-  static int cheatstate=0;
-  static int bigstate=0;
+  static int cheatstate;
+  static int bigstate;
   int ch;                                                       // phares
 
   rc = false;
@@ -860,8 +742,8 @@ static boolean AM_clipMline
   fl->b.x = CXMTOF(ml->b.x);
   fl->b.y = CYMTOF(ml->b.y);
 
-  DOOUTCODE(outcode1, fl->a.x, fl->a.y);
-  DOOUTCODE(outcode2, fl->b.x, fl->b.y);
+  DOOUTCODE(outcode1, fl->a.x, fl->a.y)
+  DOOUTCODE(outcode2, fl->b.x, fl->b.y)
 
   if (outcode1 & outcode2)
   return false;
@@ -908,12 +790,12 @@ static boolean AM_clipMline
     if (outside == outcode1)
     {
       fl->a = tmp;
-      DOOUTCODE(outcode1, fl->a.x, fl->a.y);
+      DOOUTCODE(outcode1, fl->a.x, fl->a.y)
     }
     else
     {
       fl->b = tmp;
-      DOOUTCODE(outcode2, fl->b.x, fl->b.y);
+      DOOUTCODE(outcode2, fl->b.x, fl->b.y)
     }
 
     if (outcode1 & outcode2)
@@ -1248,7 +1130,7 @@ static void AM_drawWalls(void)
 // Returns nothing
 //
 static void AM_drawLineCharacter
-( mline_t*  lineguy,
+( const mline_t*  lineguy,
   int   lineguylines,
   fixed_t scale,
   angle_t angle,

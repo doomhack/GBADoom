@@ -65,7 +65,6 @@
 #include "m_argv.h"
 #include "lprintf.h"
 
-static boolean   server;
 static int       remotetic; // Tic expected from the remote
 ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
 static ticcmd_t* localcmds;
@@ -119,7 +118,7 @@ void TryRunTics (void)
 
 		D_BuildNewTiccmds();
 
-	    runtics = (server ? remotetic : maketic) - gametic;
+        runtics = (maketic) - gametic;
 		if (!runtics)
 		{
 			if (I_GetTime() - entertime > 10)
