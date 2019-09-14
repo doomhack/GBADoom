@@ -41,6 +41,8 @@
 #include "f_finale.h" // CPhipps - hmm...
 #include "dstrings.h"
 
+#include "global_data.h"
+
 // Stage of animation:
 //  0 = text, 1 = art screen, 2 = character cast
 static int finalestage; // cph -
@@ -76,7 +78,7 @@ void F_StartFinale (void)
 {
   gameaction = ga_nothing;
   gamestate = GS_FINALE;
-  automapmode &= ~am_active;
+  _g->automapmode &= ~am_active;
 
   // killough 3/28/98: clear accelerative text flags
   acceleratestage = midstage = 0;

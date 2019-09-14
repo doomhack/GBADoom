@@ -31,6 +31,7 @@ SOURCES += \
         source/f_finale.c \
         source/f_wipe.c \
         source/g_game.c \
+        source/global_data.c \
         source/hu_lib.c \
         source/hu_stuff.c \
         source/i_audio.cpp \
@@ -128,6 +129,9 @@ HEADERS += \
     include/f_finale.h \
     include/f_wipe.h \
     include/g_game.h \
+    include/global_data.h \
+    include/global_defs.h \
+    include/global_init.h \
     include/hu_lib.h \
     include/hu_stuff.h \
     include/i_main.h \

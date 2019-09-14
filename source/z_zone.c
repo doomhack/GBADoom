@@ -222,7 +222,6 @@ void (Z_Free)(void *p)
   free_memory += block->size;
 
   running_count -= block->size;
-  printf("Running Count: %d\n", running_count);
 
   (free)(block);
 

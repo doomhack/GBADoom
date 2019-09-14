@@ -56,6 +56,7 @@
 #include "i_sound.h"
 #include "i_main.h"
 #include "lprintf.h"
+#include "global_data.h"
 
 #include <signal.h>
 #include <stdio.h>
@@ -191,6 +192,8 @@ int main(int argc, const char * const * argv)
 
 
   Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
+
+    InitGlobals();
 
   I_SetAffinityMask();
 

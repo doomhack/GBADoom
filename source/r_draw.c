@@ -43,6 +43,8 @@
 #include "am_map.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 //
 // All drawing to the view buffer is accomplished in this file.
 // The other refresh files only know about ccordinates,
@@ -421,7 +423,7 @@ void R_DrawViewBorder(void)
 {
 	int top, side, i;
 
-	if ((SCREENHEIGHT != viewheight) || ((automapmode & am_active) && ! (automapmode & am_overlay)))
+    if ((SCREENHEIGHT != viewheight) || ((_g->automapmode & am_active) && ! (_g->automapmode & am_overlay)))
 	{
 		// erase left and right of statusbar
 		side= ( SCREENWIDTH - ST_SCALED_WIDTH ) / 2;

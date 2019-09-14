@@ -1,4 +1,4 @@
-#include "iwad/doom1.h"
+#include "iwad/doomu.h"
 
 #include "doom_iwad.h"
 

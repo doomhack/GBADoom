@@ -44,6 +44,8 @@
 #include "p_inter.h"
 #include "p_enemy.h"
 
+#include "global_data.h"
+
 #ifdef __GNUG__
 #pragma implementation "p_inter.h"
 #endif
@@ -630,7 +632,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
       target->player->playerstate = PST_DEAD;
       P_DropWeapon (target->player);
 
-      if (target->player == &players[consoleplayer] && (automapmode & am_active))
+      if (target->player == &players[consoleplayer] && (_g->automapmode & am_active))
         AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 

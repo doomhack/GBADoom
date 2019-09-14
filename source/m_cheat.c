@@ -46,6 +46,8 @@
 /* cph 2006/07/23 - needs direct access to thinkercap */
 #include "p_tick.h"
 
+#include "global_data.h"
+
 #define plyr (players+consoleplayer)     /* the console player */
 
 //-----------------------------------------------------------------------------
@@ -519,9 +521,8 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
 // killough 3/26/98: emulate Doom better
 static void cheat_ddt()
 {
-  extern int ddt_cheating;
-  if (automapmode & am_active)
-    ddt_cheating = (ddt_cheating+1) % 3;
+  if (_g->automapmode & am_active)
+    _g->ddt_cheating = (_g->ddt_cheating+1) % 3;
 }
 
 // killough 2/7/98: HOM autodetection

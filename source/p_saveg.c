@@ -42,6 +42,8 @@
 #include "p_enemy.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 byte *save_p;
 
 // Pads save_p to a 4-byte boundary
@@ -979,10 +981,10 @@ void P_ArchiveMap(void)
   int zero = 0, one = 1;
   CheckSaveGame(2 * sizeof zero + sizeof markpointnum +
                 markpointnum * sizeof *markpoints +
-                sizeof automapmode + sizeof one);
+                sizeof _g->automapmode + sizeof one);
 
-  memcpy(save_p, &automapmode, sizeof automapmode);
-  save_p += sizeof automapmode;
+  memcpy(save_p, &_g->automapmode, sizeof _g->automapmode);
+  save_p += sizeof _g->automapmode;
   memcpy(save_p, &one, sizeof one);   // CPhipps - used to be viewactive, now
   save_p += sizeof one;               // that's worked out locally by D_Display
   memcpy(save_p, &zero, sizeof zero); // CPhipps - used to be followplayer
@@ -1002,8 +1004,8 @@ void P_ArchiveMap(void)
 void P_UnArchiveMap(void)
 {
   int unused;
-  memcpy(&automapmode, save_p, sizeof automapmode);
-  save_p += sizeof automapmode;
+  memcpy(&_g->automapmode, save_p, sizeof _g->automapmode);
+  save_p += sizeof _g->automapmode;
   memcpy(&unused, save_p, sizeof unused);
   save_p += sizeof unused;
   memcpy(&unused, save_p, sizeof unused);
@@ -1011,7 +1013,7 @@ void P_UnArchiveMap(void)
   memcpy(&unused, save_p, sizeof unused);
   save_p += sizeof unused;
 
-  if (automapmode & am_active)
+  if (_g->automapmode & am_active)
     AM_Start();
 
   memcpy(&markpointnum, save_p, sizeof markpointnum);

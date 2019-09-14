@@ -40,6 +40,8 @@
 #include "r_main.h"
 #include "r_draw.h"
 
+#include "global_data.h"
+
 // boolean : whether the screen is always erased
 #define noterased viewwindowx
 
@@ -218,7 +220,7 @@ void HUlib_eraseTextLine(hu_textline_t* l)
   // and the text must either need updating or refreshing
   // (because of a recent change back from the automap)
 
-  if (!(automapmode & am_active) && viewwindowx && l->needsupdate)
+  if (!(_g->automapmode & am_active) && viewwindowx && l->needsupdate)
   {
     lh = l->f[0].height + 1;
     for (y=l->y; y<l->y+lh ; y++)

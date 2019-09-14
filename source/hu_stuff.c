@@ -44,6 +44,8 @@
 #include "g_game.h"
 #include "r_main.h"
 
+#include "global_data.h"
+
 // global heads up display controls
 
 int hud_displayed = 0;    //jff 2/23/98 turns heads-up display on/off
@@ -820,7 +822,7 @@ void HU_Drawer(void)
 
   plr = &players[displayplayer];         // killough 3/7/98
   // draw the automap widgets if automap is displayed
-  if (automapmode & am_active)
+  if (_g->automapmode & am_active)
   {
     // map title
     HUlib_drawTextLine(&w_title, false);
@@ -833,7 +835,7 @@ void HU_Drawer(void)
   (
     hud_displayed &&                 // hud on from fullscreen key
     viewheight==SCREENHEIGHT &&      // fullscreen mode is active
-    !(automapmode & am_active)       // automap is not active
+    !(_g->automapmode & am_active)       // automap is not active
   )
   {
     doit = !(gametic&1); //jff 3/4/98 speed update up for slow systems

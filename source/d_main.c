@@ -74,6 +74,7 @@
 #include "am_map.h"
 
 #include "doom_iwad.h"
+#include "global_data.h"
 
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
@@ -216,8 +217,8 @@ void D_Display (void)
     }
 
     // Work out if the player view is visible, and if there is a border
-    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay));
-    isborder = viewactive ? (viewheight != SCREENHEIGHT) : ((automapmode & am_active));
+    viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
+    isborder = viewactive ? (viewheight != SCREENHEIGHT) : ((_g->automapmode & am_active));
 
     if (oldgamestate != GS_LEVEL) {
       R_FillBackScreen ();    // draw the pattern into the back screen
@@ -237,9 +238,9 @@ void D_Display (void)
     // Now do the drawing
     if (viewactive)
       R_RenderPlayerView (&players[displayplayer]);
-    if (automapmode & am_active)
+    if (_g->automapmode & am_active)
       AM_Drawer();
-    ST_Drawer((viewheight != SCREENHEIGHT) || ((automapmode & am_active) && !(automapmode & am_overlay)), redrawborderstuff);
+    ST_Drawer((viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), redrawborderstuff);
     R_DrawViewBorder();
     HU_Drawer();
   }

@@ -78,6 +78,8 @@
 #include "i_system.h"
 #include "r_demo.h"
 
+#include "global_data.h"
+
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
 
@@ -512,7 +514,7 @@ boolean G_Responder (event_t* ev)
       // Don't suck up keys, which may be cheats
 
       return gamestate == GS_DEMOSCREEN &&
-  !(paused & 2) && !(automapmode & am_active) &&
+  !(paused & 2) && !(_g->automapmode & am_active) &&
   ((ev->type == ev_keydown) ||
    (ev->type == ev_mouse && ev->data1) ||
    (ev->type == ev_joystick && ev->data1)) ?
@@ -977,7 +979,7 @@ void G_DoCompleted (void)
     if (playeringame[i])
       G_PlayerFinishLevel(i);        // take away cards and stuff
 
-  if (automapmode & am_active)
+  if (_g->automapmode & am_active)
     AM_Stop();
 
   if (gamemode != commercial) // kilough 2/7/98
@@ -1074,7 +1076,7 @@ void G_DoCompleted (void)
   wminfo.totaltimes = (totalleveltimes += (leveltime - leveltime%35));
 
   gamestate = GS_INTERMISSION;
-  automapmode &= ~am_active;
+  _g->automapmode &= ~am_active;
 
   // lmpwatch.pl engine-side demo testing support
   // print "FINISHED: <mapname>" when the player exits the current map
@@ -1643,7 +1645,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   usergame = true;                // will be set false if a demo
   paused = false;
-  automapmode &= ~am_active;
+  _g->automapmode &= ~am_active;
   gameepisode = episode;
   gamemap = map;
   gameskill = skill;
