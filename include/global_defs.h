@@ -98,6 +98,32 @@ const char *pagename; // CPhipps - const
 GameMode_t gamemode;
 GameMission_t   gamemission;
 
+
+//******************************************************************************
+//f_finale.c
+//******************************************************************************
+
+
+// Stage of animation:
+//  0 = text, 1 = art screen, 2 = character cast
+int finalestage; // cph -
+int finalecount; // made static
+const char*   finaletext; // cph -
+const char*   finaleflat; // made static const
+
+int             castnum;
+int             casttics;
+state_t*        caststate;
+boolean         castdeath;
+int             castframes;
+int             castonmelee;
+boolean         castattacking;
+
+int midstage;                 // whether we're in "mid-stage"
+int  laststage;
+
+
+
 //******************************************************************************
 
 #endif // GLOBAL_DEFS_H
