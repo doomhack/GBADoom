@@ -1,2 +1,6 @@
 
 *.user
+
+source/iwad/doom2.h
+
+source/iwad/doomu.h
