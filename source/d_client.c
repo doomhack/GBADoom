@@ -120,7 +120,7 @@ void TryRunTics (void)
     while (runtics--)
     {
 
-        if (advancedemo)
+        if (_g->advancedemo)
             D_DoAdvanceDemo ();
 
         M_Ticker ();

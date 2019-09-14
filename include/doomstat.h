@@ -173,11 +173,6 @@ extern wbstartstruct_t wminfo;
 
 // wipegamestate can be set to -1
 //  to force a wipe on the next draw
-extern  gamestate_t     wipegamestate;
-
-// debug flag to cancel adaptiveness
-extern  boolean         singletics;
-
 extern  int             bodyqueslot;
 
 // Needed to store the number of the dummy sky flat.

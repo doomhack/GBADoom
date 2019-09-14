@@ -442,8 +442,8 @@ static void G_DoLoadLevel (void)
 
   /* cph 2006/07/31 - took out unused levelstarttic variable */
 
-  if (wipegamestate == GS_LEVEL)
-    wipegamestate = -1;             // force a wipe
+  if (_g->wipegamestate == GS_LEVEL)
+    _g->wipegamestate = -1;             // force a wipe
 
   gamestate = GS_LEVEL;
 
@@ -1400,12 +1400,7 @@ void (CheckSaveGame)(size_t size, const char* file, int line)
 
 void G_SaveGameName(char *name, size_t size, int slot, boolean demoplayback)
 {
-  const char* sgn = "demosav";
-#ifdef HAVE_SNPRINTF
-  snprintf (name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
-#else
-  sprintf (name, "%s/%s%d.dsg", basesavegame, sgn, slot);
-#endif
+
 }
 
 static void G_DoSaveGame (boolean menu)

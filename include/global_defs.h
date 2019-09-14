@@ -71,6 +71,17 @@ ticcmd_t* localcmds;
 int maketic;
 int lastmadetic;
 
+//******************************************************************************
+//d_main.c
+//******************************************************************************
+
+boolean singletics; // debug flag to cancel adaptiveness
+boolean advancedemo;
+
+// wipegamestate can be set to -1 to force a wipe on the next draw
+gamestate_t    wipegamestate;
+
+
 
 
 //******************************************************************************

@@ -81,7 +81,6 @@ static void D_PageDrawer(void);
 
 // CPhipps - removed wadfiles[] stuff
 
-boolean singletics = false; // debug flag to cancel adaptiveness
 
 //jff 1/22/98 parms for disabling music and sound
 const boolean nosfxparm = false;
@@ -92,10 +91,6 @@ const int startepisode = 1;
 const int startmap = 1;
 
 static const char* timedemo = NULL;
-
-boolean advancedemo;
-char    basesavegame[PATH_MAX+1];  // killough 2/16/98: savegame directory
-
 
 /*
  * D_PostEvent - Event handling
@@ -161,8 +156,6 @@ static void D_Wipe(void)
 //  draw current display, possibly wiping it from the previous
 //
 
-// wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t    wipegamestate = GS_DEMOSCREEN;
 extern boolean setsizeneeded;
 extern int     showMessages;
 
@@ -181,7 +174,7 @@ void D_Display (void)
     return;
 
   // save the current screen if about to wipe
-  if (wipe = gamestate != wipegamestate)
+  if (wipe = gamestate != _g->wipegamestate)
     wipe_StartScreen();
 
   if (gamestate != GS_LEVEL) { // Not a level
@@ -246,7 +239,7 @@ void D_Display (void)
   }
 
   isborderstate      = isborder;
-  oldgamestate = wipegamestate = gamestate;
+  oldgamestate = _g->wipegamestate = gamestate;
 
   // draw pause pic
   if (paused) {
@@ -292,12 +285,12 @@ static void D_DoomLoop(void)
 		I_StartFrame();
 					
 		// process one or more tics
-		if (singletics)
+        if (_g->singletics)
 		{
 			I_StartTic ();
             G_BuildTiccmd (&_g->netcmds[consoleplayer][_g->maketic%BACKUPTICS]);
 			
-			if (advancedemo)
+            if (_g->advancedemo)
 				D_DoAdvanceDemo ();
 
 			M_Ticker ();
@@ -357,7 +350,7 @@ static void D_PageDrawer(void)
 //
 void D_AdvanceDemo (void)
 {
-  advancedemo = true;
+  _g->advancedemo = true;
 }
 
 /* killough 11/98: functions to perform demo sequences
@@ -464,7 +457,7 @@ const demostates[][4] =
 void D_DoAdvanceDemo(void)
 {
   players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
-  advancedemo = usergame = paused = false;
+  _g->advancedemo = usergame = paused = false;
   gameaction = ga_nothing;
 
   pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
@@ -759,7 +752,7 @@ static void D_DoomMainSetup(void)
 
     if (timedemo)
     {
-        singletics = true;
+        _g->singletics = true;
         timingdemo = true;            // show stats after quit
         G_DeferedPlayDemo(timedemo);
         singledemo = true;            // quit after one demo

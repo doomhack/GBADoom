@@ -41,10 +41,6 @@
 #pragma interface
 #endif
 
-/* CPhipps - removed wadfiles[] stuff to w_wad.h */
-
-extern char basesavegame[];     // killough 2/16/98: savegame path
-
 //jff end of external declaration of command line playmode
 
 extern const boolean nosfxparm;
@@ -54,7 +50,6 @@ extern const boolean nomusicparm;
 void D_PostEvent(event_t* ev);
 
 // Demo stuff
-extern boolean advancedemo;
 void D_AdvanceDemo(void);
 void D_DoAdvanceDemo (void);
 
