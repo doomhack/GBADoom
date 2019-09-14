@@ -71,7 +71,6 @@
 #include "sounds.h"
 #include "r_data.h"
 #include "r_sky.h"
-#include "d_deh.h"              // Ty 3/27/98 deh declarations
 #include "p_inter.h"
 #include "g_game.h"
 #include "lprintf.h"
@@ -1401,7 +1400,7 @@ void (CheckSaveGame)(size_t size, const char* file, int line)
 
 void G_SaveGameName(char *name, size_t size, int slot, boolean demoplayback)
 {
-  const char* sgn = demoplayback ? "demosav" : savegamename;
+  const char* sgn = "demosav";
 #ifdef HAVE_SNPRINTF
   snprintf (name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
 #else
@@ -1514,7 +1513,7 @@ static void G_DoSaveGame (boolean menu)
 
   Z_CheckHeap();
   doom_printf( "%s", M_WriteFile(name, savebuffer, length)
-         ? s_GGSAVED /* Ty - externalised */
+         ? GGSAVED /* Ty - externalised */
          : "Game save failed!"); // CPhipps - not externalised
 
   free(savebuffer);  // killough

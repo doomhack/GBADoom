@@ -55,7 +55,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "m_bbox.h"                                         // phares 3/20/98
-#include "d_deh.h"
 #include "r_plane.h"
 #include "lprintf.h"
 
@@ -100,7 +99,6 @@ typedef struct
 
 static anim_t*  lastanim;
 anim_t		anims[MAXANIMS];
-static size_t maxanims;
 
 //
 // P_InitPicAnims
@@ -115,7 +113,7 @@ static size_t maxanims;
 //  and end entry, in the order found in
 //  the WAD file.
 //
-animdef_t		animdefs[] =
+const animdef_t		animdefs[] =
 {
     {false,	"NUKAGE3",	"NUKAGE1",	8},
     {false,	"FWATER4",	"FWATER1",	8},
@@ -841,7 +839,7 @@ boolean P_CanUnlockGenDoor
         !player->cards[it_yellowskull]
       )
       {
-        player->message = s_PD_ANY; // Ty 03/27/98 - externalized
+        player->message = PD_ANY; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -853,7 +851,7 @@ boolean P_CanUnlockGenDoor
         (!skulliscard || !player->cards[it_redskull])
       )
       {
-        player->message = skulliscard? s_PD_REDK : s_PD_REDC; // Ty 03/27/98 - externalized
+        player->message = skulliscard? PD_REDK : PD_REDC; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -865,7 +863,7 @@ boolean P_CanUnlockGenDoor
         (!skulliscard || !player->cards[it_blueskull])
       )
       {
-        player->message = skulliscard? s_PD_BLUEK : s_PD_BLUEC; // Ty 03/27/98 - externalized
+        player->message = skulliscard? PD_BLUEK : PD_BLUEC; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -877,7 +875,7 @@ boolean P_CanUnlockGenDoor
         (!skulliscard || !player->cards[it_yellowskull])
       )
       {
-        player->message = skulliscard? s_PD_YELLOWK : s_PD_YELLOWC; // Ty 03/27/98 - externalized
+        player->message = skulliscard? PD_YELLOWK : PD_YELLOWC; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -889,7 +887,7 @@ boolean P_CanUnlockGenDoor
         (!skulliscard || !player->cards[it_redcard])
       )
       {
-        player->message = skulliscard? s_PD_REDK : s_PD_REDS; // Ty 03/27/98 - externalized
+        player->message = skulliscard? PD_REDK : PD_REDS; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -901,7 +899,7 @@ boolean P_CanUnlockGenDoor
         (!skulliscard || !player->cards[it_bluecard])
       )
       {
-        player->message = skulliscard? s_PD_BLUEK : s_PD_BLUES; // Ty 03/27/98 - externalized
+        player->message = skulliscard? PD_BLUEK : PD_BLUES; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -913,7 +911,7 @@ boolean P_CanUnlockGenDoor
         (!skulliscard || !player->cards[it_yellowcard])
       )
       {
-        player->message = skulliscard? s_PD_YELLOWK : s_PD_YELLOWS; // Ty 03/27/98 - externalized
+        player->message = skulliscard? PD_YELLOWK : PD_YELLOWS; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -932,7 +930,7 @@ boolean P_CanUnlockGenDoor
         )
       )
       {
-        player->message = s_PD_ALL6; // Ty 03/27/98 - externalized
+        player->message = PD_ALL6; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -949,7 +947,7 @@ boolean P_CanUnlockGenDoor
         )
       )
       {
-        player->message = s_PD_ALL3; // Ty 03/27/98 - externalized
+        player->message = PD_ALL3; // Ty 03/27/98 - externalized
         S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
         return false;
       }
@@ -1135,7 +1133,6 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
       case MT_HEADSHOT:
       case MT_BRUISERSHOT:
         return;
-        break;
 
       default: break;
     }
@@ -2238,7 +2235,7 @@ void P_PlayerInSpecialSector (player_t* player)
       default:
         //jff 1/24/98 Don't exit as DOOM2 did, just ignore
         break;
-      };
+      }
   }
   else //jff 3/14/98 handle extended sector types for secrets and damage
   {
@@ -2798,24 +2795,6 @@ static void P_SpawnScrollers(void)
 
 // e6y
 // restored boom's friction code
-
-/////////////////////////////
-//
-// Add a friction thinker to the thinker list
-//
-// Add_Friction adds a new friction thinker to the list of active thinkers.
-//
-
-static void Add_Friction(int friction, int movefactor, int affectee)
-    {
-    friction_t *f = Z_Malloc(sizeof *f, PU_LEVSPEC, 0);
-
-    f->thinker.function/*.acp1*/ = /*(actionf_p1) */T_Friction;
-    f->friction = friction;
-    f->movefactor = movefactor;
-    f->affectee = affectee;
-    P_AddThinker(&f->thinker);
-    }
 
 /////////////////////////////
 //

@@ -836,7 +836,7 @@ static void WI_drawTimeStats(int cnt_time, int cnt_total_time, int cnt_par)
   // killough 2/22/98: skip drawing par times on pwads
   // Ty 03/17/98: unless pars changed with deh patch
 
-  if (!(modifiedgame && !deh_pars))
+  if (!(modifiedgame))
   {
     if (wbs->epsd < 3)
     {

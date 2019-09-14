@@ -46,7 +46,6 @@
 #include "p_spec.h"
 #include "am_map.h"
 #include "dstrings.h"
-#include "d_deh.h"    // Ty 03/27/98 - externalizations
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "g_game.h"
 
@@ -527,15 +526,15 @@ boolean AM_Responder
       automapmode ^= am_follow;     // CPhipps - put all automap mode stuff into one enum
       f_oldloc.x = INT_MAX;
       // Ty 03/27/98 - externalized
-      plr->message = (automapmode & am_follow) ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF;
+      plr->message = (automapmode & am_follow) ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF;
     }                                                         //    |
     else if (ch == key_map_rotate) {
       automapmode ^= am_rotate;
-      plr->message = (automapmode & am_rotate) ? s_AMSTR_ROTATEON : s_AMSTR_ROTATEOFF;
+      plr->message = (automapmode & am_rotate) ? AMSTR_ROTATEON : AMSTR_ROTATEOFF;
     }
     else if (ch == key_map_overlay) {
       automapmode ^= am_overlay;
-      plr->message = (automapmode & am_overlay) ? s_AMSTR_OVERLAYON : s_AMSTR_OVERLAYOFF;
+      plr->message = (automapmode & am_overlay) ? AMSTR_OVERLAYON : AMSTR_OVERLAYOFF;
     }
     else                                                        // phares
     {

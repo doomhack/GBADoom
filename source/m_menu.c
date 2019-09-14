@@ -50,7 +50,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "m_menu.h"
-#include "d_deh.h"
 #include "m_misc.h"
 #include "lprintf.h"
 #include "am_map.h"
@@ -310,7 +309,7 @@ void M_Episode(int choice)
 {
   if ( (gamemode == shareware) && choice)
   {
-    M_StartMessage(s_SWSTRING,NULL,false); // Ty 03/27/98 - externalized
+    M_StartMessage(SWSTRING,NULL,false); // Ty 03/27/98 - externalized
     return;
   }
 
@@ -415,7 +414,7 @@ void M_ChooseSkill(int choice)
 {
   if (choice == nightmare)
     {   // Ty 03/27/98 - externalized
-      M_StartMessage(s_NIGHTMARE,M_VerifyNightmare,true);
+      M_StartMessage(NIGHTMARE,M_VerifyNightmare,true);
       return;
     }
 
@@ -591,7 +590,7 @@ void M_ReadSaveStrings(void)
     G_SaveGameName(name,sizeof(name),i,false);
     fp = fopen(name,"rb");
     if (!fp) {   // Ty 03/27/98 - externalized:
-      strcpy(&savegamestrings[i][0],s_EMPTYSTRING);
+      strcpy(&savegamestrings[i][0],EMPTYSTRING);
       LoadMenue[i].status = 0;
       continue;
     }
@@ -643,7 +642,7 @@ void M_SaveSelect(int choice)
 
   saveSlot = choice;
   strcpy(saveOldString,savegamestrings[choice]);
-  if (!strcmp(savegamestrings[choice],s_EMPTYSTRING)) // Ty 03/27/98 - externalized
+  if (!strcmp(savegamestrings[choice],EMPTYSTRING)) // Ty 03/27/98 - externalized
     savegamestrings[choice][0] = 0;
   saveCharIndex = strlen(savegamestrings[choice]);
 }
@@ -656,7 +655,7 @@ void M_SaveGame (int choice)
   // killough 10/6/98: allow savegames during single-player demo playback
   if (!usergame && (!demoplayback))
     {
-    M_StartMessage(s_SAVEDEAD,NULL,false); // Ty 03/27/98 - externalized
+    M_StartMessage(SAVEDEAD,NULL,false); // Ty 03/27/98 - externalized
     return;
     }
 
@@ -836,7 +835,7 @@ static void M_EndGameResponse(int ch)
 
 void M_EndGame(int choice)
 {
-  M_StartMessage(s_ENDGAME,M_EndGameResponse,true); // Ty 03/27/98 - externalized
+  M_StartMessage(ENDGAME,M_EndGameResponse,true); // Ty 03/27/98 - externalized
 }
 
 /////////////////////////////
@@ -851,9 +850,9 @@ void M_ChangeMessages(int choice)
   showMessages = 1 - showMessages;
 
   if (!showMessages)
-    players[consoleplayer].message = s_MSGOFF; // Ty 03/27/98 - externalized
+    players[consoleplayer].message = MSGOFF; // Ty 03/27/98 - externalized
   else
-    players[consoleplayer].message = s_MSGON ; // Ty 03/27/98 - externalized
+    players[consoleplayer].message = MSGON ; // Ty 03/27/98 - externalized
 
   message_dontfuckwithme = true;
 }

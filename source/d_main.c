@@ -70,7 +70,6 @@
 #include "r_draw.h"
 #include "r_main.h"
 #include "d_main.h"
-#include "d_deh.h"  // Ty 04/08/98 - Externalizations
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "am_map.h"
 
@@ -78,8 +77,6 @@ void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionalit
 static void D_PageDrawer(void);
 
 // CPhipps - removed wadfiles[] stuff
-
-boolean devparm;        // started game with -devparm
 
 // jff 1/24/98 add new versions of these variables to remember command line
 boolean clnomonsters;   // checkparm of -nomonsters
@@ -1152,8 +1149,6 @@ static void D_DoomMainSetup(void)
     fastparm = clfastparm = M_CheckParm ("-fast");
     // jff 1/24/98 end of set to both working and command line value
 
-    devparm = M_CheckParm ("-devparm");
-
     {
         // CPhipps - localise title variable
         // print title for every printed line
@@ -1196,10 +1191,6 @@ static void D_DoomMainSetup(void)
                           "It comes with ABSOLUTELY NO WARRANTY. See the file COPYING for details.\n",
                 version_date, doomverstr);
     }
-
-    if (devparm)
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"%s",D_DEVSTR);
 
     // turbo option
     if ((p=M_CheckParm ("-turbo")))
@@ -1294,41 +1285,6 @@ static void D_DoomMainSetup(void)
     lprintf(LO_INFO,"V_Init: allocate screens.\n");
     V_Init();
 
-
-
-    // e6y: DEH files preloaded in wrong order
-    // http://sourceforge.net/tracker/index.php?func=detail&aid=1418158&group_id=148658&atid=772943
-    // The dachaked stuff has been moved from above
-
-    // ty 03/09/98 do dehacked stuff
-    // Note: do this before any other since it is expected by
-    // the deh patch author that this is actually part of the EXE itself
-    // Using -deh in BOOM, others use -dehacked.
-    // Ty 03/18/98 also allow .bex extension.  .bex overrides if both exist.
-
-    D_BuildBEXTables(); // haleyjd
-
-    p = M_CheckParm ("-deh");
-    if (p)
-    {
-        char file[PATH_MAX+1];      // cph - localised
-        // the parms after p are deh/bex file names,
-        // until end of parms or another - preceded parm
-        // Ty 04/11/98 - Allow multiple -deh files in a row
-
-        while (++p != myargc && *myargv[p] != '-')
-        {
-            AddDefaultExtension(strcpy(file, myargv[p]), ".bex");
-            if (access(file, 0))  // nope
-            {
-                AddDefaultExtension(strcpy(file, myargv[p]), ".deh");
-                if (access(file, 0))  // still nope
-                    I_Error("D_DoomMainSetup: Cannot find .deh or .bex file named %s",myargv[p]);
-            }
-            // during the beta we have debug output to dehout.txt
-            ProcessDehFile(file,D_dehout(),0);
-        }
-    }
     // ty 03/09/98 end of do dehacked stuff
 
     // add any files specified on the command line with -file wadfile
@@ -1380,25 +1336,7 @@ static void D_DoomMainSetup(void)
 
     lprintf(LO_INFO,"\n");     // killough 3/6/98: add a newline, by popular demand :)
 
-    // e6y
-    // option to disable automatic loading of dehacked-in-wad lump
-    if (!M_CheckParm ("-nodeh"))
-        if ((p = W_CheckNumForName("DEHACKED")) != -1) // cph - add dehacked-in-a-wad support
-            ProcessDehFile(NULL, D_dehout(), p);
-
     V_InitColorTranslation(); //jff 4/24/98 load color translation lumps
-
-    // killough 2/22/98: copyright / "modified game" / SPA banners removed
-
-    // Ty 04/08/98 - Add 5 lines of misc. data, only if nonblank
-    // The expectation is that these will be set in a .bex file
-    //jff 9/3/98 use logical output routine
-    if (*startup1) lprintf(LO_INFO,"%s",startup1);
-    if (*startup2) lprintf(LO_INFO,"%s",startup2);
-    if (*startup3) lprintf(LO_INFO,"%s",startup3);
-    if (*startup4) lprintf(LO_INFO,"%s",startup4);
-    if (*startup5) lprintf(LO_INFO,"%s",startup5);
-    // End new startup strings
 
     //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"M_Init: Init miscellaneous info.\n");

@@ -159,10 +159,6 @@ static void R_InitTextures (void)
           // lump namespace problem.
 
           patchlookup[i] = (W_CheckNumForName)(name, ns_sprites);
-
-          if (patchlookup[i] == -1 && devparm)
-            //jff 8/3/98 use logical output routine
-            lprintf(LO_WARN,"\nWarning: patch %.8s, index %d does not exist",name,i);
         }
     }
   W_UnlockLumpNum(names_lump); // cph - release the lump
@@ -294,15 +290,6 @@ static void R_InitTextures (void)
 
   if (errors)
     I_Error("R_InitTextures: %d errors", errors);
-
-  // Precalculate whatever possible.
-  if (devparm) // cph - If in development mode, generate now so all errors are found at once
-    for (i=0 ; i<numtextures ; i++)
-    {
-      // proff - This is for the new renderer now
-      R_CacheTextureCompositePatchNum(i);
-      R_UnlockTextureCompositePatchNum(i);
-    }
 
   if (errors)
     I_Error("R_InitTextures: %d errors", errors);

@@ -43,7 +43,6 @@
 #include "dstrings.h"
 #include "r_main.h"
 #include "p_map.h"
-#include "d_deh.h"  // Ty 03/27/98 - externalized strings
 /* cph 2006/07/23 - needs direct access to thinkercap */
 #include "p_tick.h"
 
@@ -261,7 +260,7 @@ char buf[3];
   if (!isdigit(buf[0]) || !isdigit(buf[1]))
     return;
 
-  plyr->message = s_STSTR_MUS; // Ty 03/27/98 - externalized
+  plyr->message = STSTR_MUS; // Ty 03/27/98 - externalized
 
   if (gamemode == commercial)
     {
@@ -269,7 +268,7 @@ char buf[3];
 
       //jff 4/11/98 prevent IDMUS00 in DOOMII and IDMUS36 or greater
       if (musnum < mus_runnin ||  ((buf[0]-'0')*10 + buf[1]-'0') > 35)
-        plyr->message = s_STSTR_NOMUS; // Ty 03/27/98 - externalized
+        plyr->message = STSTR_NOMUS; // Ty 03/27/98 - externalized
       else
         {
           S_ChangeMusic(musnum, 1);
@@ -282,7 +281,7 @@ char buf[3];
 
       //jff 4/11/98 prevent IDMUS0x IDMUSx0 in DOOMI and greater than introa
       if (buf[0] < '1' || buf[1] < '1' || ((buf[0]-'1')*9 + buf[1]-'1') > 31)
-        plyr->message = s_STSTR_NOMUS; // Ty 03/27/98 - externalized
+        plyr->message = STSTR_NOMUS; // Ty 03/27/98 - externalized
       else
         {
           S_ChangeMusic(musnum, 1);
@@ -296,7 +295,7 @@ static void cheat_choppers()
 {
   plyr->weaponowned[wp_chainsaw] = true;
   plyr->powers[pw_invulnerability] = true;
-  plyr->message = s_STSTR_CHOPPERS; // Ty 03/27/98 - externalized
+  plyr->message = STSTR_CHOPPERS; // Ty 03/27/98 - externalized
 }
 
 static void cheat_god()
@@ -308,10 +307,10 @@ static void cheat_god()
         plyr->mo->health = god_health;  // Ty 03/09/98 - deh
 
       plyr->health = god_health;
-      plyr->message = s_STSTR_DQDON; // Ty 03/27/98 - externalized
+      plyr->message = STSTR_DQDON; // Ty 03/27/98 - externalized
     }
   else
-    plyr->message = s_STSTR_DQDOFF; // Ty 03/27/98 - externalized
+    plyr->message = STSTR_DQDOFF; // Ty 03/27/98 - externalized
 }
 
 // CPhipps - new health and armour cheat codes
@@ -321,7 +320,7 @@ static void cheat_health()
     if (plyr->mo)
       plyr->mo->health = mega_health;
     plyr->health = mega_health;
-    plyr->message = s_STSTR_BEHOLDX; // Ty 03/27/98 - externalized
+    plyr->message = STSTR_BEHOLDX; // Ty 03/27/98 - externalized
   }
 }
 
@@ -329,7 +328,7 @@ static void cheat_megaarmour()
 {
   plyr->armorpoints = idfa_armor;      // Ty 03/09/98 - deh
   plyr->armortype = idfa_armor_class;  // Ty 03/09/98 - deh
-  plyr->message = s_STSTR_BEHOLDX; // Ty 03/27/98 - externalized
+  plyr->message = STSTR_BEHOLDX; // Ty 03/27/98 - externalized
 }
 
 static void cheat_fa()
@@ -356,7 +355,7 @@ static void cheat_fa()
     if (i!=am_cell || gamemode!=shareware)
       plyr->ammo[i] = plyr->maxammo[i];
 
-  plyr->message = s_STSTR_FAADDED;
+  plyr->message = STSTR_FAADDED;
 }
 
 static void cheat_k()
@@ -383,7 +382,7 @@ static void cheat_noclip()
   // no clipping mode cheat
 
   plyr->message = (plyr->cheats ^= CF_NOCLIP) & CF_NOCLIP ?
-    s_STSTR_NCON : s_STSTR_NCOFF; // Ty 03/27/98 - externalized
+    STSTR_NCON : STSTR_NCOFF; // Ty 03/27/98 - externalized
 }
 
 // 'behold?' power-up cheats (modified for infinite duration -- killough)
@@ -397,13 +396,13 @@ static void cheat_pw(int pw)
       if (pw != pw_strength)
         plyr->powers[pw] = -1;      // infinite duration -- killough
     }
-  plyr->message = s_STSTR_BEHOLDX; // Ty 03/27/98 - externalized
+  plyr->message = STSTR_BEHOLDX; // Ty 03/27/98 - externalized
 }
 
 // 'behold' power-up menu
 static void cheat_behold()
 {
-  plyr->message = s_STSTR_BEHOLD; // Ty 03/27/98 - externalized
+  plyr->message = STSTR_BEHOLD; // Ty 03/27/98 - externalized
 }
 
 // 'clev' change-level cheat
@@ -434,7 +433,7 @@ static void cheat_clev(char buf[3])
 
   idmusnum = -1; //jff 3/17/98 revert to normal level music on IDCLEV
 
-  plyr->message = s_STSTR_CLEV; // Ty 03/27/98 - externalized
+  plyr->message = STSTR_CLEV; // Ty 03/27/98 - externalized
 
   G_DeferedInitNew(gameskill, epsd, map);
 }

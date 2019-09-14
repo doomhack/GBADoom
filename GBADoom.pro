@@ -22,7 +22,6 @@ SOURCES += \
         source/am_map.c \
         source/audio.cpp \
         source/d_client.c \
-        source/d_deh.c \
         source/d_items.c \
         source/d_main.c \
         source/doomdef.c \
@@ -111,7 +110,6 @@ HEADERS += \
     include/am_map.h \
     include/audio.h \
     include/config.h \
-    include/d_deh.h \
     include/d_englsh.h \
     include/d_event.h \
     include/d_items.h \

@@ -51,7 +51,7 @@
 //  atkstate, i.e. attack/fire/hit frame
 //  flashstate, muzzle flash
 //
-weaponinfo_t    weaponinfo[NUMWEAPONS] =
+const weaponinfo_t weaponinfo[NUMWEAPONS] =
 {
   {
     // fist
