@@ -459,10 +459,10 @@ void D_DoAdvanceDemo(void)
   gamestate = GS_DEMOSCREEN;
 
 
-  if (!demostates[++_g->demosequence][gamemode].func)
+  if (!demostates[++_g->demosequence][_g->gamemode].func)
       _g->demosequence = 0;
-  demostates[_g->demosequence][gamemode].func
-          (demostates[_g->demosequence][gamemode].name);
+  demostates[_g->demosequence][_g->gamemode].func
+          (demostates[_g->demosequence][_g->gamemode].name);
 }
 
 //
@@ -589,20 +589,20 @@ static void IdentifyVersion()
 {
     if(doom_iwad && (doom_iwad_len > 0))
     {
-        CheckIWAD2(doom_iwad, doom_iwad_len, &gamemode, &haswolflevels);
+        CheckIWAD2(doom_iwad, doom_iwad_len, &_g->gamemode, &haswolflevels);
 
         /* jff 8/23/98 set gamemission global appropriately in all cases
          * cphipps 12/1999 - no version output here, leave that to the caller
          */
-        switch(gamemode)
+        switch(_g->gamemode)
         {
             case retail:
             case registered:
             case shareware:
-                gamemission = doom;
+                _g->gamemission = doom;
                 break;
             case commercial:
-                gamemission = doom2;
+                _g->gamemission = doom2;
 
                 /*
                  * TODO: Detect Plutonia and TNT here.
@@ -615,11 +615,11 @@ static void IdentifyVersion()
             break;
 
             default:
-                gamemission = none;
+                _g->gamemission = none;
                 break;
         }
 
-        if (gamemode == indetermined)
+        if (_g->gamemode == indetermined)
         {
             //jff 9/3/98 use logical output routine
             lprintf(LO_WARN,"Unknown Game Version, may not work\n");
@@ -651,7 +651,7 @@ static void D_DoomMainSetup(void)
         // cph - code cleaned and made smaller
         const char* doomverstr;
 
-        switch ( gamemode ) {
+        switch ( _g->gamemode ) {
         case retail:
             doomverstr = "The Ultimate DOOM";
             break;
@@ -662,7 +662,7 @@ static void D_DoomMainSetup(void)
             doomverstr = "DOOM Registered";
             break;
         case commercial:  // Ty 08/27/98 - fixed gamemode vs gamemission
-            switch (gamemission)
+            switch (_g->gamemission)
             {
             case pack_plut:
                 doomverstr = "DOOM 2: Plutonia Experiment";
@@ -787,7 +787,7 @@ void GetFirstMap(int *ep, int *map)
     {
         *ep = 1;
         *map = 1; // default E1M1 or MAP01
-        if (gamemode == commercial)
+        if (_g->gamemode == commercial)
         {
             for (i=1;!done && i<33;i++)  // Ty 09/13/98 - add use of !done
             {

@@ -310,10 +310,10 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         gamekeydown[key_weapon3] ? wp_shotgun :
         gamekeydown[key_weapon4] ? wp_chaingun :
         gamekeydown[key_weapon5] ? wp_missile :
-        gamekeydown[key_weapon6] && gamemode != shareware ? wp_plasma :
-        gamekeydown[key_weapon7] && gamemode != shareware ? wp_bfg :
+        gamekeydown[key_weapon6] && _g->gamemode != shareware ? wp_plasma :
+        gamekeydown[key_weapon7] && _g->gamemode != shareware ? wp_bfg :
         gamekeydown[key_weapon8] ? wp_chainsaw :
-        (gamekeydown[key_weapon9] && gamemode == commercial) ? wp_supershotgun :
+        (gamekeydown[key_weapon9] && _g->gamemode == commercial) ? wp_supershotgun :
         wp_nochange;
 
       // killough 3/22/98: For network and demo consistency with the
@@ -347,7 +347,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           // in use, or if the SSG is not already in use and the
           // player prefers it.
 
-          if (newweapon == wp_shotgun && gamemode == commercial &&
+          if (newweapon == wp_shotgun && _g->gamemode == commercial &&
               player->weaponowned[wp_supershotgun] &&
               (!player->weaponowned[wp_shotgun] ||
                player->readyweapon == wp_shotgun ||
@@ -412,7 +412,7 @@ static void G_DoLoadLevel (void)
 
   // DOOM determines the sky texture to be used
   // depending on the current episode, and the game version.
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     // || gamemode == pack_tnt   //jff 3/27/98 sorry guys pack_tnt,pack_plut
     // || gamemode == pack_plut) //aren't gamemodes, this was matching retail
     {
@@ -958,7 +958,7 @@ void G_ExitLevel (void)
 
 void G_SecretExitLevel (void)
 {
-  if (gamemode!=commercial || haswolflevels)
+  if (_g->gamemode!=commercial || haswolflevels)
     secretexit = true;
   else
     secretexit = false;
@@ -982,7 +982,7 @@ void G_DoCompleted (void)
   if (_g->automapmode & am_active)
     AM_Stop();
 
-  if (gamemode != commercial) // kilough 2/7/98
+  if (_g->gamemode != commercial) // kilough 2/7/98
     switch(gamemap)
       {
   // cph - Remove ExM8 special case, so it gets summary screen displayed
@@ -997,7 +997,7 @@ void G_DoCompleted (void)
   wminfo.last = gamemap -1;
 
   // wminfo.next is 0 biased, unlike gamemap
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     {
       if (secretexit)
         switch(gamemap)
@@ -1050,7 +1050,7 @@ void G_DoCompleted (void)
   wminfo.maxsecret = totalsecret;
   wminfo.maxfrags = 0;
 
-  if ( gamemode == commercial )
+  if ( _g->gamemode == commercial )
     wminfo.partime = TICRATE*cpars[gamemap-1];
   else
     wminfo.partime = TICRATE*pars[gameepisode][gamemap];
@@ -1081,7 +1081,7 @@ void G_DoCompleted (void)
   // lmpwatch.pl engine-side demo testing support
   // print "FINISHED: <mapname>" when the player exits the current map
   if (nodrawers && (demoplayback || timingdemo)) {
-    if (gamemode == commercial)
+    if (_g->gamemode == commercial)
       lprintf(LO_INFO, "FINISHED: MAP%02d\n", gamemap);
     else
       lprintf(LO_INFO, "FINISHED: E%dM%d\n", gameepisode, gamemap);
@@ -1101,7 +1101,7 @@ void G_WorldDone (void)
   if (secretexit)
     players[consoleplayer].didsecret = true;
 
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     {
       switch (gamemap)
         {
@@ -1173,12 +1173,12 @@ static uint_64_t G_Signature(void)
 
   if (!computed) {
    computed = true;
-   if (gamemode == commercial)
+   if (_g->gamemode == commercial)
     for (map = haswolflevels ? 32 : 30; map; map--)
       sprintf(name, "map%02d", map), s = G_UpdateSignature(s, name);
    else
-    for (episode = gamemode==retail ? 4 :
-     gamemode==shareware ? 1 : 3; episode; episode--)
+    for (episode = _g->gamemode==retail ? 4 :
+     _g->gamemode==shareware ? 1 : 3; episode; episode--)
       for (map = 9; map; map--)
   sprintf(name, "E%dM%d", episode, map), s = G_UpdateSignature(s, name);
   }
@@ -1608,13 +1608,13 @@ void G_InitNew(skill_t skill, int episode, int map)
   if (episode < 1)
     episode = 1;
 
-  if (gamemode == retail)
+  if (_g->gamemode == retail)
     {
       if (episode > 4)
         episode = 4;
     }
   else
-    if (gamemode == shareware)
+    if (_g->gamemode == shareware)
       {
         if (episode > 1)
           episode = 1; // only start episode 1 on shareware
@@ -1625,7 +1625,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   if (map < 1)
     map = 1;
-  if (map > 9 && gamemode != commercial)
+  if (map > 9 && _g->gamemode != commercial)
     map = 9;
 
   G_SetFastParms(skill == sk_nightmare);  // killough 4/10/98

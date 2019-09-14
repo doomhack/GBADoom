@@ -86,7 +86,7 @@ void F_StartFinale (void)
   // Okay - IWAD dependend stuff.
   // This has been changed severly, and
   //  some stuff might have changed in the process.
-  switch ( gamemode )
+  switch ( _g->gamemode )
   {
     // DOOM 1 - E1, E3 or E4, but each nine missions
     case shareware:
@@ -130,33 +130,33 @@ void F_StartFinale (void)
       {
         case 6:
              finaleflat = "SLIME16";
-             finaletext = (gamemission==pack_tnt)  ? T1TEXT :
-                          (gamemission==pack_plut) ? P1TEXT : C1TEXT;
+             finaletext = (_g->gamemission==pack_tnt)  ? T1TEXT :
+                          (_g->gamemission==pack_plut) ? P1TEXT : C1TEXT;
              break;
         case 11:
              finaleflat = "RROCK14";
-             finaletext = (gamemission==pack_tnt)  ? T2TEXT :
-                          (gamemission==pack_plut) ? P2TEXT : C2TEXT;
+             finaletext = (_g->gamemission==pack_tnt)  ? T2TEXT :
+                          (_g->gamemission==pack_plut) ? P2TEXT : C2TEXT;
              break;
         case 20:
              finaleflat = "RROCK07";
-             finaletext = (gamemission==pack_tnt)  ? T3TEXT :
-                          (gamemission==pack_plut) ? P3TEXT : C3TEXT;
+             finaletext = (_g->gamemission==pack_tnt)  ? T3TEXT :
+                          (_g->gamemission==pack_plut) ? P3TEXT : C3TEXT;
              break;
         case 30:
              finaleflat = "RROCK17";
-             finaletext = (gamemission==pack_tnt)  ? T4TEXT :
-                          (gamemission==pack_plut) ? P4TEXT : C4TEXT;
+             finaletext = (_g->gamemission==pack_tnt)  ? T4TEXT :
+                          (_g->gamemission==pack_plut) ? P4TEXT : C4TEXT;
              break;
         case 15:
              finaleflat = "RROCK13";
-             finaletext = (gamemission==pack_tnt)  ? T5TEXT :
-                          (gamemission==pack_plut) ? P5TEXT : C5TEXT;
+             finaletext = (_g->gamemission==pack_tnt)  ? T5TEXT :
+                          (_g->gamemission==pack_plut) ? P5TEXT : C5TEXT;
              break;
         case 31:
              finaleflat = "RROCK19";
-             finaletext = (gamemission==pack_tnt)  ? T6TEXT :
-                          (gamemission==pack_plut) ? P6TEXT : C6TEXT;
+             finaletext = (_g->gamemission==pack_tnt)  ? T6TEXT :
+                          (_g->gamemission==pack_plut) ? P6TEXT : C6TEXT;
              break;
         default:
              // Ouch.
@@ -229,7 +229,7 @@ void F_Ticker(void)
       if (finalecount > strlen(finaletext)*speed +
           (midstage ? NEWTEXTWAIT : TEXTWAIT) ||
           (midstage && acceleratestage)) {
-        if (gamemode != commercial)       // Doom 1 / Ultimate Doom episode end
+        if (_g->gamemode != commercial)       // Doom 1 / Ultimate Doom episode end
           {                               // with enough time, it's automatic
             finalecount = 0;
             finalestage = 1;
@@ -644,7 +644,7 @@ void F_Drawer (void)
     {
       // CPhipps - patch drawing updated
       case 1:
-           if ( gamemode == retail )
+           if ( _g->gamemode == retail )
              V_DrawNamePatch(0, 0, 0, "CREDIT", CR_DEFAULT, VPT_STRETCH);
            else
              V_DrawNamePatch(0, 0, 0, "HELP2", CR_DEFAULT, VPT_STRETCH);

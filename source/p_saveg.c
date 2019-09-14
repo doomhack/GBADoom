@@ -551,7 +551,7 @@ void P_UnArchiveThinkers (void)
   free(mobj_p);    // free translation table
 
   // killough 3/26/98: Spawn icon landings:
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     P_SpawnBrainTargets();
 }
 

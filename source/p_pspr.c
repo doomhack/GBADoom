@@ -44,6 +44,8 @@
 #include "d_event.h"
 #include "r_demo.h"
 
+#include "global_data.h"
+
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
 #define WEAPONBOTTOM (FRACUNIT*128)
@@ -189,11 +191,11 @@ int P_SwitchWeapon(player_t *player)
         break;
       case 6:
         if (player->weaponowned[wp_plasma] && player->ammo[am_cell] &&
-            gamemode != shareware)
+            _g->gamemode != shareware)
           newweapon = wp_plasma;
         break;
       case 7:
-        if (player->weaponowned[wp_bfg] && gamemode != shareware &&
+        if (player->weaponowned[wp_bfg] && _g->gamemode != shareware &&
             player->ammo[am_cell] >= (40))
           newweapon = wp_bfg;
         break;
@@ -202,7 +204,7 @@ int P_SwitchWeapon(player_t *player)
           newweapon = wp_chainsaw;
         break;
       case 9:
-        if (player->weaponowned[wp_supershotgun] && gamemode == commercial &&
+        if (player->weaponowned[wp_supershotgun] && _g->gamemode == commercial &&
             player->ammo[am_shell] >= (2))
           newweapon = wp_supershotgun;
         break;

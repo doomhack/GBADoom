@@ -21,6 +21,14 @@ _g->wipegamestate = GS_DEMOSCREEN;
 _g->oldgamestate = -1;
 
 
+//******************************************************************************
+//doomstat.c
+//******************************************************************************
+
+// Game Mode - identify IWAD as shareware, retail etc.
+_g->gamemode = indetermined;
+_g->gamemission = doom;
+
 
 
 #endif // GLOBAL_INIT_H

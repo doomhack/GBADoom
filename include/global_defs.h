@@ -91,5 +91,13 @@ const char *pagename; // CPhipps - const
 
 
 //******************************************************************************
+//doomstat.c
+//******************************************************************************
+
+// Game Mode - identify IWAD as shareware, retail etc.
+GameMode_t gamemode;
+GameMission_t   gamemission;
+
+//******************************************************************************
 
 #endif // GLOBAL_DEFS_H

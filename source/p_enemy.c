@@ -49,6 +49,8 @@
 #include "m_bbox.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 static mobj_t *current_actor;
 
 typedef enum {
@@ -2012,7 +2014,7 @@ void A_BossDeath(mobj_t *mo)
   line_t    junk;
   int       i;
 
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     {
       if (gamemap != 7)
         return;
@@ -2098,7 +2100,7 @@ void A_BossDeath(mobj_t *mo)
       }
 
   // victory!
-  if ( gamemode == commercial)
+  if ( _g->gamemode == commercial)
     {
       if (gamemap == 7)
         {
@@ -2366,7 +2368,7 @@ void A_SpawnFly(mobj_t *mo)
 void A_PlayerScream(mobj_t *mo)
 {
   int sound = sfx_pldeth;  // Default death sound.
-  if (gamemode != shareware && mo->health < -50)
+  if (_g->gamemode != shareware && mo->health < -50)
     sound = sfx_pdiehi;   // IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
   S_StartSound(mo, sound);
 }

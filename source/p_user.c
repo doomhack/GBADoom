@@ -41,6 +41,8 @@
 #include "p_user.h"
 #include "r_demo.h"
 
+#include "global_data.h"
+
 // Index of the special effects (INVUL inverse) map.
 
 #define INVERSECOLORMAP 32
@@ -347,7 +349,7 @@ void P_PlayerThink (player_t* player)
       //  even if cheated.
 
       if ((newweapon != wp_plasma && newweapon != wp_bfg)
-          || (gamemode != shareware) )
+          || (_g->gamemode != shareware) )
         player->pendingweapon = newweapon;
     }
 

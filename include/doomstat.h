@@ -46,12 +46,6 @@
 #pragma interface
 #endif
 
-// -----------------------------------------------------
-// Game Mode - identify IWAD as shareware, retail etc.
-//
-
-extern GameMode_t gamemode;
-extern GameMission_t  gamemission;
 
 // -------------------------------------------
 // Language.

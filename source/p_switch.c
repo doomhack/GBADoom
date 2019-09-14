@@ -40,6 +40,7 @@
 #include "sounds.h"
 #include "lprintf.h"
 
+#include "global_data.h"
 
 #define MAXSWITCHES		50
 
@@ -113,10 +114,10 @@ void P_InitSwitchList(void)
 
     episode = 1;
 
-    if (gamemode == registered)
+    if (_g->gamemode == registered)
         episode = 2;
     else
-        if ( gamemode == commercial )
+        if ( _g->gamemode == commercial )
             episode = 3;
 
     for (index = 0,i = 0;i < MAXSWITCHES;i++)

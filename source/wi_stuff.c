@@ -44,6 +44,8 @@
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "r_draw.h"
 
+#include "global_data.h"
+
 // Ty 03/17/98: flag that new par times have been loaded in d_deh
 extern boolean deh_pars;
 
@@ -396,7 +398,7 @@ static void WI_endNetgameStats(void);
  */
 void WI_levelNameLump(int epis, int map, char* buf)
 {
-  if (gamemode == commercial) {
+  if (_g->gamemode == commercial) {
     sprintf(buf, "CWILV%2.2d", map);
   } else {
     sprintf(buf, "WILV%d%d", epis, map);
@@ -413,7 +415,7 @@ static void WI_slamBackground(void)
 {
   char  name[9];  // limited to 8 characters
 
-  if (gamemode == commercial || (gamemode == retail && wbs->epsd == 3))
+  if (_g->gamemode == commercial || (_g->gamemode == retail && wbs->epsd == 3))
     strcpy(name, "INTERPIC");
   else
     sprintf(name, "WIMAP%d", wbs->epsd);
@@ -561,7 +563,7 @@ void WI_initAnimatedBack(void)
   int   i;
   anim_t* a;
 
-  if (gamemode == commercial)  // no animation for DOOM2
+  if (_g->gamemode == commercial)  // no animation for DOOM2
     return;
 
   if (wbs->epsd > 2)
@@ -598,7 +600,7 @@ void WI_updateAnimatedBack(void)
   int   i;
   anim_t* a;
 
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     return;
 
   if (wbs->epsd > 2)
@@ -655,7 +657,7 @@ void WI_drawAnimatedBack(void)
   int     i;
   anim_t*   a;
 
-  if (gamemode==commercial) //jff 4/25/98 Someone forgot commercial an enum
+  if (_g->gamemode==commercial) //jff 4/25/98 Someone forgot commercial an enum
     return;
 
   if (wbs->epsd > 2)
@@ -870,7 +872,7 @@ static boolean    snl_pointeron = false;
 //
 void WI_initShowNextLoc(void)
 {
-  if ((gamemode != commercial) && (gamemap == 8)) {
+  if ((_g->gamemode != commercial) && (gamemap == 8)) {
     G_WorldDone();
     return;
   }
@@ -925,7 +927,7 @@ void WI_drawShowNextLoc(void)
   // draw animated background
   WI_drawAnimatedBack();
 
-  if ( gamemode != commercial)
+  if ( _g->gamemode != commercial)
   {
     if (wbs->epsd > 2)
     {
@@ -949,7 +951,7 @@ void WI_drawShowNextLoc(void)
   }
 
   // draws which level you are entering..
-  if ( (gamemode != commercial)
+  if ( (_g->gamemode != commercial)
      || wbs->next != 30)  // check for MAP30 end game
   WI_drawEL();
 }
@@ -1140,7 +1142,7 @@ void WI_updateDeathmatchStats(void)
     {
       S_StartSound(0, sfx_slop);
 
-      if ( gamemode == commercial)
+      if ( _g->gamemode == commercial)
         WI_initNoState();
       else
         WI_initShowNextLoc();
@@ -1446,7 +1448,7 @@ void WI_updateNetgameStats(void)
     if (acceleratestage)
     {
       S_StartSound(0, sfx_sgcock);
-      if ( gamemode == commercial )
+      if ( _g->gamemode == commercial )
         WI_initNoState();
       else
         WI_initShowNextLoc();
@@ -1670,7 +1672,7 @@ void WI_updateStats(void)
     {
       S_StartSound(0, sfx_sgcock);
 
-      if (gamemode == commercial)
+      if (_g->gamemode == commercial)
         WI_initNoState();
       else
         WI_initShowNextLoc();
@@ -1777,7 +1779,7 @@ void WI_Ticker(void)
   if (bcnt == 1)
   {
     // intermission music
-    if ( gamemode == commercial )
+    if ( _g->gamemode == commercial )
       S_ChangeMusic(mus_dm2int, true);
     else
       S_ChangeMusic(mus_inter, true);
@@ -1820,7 +1822,7 @@ void WI_loadData(void)
   char  name[9];  // limited to 8 characters
   anim_t* a;
 
-  if (gamemode != commercial)
+  if (_g->gamemode != commercial)
   {
     if (wbs->epsd < 3)
     {
@@ -1922,7 +1924,7 @@ void WI_initVariables(wbstartstruct_t* wbstartstruct)
   if (!wbs->maxitems)
     wbs->maxitems = 1;
 
-  if ( gamemode != retail )
+  if ( _g->gamemode != retail )
     if (wbs->epsd > 2)
       wbs->epsd -= 3;
 }

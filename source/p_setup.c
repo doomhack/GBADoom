@@ -52,6 +52,8 @@
 #include "v_video.h"
 #include "r_demo.h"
 
+#include "global_data.h"
+
 //
 // MAP related Lookup tables.
 // Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
@@ -1501,7 +1503,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   //    W_Reload ();     killough 1/31/98: W_Reload obsolete
 
   // find map name
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
   {
     sprintf(lumpname, "map%02d", map);           // killough 1/24/98: simplify
     sprintf(gl_lumpname, "gl_map%02d", map);    // figgi
@@ -1597,7 +1599,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   }
 
   // killough 3/26/98: Spawn icon landings:
-  if (gamemode==commercial)
+  if (_g->gamemode==commercial)
     P_SpawnBrainTargets();
 
   // clear special respawning que

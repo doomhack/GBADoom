@@ -378,7 +378,7 @@ void R_FillBackScreen (void)
 	if (scaledviewwidth == SCREENWIDTH)
 		return;
 
-	V_DrawBackground(gamemode == commercial ? "GRNROCK" : "FLOOR7_2", 1);
+    V_DrawBackground(_g->gamemode == commercial ? "GRNROCK" : "FLOOR7_2", 1);
 
 	for (x=0; x<scaledviewwidth; x+=8)
 		V_DrawNamePatch(viewwindowx+x,viewwindowy-8,1,"brdr_t", CR_DEFAULT, VPT_NONE);

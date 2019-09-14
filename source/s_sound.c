@@ -47,6 +47,8 @@
 #include "w_wad.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 // when to clip out sounds
 // Does not fit the large outdoor areas.
 #define S_CLIPPING_DIST (1200<<FRACBITS)
@@ -180,7 +182,7 @@ void S_Start(void)
   if (idmusnum!=-1)
     mnum = idmusnum; //jff 3/17/98 reload IDMUS music if not -1
   else
-    if (gamemode == commercial)
+    if (_g->gamemode == commercial)
       mnum = mus_runnin + gamemap - 1;
     else
       {

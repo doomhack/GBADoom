@@ -264,7 +264,7 @@ char buf[3];
 
   plyr->message = STSTR_MUS; // Ty 03/27/98 - externalized
 
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     {
       musnum = mus_runnin + (buf[0]-'0')*10 + buf[1]-'0' - 1;
 
@@ -349,12 +349,12 @@ static void cheat_fa()
 
   // You can't own weapons that aren't in the game // phares 02/27/98
   for (i=0;i<NUMWEAPONS;i++)
-    if (!(((i == wp_plasma || i == wp_bfg) && gamemode == shareware) ||
-          (i == wp_supershotgun && gamemode != commercial)))
+    if (!(((i == wp_plasma || i == wp_bfg) && _g->gamemode == shareware) ||
+          (i == wp_supershotgun && _g->gamemode != commercial)))
       plyr->weaponowned[i] = true;
 
   for (i=0;i<NUMAMMO;i++)
-    if (i!=am_cell || gamemode!=shareware)
+    if (i!=am_cell || _g->gamemode!=shareware)
       plyr->ammo[i] = plyr->maxammo[i];
 
   plyr->message = STSTR_FAADDED;
@@ -412,7 +412,7 @@ static void cheat_clev(char buf[3])
 {
   int epsd, map;
 
-  if (gamemode == commercial)
+  if (_g->gamemode == commercial)
     {
       epsd = 1; //jff was 0, but espd is 1-based
       map = (buf[0] - '0')*10 + buf[1] - '0';
@@ -425,10 +425,10 @@ static void cheat_clev(char buf[3])
 
   // Catch invalid maps.
   if (epsd < 1 || map < 1 ||   // Ohmygod - this is not going to work.
-      (gamemode == retail     && (epsd > 4 || map > 9  )) ||
-      (gamemode == registered && (epsd > 3 || map > 9  )) ||
-      (gamemode == shareware  && (epsd > 1 || map > 9  )) ||
-      (gamemode == commercial && (epsd > 1 || map > 32 )) )  //jff no 33 and 34
+      (_g->gamemode == retail     && (epsd > 4 || map > 9  )) ||
+      (_g->gamemode == registered && (epsd > 3 || map > 9  )) ||
+      (_g->gamemode == shareware  && (epsd > 1 || map > 9  )) ||
+      (_g->gamemode == commercial && (epsd > 1 || map > 32 )) )  //jff no 33 and 34
     return;                                                  //8/14/98 allowed
 
   // So be it.
@@ -560,7 +560,7 @@ static void cheat_tntkeyxx(int key)
 
 static void cheat_tntweap()
 {                                   // Ty 03/27/98 - *not* externalized
-  plyr->message = gamemode==commercial ?           // killough 2/28/98
+  plyr->message = _g->gamemode==commercial ?           // killough 2/28/98
     "Weapon number 1-9" : "Weapon number 1-8";
 }
 
@@ -569,8 +569,8 @@ char buf[3];
 {
   int w = *buf - '1';
 
-  if ((w==wp_supershotgun && gamemode!=commercial) ||      // killough 2/28/98
-      ((w==wp_bfg || w==wp_plasma) && gamemode==shareware))
+  if ((w==wp_supershotgun && _g->gamemode!=commercial) ||      // killough 2/28/98
+      ((w==wp_bfg || w==wp_plasma) && _g->gamemode==shareware))
     return;
 
   if (w==wp_fist)           // make '1' apply beserker strength toggle

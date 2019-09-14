@@ -48,6 +48,7 @@
 #include "lprintf.h"
 #include "r_demo.h"
 
+#include "global_data.h"
 //
 // P_SetMobjState
 // Returns true if the mobj is still present.
@@ -987,7 +988,7 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
 boolean P_IsDoomnumAllowed(int doomnum)
 {
   // Do not spawn cool, new monsters if !commercial
-  if (gamemode != commercial)
+  if (_g->gamemode != commercial)
     switch(doomnum)
       {
       case 64:  // Archvile

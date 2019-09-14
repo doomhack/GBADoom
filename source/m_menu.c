@@ -59,6 +59,8 @@
 #include "i_sound.h"
 #include "r_demo.h"
 
+#include "global_data.h"
+
 extern patchnum_t hu_font[HU_FONTSIZE];
 extern boolean  message_dontfuckwithme;
 
@@ -305,14 +307,14 @@ void M_DrawEpisode(void)
 
 void M_Episode(int choice)
 {
-  if ( (gamemode == shareware) && choice)
+  if ( (_g->gamemode == shareware) && choice)
   {
     M_StartMessage(SWSTRING,NULL,false); // Ty 03/27/98 - externalized
     return;
   }
 
   // Yet another hack...
-  if ( (gamemode == registered) && (choice > 2))
+  if ( (_g->gamemode == registered) && (choice > 2))
     {
     lprintf( LO_WARN,
      "M_Episode: 4th episode requires UltimateDOOM\n");
@@ -392,7 +394,7 @@ void M_NewGame(int choice)
         return;
     }
 
-    if ( gamemode == commercial )
+    if ( _g->gamemode == commercial )
         M_SetupNextMenu(&NewDef);
     else
         M_SetupNextMenu(&EpiDef);
@@ -1518,7 +1520,7 @@ void M_Init(void)
   // Here we could catch other version dependencies,
   //  like HELP1/2, and four episodes.
 
-  switch(gamemode)
+  switch(_g->gamemode)
     {
     case commercial:
 

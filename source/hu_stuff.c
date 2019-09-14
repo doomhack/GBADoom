@@ -661,7 +661,7 @@ void HU_Start(void)
 
   // initialize the automap's level title widget
   if (gamestate == GS_LEVEL) /* cph - stop SEGV here when not in level */
-  switch (gamemode)
+  switch (_g->gamemode)
   {
     case shareware:
     case registered:
@@ -671,8 +671,8 @@ void HU_Start(void)
 
     case commercial:
     default:  // Ty 08/27/98 - modified to check mission for TNT/Plutonia
-      s = (gamemission==pack_tnt)  ? HU_TITLET :
-          (gamemission==pack_plut) ? HU_TITLEP : HU_TITLE2;
+      s = (_g->gamemission==pack_tnt)  ? HU_TITLET :
+          (_g->gamemission==pack_plut) ? HU_TITLEP : HU_TITLE2;
       break;
   } else s = "";
   while (*s)
@@ -1024,7 +1024,7 @@ void HU_Drawer(void)
       {
         int ok=1;
         //jff avoid executing for weapons that do not exist
-        switch (gamemode)
+        switch (_g->gamemode)
         {
           case shareware:
             if (w>=wp_plasma && w!=wp_chainsaw)
