@@ -1547,9 +1547,8 @@ void G_ReloadDefaults(void)
 
   // jff 1/24/98 reset play mode to command line spec'd version
   // killough 3/1/98: moved to here
-  respawnparm = clrespawnparm;
-  fastparm = clfastparm;
-  nomonsters = clnomonsters;
+  respawnparm = 0;
+  fastparm = 0;
 
   demoplayback = false;
   singledemo = false;            // killough 9/29/98: don't stop after 1 demo
@@ -1810,7 +1809,7 @@ byte *G_WriteOptions(byte *demo_p)
   // killough 3/6/98: add parameters to savegame, move around some in demos
   *demo_p++ = respawnparm;
   *demo_p++ = fastparm;
-  *demo_p++ = nomonsters;
+  *demo_p++ = 0;
 
   *demo_p++ = 0;        // killough 3/31/98
 
@@ -1884,7 +1883,7 @@ const byte *G_ReadOptions(const byte *demo_p)
   // killough 3/6/98: add parameters to savegame, move from demo
   respawnparm = *demo_p++;
   fastparm = *demo_p++;
-  nomonsters = *demo_p++;
+  demo_p++;
 
   demo_p++;              // killough 3/31/98
 
@@ -2067,7 +2066,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
           demo_p++;
           respawnparm = *demo_p++;
           fastparm = *demo_p++;
-          nomonsters = *demo_p++;
+          demo_p++;
           consoleplayer = *demo_p++;
         }
       else
@@ -2079,7 +2078,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
           episode = *demo_p++;
           map = *demo_p++;
           respawnparm = fastparm =
-            nomonsters = consoleplayer = 0;
+          consoleplayer = 0;
         }
 
     }

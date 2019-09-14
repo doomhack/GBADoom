@@ -78,13 +78,6 @@ static void D_PageDrawer(void);
 
 // CPhipps - removed wadfiles[] stuff
 
-// jff 1/24/98 add new versions of these variables to remember command line
-boolean clnomonsters;   // checkparm of -nomonsters
-boolean clrespawnparm;  // checkparm of -respawn
-boolean clfastparm;     // checkparm of -fast
-// jff 1/24/98 end definition of command line version of play mode switches
-
-boolean nomonsters;     // working -nomonsters
 boolean respawnparm;    // working -respawn
 boolean fastparm;       // working -fast
 
@@ -94,15 +87,11 @@ boolean singletics = false; // debug flag to cancel adaptiveness
 boolean nosfxparm;
 boolean nomusicparm;
 
-//jff 4/18/98
-extern boolean inhelpscreens;
-
 const skill_t startskill = sk_medium;
 int     startepisode;
 int     startmap;
 boolean autostart;
 FILE    *debugfile;
-int ffmap;
 
 boolean advancedemo;
 
@@ -194,7 +183,6 @@ extern int     showMessages;
 
 void D_Display (void)
 {
-  static boolean inhelpscreensstate   = false;
   static boolean isborderstate        = false;
   static boolean borderwillneedredraw = false;
   static gamestate_t oldgamestate = -1;
@@ -244,8 +232,8 @@ void D_Display (void)
     }
 
     // Work out if the player view is visible, and if there is a border
-    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) && !inhelpscreens;
-    isborder = viewactive ? (viewheight != SCREENHEIGHT) : (!inhelpscreens && (automapmode & am_active));
+    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay));
+    isborder = viewactive ? (viewheight != SCREENHEIGHT) : ((automapmode & am_active));
 
     if (oldgamestate != GS_LEVEL) {
       R_FillBackScreen ();    // draw the pattern into the back screen
@@ -272,7 +260,6 @@ void D_Display (void)
     HU_Drawer();
   }
 
-  inhelpscreensstate = inhelpscreens;
   isborderstate      = isborder;
   oldgamestate = wipegamestate = gamestate;
 
@@ -323,11 +310,7 @@ static void D_DoomLoop(void)
 		// frame syncronous IO operations
 		
 		I_StartFrame();
-			
-		if (ffmap == gamemap)
-			ffmap = 0;
-
-		
+					
 		// process one or more tics
 		if (singletics)
 		{
@@ -1139,14 +1122,7 @@ static void D_DoomMainSetup(void)
     IdentifyVersion();
 
 
-    // e6y: DEH files preloaded in wrong order
-    // http://sourceforge.net/tracker/index.php?func=detail&aid=1418158&group_id=148658&atid=772943
-    // The dachaked stuff has been moved below an autoload
-
-    // jff 1/24/98 set both working and command line value of play parms
-    nomonsters = clnomonsters = M_CheckParm ("-nomonsters");
-    respawnparm = clrespawnparm = M_CheckParm ("-respawn");
-    fastparm = clfastparm = M_CheckParm ("-fast");
+    fastparm = 0;
     // jff 1/24/98 end of set to both working and command line value
 
     {
@@ -1316,9 +1292,6 @@ static void D_DoomMainSetup(void)
         D_AddFile (file,source_lmp);
         //jff 9/3/98 use logical output routine
         lprintf(LO_CONFIRM,"Playing demo %s\n",file);
-        if ((p = M_CheckParm ("-ffmap")) && p < myargc-1) {
-            ffmap = atoi(myargv[p+1]);
-        }
 
     }
 

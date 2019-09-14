@@ -94,8 +94,6 @@ int saveCharIndex;   // which char we're editing
 // old save description before edit
 char saveOldString[SAVESTRINGSIZE];
 
-boolean inhelpscreens; // indicates we are in or just left a help screen
-
 boolean menuactive;    // The menus are up
 
 #define SKULLXOFF  -32
@@ -1261,8 +1259,6 @@ void M_StartControlPanel (void)
 
 void M_Drawer (void)
 {
-  inhelpscreens = false;
-
   // Horiz. & Vertically center string and print it.
   // killough 9/29/98: simplified code, removed 40-character width limit
   if (messageToPrint)
