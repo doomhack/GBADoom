@@ -65,11 +65,9 @@
 #include "m_argv.h"
 #include "lprintf.h"
 
-static int       remotetic; // Tic expected from the remote
 ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
 static ticcmd_t* localcmds;
 int maketic;
-int ticdup = 1;
 
 doomcom_t*      doomcom;
 

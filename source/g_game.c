@@ -243,7 +243,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     // use two stage accelerative turning
     // on the keyboard and joystick
   if (gamekeydown[key_right] || gamekeydown[key_left])
-    turnheld += ticdup;
+    turnheld ++;
   else
     turnheld = 0;
 
@@ -607,7 +607,7 @@ void G_Ticker (void)
     basetic++;  // For revenant tracers and RNG -- we must maintain sync
   else {
     // get commands, check consistancy, and build new consistancy check
-    int buf = (gametic/ticdup)%BACKUPTICS;
+    int buf = (gametic)%BACKUPTICS;
 
     for (i=0 ; i<MAXPLAYERS ; i++) {
       if (playeringame[i])
@@ -632,7 +632,7 @@ void G_Ticker (void)
               doom_printf ("%s is turbo!", player_names[i]);
             }
 
-          if (netgame && !netdemo && !(gametic%ticdup) )
+          if (netgame && !netdemo && !(gametic) )
             {
               if (gametic > BACKUPTICS
                   && consistancy[i][buf] != cmd->consistancy)
