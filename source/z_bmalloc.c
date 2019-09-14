@@ -72,10 +72,6 @@ void* Z_BMalloc(struct block_memory_alloc_s *pzone)
     byte *p = memchr((*pool)->used, unused_block, (*pool)->blocks); // Scan for unused marker
     if (p) {
       int n = p - (*pool)->used;
-#ifdef SIMPLECHECKS
-      if ((n<0) || ((size_t)n>=(*pool)->blocks))
-  I_Error("Z_BMalloc: memchr returned pointer outside of array");
-#endif
       (*pool)->used[n] = used_block;
       return getelem(*pool, pzone->size, n);
     } else
@@ -105,10 +101,6 @@ void Z_BFree(struct block_memory_alloc_s *pzone, void* p)
   while (*pool != NULL) {
     int n = iselem(*pool, pzone->size, p);
     if (n >= 0) {
-#ifdef SIMPLECHECKS
-      if ((*pool)->used[n] == unused_block)
-  I_Error("Z_BFree: Refree in zone %s", pzone->desc);
-#endif
       (*pool)->used[n] = unused_block;
       if (memchr(((*pool)->used), used_block, (*pool)->blocks) == NULL) {
   // Block is all unused, can be freed
