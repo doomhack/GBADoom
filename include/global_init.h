@@ -18,6 +18,7 @@ _g->lastepisode = -1;
 //******************************************************************************
 
 _g->wipegamestate = GS_DEMOSCREEN;
+_g->oldgamestate = -1;
 
 
 

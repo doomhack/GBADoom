@@ -81,7 +81,13 @@ boolean advancedemo;
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate;
 
+boolean isborderstate;
+boolean borderwillneedredraw;
+gamestate_t oldgamestate;
 
+int  demosequence;         // killough 5/2/98: made static
+int  pagetic;
+const char *pagename; // CPhipps - const
 
 
 //******************************************************************************

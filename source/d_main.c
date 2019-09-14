@@ -161,9 +161,7 @@ extern int     showMessages;
 
 void D_Display (void)
 {
-  static boolean isborderstate        = false;
-  static boolean borderwillneedredraw = false;
-  static gamestate_t oldgamestate = -1;
+
   boolean wipe;
   boolean viewactive = false, isborder = false;
 
@@ -178,7 +176,7 @@ void D_Display (void)
     wipe_StartScreen();
 
   if (gamestate != GS_LEVEL) { // Not a level
-    switch (oldgamestate) {
+    switch (_g->oldgamestate) {
     case -1:
     case GS_LEVEL:
       V_SetPalette(0); // cph - use default (basic) palette
@@ -206,24 +204,24 @@ void D_Display (void)
 
     if (setsizeneeded) {               // change the view size if needed
       R_ExecuteSetViewSize();
-      oldgamestate = -1;            // force background redraw
+      _g->oldgamestate = -1;            // force background redraw
     }
 
     // Work out if the player view is visible, and if there is a border
     viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
     isborder = viewactive ? (viewheight != SCREENHEIGHT) : ((_g->automapmode & am_active));
 
-    if (oldgamestate != GS_LEVEL) {
+    if (_g->oldgamestate != GS_LEVEL) {
       R_FillBackScreen ();    // draw the pattern into the back screen
       redrawborderstuff = isborder;
     } else {
       // CPhipps -
       // If there is a border, and either there was no border last time,
       // or the border might need refreshing, then redraw it.
-      redrawborderstuff = isborder && (!isborderstate || borderwillneedredraw);
+      redrawborderstuff = isborder && (!_g->isborderstate || _g->borderwillneedredraw);
       // The border may need redrawing next time if the border surrounds the screen,
       // and there is a menu being displayed
-      borderwillneedredraw = menuactive && isborder && viewactive && (viewwidth != SCREENWIDTH);
+      _g->borderwillneedredraw = menuactive && isborder && viewactive && (viewwidth != SCREENWIDTH);
     }
     if (redrawborderstuff)
       R_DrawViewBorder();
@@ -238,8 +236,8 @@ void D_Display (void)
     HU_Drawer();
   }
 
-  isborderstate      = isborder;
-  oldgamestate = _g->wipegamestate = gamestate;
+  _g->isborderstate      = isborder;
+  _g->oldgamestate = _g->wipegamestate = gamestate;
 
   // draw pause pic
   if (paused) {
@@ -316,9 +314,6 @@ static void D_DoomLoop(void)
 //  DEMO LOOP
 //
 
-static int  demosequence;         // killough 5/2/98: made static
-static int  pagetic;
-static const char *pagename; // CPhipps - const
 
 //
 // D_PageTicker
@@ -326,7 +321,7 @@ static const char *pagename; // CPhipps - const
 //
 void D_PageTicker(void)
 {
-  if (--pagetic < 0)
+  if (--_g->pagetic < 0)
     D_AdvanceDemo();
 }
 
@@ -338,9 +333,9 @@ static void D_PageDrawer(void)
   // proff/nicolas 09/14/98 -- now stretchs bitmaps to fullscreen!
   // CPhipps - updated for new patch drawing
   // proff - added M_DrawCredits
-  if (pagename)
+  if (_g->pagename)
   {
-    V_DrawNamePatch(0, 0, 0, pagename, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatch(0, 0, 0, _g->pagename, CR_DEFAULT, VPT_STRETCH);
   }
 }
 
@@ -359,13 +354,13 @@ void D_AdvanceDemo (void)
 
 static void D_SetPageName(const char *name)
 {
-  pagename = name;
+  _g->pagename = name;
 }
 
 static void D_DrawTitle1(const char *name)
 {
   S_StartMusic(mus_intro);
-  pagetic = (TICRATE*170)/35;
+  _g->pagetic = (TICRATE*170)/35;
   D_SetPageName(name);
 }
 
@@ -460,14 +455,14 @@ void D_DoAdvanceDemo(void)
   _g->advancedemo = usergame = paused = false;
   gameaction = ga_nothing;
 
-  pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
+  _g->pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
   gamestate = GS_DEMOSCREEN;
 
 
-  if (!demostates[++demosequence][gamemode].func)
-      demosequence = 0;
-  demostates[demosequence][gamemode].func
-          (demostates[demosequence][gamemode].name);
+  if (!demostates[++_g->demosequence][gamemode].func)
+      _g->demosequence = 0;
+  demostates[_g->demosequence][gamemode].func
+          (demostates[_g->demosequence][gamemode].name);
 }
 
 //
@@ -476,7 +471,7 @@ void D_DoAdvanceDemo(void)
 void D_StartTitle (void)
 {
   gameaction = ga_nothing;
-  demosequence = -1;
+  _g->demosequence = -1;
   D_AdvanceDemo();
 }
 
