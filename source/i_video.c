@@ -222,22 +222,18 @@ void I_PreInitGraphics(void)
 // Sets the screen resolution
 void I_SetRes(void)
 {
-  int i;
 
-  // set first three to standard values
-  for (i=0; i<3; i++) 
-  {
-    screens[i].width = SCREENWIDTH;
-    screens[i].height = SCREENHEIGHT;
-    screens[i].byte_pitch = SCREENPITCH;
-  }
+    //backbuffer
+    screens[0].width = SCREENWIDTH;
+    screens[0].height = SCREENHEIGHT;
+    screens[0].byte_pitch = SCREENPITCH;
 
-  // statusbar
-  screens[4].width = SCREENWIDTH;
-  screens[4].height = (ST_SCALED_HEIGHT+1);
-  screens[4].byte_pitch = SCREENPITCH;
+    // statusbar
+    screens[4].width = SCREENWIDTH;
+    screens[4].height = (ST_SCALED_HEIGHT+1);
+    screens[4].byte_pitch = SCREENPITCH;
 
-  lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
+    lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 }
 
 void I_InitGraphics(void)
