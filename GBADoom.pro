@@ -24,6 +24,7 @@ SOURCES += \
         source/d_client.c \
         source/d_items.c \
         source/d_main.c \
+        source/doom_iwad.c \
         source/doomdef.c \
         source/doomstat.c \
         source/dstrings.c \
@@ -118,6 +119,7 @@ HEADERS += \
     include/d_player.h \
     include/d_think.h \
     include/d_ticcmd.h \
+    include/doom_iwad.h \
     include/doomdata.h \
     include/doomdef.h \
     include/doomstat.h \
