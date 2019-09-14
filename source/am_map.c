@@ -78,6 +78,8 @@ static const int mapcolor_frnd = 112;    // friendly sprite color
 static const int map_secret_after = 0;
 
 
+
+
 //jff 3/9/98 add option to not show secret sectors until entered
 //jff 4/3/98 add symbols for "no-color" for disable and "black color" for black
 #define NC 0
@@ -175,16 +177,6 @@ static const mline_t thintriangle_guy[] =
 static const fixed_t mtof_zoommul = FRACUNIT; // how far the window zooms each tic (map coords)
 static const fixed_t ftom_zoommul = FRACUNIT; // how far the window zooms each tic (fb coords)
 
-
-
-// killough 2/22/98: Remove limit on automap marks,
-// and make variables external for use in savegames.
-
-mpoint_t *markpoints = NULL;    // where the points are
-int markpointnum = 0; // next point to be assigned (also number of points now)
-int markpointnum_max = 0;       // killough 2/22/98
-
-static boolean stopped = true;
 
 //
 // AM_activateNewScale()
@@ -290,7 +282,7 @@ static void AM_changeWindowLoc(void)
 static void AM_initVariables(void)
 {
   int pnum;
-  static event_t st_notify = { ev_keyup, AM_MSGENTERED, 0, 0 };
+  static const event_t st_notify = { ev_keyup, AM_MSGENTERED, 0, 0 };
 
   _g->automapmode |= am_active;
 
@@ -326,7 +318,7 @@ static void AM_initVariables(void)
 //
 void AM_clearMarks(void)
 {
-  markpointnum = 0;
+  _g->markpointnum = 0;
 }
 
 //
@@ -363,11 +355,11 @@ static void AM_LevelInit(void)
 //
 void AM_Stop (void)
 {
-  static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED, 0 };
+    static const event_t st_notify = { 0, ev_keyup, AM_MSGEXITED, 0 };
 
-  _g->automapmode &= ~am_active;
-  ST_Responder(&st_notify);
-  stopped = true;
+    _g->automapmode &= ~am_active;
+    ST_Responder(&st_notify);
+    _g->stopped = true;
 }
 
 //
@@ -382,16 +374,14 @@ void AM_Stop (void)
 //
 void AM_Start(void)
 {
-  static int lastlevel = -1, lastepisode = -1;
-
-  if (!stopped)
+  if (!_g->stopped)
     AM_Stop();
-  stopped = false;
-  if (lastlevel != gamemap || lastepisode != gameepisode)
+  _g->stopped = false;
+  if (_g->lastlevel != gamemap || _g->lastepisode != gameepisode)
   {
     AM_LevelInit();
-    lastlevel = gamemap;
-    lastepisode = gameepisode;
+    _g->lastlevel = gamemap;
+    _g->lastepisode = gameepisode;
   }
   AM_initVariables();
 }
@@ -435,8 +425,6 @@ boolean AM_Responder
 ( event_t*  ev )
 {
   int rc;
-  static int cheatstate;
-  static int bigstate;
   int ch;                                                       // phares
 
   rc = false;
@@ -475,7 +463,6 @@ boolean AM_Responder
           rc = false;
     else if (ch == key_map)
     {
-      bigstate = 0;
       AM_Stop ();
     }
     else if (ch == key_map_follow)
@@ -495,7 +482,6 @@ boolean AM_Responder
     }
     else                                                        // phares
     {
-      cheatstate=0;
       rc = false;
     }
   }
@@ -776,7 +762,7 @@ static void AM_drawMline
 ( mline_t*  ml,
   int   color )
 {
-  static fline_t fl;
+  fline_t fl;
 
   if (color==-1)  // jff 4/3/98 allow not drawing any sort of line
     return;       // by setting its color to -1
@@ -895,7 +881,7 @@ static int AM_DoorColor(int type)
 static void AM_drawWalls(void)
 {
   int i;
-  static mline_t l;
+  mline_t l;
 
   // draw the unclipped visible portions of all lines
   for (i=0;i<numlines;i++)
@@ -1270,13 +1256,13 @@ static void AM_drawThings(void)
 static void AM_drawMarks(void)
 {
   int i;
-  for (i=0;i<markpointnum;i++) // killough 2/22/98: remove automap mark limit
-    if (markpoints[i].x != -1)
+  for (i=0;i<_g->markpointnum;i++) // killough 2/22/98: remove automap mark limit
+    if (_g->markpoints[i].x != -1)
     {
       int w = 5;
       int h = 6;
-      int fx = markpoints[i].x;
-      int fy = markpoints[i].y;
+      int fx = _g->markpoints[i].x;
+      int fy = _g->markpoints[i].y;
       int j = i;
 
       if (_g->automapmode & am_rotate)

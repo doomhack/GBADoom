@@ -55,7 +55,7 @@
 //
 
 // Called by main loop.
-boolean ST_Responder(event_t* ev);
+boolean ST_Responder(const event_t* ev);
 
 // Called by main loop.
 void ST_Ticker(void);

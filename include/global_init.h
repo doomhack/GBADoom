@@ -7,7 +7,10 @@
 
 _g->leveljuststarted = 1;
 _g->scale_mtof = (fixed_t)INITSCALEMTOF;
+_g->stopped = true;
 
+_g->lastlevel = -1;
+_g->lastepisode = -1;
 
 
 #endif // GLOBAL_INIT_H

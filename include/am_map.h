@@ -74,9 +74,6 @@ typedef struct
  fixed_t x,y;
 } mpoint_t;
 
-extern mpoint_t *markpoints;
-extern int markpointnum, markpointnum_max;
-
 // end changes -- killough 2/22/98
 
 

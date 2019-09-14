@@ -50,6 +50,18 @@ fixed_t scale_ftom;
 
 player_t *plr;           // the player represented by an arrow
 
+// killough 2/22/98: Remove limit on automap marks,
+// and make variables external for use in savegames.
+
+mpoint_t *markpoints;    // where the points are
+int markpointnum; // next point to be assigned (also number of points now)
+int markpointnum_max;       // killough 2/22/98
+
+boolean stopped;
+
+int lastlevel, lastepisode;
+
+
 //******************************************************************************
 
 #endif // GLOBAL_DEFS_H

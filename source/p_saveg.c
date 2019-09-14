@@ -979,8 +979,8 @@ void P_UnArchiveRNG(void)
 void P_ArchiveMap(void)
 {
   int zero = 0, one = 1;
-  CheckSaveGame(2 * sizeof zero + sizeof markpointnum +
-                markpointnum * sizeof *markpoints +
+  CheckSaveGame(2 * sizeof zero + sizeof _g->markpointnum +
+                _g->markpointnum * sizeof *_g->markpoints +
                 sizeof _g->automapmode + sizeof one);
 
   memcpy(save_p, &_g->automapmode, sizeof _g->automapmode);
@@ -991,13 +991,13 @@ void P_ArchiveMap(void)
   save_p += sizeof zero;              //  that is now part of automapmode
   memcpy(save_p, &zero, sizeof zero); // CPhipps - used to be automap_grid, ditto
   save_p += sizeof zero;
-  memcpy(save_p, &markpointnum, sizeof markpointnum);
-  save_p += sizeof markpointnum;
+  memcpy(save_p, &_g->markpointnum, sizeof _g->markpointnum);
+  save_p += sizeof _g->markpointnum;
 
-  if (markpointnum)
+  if (_g->markpointnum)
     {
-      memcpy(save_p, markpoints, sizeof *markpoints * markpointnum);
-      save_p += markpointnum * sizeof *markpoints;
+      memcpy(save_p, _g->markpoints, sizeof *_g->markpoints * _g->markpointnum);
+      save_p += _g->markpointnum * sizeof *_g->markpoints;
     }
 }
 
@@ -1016,16 +1016,16 @@ void P_UnArchiveMap(void)
   if (_g->automapmode & am_active)
     AM_Start();
 
-  memcpy(&markpointnum, save_p, sizeof markpointnum);
-  save_p += sizeof markpointnum;
+  memcpy(&_g->markpointnum, save_p, sizeof _g->markpointnum);
+  save_p += sizeof _g->markpointnum;
 
-  if (markpointnum)
+  if (_g->markpointnum)
     {
-      while (markpointnum >= markpointnum_max)
-        markpoints = realloc(markpoints, sizeof *markpoints *
-         (markpointnum_max = markpointnum_max ? markpointnum_max*2 : 16));
-      memcpy(markpoints, save_p, markpointnum * sizeof *markpoints);
-      save_p += markpointnum * sizeof *markpoints;
+      while (_g->markpointnum >= _g->markpointnum_max)
+        _g->markpoints = realloc(_g->markpoints, sizeof *_g->markpoints *
+         (_g->markpointnum_max = _g->markpointnum_max ? _g->markpointnum_max*2 : 16));
+      memcpy(_g->markpoints, save_p, _g->markpointnum * sizeof *_g->markpoints);
+      save_p += _g->markpointnum * sizeof *_g->markpoints;
     }
 }
 
