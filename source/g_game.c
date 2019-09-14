@@ -1719,53 +1719,7 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd)
 
 void G_RecordDemo (const char* name)
 {
-  char     demoname[PATH_MAX];
-  usergame = false;
-  AddDefaultExtension(strcpy(demoname, name), ".lmp");  // 1/18/98 killough
-  demorecording = true;
-  /* cph - Record demos straight to file
-   * If file already exists, try to continue existing demo
-   */
-  if (access(demoname, 0)) {
-    demofp = fopen(demoname, "wb");
-  } else {
-    demofp = fopen(demoname, "r+");
-    if (demofp) {
-      int slot = -1;
-      int rc;
-      int bytes_per_tic;
-      const byte* pos;
 
-      { /* Read the demo header for options etc */
-        byte buf[200];
-        size_t len = fread(buf, 1, sizeof(buf), demofp);
-        pos = G_ReadDemoHeader(buf, len, false);
-        if (pos)
-        {
-          fseek(demofp, pos - buf, SEEK_SET);
-        }
-      }
-      bytes_per_tic = longtics ? 5 : 4;
-    if (pos)
-      /* Now read the demo to find the last save slot */
-      do {
-        byte buf[5];
-      
-        rc = fread(buf, 1, bytes_per_tic, demofp);
-        if (buf[0] == DEMOMARKER) break;
-        if (buf[bytes_per_tic-1] & BT_SPECIAL)
-          if ((buf[bytes_per_tic-1] & BT_SPECIALMASK) == BTS_SAVEGAME)
-            slot = (buf[bytes_per_tic-1] & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-      } while (rc == bytes_per_tic);
-
-      if (slot == -1) I_Error("G_RecordDemo: No save in demo, can't continue");
-
-      /* Return to the last save position, and load the relevant savegame */
-      fseek(demofp, -rc, SEEK_CUR);
-      G_LoadGame(slot, false);
-    }
-  }
-  if (!demofp) I_Error("G_RecordDemo: failed to open %s", name);
 }
 
 // These functions are used to read and write game-specific options in demos

@@ -82,9 +82,9 @@ typedef struct {
   int handle;
 } wadfile_info_t;
 
-extern wadfile_info_t *wadfiles;
+extern wadfile_info_t wadfiles[1];
 
-extern size_t numwadfiles; // CPhipps - size of the wadfiles array
+extern const size_t numwadfiles; // CPhipps - size of the wadfiles array
 
 void W_Init(void); // CPhipps - uses the above array
 void W_ReleaseAllWads(void); // Proff - Added for iwad switching
@@ -126,6 +126,8 @@ int     (W_CheckNumForName)(const char* name, int);   // killough 4/17/98
 int     W_GetNumForName (const char* name);
 int     W_LumpLength (int lump);
 void    W_ReadLump (int lump, void *dest);
+const void* W_GetLumpPtr(int lump);
+
 // CPhipps - modified for 'new' lump locking
 const void* W_CacheLumpNum (int lump);
 const void* W_LockLumpNum(int lump);
@@ -138,7 +140,6 @@ void    W_UnlockLumpNum(int lump);
 //#define W_UnlockLumpNum(num) (W_UnlockLumpNum)((num),1)
 #define W_UnlockLumpName(name) W_UnlockLumpNum (W_GetNumForName(name))
 
-char *AddDefaultExtension(char *, const char *);  // killough 1/18/98
 void ExtractFileBase(const char *, char *);       // killough
 unsigned W_LumpNameHash(const char *s);           // killough 1/31/98
 void W_HashLumps(void);                           // cph 2001/07/07 - made public

@@ -496,28 +496,9 @@ void D_StartTitle (void)
 //         - source is an enum
 //         - modified to allocate & use new wadfiles array
 void D_AddFile (const char *file, wad_source_t source)
-{
-  char *gwa_filename=NULL;
-
-  wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
-  wadfiles[numwadfiles].name =
-    AddDefaultExtension(strcpy(malloc(strlen(file)+5), file), ".wad");
-  wadfiles[numwadfiles].src = source; // Ty 08/29/98
-  numwadfiles++;
-  // proff: automatically try to add the gwa files
-  // proff - moved from w_wad.c
-  gwa_filename=AddDefaultExtension(strcpy(malloc(strlen(file)+5), file), ".wad");
-  if (strlen(gwa_filename)>4)
-    if (!strcasecmp(gwa_filename+(strlen(gwa_filename)-4),".wad"))
-    {
-      char *ext;
-      ext = &gwa_filename[strlen(gwa_filename)-4];
-      ext[1] = 'g'; ext[2] = 'w'; ext[3] = 'a';
-      wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
-      wadfiles[numwadfiles].name = gwa_filename;
-      wadfiles[numwadfiles].src = source; // Ty 08/29/98
-      numwadfiles++;
-    }
+{  
+  wadfiles[0].name = file;
+  wadfiles[0].src = source; // Ty 08/29/98
 }
 
 //
@@ -654,6 +635,8 @@ static void IdentifyVersion()
             //jff 9/3/98 use logical output routine
             lprintf(LO_WARN,"Unknown Game Version, may not work\n");
         }
+
+        D_AddFile("doom.wad",source_iwad);
     }
 }
 

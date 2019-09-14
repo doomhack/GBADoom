@@ -85,9 +85,6 @@ typedef struct
 // A maptexturedef_t describes a rectangular texture, which is composed
 // of one or more mappatch_t structures that arrange graphic patches.
 
-// killough 4/17/98: make firstcolormaplump,lastcolormaplump external
-int firstcolormaplump, lastcolormaplump;      // killough 4/17/98
-
 int       firstflat, lastflat, numflats;
 int       firstspritelump, lastspritelump, numspritelumps;
 int       numtextures;
@@ -355,15 +352,8 @@ static void R_InitSpriteLumps(void)
 //
 void R_InitColormaps (void)
 {
-    int	lump, length;
-
-    // Load in the light tables,
-    //  256 byte align tables.
-    lump = W_GetNumForName("COLORMAP");
-    length = W_LumpLength (lump) + 255;
-    colormaps = Z_Malloc (length, PU_STATIC, 0);
-    colormaps = (byte *)( ((int)colormaps + 255)&~0xff);
-    W_ReadLump (lump,colormaps);
+    int lump = W_GetNumForName("COLORMAP");
+    colormaps = W_CacheLumpNum(lump);
 }
 
 // killough 4/4/98: get colormap number from name
@@ -372,11 +362,7 @@ void R_InitColormaps (void)
 
 int R_ColormapNumForName(const char *name)
 {
-  register int i = 0;
-  if (strncasecmp(name,"COLORMAP",8))     // COLORMAP predefined to return 0
-    if ((i = (W_CheckNumForName)(name, ns_colormaps)) != -1)
-      i -= firstcolormaplump;
-  return i;
+    return 0;
 }
 
 /*
