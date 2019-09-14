@@ -73,6 +73,8 @@
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "am_map.h"
 
+#include "doom_iwad.h"
+
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
 
@@ -93,19 +95,6 @@ static const char* timedemo = NULL;
 boolean advancedemo;
 char    basesavegame[PATH_MAX+1];  // killough 2/16/98: savegame directory
 
-//jff 4/19/98 list of standard IWAD names
-static const char *const standard_iwads[]=
-{
-  "doom2f.wad",
-  "doom2.wad",
-  "plutonia.wad",
-  "tnt.wad",
-  "doom.wad",
-  "doom1.wad",
-  "doomu.wad", /* CPhipps - alow doomu.wad */
-  "freedoom.wad", /* wart@kobold.org:  added freedoom for Fedora Extras */
-};
-static const int nstandard_iwads = sizeof standard_iwads/sizeof*standard_iwads;
 
 /*
  * D_PostEvent - Event handling
@@ -544,68 +533,46 @@ void D_AddFile (const char *file, wad_source_t source)
 // jff 4/19/98 Add routine to test IWAD for validity and determine
 // the gamemode from it. Also note if DOOM II, whether secret levels exist
 // CPhipps - const char* for iwadname, made static
-static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
+
+static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_len, GameMode_t *gmode,boolean *hassec)
 {
-  if ( !access (iwadname,0) )
-  {
+    const wadinfo_t* header = (const wadinfo_t*)iwad_data;
+
     int ud=0,rg=0,sw=0,cm=0,sc=0;
-    FILE* fp;
 
-    // Identify IWAD correctly
-    if ((fp = fopen(iwadname, "rb")))
+    if(!strncmp(header->identification, "IWAD", 4))
     {
-      wadinfo_t header;
+        size_t length = header->numlumps;
+        const filelump_t* fileinfo = (const filelump_t*)&iwad_data[header->infotableofs];
 
-      // read IWAD header
-      if (fread(&header, sizeof(header), 1, fp) == 1 && !strncmp(header.identification, "IWAD", 4))
-      {
-        size_t length;
-        filelump_t *fileinfo;
-
-        // read IWAD directory
-        header.numlumps = LONG(header.numlumps);
-        header.infotableofs = LONG(header.infotableofs);
-        length = header.numlumps;
-        fileinfo = malloc(length*sizeof(filelump_t));
-        if (fseek (fp, header.infotableofs, SEEK_SET) ||
-            fread (fileinfo, sizeof(filelump_t), length, fp) != length ||
-            fclose(fp))
-          I_Error("CheckIWAD: failed to read directory %s",iwadname);
-
-        // scan directory for levelname lumps
         while (length--)
-          if (fileinfo[length].name[0] == 'E' &&
-              fileinfo[length].name[2] == 'M' &&
-              fileinfo[length].name[4] == 0)
-          {
-            if (fileinfo[length].name[1] == '4')
-              ++ud;
-            else if (fileinfo[length].name[1] == '3')
-              ++rg;
-            else if (fileinfo[length].name[1] == '2')
-              ++rg;
-            else if (fileinfo[length].name[1] == '1')
-              ++sw;
-          }
-          else if (fileinfo[length].name[0] == 'M' &&
-                    fileinfo[length].name[1] == 'A' &&
-                    fileinfo[length].name[2] == 'P' &&
-                    fileinfo[length].name[5] == 0)
-          {
-            ++cm;
-            if (fileinfo[length].name[3] == '3')
-              if (fileinfo[length].name[4] == '1' ||
-                  fileinfo[length].name[4] == '2')
-                ++sc;
-          }
-
-        free(fileinfo);
-      }
-      else // missing IWAD tag in header
-        I_Error("CheckIWAD: IWAD tag %s not present", iwadname);
+        {
+            if (fileinfo[length].name[0] == 'E' && fileinfo[length].name[2] == 'M' && fileinfo[length].name[4] == 0)
+            {
+              if (fileinfo[length].name[1] == '4')
+                ++ud;
+              else if (fileinfo[length].name[1] == '3')
+                ++rg;
+              else if (fileinfo[length].name[1] == '2')
+                ++rg;
+              else if (fileinfo[length].name[1] == '1')
+                ++sw;
+            }
+            else if (fileinfo[length].name[0] == 'M' && fileinfo[length].name[1] == 'A' && fileinfo[length].name[2] == 'P' && fileinfo[length].name[5] == 0)
+            {
+              ++cm;
+              if (fileinfo[length].name[3] == '3')
+              {
+                  if (fileinfo[length].name[4] == '1' || fileinfo[length].name[4] == '2')
+                    ++sc;
+              }
+            }
+        }
     }
-    else // error from open call
-      I_Error("CheckIWAD: Can't open IWAD %s", iwadname);
+    else
+    {
+        I_Error("CheckIWAD: IWAD tag not present");
+    }
 
     // Determine game mode from levels present
     // Must be a full set for whichever mode is present
@@ -624,38 +591,6 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
       *gmode = registered;
     else if (sw>=9)
       *gmode = shareware;
-  }
-  else // error from access call
-    I_Error("CheckIWAD: IWAD %s not readable", iwadname);
-}
-
-/*
- * FindIWADFIle
- *
- * Search for one of the standard IWADs
- * CPhipps  - static, proper prototype
- *    - 12/1999 - rewritten to use I_FindFile
- */
-static char *FindIWADFile(void)
-{
-  int   i;
-  char  * iwad  = NULL;
-
-  i = M_CheckParm("-iwad");
-
-  if (i && (++i < myargc))
-  {
-	  iwad = I_FindFile(myargv[i], ".wad");
-  }
-  else
-  {
-	  for (i=0; !iwad && i<nstandard_iwads; i++)
-	  {
-		  iwad = I_FindFile(standard_iwads[i], ".wad");
-	  }
-
-  }
-  return iwad;
 }
 
 //
@@ -679,78 +614,47 @@ static char *FindIWADFile(void)
 //
 // jff 4/19/98 rewritten to use a more advanced search algorithm
 
-static void IdentifyVersion (void)
+
+static void IdentifyVersion()
 {
-	int		  i;	//jff 3/24/98 index of args on commandline
-	char *iwad;
-	
-	// set save path to -save parm or current dir
+    if(doom_iwad && (doom_iwad_len > 0))
+    {
+        CheckIWAD2(doom_iwad, doom_iwad_len, &gamemode, &haswolflevels);
 
-	//jff 3/27/98 default to current dir
-	//V.Aguilar (5/30/99): In LiNUX, default to $HOME/.lxdoom
+        /* jff 8/23/98 set gamemission global appropriately in all cases
+         * cphipps 12/1999 - no version output here, leave that to the caller
+         */
+        switch(gamemode)
+        {
+            case retail:
+            case registered:
+            case shareware:
+                gamemission = doom;
+                break;
+            case commercial:
+                gamemission = doom2;
 
-	// CPhipps - use DOOMSAVEDIR if defined
-	char* p = getenv("DOOMSAVEDIR");
+                /*
+                 * TODO: Detect Plutonia and TNT here.
+                 *
+                 * if(is tnt)
+                 *  gamemission = pack_tnt;
+                 * else if(is_plut)
+                 *  gamemission = pack_plut;
+                 */
+            break;
 
-	if (p != NULL)
-	{
-		if (strlen(p) > PATH_MAX-12)
-			p = NULL;
-	}
+            default:
+                gamemission = none;
+                break;
+        }
 
-	strcpy(basesavegame,(p == NULL) ? I_DoomExeDir() : p);
-
-	// locate the IWAD and determine game mode from it
-
-	iwad = FindIWADFile();
-
-	if (iwad && *iwad)
-	{
-		//jff 9/3/98 use logical output routine
-		lprintf(LO_CONFIRM,"IWAD found: %s\n",iwad); //jff 4/20/98 print only if found
-		CheckIWAD(iwad,&gamemode,&haswolflevels);
-
-
-		/* jff 8/23/98 set gamemission global appropriately in all cases
-		 * cphipps 12/1999 - no version output here, leave that to the caller
-		 */
-		switch(gamemode)
-		{
-		  case retail:
-		  case registered:
-		  case shareware:
-			gamemission = doom;
-			break;
-		  case commercial:
-			i = strlen(iwad);
-			gamemission = doom2;
-
-            if (i>=7 && !strnicmp(iwad+i-7,"tnt.wad",7))
-			  gamemission = pack_tnt;
-			else if (i>=12 && !strnicmp(iwad+i-12,"plutonia.wad",12))
-			  gamemission = pack_plut;
-			break;
-		  default:
-			gamemission = none;
-			break;
-		}
-
-		if (gamemode == indetermined)
-		{
-			//jff 9/3/98 use logical output routine
-			lprintf(LO_WARN,"Unknown Game Version, may not work\n");
-		}
-
-
-		D_AddFile(iwad,source_iwad);
-
-		free(iwad);
-	}
-	else
-	{
-	  I_Error("IdentifyVersion: IWAD not found\n");
-	}
-
+        if (gamemode == indetermined)
+        {
+            //jff 9/3/98 use logical output routine
+            lprintf(LO_WARN,"Unknown Game Version, may not work\n");
+        }
+    }
 }
 
 //
@@ -761,8 +665,6 @@ static void IdentifyVersion (void)
 
 static void D_DoomMainSetup(void)
 {
-    int p;
-
     lprintf(LO_INFO,"M_LoadDefaults: Load system defaults.\n");
 
     M_LoadDefaults();              // load before initing other systems
