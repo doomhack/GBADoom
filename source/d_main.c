@@ -78,19 +78,15 @@ static void D_PageDrawer(void);
 
 // CPhipps - removed wadfiles[] stuff
 
-boolean respawnparm;    // working -respawn
-boolean fastparm;       // working -fast
-
 boolean singletics = false; // debug flag to cancel adaptiveness
 
 //jff 1/22/98 parms for disabling music and sound
-boolean nosfxparm;
-boolean nomusicparm;
+boolean nosfxparm = false;
+boolean nomusicparm = false;
 
 const skill_t startskill = sk_medium;
-int     startepisode;
-int     startmap;
-boolean autostart;
+const int startepisode = 1;
+const int startmap = 1;
 FILE    *debugfile;
 
 boolean advancedemo;
@@ -1121,8 +1117,6 @@ static void D_DoomMainSetup(void)
 
     IdentifyVersion();
 
-
-    fastparm = 0;
     // jff 1/24/98 end of set to both working and command line value
 
     {
@@ -1191,49 +1185,6 @@ static void D_DoomMainSetup(void)
 
     modifiedgame = false;
 
-    // get skill / episode / map from parms
-
-    startepisode = 1;
-    startmap = 1;
-    autostart = false;
-
-    if ((p = M_CheckParm ("-episode")) && p < myargc-1)
-    {
-        startepisode = myargv[p+1][0]-'0';
-        startmap = 1;
-        autostart = true;
-    }
-
-    if ((p = M_CheckParm ("-warp")) ||      // killough 5/2/98
-            (p = M_CheckParm ("-wart")))
-        // Ty 08/29/98 - moved this check later so we can have -warp alone: && p < myargc-1)
-    {
-        startmap = 0; // Ty 08/29/98 - allow "-warp x" to go to first map in wad(s)
-        autostart = true; // Ty 08/29/98 - move outside the decision tree
-        if (gamemode == commercial)
-        {
-            if (p < myargc-1)
-                startmap = atoi(myargv[p+1]);   // Ty 08/29/98 - add test if last parm
-        }
-        else    // 1/25/98 killough: fix -warp xxx from crashing Doom 1 / UD
-        {
-            if (p < myargc-2)
-            {
-                startepisode = atoi(myargv[++p]);
-                startmap = atoi(myargv[p+1]);
-            }
-        }
-    }
-    // Ty 08/29/98 - later we'll check for startmap=0 and autostart=true
-    // as a special case that -warp * was used.  Actually -warp with any
-    // non-numeric will do that but we'll only document "*"
-
-    //jff 1/22/98 add command line parms to disable sound and music
-    {
-        int nosound = M_CheckParm("-nosound");
-        nomusicparm = nosound || M_CheckParm("-nomusic");
-        nosfxparm   = nosound || M_CheckParm("-nosfx");
-    }
     //jff end of sound/music command line parms
 
     // killough 3/2/98: allow -nodraw -noblit generally
@@ -1351,21 +1302,6 @@ static void D_DoomMainSetup(void)
 
     // start the apropriate game based on parms
 
-    // killough 12/98:
-    // Support -loadgame with -record and reimplement -recordfrom.
-
-    if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc)
-        G_RecordDemo(myargv[p]);
-    else
-    {
-        slot = M_CheckParm("-loadgame");
-        if ((p = M_CheckParm("-record")) && ++p < myargc)
-        {
-            autostart = true;
-            G_RecordDemo(myargv[p]);
-        }
-    }
-
     if ((p = M_CheckParm ("-checksum")) && ++p < myargc)
     {
         P_RecordChecksum (myargv[p]);
@@ -1401,13 +1337,7 @@ static void D_DoomMainSetup(void)
     else
         if (!singledemo)
         {                  /* killough 12/98 */
-            if (autostart)
-            {
-                G_InitNew(startskill, startepisode, startmap);
-                if (demorecording)
-                    G_BeginRecording();
-            }
-            else
+
                 D_StartTitle();                 // start up intro loop
         }
 }

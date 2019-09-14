@@ -1545,11 +1545,6 @@ void G_ReloadDefaults(void)
 
   distfriend = default_distfriend;                 // killough 8/8/98
 
-  // jff 1/24/98 reset play mode to command line spec'd version
-  // killough 3/1/98: moved to here
-  respawnparm = 0;
-  fastparm = 0;
-
   demoplayback = false;
   singledemo = false;            // killough 9/29/98: don't stop after 1 demo
   netdemo = false;
@@ -1642,11 +1637,11 @@ void G_InitNew(skill_t skill, int episode, int map)
   if (map > 9 && gamemode != commercial)
     map = 9;
 
-  G_SetFastParms(fastparm || skill == sk_nightmare);  // killough 4/10/98
+  G_SetFastParms(skill == sk_nightmare);  // killough 4/10/98
 
   M_ClearRandom();
 
-  respawnmonsters = skill == sk_nightmare || respawnparm;
+  respawnmonsters = skill == sk_nightmare;
 
   // force players to be initialized upon first level load
   for (i=0 ; i<MAXPLAYERS ; i++)
@@ -1774,7 +1769,6 @@ void G_RecordDemo (const char* name)
       /* Return to the last save position, and load the relevant savegame */
       fseek(demofp, -rc, SEEK_CUR);
       G_LoadGame(slot, false);
-      autostart = false;
     }
   }
   if (!demofp) I_Error("G_RecordDemo: failed to open %s", name);
@@ -1807,8 +1801,8 @@ byte *G_WriteOptions(byte *demo_p)
   *demo_p++ = 1;  // whether player bobs or not
 
   // killough 3/6/98: add parameters to savegame, move around some in demos
-  *demo_p++ = respawnparm;
-  *demo_p++ = fastparm;
+  *demo_p++ = 0;
+  *demo_p++ = 0;
   *demo_p++ = 0;
 
   *demo_p++ = 0;        // killough 3/31/98
@@ -1881,8 +1875,8 @@ const byte *G_ReadOptions(const byte *demo_p)
   demo_p++;
 
   // killough 3/6/98: add parameters to savegame, move from demo
-  respawnparm = *demo_p++;
-  fastparm = *demo_p++;
+  demo_p++;
+  demo_p++;
   demo_p++;
 
   demo_p++;              // killough 3/31/98
@@ -2064,8 +2058,8 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
           episode = *demo_p++;
           map = *demo_p++;
           demo_p++;
-          respawnparm = *demo_p++;
-          fastparm = *demo_p++;
+          demo_p++;
+          demo_p++;
           demo_p++;
           consoleplayer = *demo_p++;
         }
@@ -2077,7 +2071,6 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
 
           episode = *demo_p++;
           map = *demo_p++;
-          respawnparm = fastparm =
           consoleplayer = 0;
         }
 

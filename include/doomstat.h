@@ -46,12 +46,6 @@
 #pragma interface
 #endif
 
-// ------------------------
-// Command line parameters.
-//
-extern  boolean respawnparm;  // checkparm of -respawn
-extern  boolean fastparm; // checkparm of -fast
-
 // -----------------------------------------------------
 // Game Mode - identify IWAD as shareware, retail etc.
 //
@@ -73,10 +67,8 @@ extern  Language_t   language;
 
 // Defaults for menu, methinks.
 extern  const skill_t   startskill;
-extern  int             startepisode;
-extern  int   startmap;
-
-extern  boolean   autostart;
+extern  const int       startepisode;
+extern  const int       startmap;
 
 // Selected by user.
 extern  skill_t         gameskill;

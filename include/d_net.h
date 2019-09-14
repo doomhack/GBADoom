@@ -113,7 +113,6 @@ typedef struct
 typedef struct
 {
   byte over_under;
-  byte fastparm;
   unsigned long rngseed;
   char filler[sizeof(ticcmd_t)*BACKUPTICS-STARTUPLEN];
 } startup_t;

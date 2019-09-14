@@ -535,9 +535,7 @@ static void cheat_hom()
 // killough 3/6/98: -fast parameter toggle
 static void cheat_fast()
 {
-  plyr->message = (fastparm = !fastparm) ? "Fast Monsters On" :
-    "Fast Monsters Off";  // Ty 03/27/98 - *not* externalized
-  G_SetFastParms(fastparm); // killough 4/10/98: set -fast parameter correctly
+
 }
 
 // killough 2/16/98: keycard/skullkey cheat functions
