@@ -295,7 +295,7 @@ static void D_DoomLoop(void)
 		if (singletics)
 		{
 			I_StartTic ();
-			G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
+            G_BuildTiccmd (&_g->netcmds[consoleplayer][_g->maketic%BACKUPTICS]);
 			
 			if (advancedemo)
 				D_DoAdvanceDemo ();
@@ -305,7 +305,7 @@ static void D_DoomLoop(void)
 			P_Checksum(gametic);
 			
 			gametic++;
-			maketic++;
+            _g->maketic++;
 		}
 		else
 			TryRunTics (); // will run at least one tic

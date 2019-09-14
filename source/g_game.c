@@ -231,7 +231,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   int newweapon;                                          // phares
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd,0,sizeof*cmd);
-  cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
+  cmd->consistancy = consistancy[consoleplayer][_g->maketic%BACKUPTICS];
 
   strafe = gamekeydown[key_strafe];
 
@@ -612,7 +612,7 @@ void G_Ticker (void)
         {
           ticcmd_t *cmd = &players[i].cmd;
 
-          memcpy(cmd, &netcmds[i][buf], sizeof *cmd);
+          memcpy(cmd, &_g->netcmds[i][buf], sizeof *cmd);
 
           if (demoplayback)
             G_ReadDemoTiccmd (cmd);

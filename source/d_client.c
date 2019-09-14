@@ -65,16 +65,14 @@
 #include "m_argv.h"
 #include "lprintf.h"
 
-ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
-static ticcmd_t* localcmds;
-int maketic;
+#include "global_data.h"
 
 
 void D_InitNetGame (void)
 {
     int i;
 
-    localcmds = netcmds[consoleplayer];
+    _g->localcmds = _g->netcmds[consoleplayer];
 
     playeringame[0] = true;
 
@@ -84,15 +82,14 @@ void D_InitNetGame (void)
 
 void D_BuildNewTiccmds(void)
 {
-    static int lastmadetic;
-    int newtics = I_GetTime() - lastmadetic;
-    lastmadetic += newtics;
+    int newtics = I_GetTime() - _g->lastmadetic;
+    _g->lastmadetic += newtics;
     while (newtics--)
     {
         I_StartTic();
-        if (maketic - gametic > BACKUPTICS/2) break;
-        G_BuildTiccmd(&localcmds[maketic%BACKUPTICS]);
-        maketic++;
+        if (_g->maketic - gametic > BACKUPTICS/2) break;
+        G_BuildTiccmd(&_g->localcmds[_g->maketic%BACKUPTICS]);
+        _g->maketic++;
     }
 }
 
@@ -107,7 +104,7 @@ void TryRunTics (void)
 
         D_BuildNewTiccmds();
 
-        runtics = (maketic) - gametic;
+        runtics = (_g->maketic) - gametic;
         if (!runtics)
         {
             if (I_GetTime() - entertime > 10)
