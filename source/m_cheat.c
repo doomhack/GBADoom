@@ -679,7 +679,7 @@ boolean M_FindCheats(int key)
 
   for (matchedbefore = ret = i = 0; cheat[i].cheat; i++)
       if ((sr & cheat[i].mask) == cheat[i].code &&      // if match found
-              !(cheat[i].when & not_demo && (demorecording || demoplayback)) &&
+              !(cheat[i].when & not_demo && (demoplayback)) &&
               !(cheat[i].when & not_menu && menuactive) &&
               !(cheat[i].when & not_deh  && M_CheckParm("-deh")))
       {

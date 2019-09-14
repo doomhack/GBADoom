@@ -83,11 +83,12 @@
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
 
-static size_t   savegamesize = SAVEGAMESIZE; // killough
-static boolean  netdemo;
+static const size_t savegamesize = SAVEGAMESIZE; // killough
+
+
 static const byte *demobuffer;   /* cph - only used for playback */
 static int demolength; // check for overrun (missing DEMOMARKER)
-static FILE    *demofp; /* cph - record straight to file */
+
 static const byte *demo_p;
 static short    consistancy[MAXPLAYERS][BACKUPTICS];
 
@@ -115,7 +116,6 @@ const int       displayplayer = 0; // view being displayed
 int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
-boolean         demorecording;
 boolean         demoplayback;
 int             demover;
 boolean         singledemo;           // quit after playing a demo from cmdline
@@ -616,8 +616,6 @@ void G_Ticker (void)
 
           if (demoplayback)
             G_ReadDemoTiccmd (cmd);
-          if (demorecording)
-            G_WriteDemoTiccmd (cmd);
 
           // check for turbo cheats
           // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
@@ -1342,9 +1340,7 @@ void G_DoLoadGame(void)
     if (singledemo) {
       gameaction = ga_loadgame; /* Mark that we're loading a game before demo */
       G_DoPlayDemo();           /* This will detect it and won't reinit level */
-    } else /* Command line + record means it's a recordfrom */
-      if (demorecording)
-        G_BeginRecording();
+    }
 }
 
 //
@@ -1372,25 +1368,7 @@ void G_SaveGame(int slot, char *description)
 // Check for overrun and realloc if necessary -- Lee Killough 1/22/98
 void (CheckSaveGame)(size_t size, const char* file, int line)
 {
-  size_t pos = save_p - savebuffer;
 
-#ifdef RANGECHECK
-  /* cph 2006/08/07 - after-the-fact sanity checking of CheckSaveGame calls */
-  static size_t prev_check;
-  static const char* prevf;
-  static int prevl;
-
-  if (pos > prev_check)
-    I_Error("CheckSaveGame at %s:%d called for insufficient buffer (%u < %u)", prevf, prevl, prev_check, pos);
-  prev_check = size + pos;
-  prevf = file;
-  prevl = line;
-#endif
-
-  size += 1024;  // breathing room
-  if (pos+size > savegamesize)
-    save_p = (savebuffer = realloc(savebuffer,
-           savegamesize += (size+1023) & ~1023)) + pos;
 }
 
 /* killough 3/22/98: form savegame name in one location
@@ -1540,7 +1518,6 @@ void G_ReloadDefaults(void)
 
   demoplayback = false;
   singledemo = false;            // killough 9/29/98: don't stop after 1 demo
-  netdemo = false;
 
   // killough 2/21/98:
   memset(playeringame+1, 0, sizeof(*playeringame)*(MAXPLAYERS-1));
@@ -1689,25 +1666,7 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd)
  */
 void G_WriteDemoTiccmd (ticcmd_t* cmd)
 {
-  char buf[5];
-  char *p = buf;
 
-  *p++ = cmd->forwardmove;
-  *p++ = cmd->sidemove;
-  if (!longtics) {
-    *p++ = (cmd->angleturn+128)>>8;
-  } else {
-    signed short a = cmd->angleturn;
-    *p++ = a & 0xff;
-    *p++ = (a >> 8) & 0xff;
-  }
-  *p++ = cmd->buttons;
-  if (fwrite(buf, p-buf, 1, demofp) != 1)
-    I_Error("G_WriteDemoTiccmd: error writing demo");
-
-  /* cph - alias demo_p to it so we can read it back */
-  demo_p = buf;
-  G_ReadDemoTiccmd (cmd);         // make SURE it is exactly the same
 }
 
 //
@@ -1867,56 +1826,7 @@ const byte *G_ReadOptions(const byte *demo_p)
 
 void G_BeginRecording (void)
 {
-  int i;
-  byte *demostart, *demo_p;
-  demostart = demo_p = malloc(1000);
-  longtics = 0;
 
-
-    { /* Write version code into demo */
-      unsigned char v;
-      v = 214;
-      longtics = 1;
-
-      *demo_p++ = v;
-    }
-
-    // signature
-    *demo_p++ = 0x1d;
-    *demo_p++ = 'M';
-    *demo_p++ = 'B';
-    *demo_p++ = 'F';
-    *demo_p++ = 0xe6;
-    *demo_p++ = '\0';
-
-    /* killough 2/22/98: save compatibility flag in new demos
-     * cph - FIXME? MBF demos will always be not in compat. mode */
-    *demo_p++ = 0;
-
-    *demo_p++ = gameskill;
-    *demo_p++ = gameepisode;
-    *demo_p++ = gamemap;
-    *demo_p++ = 0;
-    *demo_p++ = consoleplayer;
-
-    demo_p = G_WriteOptions(demo_p); // killough 3/1/98: Save game options
-
-    for (i=0 ; i<MAXPLAYERS ; i++)
-      *demo_p++ = playeringame[i];
-
-    // killough 2/28/98:
-    // We always store at least MIN_MAXPLAYERS bytes in demo, to
-    // support enhancements later w/o losing demo compatibility
-
-    for (; i<MIN_MAXPLAYERS; i++)
-      *demo_p++ = 0;
-
-
-
-
-  if (fwrite(demostart, 1, demo_p-demostart, demofp) != (size_t)(demo_p-demostart))
-    I_Error("G_BeginRecording: Error writing demo header");
-  free(demostart);
 }
 
 //
@@ -2136,14 +2046,6 @@ void G_DoPlayDemo(void)
 boolean G_CheckDemoStatus (void)
 {
   P_ChecksumFinal();
-
-  if (demorecording)
-    {
-      demorecording = false;
-      fputc(DEMOMARKER, demofp);
-      I_Error("G_CheckDemoStatus: Demo recorded");
-      return false;  // killough
-    }
 
   if (timingdemo)
     {

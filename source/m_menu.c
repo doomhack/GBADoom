@@ -378,22 +378,12 @@ static void M_RestartLevelResponse(int ch)
   if (ch != 'y')
     return;
 
-  if (demorecording)
-    exit(0);
-
   M_ClearMenus ();
   G_RestartLevel ();
 }
 
 void M_NewGame(int choice)
 {
-    if (demorecording) {  /* killough 5/26/98: exclude during demo recordings */
-        M_StartMessage("you can't start a new game\n"
-                       "while recording a demo!\n\n"PRESSKEY,
-                       NULL, false); // killough 5/26/98: not externalized
-        return;
-    }
-
     if ( _g->gamemode == commercial )
         M_SetupNextMenu(&NewDef);
     else
@@ -826,7 +816,7 @@ static void M_EndGameResponse(int ch)
     return;
 
   // killough 5/26/98: make endgame quit if recording or playing back demo
-  if (demorecording || singledemo)
+  if (singledemo)
     G_CheckDemoStatus();
 
   M_ClearMenus ();
