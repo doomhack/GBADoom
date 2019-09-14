@@ -193,9 +193,6 @@ void I_FinishUpdate (void)
 		newpal = NO_PALETTE_CHANGE;
 	}
 
-	if(noblit)
-		return;
-
 	I_FinishUpdate_e32(screens[0].data, current_pallete, SCREENWIDTH, SCREENHEIGHT);
 }
 

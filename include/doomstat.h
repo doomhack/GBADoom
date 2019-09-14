@@ -99,7 +99,6 @@ extern enum automapmode_e automapmode; // Mode that the automap is in
 extern  boolean menuactive;    // Menu overlayed?
 extern  boolean paused;        // Game Pause?
 extern  boolean nodrawers;
-extern  boolean noblit;
 
 // Player taking events, and displaying.
 extern const int consoleplayer;

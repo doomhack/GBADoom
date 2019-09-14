@@ -90,7 +90,6 @@ static const byte *demobuffer;   /* cph - only used for playback */
 static int demolength; // check for overrun (missing DEMOMARKER)
 
 static const byte *demo_p;
-static short    consistancy[MAXPLAYERS][BACKUPTICS];
 
 gameaction_t    gameaction;
 gamestate_t     gamestate;
@@ -99,20 +98,22 @@ boolean         respawnmonsters;
 int             gameepisode;
 int             gamemap;
 boolean         paused;
+
+
 // CPhipps - moved *_loadgame vars here
-static boolean forced_loadgame = false;
 static boolean command_loadgame = false;
 
 boolean         usergame;      // ok to save / end game
 boolean         timingdemo;    // if true, exit with report on completion
 boolean         fastdemo;      // if true, run at full speed -- killough
 boolean         nodrawers;     // for comparative timing purposes
-boolean         noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
 boolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
+
 const int       consoleplayer = 0; // player taking events and displaying
 const int       displayplayer = 0; // view being displayed
+
 int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
@@ -123,7 +124,7 @@ wbstartstruct_t wminfo;               // parms for world map / intermission
 boolean         haswolflevels = false;// jff 4/18/98 wolf levels present
 static byte     *savebuffer;          // CPhipps - static
 int             totalleveltimes;      // CPhipps - total time for all completed levels
-int		longtics;
+int             longtics;
 
 //
 // controls (have defaults)
@@ -176,9 +177,9 @@ const int     key_weapon9 = '9';                                                
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
 #define NUMKEYS   512
 
-fixed_t forwardmove[2] = {0x19, 0x32};
-fixed_t sidemove[2]    = {0x18, 0x28};
-fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
+const fixed_t forwardmove[2] = {0x19, 0x32};
+const fixed_t sidemove[2]    = {0x18, 0x28};
+const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
 // CPhipps - made lots of key/button state vars static
 static boolean gamekeydown[NUMKEYS];
@@ -223,7 +224,6 @@ static inline signed short fudgea(signed short b)
 void G_BuildTiccmd(ticcmd_t* cmd)
 {
   boolean strafe;
-  boolean bstrafe;
   int speed;
   int tspeed;
   int forward;
@@ -231,7 +231,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   int newweapon;                                          // phares
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd,0,sizeof*cmd);
-  cmd->consistancy = consistancy[consoleplayer][_g->maketic%BACKUPTICS];
 
   strafe = gamekeydown[key_strafe];
 
@@ -659,8 +658,7 @@ void G_Ticker (void)
                   savegameslot =
                     (players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
                   gameaction = ga_loadgame;
-      forced_loadgame = false; // Force if a netgame
-      command_loadgame = false;
+                    command_loadgame = false;
                   break;
 
       // CPhipps - Restart the level
@@ -1192,7 +1190,6 @@ void G_ForcedLoadGame(void)
   // CPhipps - net loadgames are always forced, so we only reach here
   //  in single player
   gameaction = ga_loadgame;
-  forced_loadgame = true;
 }
 
 // killough 3/16/98: add slot info
@@ -1205,11 +1202,9 @@ void G_LoadGame(int slot, boolean command)
     //         - store info in special_event
     special_event = BT_SPECIAL | (BTS_LOADGAME & BT_SPECIALMASK) |
       ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
-    forced_loadgame = false; // CPhipps - always force load netgames
   } else {
     // Do the old thing, immediate load
     gameaction = ga_loadgame;
-    forced_loadgame = false;
     savegameslot = slot;
     demoplayback = false;
   }
@@ -1259,19 +1254,6 @@ void G_DoLoadGame(void)
 
     checksum = G_Signature();
 
-    if (memcmp(&checksum, save_p, sizeof checksum)) {
-      if (!forced_loadgame) {
-        char *msg = malloc(strlen(save_p + sizeof checksum) + 128);
-        strcpy(msg,"Incompatible Savegame!!!\n");
-        if (save_p[sizeof checksum])
-          strcat(strcat(msg,"Wads expected:\n\n"), save_p + sizeof checksum);
-        strcat(msg, "\nAre you sure?");
-        G_LoadGameErr(msg);
-        free(msg);
-        return;
-      } else
-  lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame\n");
-    }
     save_p += sizeof checksum;
    }
 

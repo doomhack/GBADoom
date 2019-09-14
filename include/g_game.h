@@ -168,7 +168,4 @@ extern const int cpars[32];    // hardcoded array size
 #define SAVEDESCLEN 32
 extern char savedescription[SAVEDESCLEN];  // Description to save in savegame
 
-/* cph - compatibility level strings */
-extern const char * comp_lev_str[];
-
 #endif
