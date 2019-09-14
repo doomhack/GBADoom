@@ -1479,8 +1479,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   char  gl_lumpname[9];
   int   gl_lumpnum;
 
-  totallive = totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
-  wminfo.partime = 180;
+  _g->totallive = _g->totalkills = _g->totalitems = _g->totalsecret = _g->wminfo.maxfrags = 0;
+  _g->wminfo.partime = 180;
 
   for (i=0; i<MAXPLAYERS; i++)
     _g->players[i].killcount = _g->players[i].secretcount = _g->players[i].itemcount = 0;
@@ -1517,7 +1517,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   lumpnum = W_GetNumForName(lumpname);
   gl_lumpnum = W_CheckNumForName(gl_lumpname); // figgi
 
-  leveltime = 0; totallive = 0;
+  leveltime = 0; _g->totallive = 0;
 
   // note: most of this ordering is important
 

@@ -87,10 +87,6 @@ int (P_Random)(pr_class_t pr_class
   // All of this RNG stuff is tricky as far as demo sync goes --
   // it's like playing with explosives :) Lee
 
-#ifdef INSTRUMENTED
-  //lprintf(LO_DEBUG, "%.10d: %.10d - %s:%.5d\n", gametic, pr_class, file, line);
-#endif
-
   int compat = pr_class == pr_misc ?
     (rng.prndindex = (rng.prndindex + 1) & 255) :
     (rng. rndindex = (rng. rndindex + 1) & 255) ;

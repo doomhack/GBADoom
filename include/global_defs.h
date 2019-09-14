@@ -152,6 +152,20 @@ int             starttime;     // for comparative timing purposes
 boolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
 
+
+int             gametic;
+int             basetic;       /* killough 9/29/98: for demo sync */
+int             totalkills, totallive, totalitems, totalsecret;    // for intermission
+boolean         demoplayback;
+int             demover;
+boolean         singledemo;           // quit after playing a demo from cmdline
+wbstartstruct_t wminfo;               // parms for world map / intermission
+boolean         haswolflevels;// jff 4/18/98 wolf levels present
+byte            *savebuffer;          // CPhipps - static
+int             totalleveltimes;      // CPhipps - total time for all completed levels
+int             longtics;
+
+
 //******************************************************************************
 
 #endif // GLOBAL_DEFS_H

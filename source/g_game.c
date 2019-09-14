@@ -88,17 +88,6 @@ static const size_t savegamesize = SAVEGAMESIZE; // killough
 const int       consoleplayer = 0; // player taking events and displaying
 const int       displayplayer = 0; // view being displayed
 
-int             gametic;
-int             basetic;       /* killough 9/29/98: for demo sync */
-int             totalkills, totallive, totalitems, totalsecret;    // for intermission
-boolean         demoplayback;
-int             demover;
-boolean         singledemo;           // quit after playing a demo from cmdline
-wbstartstruct_t wminfo;               // parms for world map / intermission
-boolean         haswolflevels = false;// jff 4/18/98 wolf levels present
-static byte     *savebuffer;          // CPhipps - static
-int             totalleveltimes;      // CPhipps - total time for all completed levels
-int             longtics;
 
 //
 // controls (have defaults)
@@ -181,7 +170,7 @@ static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, boolean fai
 static inline signed char fudgef(signed char b)
 {
   static int c;
-  if (!b || longtics) return b;
+  if (!b || _g->longtics) return b;
   if (++c & 0x1f) return b;
   b |= 1; if (b>2) b-=2;
   return b;
@@ -189,7 +178,7 @@ static inline signed char fudgef(signed char b)
 
 static inline signed short fudgea(signed short b)
 {
-  if (!b || !longtics) return b;
+  if (!b || !_g->longtics) return b;
   b |= 1; if (b>2) b-=2;
   return b;
 }
@@ -469,7 +458,7 @@ boolean G_Responder (event_t* ev)
   // killough 9/29/98: make any key pop up menu regardless of
   // which kind of demo, and allow other events during playback
 
-  if (_g->gameaction == ga_nothing && (demoplayback || _g->gamestate == GS_DEMOSCREEN))
+  if (_g->gameaction == ga_nothing && (_g->demoplayback || _g->gamestate == GS_DEMOSCREEN))
     {
       // killough 9/29/98: allow user to pause demos during playback
       if (ev->type == ev_keydown && ev->data1 == key_pause)
@@ -574,11 +563,11 @@ void G_Ticker (void)
         }
     }
 
-  if (_g->paused & 2 || (!demoplayback && menuactive))
-    basetic++;  // For revenant tracers and RNG -- we must maintain sync
+  if (_g->paused & 2 || (!_g->demoplayback && menuactive))
+    _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
   else {
     // get commands, check consistancy, and build new consistancy check
-    int buf = (gametic)%BACKUPTICS;
+    int buf = (_g->gametic)%BACKUPTICS;
 
     for (i=0 ; i<MAXPLAYERS ; i++) {
       if (_g->playeringame[i])
@@ -587,14 +576,14 @@ void G_Ticker (void)
 
           memcpy(cmd, &_g->netcmds[i][buf], sizeof *cmd);
 
-          if (demoplayback)
+          if (_g->demoplayback)
             G_ReadDemoTiccmd (cmd);
 
           // check for turbo cheats
           // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
 
-          if ((demoplayback) && cmd->forwardmove > TURBOTHRESHOLD &&
-              !(gametic&31) && ((gametic>>5)&3) == i )
+          if ((_g->demoplayback) && cmd->forwardmove > TURBOTHRESHOLD &&
+              !(_g->gametic&31) && ((_g->gametic>>5)&3) == i )
             {
         extern char *player_names[];
         /* cph - don't use sprintf, use doom_printf */
@@ -637,7 +626,7 @@ void G_Ticker (void)
 
       // CPhipps - Restart the level
     case BTS_RESTARTLEVEL:
-                  if (demoplayback)
+                  if (_g->demoplayback)
                     break;     // CPhipps - Ignore in demos or old games
       _g->gameaction = ga_loadlevel;
       break;
@@ -928,7 +917,7 @@ void G_ExitLevel (void)
 
 void G_SecretExitLevel (void)
 {
-  if (_g->gamemode!=commercial || haswolflevels)
+  if (_g->gamemode!=commercial || _g->haswolflevels)
     secretexit = true;
   else
     secretexit = false;
@@ -962,9 +951,9 @@ void G_DoCompleted (void)
         break;
       }
 
-  wminfo.didsecret = _g->players[consoleplayer].didsecret;
-  wminfo.epsd = _g->gameepisode -1;
-  wminfo.last = _g->gamemap -1;
+  _g->wminfo.didsecret = _g->players[consoleplayer].didsecret;
+  _g->wminfo.epsd = _g->gameepisode -1;
+  _g->wminfo.last = _g->gamemap -1;
 
   // wminfo.next is 0 biased, unlike gamemap
   if (_g->gamemode == commercial)
@@ -973,24 +962,24 @@ void G_DoCompleted (void)
         switch(_g->gamemap)
           {
           case 15:
-            wminfo.next = 30; break;
+            _g->wminfo.next = 30; break;
           case 31:
-            wminfo.next = 31; break;
+            _g->wminfo.next = 31; break;
           }
       else
         switch(_g->gamemap)
           {
           case 31:
           case 32:
-            wminfo.next = 15; break;
+            _g->wminfo.next = 15; break;
           default:
-            wminfo.next = _g->gamemap;
+            _g->wminfo.next = _g->gamemap;
           }
     }
   else
     {
       if (secretexit)
-        wminfo.next = 8;  // go to secret level
+        _g->wminfo.next = 8;  // go to secret level
       else
         if (_g->gamemap == 9)
           {
@@ -998,44 +987,44 @@ void G_DoCompleted (void)
             switch (_g->gameepisode)
               {
               case 1:
-                wminfo.next = 3;
+                _g->wminfo.next = 3;
                 break;
               case 2:
-                wminfo.next = 5;
+                _g->wminfo.next = 5;
                 break;
               case 3:
-                wminfo.next = 6;
+                _g->wminfo.next = 6;
                 break;
               case 4:
-                wminfo.next = 2;
+                _g->wminfo.next = 2;
                 break;
               }
           }
         else
-          wminfo.next = _g->gamemap;          // go to next level
+          _g->wminfo.next = _g->gamemap;          // go to next level
     }
 
-  wminfo.maxkills = totalkills;
-  wminfo.maxitems = totalitems;
-  wminfo.maxsecret = totalsecret;
-  wminfo.maxfrags = 0;
+  _g->wminfo.maxkills = _g->totalkills;
+  _g->wminfo.maxitems = _g->totalitems;
+  _g->wminfo.maxsecret = _g->totalsecret;
+  _g->wminfo.maxfrags = 0;
 
   if ( _g->gamemode == commercial )
-    wminfo.partime = TICRATE*cpars[_g->gamemap-1];
+    _g->wminfo.partime = TICRATE*cpars[_g->gamemap-1];
   else
-    wminfo.partime = TICRATE*pars[_g->gameepisode][_g->gamemap];
+    _g->wminfo.partime = TICRATE*pars[_g->gameepisode][_g->gamemap];
 
-  wminfo.pnum = consoleplayer;
+  _g->wminfo.pnum = consoleplayer;
 
   for (i=0 ; i<MAXPLAYERS ; i++)
     {
-      wminfo.plyr[i].in = _g->playeringame[i];
-      wminfo.plyr[i].skills = _g->players[i].killcount;
-      wminfo.plyr[i].sitems = _g->players[i].itemcount;
-      wminfo.plyr[i].ssecret = _g->players[i].secretcount;
-      wminfo.plyr[i].stime = leveltime;
-      memcpy (wminfo.plyr[i].frags, _g->players[i].frags,
-              sizeof(wminfo.plyr[i].frags));
+      _g->wminfo.plyr[i].in = _g->playeringame[i];
+      _g->wminfo.plyr[i].skills = _g->players[i].killcount;
+      _g->wminfo.plyr[i].sitems = _g->players[i].itemcount;
+      _g->wminfo.plyr[i].ssecret = _g->players[i].secretcount;
+      _g->wminfo.plyr[i].stime = leveltime;
+      memcpy (_g->wminfo.plyr[i].frags, _g->players[i].frags,
+              sizeof(_g->wminfo.plyr[i].frags));
     }
 
   /* cph - modified so that only whole seconds are added to the totalleveltimes
@@ -1043,21 +1032,21 @@ void G_DoCompleted (void)
    *  the times in seconds shown for each level. Also means our total time
    *  will agree with Compet-n.
    */
-  wminfo.totaltimes = (totalleveltimes += (leveltime - leveltime%35));
+  _g->wminfo.totaltimes = (_g->totalleveltimes += (leveltime - leveltime%35));
 
   _g->gamestate = GS_INTERMISSION;
   _g->automapmode &= ~am_active;
 
   // lmpwatch.pl engine-side demo testing support
   // print "FINISHED: <mapname>" when the player exits the current map
-  if (_g->nodrawers && (demoplayback || _g->timingdemo)) {
+  if (_g->nodrawers && (_g->demoplayback || _g->timingdemo)) {
     if (_g->gamemode == commercial)
       lprintf(LO_INFO, "FINISHED: MAP%02d\n", _g->gamemap);
     else
       lprintf(LO_INFO, "FINISHED: E%dM%d\n", _g->gameepisode, _g->gamemap);
   }
 
-  WI_Start (&wminfo);
+  WI_Start (&_g->wminfo);
 }
 
 //
@@ -1095,7 +1084,7 @@ void G_DoWorldDone (void)
 {
   idmusnum = -1;             //jff 3/17/98 allow new level's music to be loaded
   _g->gamestate = GS_LEVEL;
-  _g->gamemap = wminfo.next+1;
+  _g->gamemap = _g->wminfo.next+1;
   G_DoLoadLevel();
   _g->gameaction = ga_nothing;
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
@@ -1144,7 +1133,7 @@ static uint_64_t G_Signature(void)
   if (!computed) {
    computed = true;
    if (_g->gamemode == commercial)
-    for (map = haswolflevels ? 32 : 30; map; map--)
+    for (map = _g->haswolflevels ? 32 : 30; map; map--)
       sprintf(name, "map%02d", map), s = G_UpdateSignature(s, name);
    else
     for (episode = _g->gamemode==retail ? 4 :
@@ -1170,7 +1159,7 @@ void G_ForcedLoadGame(void)
 // killough 5/15/98: add command-line
 void G_LoadGame(int slot, boolean command)
 {
-  if (!demoplayback && !command) {
+  if (!_g->demoplayback && !command) {
     // CPhipps - handle savegame filename in G_DoLoadGame
     //         - Delay load so it can be communicated in net game
     //         - store info in special_event
@@ -1180,7 +1169,7 @@ void G_LoadGame(int slot, boolean command)
     // Do the old thing, immediate load
     _g->gameaction = ga_loadgame;
     savegameslot = slot;
-    demoplayback = false;
+    _g->demoplayback = false;
   }
   _g->command_loadgame = command;
   R_SmoothPlaying_Reset(NULL); // e6y
@@ -1191,7 +1180,7 @@ void G_LoadGame(int slot, boolean command)
 
 static void G_LoadGameErr(const char *msg)
 {
-  Z_Free(savebuffer);                // Free the savegame buffer
+  Z_Free(_g->savebuffer);                // Free the savegame buffer
   M_ForcedLoadGame(msg);             // Print message asking for 'Y' to force
   if (_g->command_loadgame)              // If this was a command-line -loadgame
     {
@@ -1209,14 +1198,14 @@ void G_DoLoadGame(void)
   // CPhipps - do savegame filename stuff here
   char name[PATH_MAX+1];     // killough 3/22/98
 
-  G_SaveGameName(name,sizeof(name),savegameslot, demoplayback);
+  G_SaveGameName(name,sizeof(name),savegameslot, _g->demoplayback);
 
   _g->gameaction = ga_nothing;
 
-  length = M_ReadFile(name, &savebuffer);
+  length = M_ReadFile(name, &_g->savebuffer);
   if (length<=0)
     I_Error("Couldn't read file %s: %s", name, "(Unknown Error)");
-  save_p = savebuffer + SAVESTRINGSIZE;
+  save_p = _g->savebuffer + SAVESTRINGSIZE;
 
 
   save_p += VERSIONSIZE;
@@ -1259,12 +1248,12 @@ void G_DoLoadGame(void)
   save_p += sizeof leveltime;
 
 
-    memcpy(&totalleveltimes, save_p, sizeof totalleveltimes);
-    save_p += sizeof totalleveltimes;
+    memcpy(&_g->totalleveltimes, save_p, sizeof _g->totalleveltimes);
+    save_p += sizeof _g->totalleveltimes;
 
 
   // killough 11/98: load revenant tracer state
-  basetic = gametic - *save_p++;
+  _g->basetic = _g->gametic - *save_p++;
 
   // dearchive all the modifications
   P_MapStart();
@@ -1281,7 +1270,7 @@ void G_DoLoadGame(void)
     I_Error ("G_DoLoadGame: Bad savegame");
 
   // done
-  Z_Free (savebuffer);
+  Z_Free (_g->savebuffer);
 
   if (setsizeneeded)
     R_ExecuteSetViewSize ();
@@ -1291,9 +1280,9 @@ void G_DoLoadGame(void)
 
   /* killough 12/98: support -recordfrom and -loadgame -playdemo */
   if (!_g->command_loadgame)
-    singledemo = false;  /* Clear singledemo flag if loading from menu */
+    _g->singledemo = false;  /* Clear singledemo flag if loading from menu */
   else
-    if (singledemo) {
+    if (_g->singledemo) {
       _g->gameaction = ga_loadgame; /* Mark that we're loading a game before demo */
       G_DoPlayDemo();           /* This will detect it and won't reinit level */
     }
@@ -1308,7 +1297,7 @@ void G_DoLoadGame(void)
 void G_SaveGame(int slot, char *description)
 {
   strcpy(savedescription, description);
-  if (demoplayback) {
+  if (_g->demoplayback) {
     /* cph - We're doing a user-initiated save game while a demo is
      * running so, go outside normal mechanisms
      */
@@ -1347,11 +1336,11 @@ static void G_DoSaveGame (boolean menu)
   _g->gameaction = ga_nothing; // cph - cancel savegame at top of this function,
     // in case later problems cause a premature exit
 
-  G_SaveGameName(name,sizeof(name),savegameslot, demoplayback && !menu);
+  G_SaveGameName(name,sizeof(name),savegameslot, _g->demoplayback && !menu);
 
   description = savedescription;
 
-  save_p = savebuffer = malloc(savegamesize);
+  save_p = _g->savebuffer = malloc(savegamesize);
 
   CheckSaveGame(SAVESTRINGSIZE+VERSIONSIZE+sizeof(uint_64_t));
   memcpy (save_p, description, SAVESTRINGSIZE);
@@ -1404,11 +1393,11 @@ static void G_DoSaveGame (boolean menu)
   memcpy(save_p, &leveltime, sizeof leveltime);
   save_p += sizeof leveltime;
 
-    memcpy(save_p, &totalleveltimes, sizeof totalleveltimes);
-    save_p += sizeof totalleveltimes;
+    memcpy(save_p, &_g->totalleveltimes, sizeof _g->totalleveltimes);
+    save_p += sizeof _g->totalleveltimes;
 
   // killough 11/98: save revenant tracer state
-  *save_p++ = (gametic-basetic) & 255;
+  *save_p++ = (_g->gametic-_g->basetic) & 255;
 
   // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
   Z_CheckHeap();
@@ -1438,15 +1427,15 @@ static void G_DoSaveGame (boolean menu)
 
   *save_p++ = 0xe6;   // consistancy marker
 
-  length = save_p - savebuffer;
+  length = save_p - _g->savebuffer;
 
   Z_CheckHeap();
-  doom_printf( "%s", M_WriteFile(name, savebuffer, length)
+  doom_printf( "%s", M_WriteFile(name, _g->savebuffer, length)
          ? GGSAVED /* Ty - externalised */
          : "Game save failed!"); // CPhipps - not externalised
 
-  free(savebuffer);  // killough
-  savebuffer = save_p = NULL;
+  free(_g->savebuffer);  // killough
+  _g->savebuffer = save_p = NULL;
 
   savedescription[0] = 0;
 }
@@ -1472,13 +1461,13 @@ void G_ReloadDefaults(void)
   // (allows functions above to load different values for demos
   // and savegames without messing up defaults).
 
-  demoplayback = false;
-  singledemo = false;            // killough 9/29/98: don't stop after 1 demo
+  _g->demoplayback = false;
+  _g->singledemo = false;            // killough 9/29/98: don't stop after 1 demo
 
   // killough 2/21/98:
   memset(_g->playeringame+1, 0, sizeof(*_g->playeringame)*(MAXPLAYERS-1));
 
-  rngseed += I_GetRandomTimeSeed() + gametic; // CPhipps
+  rngseed += I_GetRandomTimeSeed() + _g->gametic; // CPhipps
 }
 
 void G_DoNewGame (void)
@@ -1578,7 +1567,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   _g->gamemap = map;
   _g->gameskill = skill;
 
-  totalleveltimes = 0; // cph
+  _g->totalleveltimes = 0; // cph
 
   //jff 4/16/98 force marks on automap cleared every new level start
   AM_clearMarks();
@@ -1598,7 +1587,7 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd)
 
   if (*_g->demo_p == DEMOMARKER)
     G_CheckDemoStatus();      // end of demo data stream
-  else if (demoplayback && _g->demo_p + (longtics?5:4) > _g->demobuffer + _g->demolength)
+  else if (_g->demoplayback && _g->demo_p + (_g->longtics?5:4) > _g->demobuffer + _g->demolength)
   {
     lprintf(LO_WARN, "G_ReadDemoTiccmd: missing DEMOMARKER\n");
     G_CheckDemoStatus();
@@ -1607,7 +1596,7 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd)
     {
       cmd->forwardmove = ((signed char)*_g->demo_p++);
       cmd->sidemove = ((signed char)*_g->demo_p++);
-      if (!longtics) {
+      if (!_g->longtics) {
         cmd->angleturn = ((unsigned char)(at = *_g->demo_p++))<<8;
       } else {
     unsigned int lowbyte = (unsigned char)*_g->demo_p++;
@@ -1825,7 +1814,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
 
   const byte *option_p = NULL;      /* killough 11/98 */
 
-  basetic = gametic;  // killough 9/29/98
+  _g->basetic = _g->gametic;  // killough 9/29/98
 
   // killough 2/22/98, 2/28/98: autodetect old demos and act accordingly.
   // Old demos turn on demo_compatibility => compatibility; new demos load
@@ -1835,31 +1824,31 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
   if (CheckForOverrun(header_p, demo_p, size, 1, failonerror))
     return NULL;
 
-  demover = *demo_p++;
-  longtics = 0;
+  _g->demover = *demo_p++;
+  _g->longtics = 0;
 
   // e6y
   // Handling of unrecognized demo formats
   // Versions up to 1.2 use a 7-byte header - first byte is a skill level.
   // Versions after 1.2 use a 13-byte header - first byte is a demoversion.
   // BOOM's demoversion starts from 200
-  if (!((demover >=   0  && demover <=   4) ||
-        (demover >= 104  && demover <= 111) ||
-        (demover >= 200  && demover <= 214)))
+  if (!((_g->demover >=   0  && _g->demover <=   4) ||
+        (_g->demover >= 104  && _g->demover <= 111) ||
+        (_g->demover >= 200  && _g->demover <= 214)))
   {
-    I_Error("G_ReadDemoHeader: Unknown demo format %d.", demover);
+    I_Error("G_ReadDemoHeader: Unknown demo format %d.", _g->demover);
   }
 
-  if (demover < 200)     // Autodetect old demos
+  if (_g->demover < 200)     // Autodetect old demos
     {
-      if (demover >= 111) longtics = 1;
+      if (_g->demover >= 111) _g->longtics = 1;
 
       // killough 3/2/98: force these variables to be 0 in demo_compatibility
 
       // killough 3/6/98: rearrange to fix savegame bugs (moved fastparm,
       // respawnparm, nomonsters flags to G_LoadOptions()/G_SaveOptions())
 
-      if ((skill=demover) >= 100)         // For demos from versions >= 1.4
+      if ((skill=_g->demover) >= 100)         // For demos from versions >= 1.4
         {
           //e6y: check for overrun
           if (CheckForOverrun(header_p, demo_p, size, 8, failonerror))
@@ -1888,7 +1877,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
   else    // new versions of demos
     {
       demo_p += 6;               // skip signature;
-      switch (demover) {
+      switch (_g->demover) {
       case 200: /* BOOM */
       case 201:
         //e6y: check for overrun
@@ -1926,7 +1915,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
 	demo_p++;
 	break;
       case 214:
-        longtics = 1;
+        _g->longtics = 1;
 	demo_p++;
 	break;
       }
@@ -1948,7 +1937,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
 
       demo_p = G_ReadOptions(demo_p);  // killough 3/1/98: Read game options
 
-      if (demover == 200)              // killough 6/3/98: partially fix v2.00 demos
+      if (_g->demover == 200)              // killough 6/3/98: partially fix v2.00 demos
         demo_p += 256-GAME_OPTION_SIZE;
     }
 
@@ -1988,7 +1977,7 @@ void G_DoPlayDemo(void)
   _g->gameaction = ga_nothing;
   _g->usergame = false;
 
-  demoplayback = true;
+  _g->demoplayback = true;
   R_SmoothPlaying_Reset(NULL); // e6y
 
   _g->starttime = I_GetTime_RealTime ();
@@ -2009,13 +1998,13 @@ boolean G_CheckDemoStatus (void)
       // killough -- added fps information and made it work for longer demos:
       unsigned realtics = endtime-_g->starttime;
       I_Error ("Timed %u gametics in %u realtics = %-.1f frames per second",
-               (unsigned) gametic,realtics,
-               (unsigned) gametic * (double) TICRATE / realtics);
+               (unsigned) _g->gametic,realtics,
+               (unsigned) _g->gametic * (double) TICRATE / realtics);
     }
 
-  if (demoplayback)
+  if (_g->demoplayback)
     {
-      if (singledemo)
+      if (_g->singledemo)
         exit(0);  // killough
 
       if (demolumpnum != -1) {

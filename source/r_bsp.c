@@ -41,6 +41,8 @@
 #include "v_video.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 seg_t     *curline;
 side_t    *sidedef;
 line_t    *linedef;
@@ -114,7 +116,7 @@ void R_ClearClipSegs (void)
 
 static void R_RecalcLineFlags(void)
 {
-  linedef->r_validcount = gametic;
+  linedef->r_validcount = _g->gametic;
 
   /* First decide if the line is closed, normal, or invisible */
   if (!(linedef->flags & ML_TWOSIDED)
@@ -364,7 +366,7 @@ static void R_AddLine (seg_t *line)
     backsector = R_FakeFlat(backsector, &tempsec, NULL, NULL, true);
 
   /* cph - roll up linedef properties in flags */
-  if ((linedef = curline->linedef)->r_validcount != gametic)
+  if ((linedef = curline->linedef)->r_validcount != _g->gametic)
     R_RecalcLineFlags();
 
   if (linedef->r_flags & RF_IGNORE)

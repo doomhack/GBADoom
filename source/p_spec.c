@@ -2420,7 +2420,7 @@ void P_SpawnSpecials (void)
       continue;
 
     if (sector->special&SECRET_MASK) //jff 3/15/98 count extended
-      totalsecret++;                 // secret sectors too
+      _g->totalsecret++;                 // secret sectors too
 
     switch (sector->special&31)
     {
@@ -2452,7 +2452,7 @@ void P_SpawnSpecials (void)
       case 9:
         // secret sector
         if (sector->special<32) //jff 3/14/98 bits don't count unless not
-          totalsecret++;        // a generalized sector type
+          _g->totalsecret++;        // a generalized sector type
         break;
 
       case 10:

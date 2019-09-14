@@ -472,7 +472,7 @@ static void R_SetupFrame (player_t *player)
 
   viewplayer = player;
 
-  if (player->mo != oviewer || (_g->paused || (menuactive && !demoplayback)))
+  if (player->mo != oviewer || (_g->paused || (menuactive && !_g->demoplayback)))
   {
     oviewer = player->mo;
   }
@@ -557,7 +557,7 @@ void R_RenderPlayerView (player_t* player)
 
     if (autodetect_hom)
     { // killough 2/10/98: add flashing red HOM indicators
-      unsigned char color=(gametic % 20) < 9 ? 0xb0 : 0;
+      unsigned char color=(_g->gametic % 20) < 9 ? 0xb0 : 0;
       V_FillRect(0, viewwindowx, viewwindowy, viewwidth, viewheight, color);
       R_DrawViewBorder();
     }

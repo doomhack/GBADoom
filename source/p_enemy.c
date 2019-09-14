@@ -1415,7 +1415,7 @@ void A_Tracer(mobj_t *actor)
    * and improvise around it (using leveltime causes desync across levels).
    */
 
-  if ((gametic-basetic) & 3)
+  if ((_g->gametic-_g->basetic) & 3)
     return;
 
   // spawn a puff of smoke behind the rocket
@@ -1617,7 +1617,7 @@ void A_VileChase(mobj_t* actor)
         (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
 
 		  if (!((corpsehit->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
-		    totallive++;
+            _g->totallive++;
 		  
                   corpsehit->health = info->spawnhealth;
       P_SetTarget(&corpsehit->target, NULL);  // killough 11/98

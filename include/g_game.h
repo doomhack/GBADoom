@@ -156,8 +156,6 @@ extern const int  key_map_rotate; // cph - map rotation
 extern const int  key_map_overlay;// cph - map overlay
 extern const int  key_screenshot;    // killough 2/22/98 -- add key for screenshot
 
-extern boolean haswolflevels;  //jff 4/18/98 wolf levels present
-
 extern const int  bodyquesize;       // killough 2/8/98: adustable corpse limit
 
 // killough 5/2/98: moved from d_deh.c:

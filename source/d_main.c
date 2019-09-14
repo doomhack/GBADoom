@@ -105,7 +105,7 @@ void D_PostEvent(event_t *ev)
 {
   /* cph - suppress all input events at game start
    * FIXME: This is a lousy kludge */
-  if (gametic < 3)
+  if (_g->gametic < 3)
       return;
 
   M_Responder(ev) ||
@@ -197,7 +197,7 @@ void D_Display (void)
     default:
       break;
     }
-  } else if (gametic != basetic) { // In a level
+  } else if (_g->gametic != _g->basetic) { // In a level
     boolean redrawborderstuff;
 
     HU_Erase();
@@ -293,9 +293,9 @@ static void D_DoomLoop(void)
 
 			M_Ticker ();
 			G_Ticker ();
-			P_Checksum(gametic);
+            P_Checksum(_g->gametic);
 			
-			gametic++;
+            _g->gametic++;
             _g->maketic++;
 		}
 		else
@@ -589,7 +589,7 @@ static void IdentifyVersion()
 {
     if(doom_iwad && (doom_iwad_len > 0))
     {
-        CheckIWAD2(doom_iwad, doom_iwad_len, &_g->gamemode, &haswolflevels);
+        CheckIWAD2(doom_iwad, doom_iwad_len, &_g->gamemode, &_g->haswolflevels);
 
         /* jff 8/23/98 set gamemission global appropriately in all cases
          * cphipps 12/1999 - no version output here, leave that to the caller
@@ -750,7 +750,7 @@ static void D_DoomMainSetup(void)
         _g->singletics = true;
         _g->timingdemo = true;            // show stats after quit
         G_DeferedPlayDemo(timedemo);
-        singledemo = true;            // quit after one demo
+        _g->singledemo = true;            // quit after one demo
     }
 
     D_StartTitle();                 // start up intro loop

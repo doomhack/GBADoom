@@ -251,7 +251,7 @@ P_UseSpecialLine
 
   // e6y
   // b.m. side test was broken in boom201
-  if ((demoplayback ? (demover != 201) : (true)))
+  if ((_g->demoplayback ? (_g->demover != 201) : (true)))
   if (side) //jff 6/1/98 fix inadvertent deletion of side test
     return false;
 

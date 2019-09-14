@@ -643,7 +643,7 @@ void M_SaveSelect(int choice)
 void M_SaveGame (int choice)
 {
   // killough 10/6/98: allow savegames during single-player demo playback
-  if (!_g->usergame && (!demoplayback))
+  if (!_g->usergame && (!_g->demoplayback))
     {
     M_StartMessage(SAVEDEAD,NULL,false); // Ty 03/27/98 - externalized
     return;
@@ -816,7 +816,7 @@ static void M_EndGameResponse(int ch)
     return;
 
   // killough 5/26/98: make endgame quit if recording or playing back demo
-  if (singledemo)
+  if (_g->singledemo)
     G_CheckDemoStatus();
 
   M_ClearMenus ();

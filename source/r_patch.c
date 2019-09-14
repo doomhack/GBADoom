@@ -644,9 +644,6 @@ const rpatch_t *R_CachePatchNum(int id)
   /* cph - if wasn't locked but now is, tell z_zone to hold it */
   if (!patches[id].locks && locks) {
     Z_ChangeTag(patches[id].data,PU_STATIC);
-#ifdef TIMEDIAG
-    patches[id].locktic = gametic;
-#endif
   }
   patches[id].locks += locks;
 

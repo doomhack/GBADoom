@@ -93,34 +93,15 @@ extern  boolean menuactive;    // Menu overlayed?
 extern const int consoleplayer;
 extern const int displayplayer;
 
-// -------------------------------------
-// Scores, rating.
-// Statistics on a given map, for intermission.
-//
-extern  int totalkills, totallive;
-extern  int totalitems;
-extern  int totalsecret;
-
 // Timer, for scores.
-extern  int basetic;    /* killough 9/29/98: levelstarttic, adjusted */
+
 extern  int leveltime;  // tics in game play for par
-
-// --------------------------------------
-// DEMO playback/recording related stuff.
-
-extern  boolean demoplayback;
-extern  int demover;
-
-// Quit after playing a demo from cmdline.
-extern  boolean   singledemo;
 
 //-----------------------------
 // Internal parameters, fixed.
 // These are set by the engine, and not changed
 //  according to user inputs. Partly load from
 //  WAD, partly set at startup time.
-
-extern  int   gametic;
 
 extern  mapthing_t *deathmatchstarts;     // killough
 extern  size_t     num_deathmatchstarts; // killough
@@ -130,9 +111,7 @@ extern  mapthing_t *deathmatch_p;
 // Player spawn spots.
 extern  mapthing_t playerstarts[];
 
-// Intermission stats.
-// Parameters for world map / intermission.
-extern wbstartstruct_t wminfo;
+
 
 //-----------------------------------------
 // Internal parameters, used for engine.

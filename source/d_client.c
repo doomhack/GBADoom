@@ -87,7 +87,7 @@ void D_BuildNewTiccmds(void)
     while (newtics--)
     {
         I_StartTic();
-        if (_g->maketic - gametic > BACKUPTICS/2) break;
+        if (_g->maketic - _g->gametic > BACKUPTICS/2) break;
         G_BuildTiccmd(&_g->localcmds[_g->maketic%BACKUPTICS]);
         _g->maketic++;
     }
@@ -104,7 +104,7 @@ void TryRunTics (void)
 
         D_BuildNewTiccmds();
 
-        runtics = (_g->maketic) - gametic;
+        runtics = (_g->maketic) - _g->gametic;
         if (!runtics)
         {
             if (I_GetTime() - entertime > 10)
@@ -126,7 +126,7 @@ void TryRunTics (void)
         M_Ticker ();
         I_GetTime_SaveMS();
         G_Ticker ();
-        P_Checksum(gametic);
-        gametic++;
+        P_Checksum(_g->gametic);
+        _g->gametic++;
     }
 }

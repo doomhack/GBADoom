@@ -796,7 +796,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   mobj->target = mobj->tracer = mobj->lastenemy = NULL;
   P_AddThinker (&mobj->thinker);
   if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
-    totallive++;
+    _g->totallive++;
   return mobj;
   }
 
@@ -854,7 +854,7 @@ void P_RemoveMobj (mobj_t* mobj)
   // CPhipps - only leave dead references in old demos; I hope lxdoom_1 level
   // demos are rare and don't rely on this. I hope.
 
-  if (!demoplayback)
+  if (!_g->demoplayback)
   {
     P_SetTarget(&mobj->target,    NULL);
     P_SetTarget(&mobj->tracer,    NULL);
@@ -1146,10 +1146,10 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 
   /* killough 7/20/98: exclude friends */
   if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
-    totalkills++;
+    _g->totalkills++;
 
   if (mobj->flags & MF_COUNTITEM)
-    totalitems++;
+    _g->totalitems++;
 
   mobj->angle = ANG45 * (mthing->angle/45);
   if (options & MTF_AMBUSH)

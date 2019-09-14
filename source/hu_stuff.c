@@ -838,7 +838,7 @@ void HU_Drawer(void)
     !(_g->automapmode & am_active)       // automap is not active
   )
   {
-    doit = !(gametic&1); //jff 3/4/98 speed update up for slow systems
+    doit = !(_g->gametic&1); //jff 3/4/98 speed update up for slow systems
     if (doit)            //jff 8/7/98 update every time, avoid lag in update
     {
       HU_MoveHud();                  // insure HUD display coords are correct
@@ -1187,9 +1187,9 @@ void HU_Drawer(void)
         (
           hud_monsecstr,
           "STS \x1b\x36K \x1b\x33%d \x1b\x36M \x1b\x33%d \x1b\x37I \x1b\x33%d/%d \x1b\x35S \x1b\x33%d/%d",
-          plr->killcount,totallive,
-          plr->itemcount,totalitems,
-          plr->secretcount,totalsecret
+          plr->killcount,_g->totallive,
+          plr->itemcount,_g->totalitems,
+          plr->secretcount,_g->totalsecret
         );
         // transfer the init string to the widget
         s = hud_monsecstr;

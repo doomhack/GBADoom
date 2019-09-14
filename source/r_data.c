@@ -44,6 +44,8 @@
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "p_tick.h"
 
+#include "global_data.h"
+
 //
 // Graphics.
 // DOOM graphics for walls and sprites
@@ -510,7 +512,7 @@ void R_PrecacheLevel(void)
   register int i;
   register byte *hitlist;
 
-  if (demoplayback)
+  if (_g->demoplayback)
     return;
 
   {

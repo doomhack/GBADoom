@@ -432,7 +432,7 @@ void P_UnArchiveThinkers (void)
   mobj_t    **mobj_p;    // killough 2/14/98: Translation table
   size_t    size;        // killough 2/14/98: size of or index into table
 
-  totallive = 0;
+  _g->totallive = 0;
   // killough 3/26/98: Load boss brain state
   memcpy(&brain, save_p, sizeof brain);
   save_p += sizeof brain;
@@ -515,7 +515,7 @@ void P_UnArchiveThinkers (void)
       P_AddThinker (&mobj->thinker);
 
       if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL | MF_CORPSE)))
-        totallive++;
+        _g->totallive++;
     }
 
   // killough 2/14/98: adjust target and tracer fields, plus
