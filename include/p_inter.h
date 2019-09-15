@@ -53,23 +53,23 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor,mobj_t *source,int damage);
 
 /* killough 5/2/98: moved from d_deh.c, g_game.c, m_misc.c, others: */
 
-extern int god_health;   /* Ty 03/09/98 - deh support, see also p_inter.c */
-extern int idfa_armor;
-extern int idfa_armor_class;
-extern int idkfa_armor;
-extern int idkfa_armor_class;  /* Ty - end */
+extern const int god_health;   /* Ty 03/09/98 - deh support, see also p_inter.c */
+extern const int idfa_armor;
+extern const int idfa_armor_class;
+extern const int idkfa_armor;
+extern const int idkfa_armor_class;  /* Ty - end */
 /* Ty 03/13/98 - externalized initial settings for respawned player */
-extern int initial_health;
-extern int initial_bullets;
-extern int maxhealth;
-extern int max_armor;
-extern int green_armor_class;
-extern int blue_armor_class;
-extern int max_soul;
-extern int soul_health;
-extern int mega_health;
-extern int bfgcells;
-extern int monsters_infight; // e6y: Dehacked support - monsters infight
-extern int maxammo[], clipammo[];
+extern const int initial_health;
+extern const int initial_bullets;
+extern const int maxhealth;
+extern const int max_armor;
+extern const int green_armor_class;
+extern const int blue_armor_class;
+extern const int max_soul;
+extern const int soul_health;
+extern const int mega_health;
+extern const int bfgcells;
+extern const int monsters_infight; // e6y: Dehacked support - monsters infight
+extern const int maxammo[], clipammo[];
 
 #endif

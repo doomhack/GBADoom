@@ -58,30 +58,30 @@
 // dehacked support (and future flexibility).  Most var names came from the key
 // strings used in dehacked.
 
-int initial_health = 100;
-int initial_bullets = 50;
-int maxhealth = 100; // was MAXHEALTH as a #define, used only in this module
-int max_armor = 200;
-int green_armor_class = 1;  // these are involved with armortype below
-int blue_armor_class = 2;
-int max_soul = 200;
-int soul_health = 100;
-int mega_health = 200;
-int god_health = 100;   // these are used in cheats (see st_stuff.c)
-int idfa_armor = 200;
-int idfa_armor_class = 2;
+const int initial_health = 100;
+const int initial_bullets = 50;
+const int maxhealth = 100; // was MAXHEALTH as a #define, used only in this module
+const int max_armor = 200;
+const int green_armor_class = 1;  // these are involved with armortype below
+const int blue_armor_class = 2;
+const int max_soul = 200;
+const int soul_health = 100;
+const int mega_health = 200;
+const int god_health = 100;   // these are used in cheats (see st_stuff.c)
+const int idfa_armor = 200;
+const int idfa_armor_class = 2;
 // not actually used due to pairing of cheat_k and cheat_fa
-int idkfa_armor = 200;
-int idkfa_armor_class = 2;
+const int idkfa_armor = 200;
+const int idkfa_armor_class = 2;
 
-int bfgcells = 40;      // used in p_pspr.c
-int monsters_infight = 0; // e6y: Dehacked support - monsters infight
+const int bfgcells = 40;      // used in p_pspr.c
+const int monsters_infight = 0; // e6y: Dehacked support - monsters infight
 // Ty 03/07/98 - end deh externals
 
 // a weapon is found with two clip loads,
 // a big item has five clip loads
-int maxammo[NUMAMMO]  = {200, 50, 300, 50};
-int clipammo[NUMAMMO] = { 10,  4,  20,  1};
+const int maxammo[NUMAMMO]  = {200, 50, 300, 50};
+const int clipammo[NUMAMMO] = { 10,  4,  20,  1};
 
 //
 // GET STUFF
