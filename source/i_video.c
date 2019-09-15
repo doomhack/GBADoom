@@ -44,7 +44,6 @@
 
 #include <math.h>
 
-#include "m_argv.h"
 #include "doomstat.h"
 #include "doomdef.h"
 #include "doomtype.h"

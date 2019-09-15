@@ -36,7 +36,6 @@
 
 #include "doomstat.h"
 #include "m_bbox.h"
-#include "m_argv.h"
 #include "g_game.h"
 #include "w_wad.h"
 #include "r_main.h"
@@ -1192,7 +1191,7 @@ static void P_LoadBlockMap (int lump)
 {
   long count;
 
-  if (M_CheckParm("-blockmap") || W_LumpLength(lump)<8 || (count = W_LumpLength(lump)/2) >= 0x10000) //e6y
+  if (W_LumpLength(lump)<8 || (count = W_LumpLength(lump)/2) >= 0x10000) //e6y
     P_CreateBlockMap();
   else
     {

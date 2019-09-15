@@ -47,7 +47,6 @@
 #include <sys/stat.h>
 
 #include "doomstat.h"
-#include "m_argv.h"
 #include "g_game.h"
 #include "m_menu.h"
 #include "am_map.h"

@@ -42,7 +42,6 @@
 #endif
 
 #include "doomdef.h"
-#include "m_argv.h"
 #include "d_main.h"
 #include "m_fixed.h"
 #include "i_system.h"

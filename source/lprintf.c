@@ -45,21 +45,15 @@
 #include "doomtype.h"
 #include "lprintf.h"
 #include "i_main.h"
-#include "m_argv.h"
-
-int cons_error_mask = -1-LO_INFO; /* all but LO_INFO when redir'd */
-int cons_output_mask = -1;        /* all output enabled */
 
 /* cphipps - enlarged message buffer and made non-static
  * We still have to be careful here, this function can be called after exit
  */
-#define MAX_MESSAGE_SIZE 2048
+#define MAX_MESSAGE_SIZE 1024
 
 int lprintf(OutputLevels pri, const char *s, ...)
 {
-	int r=0;
 	char msg[MAX_MESSAGE_SIZE];
-	int lvl=pri;
 
 	va_list v;
 	va_start(v,s);
@@ -68,26 +62,9 @@ int lprintf(OutputLevels pri, const char *s, ...)
 	
 	va_end(v);
 
-	printf(msg);
+    printf("%s", msg);
 
 	fflush(stdout);
-
-	//gets(msg);
 	
-	return r;
-}
-
-void Done_ConsoleWin(void)
-{
-
-}
-
-int Init_ConsoleWin(void)
-{
-	return 0;
-}
-
-void I_ConTextAttr(unsigned char a)
-{
-
+    return 0;
 }

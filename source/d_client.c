@@ -62,7 +62,6 @@
 #include "i_system.h"
 #include "i_main.h"
 #include "i_video.h"
-#include "m_argv.h"
 #include "lprintf.h"
 
 #include "global_data.h"

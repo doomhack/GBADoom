@@ -50,7 +50,6 @@ SOURCES += \
         source/libtimidity/timi_tables.c \
         source/libtimidity/timidity.c \
         source/lprintf.c \
-        source/m_argv.c \
         source/m_bbox.c \
         source/m_cheat.c \
         source/m_menu.c \
@@ -154,7 +153,6 @@ HEADERS += \
     include/libtimidity/timidity.h \
     include/libtimidity/timidity_internal.h \
     include/lprintf.h \
-    include/m_argv.h \
     include/m_bbox.h \
     include/m_cheat.h \
     include/m_fixed.h \

@@ -45,13 +45,7 @@ typedef enum                /* Logical output levels */
   LO_ALWAYS=64,
 } OutputLevels;
 
-#ifndef __GNUC__
-#define __attribute__(x)
-#endif
-
 extern int lprintf(OutputLevels pri, const char *fmt, ...) __attribute__((format(printf,2,3)));
-extern int cons_output_mask;
-extern int cons_error_mask;
 
 /* killough 3/20/98: add const
  * killough 4/25/98: add gcc attributes

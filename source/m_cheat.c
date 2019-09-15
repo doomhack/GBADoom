@@ -37,7 +37,6 @@
 #include "p_inter.h"
 #include "p_tick.h"
 #include "m_cheat.h"
-#include "m_argv.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "dstrings.h"
@@ -117,11 +116,6 @@ struct cheat_s cheat[] = {
 
   {"iddqd",      "God mode",          not_net | not_demo,
    cheat_god      },
-
-#if 0
-  {"idk",        NULL,                not_net | not_demo | not_deh,
-   cheat_k },  // The most controversial cheat code in Doom history!!!
-#endif
 
   {"idkfa",      "Ammo & Keys",       not_net | not_demo,
    cheat_kfa },
@@ -680,8 +674,7 @@ boolean M_FindCheats(int key)
   for (matchedbefore = ret = i = 0; cheat[i].cheat; i++)
       if ((sr & cheat[i].mask) == cheat[i].code &&      // if match found
               !(cheat[i].when & not_demo && (_g->demoplayback)) &&
-              !(cheat[i].when & not_menu && menuactive) &&
-              !(cheat[i].when & not_deh  && M_CheckParm("-deh")))
+              !(cheat[i].when & not_menu && menuactive))
       {
           if (cheat[i].arg < 0)               // if additional args are required
           {
