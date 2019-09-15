@@ -1144,10 +1144,10 @@ void G_DoLoadGame(void)
   length = M_ReadFile(name, &_g->savebuffer);
   if (length<=0)
     I_Error("Couldn't read file %s: %s", name, "(Unknown Error)");
-  save_p = _g->savebuffer + SAVESTRINGSIZE;
+  _g->save_p = _g->savebuffer + SAVESTRINGSIZE;
 
 
-  save_p += VERSIONSIZE;
+  _g->save_p += VERSIONSIZE;
 
   // CPhipps - always check savegames even when forced,
   //  only print a warning if forced
@@ -1156,43 +1156,43 @@ void G_DoLoadGame(void)
 
     checksum = 0;
 
-    save_p += sizeof checksum;
+    _g->save_p += sizeof checksum;
    }
 
-  save_p += strlen(save_p)+1;
+  _g->save_p += strlen(_g->save_p)+1;
 
-  save_p++;
+  _g->save_p++;
 
-  _g->gameskill = *save_p++;
-  _g->gameepisode = *save_p++;
-  _g->gamemap = *save_p++;
+  _g->gameskill = *_g->save_p++;
+  _g->gameepisode = *_g->save_p++;
+  _g->gamemap = *_g->save_p++;
 
   for (i=0 ; i<MAXPLAYERS ; i++)
-    _g->playeringame[i] = *save_p++;
-  save_p += MIN_MAXPLAYERS-MAXPLAYERS;         // killough 2/28/98
+    _g->playeringame[i] = *_g->save_p++;
+  _g->save_p += MIN_MAXPLAYERS-MAXPLAYERS;         // killough 2/28/98
 
-  idmusnum = *save_p++;           // jff 3/17/98 restore idmus music
+  idmusnum = *_g->save_p++;           // jff 3/17/98 restore idmus music
   if (idmusnum==255) idmusnum=-1; // jff 3/18/98 account for unsigned byte
 
   /* killough 3/1/98: Read game options
    * killough 11/98: move down to here
    */
-  save_p = (char*)G_ReadOptions(save_p);
+  _g->save_p = (char*)G_ReadOptions(_g->save_p);
 
   // load a base level
   G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
 
   /* get the times - killough 11/98: save entire word */
-  memcpy(&leveltime, save_p, sizeof leveltime);
-  save_p += sizeof leveltime;
+  memcpy(&leveltime, _g->save_p, sizeof leveltime);
+  _g->save_p += sizeof leveltime;
 
 
-    memcpy(&_g->totalleveltimes, save_p, sizeof _g->totalleveltimes);
-    save_p += sizeof _g->totalleveltimes;
+    memcpy(&_g->totalleveltimes, _g->save_p, sizeof _g->totalleveltimes);
+    _g->save_p += sizeof _g->totalleveltimes;
 
 
   // killough 11/98: load revenant tracer state
-  _g->basetic = _g->gametic - *save_p++;
+  _g->basetic = _g->gametic - *_g->save_p++;
 
   // dearchive all the modifications
   P_MapStart();
@@ -1205,7 +1205,7 @@ void G_DoLoadGame(void)
   P_MapEnd();
   R_SmoothPlaying_Reset(NULL); // e6y
 
-  if (*save_p != 0xe6)
+  if (*_g->save_p != 0xe6)
     I_Error ("G_DoLoadGame: Bad savegame");
 
   // done
@@ -1279,19 +1279,19 @@ static void G_DoSaveGame (boolean menu)
 
   description = _g->savedescription;
 
-  save_p = _g->savebuffer = malloc(savegamesize);
+  _g->save_p = _g->savebuffer = malloc(savegamesize);
 
   CheckSaveGame(SAVESTRINGSIZE+VERSIONSIZE+sizeof(uint_64_t));
-  memcpy (save_p, description, SAVESTRINGSIZE);
-  save_p += SAVESTRINGSIZE;
+  memcpy (_g->save_p, description, SAVESTRINGSIZE);
+  _g->save_p += SAVESTRINGSIZE;
   memset (name2,0,sizeof(name2));
 
-  save_p += VERSIONSIZE;
+  _g->save_p += VERSIONSIZE;
 
   { /* killough 3/16/98, 12/98: store lump name checksum */
     uint_64_t checksum = 0;
-    memcpy(save_p, &checksum, sizeof checksum);
-    save_p += sizeof checksum;
+    memcpy(_g->save_p, &checksum, sizeof checksum);
+    _g->save_p += sizeof checksum;
   }
 
   // killough 3/16/98: store pwad filenames in savegame
@@ -1302,41 +1302,41 @@ static void G_DoSaveGame (boolean menu)
       {
         const char *const w = wadfiles[i].name;
         CheckSaveGame(strlen(w)+2);
-        strcpy(save_p, w);
-        save_p += strlen(save_p);
-        *save_p++ = '\n';
+        strcpy(_g->save_p, w);
+        _g->save_p += strlen(_g->save_p);
+        *_g->save_p++ = '\n';
       }
-    *save_p++ = 0;
+    *_g->save_p++ = 0;
   }
 
   CheckSaveGame(GAME_OPTION_SIZE+MIN_MAXPLAYERS+14);
 
-  *save_p++ = -1;
+  *_g->save_p++ = -1;
 
-  *save_p++ = _g->gameskill;
-  *save_p++ = _g->gameepisode;
-  *save_p++ = _g->gamemap;
+  *_g->save_p++ = _g->gameskill;
+  *_g->save_p++ = _g->gameepisode;
+  *_g->save_p++ = _g->gamemap;
 
   for (i=0 ; i<MAXPLAYERS ; i++)
-    *save_p++ = _g->playeringame[i];
+    *_g->save_p++ = _g->playeringame[i];
 
   for (;i<MIN_MAXPLAYERS;i++)         // killough 2/28/98
-    *save_p++ = 0;
+    *_g->save_p++ = 0;
 
-  *save_p++ = idmusnum;               // jff 3/17/98 save idmus state
+  *_g->save_p++ = idmusnum;               // jff 3/17/98 save idmus state
 
-  save_p = G_WriteOptions(save_p);    // killough 3/1/98: save game options
+  _g->save_p = G_WriteOptions(_g->save_p);    // killough 3/1/98: save game options
 
   /* cph - FIXME - endianness? */
   /* killough 11/98: save entire word */
-  memcpy(save_p, &leveltime, sizeof leveltime);
-  save_p += sizeof leveltime;
+  memcpy(_g->save_p, &leveltime, sizeof leveltime);
+  _g->save_p += sizeof leveltime;
 
-    memcpy(save_p, &_g->totalleveltimes, sizeof _g->totalleveltimes);
-    save_p += sizeof _g->totalleveltimes;
+    memcpy(_g->save_p, &_g->totalleveltimes, sizeof _g->totalleveltimes);
+    _g->save_p += sizeof _g->totalleveltimes;
 
   // killough 11/98: save revenant tracer state
-  *save_p++ = (_g->gametic-_g->basetic) & 255;
+  *_g->save_p++ = (_g->gametic-_g->basetic) & 255;
 
   // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
   Z_CheckHeap();
@@ -1364,9 +1364,9 @@ static void G_DoSaveGame (boolean menu)
   Z_CheckHeap();
   P_ArchiveMap();    // killough 1/22/98: save automap information
 
-  *save_p++ = 0xe6;   // consistancy marker
+  *_g->save_p++ = 0xe6;   // consistancy marker
 
-  length = save_p - _g->savebuffer;
+  length = _g->save_p - _g->savebuffer;
 
   Z_CheckHeap();
   doom_printf( "%s", M_WriteFile(name, _g->savebuffer, length)
@@ -1374,7 +1374,7 @@ static void G_DoSaveGame (boolean menu)
          : "Game save failed!"); // CPhipps - not externalised
 
   free(_g->savebuffer);  // killough
-  _g->savebuffer = save_p = NULL;
+  _g->savebuffer = _g->save_p = NULL;
 
   _g->savedescription[0] = 0;
 }

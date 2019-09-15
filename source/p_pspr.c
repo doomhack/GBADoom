@@ -55,20 +55,6 @@
 
 extern void P_Thrust(player_t *, angle_t, fixed_t);
 
-// The following array holds the recoil values         // phares
-
-static const int recoil_values[] = {    // phares
-  10, // wp_fist
-  10, // wp_pistol
-  30, // wp_shotgun
-  10, // wp_chaingun
-  100,// wp_missile
-  20, // wp_plasma
-  100,// wp_bfg
-  0,  // wp_chainsaw
-  80  // wp_supershotgun
-};
-
 //
 // P_SetPsprite
 //
@@ -579,14 +565,12 @@ void A_FirePlasma(player_t *player, pspdef_t *psp)
   P_SpawnPlayerMissile(player->mo, MT_PLASMA);
 }
 
+
 //
 // P_BulletSlope
 // Sets a slope so a near miss is at aproximately
 // the height of the intended target
 //
-
-static fixed_t bulletslope;
-
 static void P_BulletSlope(mobj_t *mo)
 {
   angle_t an = mo->angle;    // see which target is to be aimed at
@@ -596,11 +580,11 @@ static void P_BulletSlope(mobj_t *mo)
 
   do
     {
-      bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
+      _g->bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
       if (!_g->linetarget)
-  bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
+  _g->bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
       if (!_g->linetarget)
-  bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
+  _g->bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
     }
   while (mask && (mask=0, !_g->linetarget));  /* killough 8/2/98 */
 }
@@ -620,7 +604,7 @@ static void P_GunShot(mobj_t *mo, boolean accurate)
       angle += (t - P_Random())<<18;
     }
 
-  P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+  P_LineAttack(mo, angle, MISSILERANGE, _g->bulletslope, damage);
 }
 
 //
@@ -684,7 +668,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
       int t = P_Random();
       angle += (t - P_Random())<<19;
       t = P_Random();
-      P_LineAttack(player->mo, angle, MISSILERANGE, bulletslope +
+      P_LineAttack(player->mo, angle, MISSILERANGE, _g->bulletslope +
                    ((t - P_Random())<<5), damage);
     }
 }
