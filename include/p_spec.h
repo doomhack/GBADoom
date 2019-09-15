@@ -760,8 +760,6 @@ typedef struct {
 // list of retriggerable buttons active
 extern button_t buttonlist[MAXBUTTONS];
 
-extern platlist_t *activeplats;        // killough 2/14/98
-
 ////////////////////////////////////////////////////////////////
 //
 // Linedef and sector special utility function prototypes

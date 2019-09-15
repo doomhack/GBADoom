@@ -601,7 +601,7 @@ void P_ArchiveSpecials (void)
       {
         platlist_t *pl;
         ceilinglist_t *cl;     //jff 2/22/98 need this for ceilings too now
-        for (pl=activeplats; pl; pl=pl->next)
+        for (pl=_g->activeplats; pl; pl=pl->next)
           if (pl->plat == (plat_t *) th)   // killough 2/14/98
             {
               size += 4+sizeof(plat_t);
@@ -645,7 +645,7 @@ void P_ArchiveSpecials (void)
           // so check the active plats list, and save this
           // plat (jff: or ceiling) even if it is in stasis.
 
-          for (pl=activeplats; pl; pl=pl->next)
+          for (pl=_g->activeplats; pl; pl=pl->next)
             if (pl->plat == (plat_t *) th)      // killough 2/14/98
               goto plat;
 

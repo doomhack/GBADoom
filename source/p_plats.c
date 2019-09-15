@@ -39,7 +39,7 @@
 #include "s_sound.h"
 #include "sounds.h"
 
-platlist_t *activeplats;       // killough 2/14/98: made global again
+#include "global_data.h"
 
 //
 // T_PlatRaise()
@@ -339,7 +339,7 @@ int EV_DoPlat
 void P_ActivateInStasis(int tag)
 {
   platlist_t *pl;
-  for (pl=activeplats; pl; pl=pl->next)   // search the active plats
+  for (pl=_g->activeplats; pl; pl=pl->next)   // search the active plats
   {
     plat_t *plat = pl->plat;              // for one in stasis with right tag
     if (plat->tag == tag && plat->status == in_stasis)
@@ -366,7 +366,7 @@ void P_ActivateInStasis(int tag)
 int EV_StopPlat(line_t* line)
 {
   platlist_t *pl;
-  for (pl=activeplats; pl; pl=pl->next)  // search the active plats
+  for (pl=_g->activeplats; pl; pl=pl->next)  // search the active plats
   {
     plat_t *plat = pl->plat;             // for one with the tag not in stasis
     if (plat->status != in_stasis && plat->tag == line->tag)
@@ -392,10 +392,10 @@ void P_AddActivePlat(plat_t* plat)
   platlist_t *list = malloc(sizeof *list);
   list->plat = plat;
   plat->list = list;
-  if ((list->next = activeplats))
+  if ((list->next = _g->activeplats))
     list->next->prev = &list->next;
-  list->prev = &activeplats;
-  activeplats = list;
+  list->prev = &_g->activeplats;
+  _g->activeplats = list;
 }
 
 //
@@ -425,10 +425,10 @@ void P_RemoveActivePlat(plat_t* plat)
 //
 void P_RemoveAllActivePlats(void)
 {
-  while (activeplats)
+  while (_g->activeplats)
   {
-    platlist_t *next = activeplats->next;
-    free(activeplats);
-    activeplats = next;
+    platlist_t *next = _g->activeplats->next;
+    free(_g->activeplats);
+    _g->activeplats = next;
   }
 }
