@@ -215,18 +215,18 @@ static void P_XYMovement (mobj_t* mo)
 
             if (!(mo->flags & MF_MISSILE) &&
                     (mo->flags & MF_BOUNCES ||
-                     (!player && blockline &&
+                     (!player && _g->blockline &&
                       mo->z <= mo->floorz &&
                       P_GetFriction(mo, NULL) > ORIG_FRICTION)))
             {
-                if (blockline)
+                if (_g->blockline)
                 {
-                    fixed_t r = ((blockline->dx >> FRACBITS) * mo->momx +
-                                 (blockline->dy >> FRACBITS) * mo->momy) /
-                            ((blockline->dx >> FRACBITS)*(blockline->dx >> FRACBITS)+
-                             (blockline->dy >> FRACBITS)*(blockline->dy >> FRACBITS));
-                    fixed_t x = FixedMul(r, blockline->dx);
-                    fixed_t y = FixedMul(r, blockline->dy);
+                    fixed_t r = ((_g->blockline->dx >> FRACBITS) * mo->momx +
+                                 (_g->blockline->dy >> FRACBITS) * mo->momy) /
+                            ((_g->blockline->dx >> FRACBITS)*(_g->blockline->dx >> FRACBITS)+
+                             (_g->blockline->dy >> FRACBITS)*(_g->blockline->dy >> FRACBITS));
+                    fixed_t x = FixedMul(r, _g->blockline->dx);
+                    fixed_t y = FixedMul(r, _g->blockline->dy);
 
                     // reflect momentum away from wall
 
@@ -253,10 +253,10 @@ static void P_XYMovement (mobj_t* mo)
                     {
                         // explode a missile
 
-                        if (ceilingline &&
-                                ceilingline->backsector &&
-                                ceilingline->backsector->ceilingpic == skyflatnum)
-                            if (mo->z > ceilingline->backsector->ceilingheight)
+                        if (_g->ceilingline &&
+                                _g->ceilingline->backsector &&
+                                _g->ceilingline->backsector->ceilingpic == skyflatnum)
+                            if (mo->z > _g->ceilingline->backsector->ceilingheight)
                             {
                                 // Hack to prevent missiles exploding
                                 // against the sky.
@@ -427,10 +427,10 @@ static void P_ZMovement (mobj_t* mo)
     mo->momz = 0;
 
     if (mo->flags & MF_MISSILE) {
-  if (ceilingline &&
-      ceilingline->backsector &&
-      ceilingline->backsector->ceilingpic == skyflatnum &&
-      mo->z > ceilingline->backsector->ceilingheight)
+  if (_g->ceilingline &&
+      _g->ceilingline->backsector &&
+      _g->ceilingline->backsector->ceilingpic == skyflatnum &&
+      mo->z > _g->ceilingline->backsector->ceilingheight)
     P_RemoveMobj(mo);  /* don't explode on skies */
   else
     P_ExplodeMissile(mo);
@@ -834,10 +834,10 @@ void P_RemoveMobj (mobj_t* mobj)
 
   // Delete all nodes on the current sector_list               phares 3/16/98
 
-  if (sector_list)
+  if (_g->sector_list)
     {
-    P_DelSeclist(sector_list);
-    sector_list = NULL;
+    P_DelSeclist(_g->sector_list);
+    _g->sector_list = NULL;
     }
 
   // stop any playing sound

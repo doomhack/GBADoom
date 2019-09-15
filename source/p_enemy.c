@@ -308,10 +308,6 @@ static int P_IsUnderDamage(mobj_t *actor)
 static const fixed_t xspeed[8] = {FRACUNIT,47000,0,-47000,-FRACUNIT,-47000,0,47000};
 static const fixed_t yspeed[8] = {0,47000,FRACUNIT,47000,0,-47000,-FRACUNIT,-47000};
 
-// 1/11/98 killough: Limit removed on special lines crossed
-extern  line_t **spechit;          // New code -- killough
-extern  int    numspechit;
-
 static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
 {
   fixed_t tryx, tryy, deltax, deltay, origx, origy;
@@ -359,9 +355,9 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
     {      // open any specials
       int good;
 
-      if (actor->flags & MF_FLOAT && floatok)
+      if (actor->flags & MF_FLOAT && _g->floatok)
         {
-          if (actor->z < tmfloorz)          // must adjust height
+          if (actor->z < _g->tmfloorz)          // must adjust height
             actor->z += FLOATSPEED;
           else
             actor->z -= FLOATSPEED;
@@ -371,7 +367,7 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
     return true;
         }
 
-      if (!numspechit)
+      if (!_g->numspechit)
         return false;
 
       actor->movedir = DI_NODIR;
@@ -393,9 +389,9 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
        * back out when they shouldn't, and creates secondary stickiness).
        */
 
-      for (good = false; numspechit--; )
-        if (P_UseSpecialLine(actor, spechit[numspechit], 0))
-    good |= spechit[numspechit] == blockline ? 1 : 2;
+      for (good = false; _g->numspechit--; )
+        if (P_UseSpecialLine(actor, _g->spechit[_g->numspechit], 0))
+    good |= _g->spechit[_g->numspechit] == _g->blockline ? 1 : 2;
 
       /* cph - compatibility maze here
        * Boom v2.01 and orig. Doom return "good"
@@ -410,7 +406,7 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
 
   /* killough 11/98: fall more slowly, under gravity, if felldown==true */
   if (!(actor->flags & MF_FLOAT) &&
-      (!felldown))
+      (!_g->felldown))
     actor->z = actor->floorz;
 
   return true;
@@ -549,11 +545,11 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 static boolean PIT_AvoidDropoff(line_t *line)
 {
   if (line->backsector                          && // Ignore one-sided linedefs
-      tmbbox[BOXRIGHT]  > line->bbox[BOXLEFT]   &&
-      tmbbox[BOXLEFT]   < line->bbox[BOXRIGHT]  &&
-      tmbbox[BOXTOP]    > line->bbox[BOXBOTTOM] && // Linedef must be contacted
-      tmbbox[BOXBOTTOM] < line->bbox[BOXTOP]    &&
-      P_BoxOnLineSide(tmbbox, line) == -1)
+      _g->tmbbox[BOXRIGHT]  > line->bbox[BOXLEFT]   &&
+      _g->tmbbox[BOXLEFT]   < line->bbox[BOXRIGHT]  &&
+      _g->tmbbox[BOXTOP]    > line->bbox[BOXBOTTOM] && // Linedef must be contacted
+      _g->tmbbox[BOXBOTTOM] < line->bbox[BOXTOP]    &&
+      P_BoxOnLineSide(_g->tmbbox, line) == -1)
     {
       fixed_t front = line->frontsector->floorheight;
       fixed_t back  = line->backsector->floorheight;
@@ -584,10 +580,10 @@ static boolean PIT_AvoidDropoff(line_t *line)
 
 static fixed_t P_AvoidDropoff(mobj_t *actor)
 {
-  int yh=((tmbbox[BOXTOP]   = actor->y+actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
-  int yl=((tmbbox[BOXBOTTOM]= actor->y-actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
-  int xh=((tmbbox[BOXRIGHT] = actor->x+actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
-  int xl=((tmbbox[BOXLEFT]  = actor->x-actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
+  int yh=((_g->tmbbox[BOXTOP]   = actor->y+actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
+  int yl=((_g->tmbbox[BOXBOTTOM]= actor->y-actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
+  int xh=((_g->tmbbox[BOXRIGHT] = actor->x+actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
+  int xl=((_g->tmbbox[BOXLEFT]  = actor->x-actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
   int bx, by;
 
   _g->floorz = actor->z;            // remember floor height

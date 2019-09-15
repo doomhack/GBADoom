@@ -349,6 +349,52 @@ int    numbraintargets;
 
 brain_t brain;   // killough 3/26/98: global state of boss brain
 
+//******************************************************************************
+//p_map.c
+//******************************************************************************
+
+mobj_t    *tmthing;
+fixed_t   tmx;
+fixed_t   tmy;
+int pe_x; // Pain Elemental position for Lost Soul checks // phares
+int pe_y; // Pain Elemental position for Lost Soul checks // phares
+int ls_x; // Lost Soul position for Lost Soul checks      // phares
+int ls_y; // Lost Soul position for Lost Soul checks      // phares
+
+// If "floatok" true, move would be ok
+// if within "tmfloorz - tmceilingz".
+boolean   floatok;
+
+/* killough 11/98: if "felldown" true, object was pushed down ledge */
+boolean   felldown;
+
+// The tm* items are used to hold information globally, usually for
+// line or object intersection checking
+
+fixed_t   tmbbox[4];  // bounding box for line intersection checks
+fixed_t   tmfloorz;   // floor you'd hit if free to fall
+fixed_t   tmceilingz; // ceiling of sector you're in
+fixed_t   tmdropoffz; // dropoff on other side of line you're crossing
+
+// keep track of the line that lowers the ceiling,
+// so missiles don't explode against sky hack walls
+
+line_t    *ceilingline;
+line_t        *blockline;    /* killough 8/11/98: blocking linedef */
+line_t        *floorline;    /* killough 8/1/98: Highest touched floor */
+int         tmunstuck;     /* killough 8/1/98: whether to allow unsticking */
+
+// keep track of special lines as they are hit,
+// but don't process them until the move is proven valid
+
+// 1/11/98 killough: removed limit on special lines crossed
+line_t **spechit;                // new code -- killough
+int spechit_max;          // killough
+
+int numspechit;
+
+// Temporary holder for thing_sectorlist threads
+msecnode_t* sector_list;                             // phares 3/16/98
 
 
 //******************************************************************************

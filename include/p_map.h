@@ -77,16 +77,6 @@ void    P_ApplyTorque(mobj_t *mo);                          // killough 9/12/98
 void	P_MapStart(void);
 void	P_MapEnd(void);
 
-// If "floatok" true, move would be ok if within "tmfloorz - tmceilingz".
-extern boolean floatok;
-extern boolean felldown;   // killough 11/98: indicates object pushed off ledge
-extern fixed_t tmfloorz;
-extern fixed_t tmceilingz;
-extern line_t *ceilingline;
-extern line_t *floorline;      // killough 8/23/98
 extern mobj_t *linetarget;     // who got hit (or NULL)
-extern msecnode_t *sector_list;                             // phares 3/16/98
-extern fixed_t tmbbox[4];         // phares 3/20/98
-extern line_t *blockline;   // killough 8/11/98
 
 #endif // __P_MAP__
