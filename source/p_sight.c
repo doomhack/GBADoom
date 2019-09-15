@@ -42,22 +42,6 @@
 #include "global_data.h"
 
 //
-// P_CheckSight
-//
-// killough 4/19/98:
-// Convert LOS info to struct for reentrancy and efficiency of data locality
-
-typedef struct {
-  fixed_t sightzstart, t2x, t2y;   // eye z of looker
-  divline_t strace;                // from t1 to t2
-  fixed_t topslope, bottomslope;   // slopes to top and bottom of target
-  fixed_t bbox[4];
-  fixed_t maxz,minz;               // cph - z optimisations for 2sided lines
-} los_t;
-
-static los_t los; // cph - made static
-
-//
 // P_DivlineSide
 // Returns side 0 (front), 1 (back), or 2 (on).
 //
@@ -110,10 +94,10 @@ static boolean P_CrossSubsector(int num)
      * cph - this is causing demo desyncs on original Doom demos.
      *  Who knows why. Exclude test for those.
      */
-    if (line->bbox[BOXLEFT  ] > los.bbox[BOXRIGHT ] ||
-  line->bbox[BOXRIGHT ] < los.bbox[BOXLEFT  ] ||
-  line->bbox[BOXBOTTOM] > los.bbox[BOXTOP   ] ||
-  line->bbox[BOXTOP]    < los.bbox[BOXBOTTOM])
+    if (line->bbox[BOXLEFT  ] > _g->los.bbox[BOXRIGHT ] ||
+  line->bbox[BOXRIGHT ] < _g->los.bbox[BOXLEFT  ] ||
+  line->bbox[BOXBOTTOM] > _g->los.bbox[BOXTOP   ] ||
+  line->bbox[BOXTOP]    < _g->los.bbox[BOXBOTTOM])
       continue;
 
     // cph - do what we can before forced to check intersection
@@ -135,7 +119,7 @@ static boolean P_CrossSubsector(int num)
   front->floorheight : back->floorheight ;
 
       // cph - reject if does not intrude in the z-space of the possible LOS
-      if ((opentop >= los.maxz) && (openbottom <= los.minz))
+      if ((opentop >= _g->los.maxz) && (openbottom <= _g->los.minz))
   continue;
     }
 
@@ -145,44 +129,44 @@ static boolean P_CrossSubsector(int num)
       v1 = line->v1;
       v2 = line->v2;
 
-      if (P_DivlineSide(v1->x, v1->y, &los.strace) ==
-          P_DivlineSide(v2->x, v2->y, &los.strace))
+      if (P_DivlineSide(v1->x, v1->y, &_g->los.strace) ==
+          P_DivlineSide(v2->x, v2->y, &_g->los.strace))
         continue;
 
       divl.dx = v2->x - (divl.x = v1->x);
       divl.dy = v2->y - (divl.y = v1->y);
 
       // line isn't crossed?
-      if (P_DivlineSide(los.strace.x, los.strace.y, &divl) ==
-    P_DivlineSide(los.t2x, los.t2y, &divl))
+      if (P_DivlineSide(_g->los.strace.x, _g->los.strace.y, &divl) ==
+    P_DivlineSide(_g->los.t2x, _g->los.t2y, &divl))
   continue;
     }
 
     // cph - if bottom >= top or top < minz or bottom > maxz then it must be
     // solid wrt this LOS
     if (!(line->flags & ML_TWOSIDED) || (openbottom >= opentop) ||
-  (opentop < los.minz) || (openbottom > los.maxz))
+  (opentop < _g->los.minz) || (openbottom > _g->los.maxz))
   return false;
 
     { // crosses a two sided line
       /* cph 2006/07/15 - oops, we missed this in 2.4.0 & .1;
        *  use P_InterceptVector2 for those compat levels only. */ 
-      fixed_t frac = P_InterceptVector2(&los.strace, &divl);
+      fixed_t frac = P_InterceptVector2(&_g->los.strace, &divl);
 
       if (front->floorheight != back->floorheight) {
-        fixed_t slope = FixedDiv(openbottom - los.sightzstart , frac);
-        if (slope > los.bottomslope)
-            los.bottomslope = slope;
+        fixed_t slope = FixedDiv(openbottom - _g->los.sightzstart , frac);
+        if (slope > _g->los.bottomslope)
+            _g->los.bottomslope = slope;
       }
 
       if (front->ceilingheight != back->ceilingheight)
         {
-          fixed_t slope = FixedDiv(opentop - los.sightzstart , frac);
-          if (slope < los.topslope)
-            los.topslope = slope;
+          fixed_t slope = FixedDiv(opentop - _g->los.sightzstart , frac);
+          if (slope < _g->los.topslope)
+            _g->los.topslope = slope;
         }
 
-      if (los.topslope <= los.bottomslope)
+      if (_g->los.topslope <= _g->los.bottomslope)
         return false;               // stop
     }
   }
@@ -190,60 +174,23 @@ static boolean P_CrossSubsector(int num)
   return true;
 }
 
-//
-// P_CrossBSPNode
-// Returns true
-//  if strace crosses the given node successfully.
-//
-// killough 4/20/98: rewritten to remove tail recursion, clean up, and optimize
-// cph - Made to use R_PointOnSide instead of P_DivlineSide, since the latter
-//  could return 2 which was ambigous, and the former is
-//  better optimised; also removes two casts :-)
-
-static boolean P_CrossBSPNode_LxDoom(int bspnum)
-{
-  while (!(bspnum & NF_SUBSECTOR))
-    {
-      register const node_t *bsp = _g->nodes + bspnum;
-      int side,side2;
-      side = R_PointOnSide(los.strace.x, los.strace.y, bsp);
-      side2 = R_PointOnSide(los.t2x, los.t2y, bsp);
-      if (side == side2)
-         bspnum = bsp->children[side]; // doesn't touch the other side
-      else         // the partition plane is crossed here
-        if (!P_CrossBSPNode_LxDoom(bsp->children[side]))
-          return 0;  // cross the starting side
-        else
-          bspnum = bsp->children[side^1];  // cross the ending side
-    }
-  return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
-}
-
-static boolean P_CrossBSPNode_PrBoom(int bspnum)
-{
-  while (!(bspnum & NF_SUBSECTOR))
-    {
-      register const node_t *bsp = _g->nodes + bspnum;
-      int side,side2;
-      side = P_DivlineSide(los.strace.x,los.strace.y,(const divline_t *)bsp)&1;
-      side2= P_DivlineSide(los.t2x, los.t2y, (const divline_t *) bsp);
-      if (side == side2)
-         bspnum = bsp->children[side]; // doesn't touch the other side
-      else         // the partition plane is crossed here
-        if (!P_CrossBSPNode_PrBoom(bsp->children[side]))
-          return 0;  // cross the starting side
-        else
-          bspnum = bsp->children[side^1];  // cross the ending side
-    }
-  return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
-}
-
-/* proff - Moved the compatibility check outside the functions
- * this gives a slight speedup
- */
 static boolean P_CrossBSPNode(int bspnum)
 {
-    return P_CrossBSPNode_PrBoom(bspnum);
+  while (!(bspnum & NF_SUBSECTOR))
+    {
+      register const node_t *bsp = _g->nodes + bspnum;
+      int side,side2;
+      side = P_DivlineSide(_g->los.strace.x,_g->los.strace.y,(const divline_t *)bsp)&1;
+      side2= P_DivlineSide(_g->los.t2x, _g->los.t2y, (const divline_t *) bsp);
+      if (side == side2)
+         bspnum = bsp->children[side]; // doesn't touch the other side
+      else         // the partition plane is crossed here
+        if (!P_CrossBSPNode(bsp->children[side]))
+          return 0;  // cross the starting side
+        else
+          bspnum = bsp->children[side^1];  // cross the ending side
+    }
+  return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
 }
 
 //
@@ -294,24 +241,24 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
 
   validcount++;
 
-  los.topslope = (los.bottomslope = t2->z - (los.sightzstart =
+  _g->los.topslope = (_g->los.bottomslope = t2->z - (_g->los.sightzstart =
                                              t1->z + t1->height -
                                              (t1->height>>2))) + t2->height;
-  los.strace.dx = (los.t2x = t2->x) - (los.strace.x = t1->x);
-  los.strace.dy = (los.t2y = t2->y) - (los.strace.y = t1->y);
+  _g->los.strace.dx = (_g->los.t2x = t2->x) - (_g->los.strace.x = t1->x);
+  _g->los.strace.dy = (_g->los.t2y = t2->y) - (_g->los.strace.y = t1->y);
 
   if (t1->x > t2->x)
-    los.bbox[BOXRIGHT] = t1->x, los.bbox[BOXLEFT] = t2->x;
+    _g->los.bbox[BOXRIGHT] = t1->x, _g->los.bbox[BOXLEFT] = t2->x;
   else
-    los.bbox[BOXRIGHT] = t2->x, los.bbox[BOXLEFT] = t1->x;
+    _g->los.bbox[BOXRIGHT] = t2->x, _g->los.bbox[BOXLEFT] = t1->x;
 
   if (t1->y > t2->y)
-    los.bbox[BOXTOP] = t1->y, los.bbox[BOXBOTTOM] = t2->y;
+    _g->los.bbox[BOXTOP] = t1->y, _g->los.bbox[BOXBOTTOM] = t2->y;
   else
-    los.bbox[BOXTOP] = t2->y, los.bbox[BOXBOTTOM] = t1->y;
+    _g->los.bbox[BOXTOP] = t2->y, _g->los.bbox[BOXBOTTOM] = t1->y;
 
 
-    los.maxz = INT_MAX; los.minz = INT_MIN;
+    _g->los.maxz = INT_MAX; _g->los.minz = INT_MIN;
 
   // the head node is the last node output
   return P_CrossBSPNode(_g->numnodes-1);

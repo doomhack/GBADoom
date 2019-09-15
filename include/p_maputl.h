@@ -63,6 +63,14 @@ typedef struct {
   } d;
 } intercept_t;
 
+typedef struct {
+  fixed_t sightzstart, t2x, t2y;   // eye z of looker
+  divline_t strace;                // from t1 to t2
+  fixed_t topslope, bottomslope;   // slopes to top and bottom of target
+  fixed_t bbox[4];
+  fixed_t maxz,minz;               // cph - z optimisations for 2sided lines
+} los_t;
+
 typedef boolean (*traverser_t)(intercept_t *in);
 
 fixed_t CONSTFUNC P_AproxDistance (fixed_t dx, fixed_t dy);
