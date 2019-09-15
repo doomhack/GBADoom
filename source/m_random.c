@@ -42,6 +42,8 @@
 #include "m_random.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 //
 // M_Random
 // Returns a 0-255 number
@@ -68,23 +70,22 @@ static const unsigned char rndtable[256] = {
     120, 163, 236, 249
 };
 
-static int	rndindex = 0;
-static int	prndindex = 0;
+
 
 // Which one is deterministic?
 int P_Random (void)
 {
-    prndindex = (prndindex+1)&0xff;
-    return rndtable[prndindex];
+    _g->prndindex = (_g->prndindex+1)&0xff;
+    return rndtable[_g->prndindex];
 }
 
 int M_Random (void)
 {
-    rndindex = (rndindex+1)&0xff;
-    return rndtable[rndindex];
+    _g->rndindex = (_g->rndindex+1)&0xff;
+    return rndtable[_g->rndindex];
 }
 
 void M_ClearRandom (void)
 {
-    rndindex = prndindex = 0;
+    _g->rndindex = _g->prndindex = 0;
 }
