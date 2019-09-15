@@ -46,4 +46,13 @@ _g->screenblocks = 10;    // has default
 _g->rejectlump = -1;// cph - store reject lump num if cached
 
 
+//******************************************************************************
+//r_main.c
+//******************************************************************************
+
+_g->validcount = 1;         // increment every time a check is made
+
+
+
+
 #endif // GLOBAL_INIT_H

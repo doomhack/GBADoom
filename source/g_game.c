@@ -1080,8 +1080,6 @@ void G_DoWorldDone (void)
 
 #define MIN_MAXPLAYERS 32
 
-extern boolean setsizeneeded;
-
 //
 // killough 5/15/98: add forced loadgames, which allow user to override checks
 //
@@ -1208,7 +1206,7 @@ void G_DoLoadGame(void)
   // done
   Z_Free (_g->savebuffer);
 
-  if (setsizeneeded)
+  if (_g->setsizeneeded)
     R_ExecuteSetViewSize ();
 
   // draw the pattern into the back screen

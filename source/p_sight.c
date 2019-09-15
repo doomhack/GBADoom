@@ -85,10 +85,10 @@ static boolean P_CrossSubsector(int num)
      continue;
 
     // allready checked other side?
-    if (line->validcount == validcount)
+    if (line->validcount == _g->validcount)
       continue;
 
-    line->validcount = validcount;
+    line->validcount = _g->validcount;
 
     /* OPTIMIZE: killough 4/20/98: Added quick bounding-box rejection test
      * cph - this is causing demo desyncs on original Doom demos.
@@ -239,7 +239,7 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
   // An unobstructed LOS is possible.
   // Now look from eyes of t1 to any part of t2.
 
-  validcount++;
+  _g->validcount++;
 
   _g->los.topslope = (_g->los.bottomslope = t2->z - (_g->los.sightzstart =
                                              t1->z + t1->height -

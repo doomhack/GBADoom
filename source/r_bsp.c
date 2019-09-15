@@ -196,8 +196,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
   if (sec->heightsec != -1)
     {
       const sector_t *s = &_g->sectors[sec->heightsec];
-      int heightsec = viewplayer->mo->subsector->sector->heightsec;
-      int underwater = heightsec!=-1 && viewz<=_g->sectors[heightsec].floorheight;
+      int heightsec = _g->viewplayer->mo->subsector->sector->heightsec;
+      int underwater = heightsec!=-1 && _g->viewz<=_g->sectors[heightsec].floorheight;
 
       // Replace sector being drawn, with a copy to be hacked
       *tempsec = *sec;
@@ -238,7 +238,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
             _g->sectors[s->ceilinglightsec].lightlevel; // killough 4/11/98
         }
       else
-        if (heightsec != -1 && viewz >= _g->sectors[heightsec].ceilingheight &&
+        if (heightsec != -1 && _g->viewz >= _g->sectors[heightsec].ceilingheight &&
             sec->ceilingheight > s->ceilingheight)
           {   // Above-ceiling hack
             tempsec->ceilingheight = s->ceilingheight;
@@ -301,30 +301,30 @@ static void R_AddLine (seg_t *line)
 
   // Global angle needed by segcalc.
   rw_angle1 = angle1;
-  angle1 -= viewangle;
-  angle2 -= viewangle;
+  angle1 -= _g->viewangle;
+  angle2 -= _g->viewangle;
 
-  tspan = angle1 + clipangle;
-  if (tspan > 2*clipangle)
+  tspan = angle1 + _g->clipangle;
+  if (tspan > 2*_g->clipangle)
     {
-      tspan -= 2*clipangle;
+      tspan -= 2*_g->clipangle;
 
       // Totally off the left edge?
       if (tspan >= span)
         return;
 
-      angle1 = clipangle;
+      angle1 = _g->clipangle;
     }
 
-  tspan = clipangle - angle2;
-  if (tspan > 2*clipangle)
+  tspan = _g->clipangle - angle2;
+  if (tspan > 2*_g->clipangle)
     {
-      tspan -= 2*clipangle;
+      tspan -= 2*_g->clipangle;
 
       // Totally off the left edge?
       if (tspan >= span)
         return;
-      angle2 = 0-clipangle;
+      angle2 = 0-_g->clipangle;
     }
 
   // The seg is in the view range,
@@ -334,8 +334,8 @@ static void R_AddLine (seg_t *line)
   angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
 
   // killough 1/31/98: Here is where "slime trails" can SOMETIMES occur:
-  x1 = viewangletox[angle1];
-  x2 = viewangletox[angle2];
+  x1 = _g->viewangletox[angle1];
+  x2 = _g->viewangletox[angle2];
 
   // Does not cross a pixel?
   if (x1 >= x2)       // killough 1/31/98 -- change == to >= for robustness
@@ -393,15 +393,15 @@ static boolean R_CheckBBox(const fixed_t *bspcoord)
 
     // Find the corners of the box
     // that define the edges from current viewpoint.
-    boxpos = (viewx <= bspcoord[BOXLEFT] ? 0 : viewx < bspcoord[BOXRIGHT ] ? 1 : 2) +
-      (viewy >= bspcoord[BOXTOP ] ? 0 : viewy > bspcoord[BOXBOTTOM] ? 4 : 8);
+    boxpos = (_g->viewx <= bspcoord[BOXLEFT] ? 0 : _g->viewx < bspcoord[BOXRIGHT ] ? 1 : 2) +
+      (_g->viewy >= bspcoord[BOXTOP ] ? 0 : _g->viewy > bspcoord[BOXBOTTOM] ? 4 : 8);
 
     if (boxpos == 5)
       return true;
 
     check = checkcoord[boxpos];
-    angle1 = R_PointToAngle (bspcoord[check[0]], bspcoord[check[1]]) - viewangle;
-    angle2 = R_PointToAngle (bspcoord[check[2]], bspcoord[check[3]]) - viewangle;
+    angle1 = R_PointToAngle (bspcoord[check[0]], bspcoord[check[1]]) - _g->viewangle;
+    angle2 = R_PointToAngle (bspcoord[check[2]], bspcoord[check[3]]) - _g->viewangle;
   }
 
   // cph - replaced old code, which was unclear and badly commented
@@ -416,10 +416,10 @@ static boolean R_CheckBBox(const fixed_t *bspcoord)
       angle2 = INT_MIN;
   }
 
-  if ((signed)angle2 >= (signed)clipangle) return false; // Both off left edge
-  if ((signed)angle1 <= -(signed)clipangle) return false; // Both off right edge
-  if ((signed)angle1 >= (signed)clipangle) angle1 = clipangle; // Clip at left edge
-  if ((signed)angle2 <= -(signed)clipangle) angle2 = 0-clipangle; // Clip at right edge
+  if ((signed)angle2 >= (signed)_g->clipangle) return false; // Both off left edge
+  if ((signed)angle1 <= -(signed)_g->clipangle) return false; // Both off right edge
+  if ((signed)angle1 >= (signed)_g->clipangle) angle1 = _g->clipangle; // Clip at left edge
+  if ((signed)angle2 <= -(signed)_g->clipangle) angle2 = 0-_g->clipangle; // Clip at right edge
 
   // Find the first clippost
   //  that touches the source post
@@ -427,8 +427,8 @@ static boolean R_CheckBBox(const fixed_t *bspcoord)
   angle1 = (angle1+ANG90)>>ANGLETOFINESHIFT;
   angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
   {
-    int sx1 = viewangletox[angle1];
-    int sx2 = viewangletox[angle2];
+    int sx1 = _g->viewangletox[angle1];
+    int sx2 = _g->viewangletox[angle2];
     //    const cliprange_t *start;
 
     // Does not cross a pixel.
@@ -477,7 +477,7 @@ static void R_Subsector(int num)
   // killough 3/16/98: add floorlightlevel
   // killough 10/98: add support for skies transferred from sidedefs
 
-  floorplane = _g->frontsector->floorheight < viewz || // killough 3/7/98
+  floorplane = _g->frontsector->floorheight < _g->viewz || // killough 3/7/98
     (_g->frontsector->heightsec != -1 &&
      _g->sectors[_g->frontsector->heightsec].ceilingpic == skyflatnum) ?
     R_FindPlane(_g->frontsector->floorheight,
@@ -489,7 +489,7 @@ static void R_Subsector(int num)
                 _g->frontsector->floor_yoffs
                 ) : NULL;
 
-  ceilingplane = _g->frontsector->ceilingheight > viewz ||
+  ceilingplane = _g->frontsector->ceilingheight > _g->viewz ||
     _g->frontsector->ceilingpic == skyflatnum ||
     (_g->frontsector->heightsec != -1 &&
      _g->sectors[_g->frontsector->heightsec].floorpic == skyflatnum) ?
@@ -540,7 +540,7 @@ void R_RenderBSPNode(int bspnum)
       const node_t *bsp = &_g->nodes[bspnum];
 
       // Decide which side the view point is on.
-      int side = R_PointOnSide(viewx, viewy, bsp);
+      int side = R_PointOnSide(_g->viewx, _g->viewy, bsp);
       // Recursively divide front space.
       R_RenderBSPNode(bsp->children[side]);
 

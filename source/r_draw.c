@@ -87,7 +87,7 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 	dcvars->x = dcvars->yl = dcvars->yh = dcvars->z = 0;
 	dcvars->iscale = dcvars->texturemid = 0;
 	dcvars->source = NULL;
-    dcvars->colormap = colormaps;
+    dcvars->colormap = _g->colormaps;
 	dcvars->translation = NULL;
 }
 
@@ -145,7 +145,7 @@ void R_DrawColumn (draw_column_vars_t *dcvars)
     byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
-	fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
+    fixed_t frac = dcvars->texturemid + (dcvars->yl - _g->centery)*fracstep;
  
     // Zero length, column does not exceed a pixel.
     if (dcvars->yl >= dcvars->yh)
@@ -204,7 +204,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
     // Looks familiar.
     fracstep = dcvars->iscale;
 	
-    frac = dcvars->texturemid + (dc_yl-centery)*fracstep; 
+    frac = dcvars->texturemid + (dc_yl-_g->centery)*fracstep;
 
     // Looks like an attempt at dithering,
     //  using the colormap #6 (of 0-31, a bit
@@ -215,7 +215,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 		//  a pixel that is either one column
 		//  left or right of the current one.
 		// Add index from colormap to index.
-            *dest = fullcolormap[6*256+dest[_g->fuzzoffset[_g->fuzzpos]]];
+            *dest = _g->fullcolormap[6*256+dest[_g->fuzzoffset[_g->fuzzpos]]];
 
 		// Clamp table lookup index.
         if (++_g->fuzzpos == FUZZTABLE)
@@ -250,7 +250,7 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
     byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
-	fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
+    fixed_t frac = dcvars->texturemid + (dcvars->yl - _g->centery)*fracstep;
  
 	const unsigned int sw = SCREENWIDTH;
 

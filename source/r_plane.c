@@ -156,13 +156,13 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
     }
 
   length = FixedMul (distance,distscale[x1]);
-  angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
+  angle = (_g->viewangle + _g->xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
   // killough 2/28/98: Add offsets
-  dsvars->xfrac =  viewx + FixedMul(finecosine[angle], length) + xoffs;
-  dsvars->yfrac = -viewy - FixedMul(finesine[angle],   length) + yoffs;
+  dsvars->xfrac =  _g->viewx + FixedMul(finecosine[angle], length) + xoffs;
+  dsvars->yfrac = -_g->viewy - FixedMul(finesine[angle],   length) + yoffs;
 
-  if (!(dsvars->colormap = fixedcolormap))
+  if (!(dsvars->colormap = _g->fixedcolormap))
     {
       dsvars->z = distance;
       index = distance >> LIGHTZSHIFT;
@@ -205,8 +205,8 @@ void R_ClearPlanes(void)
   memset (cachedheight, 0, sizeof(cachedheight));
 
   // scale will be unit scale at SCREENWIDTH/2 distance
-  basexscale = FixedDiv (viewsin,projection);
-  baseyscale = FixedDiv (viewcos,projection);
+  basexscale = FixedDiv (_g->viewsin,_g->projection);
+  baseyscale = FixedDiv (_g->viewcos,_g->projection);
 }
 
 // New function, by Lee Killough
@@ -354,7 +354,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 			// arbitrary multiple skies per level without having
 			// to use info lumps.
 
-			an = viewangle;
+            an = _g->viewangle;
 
 			if (pl->picnum & PL_SKYFLAT)
 			{
@@ -397,8 +397,8 @@ static void R_DoDrawPlane(visplane_t *pl)
 		   * Because of this hack, sky is not affected by INVUL inverse mapping.
 		   * Until Boom fixed this. Compat option added in MBF. */
 			
-            if (!(dcvars.colormap = fixedcolormap))
-				dcvars.colormap = fullcolormap;          // killough 3/20/98
+            if (!(dcvars.colormap = _g->fixedcolormap))
+                dcvars.colormap = _g->fullcolormap;          // killough 3/20/98
 			
 			// proff 09/21/98: Changed for high-res
             dcvars.iscale = FRACUNIT*200/_g->viewheight;
@@ -410,7 +410,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 			{
 				if ((dcvars.yl = pl->top[x]) != -1 && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
 				{
-					dcvars.source = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x])^flip) >> ANGLETOSKYSHIFT);
+                    dcvars.source = R_GetTextureColumn(tex_patch, ((an + _g->xtoviewangle[x])^flip) >> ANGLETOSKYSHIFT);
 					R_DrawColumn(&dcvars);
 				}
 			}
@@ -428,8 +428,8 @@ static void R_DoDrawPlane(visplane_t *pl)
 			xoffs = pl->xoffs;  // killough 2/28/98: Add offsets
 			yoffs = pl->yoffs;
 			
-			planeheight = D_abs(pl->height-viewz);
-			light = (pl->lightlevel >> LIGHTSEGSHIFT) + extralight;
+            planeheight = D_abs(pl->height-_g->viewz);
+            light = (pl->lightlevel >> LIGHTSEGSHIFT) + _g->extralight;
 			
 			if (light >= LIGHTLEVELS)
 				light = LIGHTLEVELS-1;
@@ -438,7 +438,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 				light = 0;
 			
 			stop = pl->maxx + 1;
-			planezlight = zlight[light];
+            planezlight = _g->zlight[light];
 			pl->top[pl->minx-1] = pl->top[stop] = 0xffffffffu; // dropoff overflow
 			
 			for (x = pl->minx ; x <= stop ; x++)
@@ -461,6 +461,6 @@ void R_DrawPlanes (void)
   visplane_t *pl;
   int i;
   for (i=0;i<MAXVISPLANES;i++)
-    for (pl=visplanes[i]; pl; pl=pl->next, rendered_visplanes++)
+    for (pl=visplanes[i]; pl; pl=pl->next)
       R_DoDrawPlane(pl);
 }

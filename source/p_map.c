@@ -206,7 +206,7 @@ boolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, boolean boss)
   _g->tmfloorz = _g->tmdropoffz = newsubsec->sector->floorheight;
   _g->tmceilingz = newsubsec->sector->ceilingheight;
 
-  validcount++;
+  _g->validcount++;
   _g->numspechit = 0;
 
   // stomp on any things contacted
@@ -247,8 +247,6 @@ boolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, boolean boss)
 // MOVEMENT ITERATOR FUNCTIONS
 //
 
-// e6y: Spechits overrun emulation code
-static void SpechitOverrun(line_t *ld);
 
 //                                                                  // phares
 // PIT_CrossLine                                                    //   |
@@ -573,7 +571,7 @@ boolean Check_Sides(mobj_t* actor, int x, int y)
 
   // xl->xh, yl->yh determine the mapblock set to search
 
-  validcount++; // prevents checking same line twice
+  _g->validcount++; // prevents checking same line twice
   for (bx = xl ; bx <= xh ; bx++)
     for (by = yl ; by <= yh ; by++)
       if (!P_BlockLinesIterator(bx,by,PIT_CrossLine))
@@ -644,7 +642,7 @@ boolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
 
   _g->tmfloorz = _g->tmdropoffz = newsubsec->sector->floorheight;
   _g->tmceilingz = newsubsec->sector->ceilingheight;
-  validcount++;
+  _g->validcount++;
   _g->numspechit = 0;
 
   if ( _g->tmthing->flags & MF_NOCLIP )
@@ -879,7 +877,7 @@ void P_ApplyTorque(mobj_t *mo)
   int bx,by,flags = mo->intflags; //Remember the current state, for gear-change
 
   _g->tmthing = mo;
-  validcount++; /* prevents checking same line twice */
+  _g->validcount++; /* prevents checking same line twice */
 
   for (bx = xl ; bx <= xh ; bx++)
     for (by = yl ; by <= yh ; by++)
@@ -1524,7 +1522,6 @@ void P_LineAttack
 // USE LINES
 //
 
-mobj_t*   usething;
 
 boolean PTR_UseTraverse (intercept_t* in)
   {
@@ -1535,7 +1532,7 @@ boolean PTR_UseTraverse (intercept_t* in)
     P_LineOpening (in->d.line);
     if (_g->openrange <= 0)
       {
-      S_StartSound (usething, sfx_noway);
+      S_StartSound (_g->usething, sfx_noway);
 
       // can't use through a wall
       return false;
@@ -1547,12 +1544,12 @@ boolean PTR_UseTraverse (intercept_t* in)
     }
 
   side = 0;
-  if (P_PointOnLineSide (usething->x, usething->y, in->d.line) == 1)
+  if (P_PointOnLineSide (_g->usething->x, _g->usething->y, in->d.line) == 1)
     side = 1;
 
   //  return false;   // don't use back side
 
-  P_UseSpecialLine (usething, in->d.line, side);
+  P_UseSpecialLine (_g->usething, in->d.line, side);
 
   //WAS can't use for than one special line in a row
   //jff 3/21/98 NOW multiple use allowed with enabling line flag
@@ -1579,8 +1576,8 @@ boolean PTR_NoWayTraverse(intercept_t* in)
    ld->flags & ML_BLOCKING || (            // Always blocking
    P_LineOpening(ld),                      // Find openings
    _g->openrange <= 0 ||                       // No opening
-   _g->openbottom > usething->z+24*FRACUNIT || // Too high it blocks
-   _g->opentop < usething->z+usething->height  // Too low it blocks
+   _g->openbottom > _g->usething->z+24*FRACUNIT || // Too high it blocks
+   _g->opentop < _g->usething->z+_g->usething->height  // Too low it blocks
   )
   );
   }
@@ -1597,7 +1594,7 @@ void P_UseLines (player_t*  player)
   fixed_t x2;
   fixed_t y2;
 
-  usething = player->mo;
+  _g->usething = player->mo;
 
   angle = player->mo->angle >> ANGLETOFINESHIFT;
 
@@ -1614,7 +1611,7 @@ void P_UseLines (player_t*  player)
 
   if (P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse ))
     if (!P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_NoWayTraverse ))
-      S_StartSound (usething, sfx_noway);
+      S_StartSound (_g->usething, sfx_noway);
   }
 
 
@@ -2065,7 +2062,7 @@ void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
   _g->tmbbox[BOXRIGHT]  = x + _g->tmthing->radius;
   _g->tmbbox[BOXLEFT]   = x - _g->tmthing->radius;
 
-  validcount++; // used to make sure we only process a line once
+  _g->validcount++; // used to make sure we only process a line once
 
   xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
   xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
@@ -2114,37 +2111,4 @@ void P_MapStart(void) {
 }
 void P_MapEnd(void) {
     _g->tmthing = NULL;
-}
-
-// e6y
-// Code to emulate the behavior of Vanilla Doom when encountering an overrun
-// of the spechit array.
-// No more desyncs on compet-n\hr.wad\hr18*.lmp, all strain.wad\map07 demos etc.
-// http://www.doomworld.com/vb/showthread.php?s=&threadid=35214
-static void SpechitOverrun(line_t *ld)
-{
-  //int addr = 0x01C09C98 + (ld - lines) * 0x3E;
-    int addr = 0x00C09C98 + (ld - _g->lines) * 0x3E;
-
-    switch(_g->numspechit)
-    {
-    case 8: break; /* numspechit, not significant it seems - cph */
-    case 9:
-    case 10:
-    case 11:
-    case 12:
-        _g->tmbbox[_g->numspechit-9] = addr;
-        break;
-    case 13:
-        _g->nofit = addr;
-        break;
-    case 14:
-        _g->crushchange = addr;
-        break;
-    default:
-        lprintf(LO_ERROR, "SpechitOverrun: Warning: unable to emulate"
-                          " an overrun where numspechit=%i\n",
-                _g->numspechit);
-        break;
-    }
 }

@@ -319,7 +319,7 @@ static void R_InitSpriteLumps(void)
 void R_InitColormaps (void)
 {
     int lump = W_GetNumForName("COLORMAP");
-    colormaps = W_CacheLumpNum(lump);
+    _g->colormaps = W_CacheLumpNum(lump);
 }
 
 // killough 4/4/98: get colormap number from name
@@ -343,7 +343,7 @@ static inline int between(int l,int u,int x)
 
 const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
 {
-  if (fixedcolormap) return fixedcolormap;
+  if (_g->fixedcolormap) return _g->fixedcolormap;
   else {
     if (_g->curline)
       if (_g->curline->v1->y == _g->curline->v2->y)
@@ -352,7 +352,7 @@ const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
         if (_g->curline->v1->x == _g->curline->v2->x)
           lightlevel += 1 << LIGHTSEGSHIFT;
 
-    lightlevel += extralight << LIGHTSEGSHIFT;
+    lightlevel += _g->extralight << LIGHTSEGSHIFT;
 
     /* cph 2001/11/17 -
      * Work out what colour map to use, remembering to clamp it to the number of
@@ -365,7 +365,7 @@ const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
      * precision until the final step, so slight scale differences can count
      * against slight light level variations.
      */
-    return fullcolormap + between(0,NUMCOLORMAPS-1,
+    return _g->fullcolormap + between(0,NUMCOLORMAPS-1,
           ((256-lightlevel)*2*NUMCOLORMAPS/256) - 4
           - (FixedMul(spryscale,pspriteiscale)/2 >> LIGHTSCALESHIFT)
           )*256;

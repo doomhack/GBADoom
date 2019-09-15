@@ -21,6 +21,7 @@
 #include "p_tick.h"
 
 #include "r_draw.h"
+#include "r_main.h"
 
 #include "mmus2mid.h"
 

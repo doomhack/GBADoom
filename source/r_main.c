@@ -60,54 +60,6 @@
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
 
-
-int validcount = 1;         // increment every time a check is made
-const lighttable_t *fixedcolormap;
-int      centerx, centery;
-fixed_t  centerxfrac, centeryfrac;
-fixed_t  viewheightfrac; //e6y: for correct clipping of things
-fixed_t  projection;
-// proff 11/06/98: Added for high-res
-fixed_t  projectiony;
-fixed_t  viewx, viewy, viewz;
-angle_t  viewangle;
-fixed_t  viewcos, viewsin;
-player_t *viewplayer;
-extern lighttable_t **walllights;
-
-static mobj_t *oviewer;
-
-//
-// precalculated math tables
-//
-
-angle_t clipangle;
-
-// The viewangletox[viewangle + FINEANGLES/4] lookup
-// maps the visible view angles to screen X coordinates,
-// flattening the arc to a flat projection plane.
-// There will be many angles mapped to the same X.
-
-int viewangletox[FINEANGLES/2];
-
-// The xtoviewangleangle[] table maps a screen pixel
-// to the lowest viewangle that maps back to x ranges
-// from clipangle to -clipangle.
-
-angle_t xtoviewangle[MAX_SCREENWIDTH+1];   // killough 2/8/98
-
-// killough 3/20/98: Support dynamic colormaps, e.g. deep water
-// killough 4/4/98: support dynamic number of them as well
-
-const lighttable_t *(*c_zlight)[LIGHTLEVELS][MAXLIGHTZ];
-const lighttable_t *(*zlight)[MAXLIGHTZ];
-const lighttable_t *fullcolormap;
-const lighttable_t *colormaps;
-
-// killough 3/20/98, 4/4/98: end dynamic colormaps
-
-int extralight;                           // bumped light from gun blasts
-
 //
 // R_PointOnSide
 // Traverse BSP (sub) tree,
@@ -178,7 +130,7 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
   static fixed_t oldx, oldy;
   static angle_t oldresult;
 
-  x -= viewx; y -= viewy;
+  x -= _g->viewx; y -= _g->viewy;
 
   if ( /* !render_precise && */
       // e6y: here is where "slime trails" can SOMETIMES occur
@@ -244,7 +196,7 @@ static void R_InitTextureMapping (void)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
-  focallength = FixedDiv(centerxfrac, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
+  focallength = FixedDiv(_g->centerxfrac, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
 
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
@@ -257,14 +209,14 @@ static void R_InitTextureMapping (void)
       else
         {
           t = FixedMul(finetangent[i], focallength);
-          t = (centerxfrac - t + FRACUNIT-1) >> FRACBITS;
+          t = (_g->centerxfrac - t + FRACUNIT-1) >> FRACBITS;
           if (t < -1)
             t = -1;
           else
             if (t > _g->viewwidth+1)
               t = _g->viewwidth+1;
         }
-      viewangletox[i] = t;
+      _g->viewangletox[i] = t;
     }
 
   // Scan viewangletox[] to generate xtoviewangle[]:
@@ -273,20 +225,20 @@ static void R_InitTextureMapping (void)
 
   for (x=0; x<=_g->viewwidth; x++)
     {
-      for (i=0; viewangletox[i] > x; i++)
+      for (i=0; _g->viewangletox[i] > x; i++)
         ;
-      xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
+      _g->xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
     }
 
   // Take out the fencepost cases from viewangletox.
   for (i=0; i<FINEANGLES/2; i++)
-    if (viewangletox[i] == -1)
-      viewangletox[i] = 0;
+    if (_g->viewangletox[i] == -1)
+      _g->viewangletox[i] = 0;
     else
-      if (viewangletox[i] == _g->viewwidth+1)
-        viewangletox[i] = _g->viewwidth;
+      if (_g->viewangletox[i] == _g->viewwidth+1)
+        _g->viewangletox[i] = _g->viewwidth;
 
-  clipangle = xtoviewangle[0];
+  _g->clipangle = _g->xtoviewangle[0];
 }
 
 //
@@ -300,7 +252,7 @@ static void R_InitLightTables (void)
   int i;
 
   // killough 4/4/98: dynamic colormaps
-  c_zlight = malloc(sizeof(*c_zlight) * NUMCOLORMAPS);
+  _g->c_zlight = malloc(sizeof(*_g->c_zlight) * NUMCOLORMAPS);
 
   // Calculate the light levels to use
   //  for each level / distance combination.
@@ -323,7 +275,7 @@ static void R_InitLightTables (void)
           // killough 3/20/98: Initialize multiple colormaps
           level *= 256;
           for (t=0; t<NUMCOLORMAPS; t++)         // killough 4/4/98
-            c_zlight[t][i][j] = (&colormaps[t*256]) + level;
+            _g->c_zlight[t][i][j] = (&_g->colormaps[t*256]) + level;
         }
     }
 }
@@ -335,13 +287,11 @@ static void R_InitLightTables (void)
 // The change will take effect next refresh.
 //
 
-boolean setsizeneeded;
-int     setblocks;
 
 void R_SetViewSize(int blocks)
 {
-  setsizeneeded = true;
-  setblocks = blocks;
+  _g->setsizeneeded = true;
+  _g->setblocks = blocks;
 }
 
 //
@@ -352,15 +302,15 @@ void R_ExecuteSetViewSize (void)
 {
   int i;
 
-  setsizeneeded = false;
+  _g->setsizeneeded = false;
 
-  if (setblocks == 11)
+  if (_g->setblocks == 11)
     {
       _g->scaledviewwidth = SCREENWIDTH;
       _g->viewheight = SCREENHEIGHT;
     }
 // proff 09/24/98: Added for high-res
-  else if (setblocks == 10)
+  else if (_g->setblocks == 10)
     {
       _g->scaledviewwidth = SCREENWIDTH;
       _g->viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
@@ -368,21 +318,21 @@ void R_ExecuteSetViewSize (void)
   else
     {
 // proff 08/17/98: Changed for high-res
-      _g->scaledviewwidth = setblocks*SCREENWIDTH/10;
-      _g->viewheight = (setblocks*(SCREENHEIGHT-ST_SCALED_HEIGHT)/10) & ~7;
+      _g->scaledviewwidth = _g->setblocks*SCREENWIDTH/10;
+      _g->viewheight = (_g->setblocks*(SCREENHEIGHT-ST_SCALED_HEIGHT)/10) & ~7;
     }
 
   _g->viewwidth = _g->scaledviewwidth;
 
-  viewheightfrac = _g->viewheight<<FRACBITS;//e6y
+  _g->viewheightfrac = _g->viewheight<<FRACBITS;//e6y
 
-  centery = _g->viewheight/2;
-  centerx = _g->viewwidth/2;
-  centerxfrac = centerx<<FRACBITS;
-  centeryfrac = centery<<FRACBITS;
-  projection = centerxfrac;
+  _g->centery = _g->viewheight/2;
+  _g->centerx = _g->viewwidth/2;
+  _g->centerxfrac = _g->centerx<<FRACBITS;
+  _g->centeryfrac = _g->centery<<FRACBITS;
+  _g->projection = _g->centerxfrac;
 // proff 11/06/98: Added for high-res
-  projectiony = ((SCREENHEIGHT * centerx * 320) / 200) / SCREENWIDTH * FRACUNIT;
+  _g->projectiony = ((SCREENHEIGHT * _g->centerx * 320) / 200) / SCREENWIDTH * FRACUNIT;
 
   R_InitBuffer (_g->scaledviewwidth, _g->viewheight);
 
@@ -404,12 +354,12 @@ void R_ExecuteSetViewSize (void)
     {   // killough 5/2/98: reformatted
       fixed_t dy = D_abs(((i-_g->viewheight/2)<<FRACBITS)+FRACUNIT/2);
 // proff 08/17/98: Changed for high-res
-      yslope[i] = FixedDiv(projectiony, dy);
+      yslope[i] = FixedDiv(_g->projectiony, dy);
     }
 
   for (i=0 ; i<_g->viewwidth ; i++)
     {
-      fixed_t cosadj = D_abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
+      fixed_t cosadj = D_abs(finecosine[_g->xtoviewangle[i]>>ANGLETOFINESHIFT]);
       distscale[i] = FixedDiv(FRACUNIT,cosadj);
     }
 
@@ -467,29 +417,24 @@ static void R_SetupFrame (player_t *player)
 {
   int cm;
 
-  viewplayer = player;
+  _g->viewplayer = player;
 
-  if (player->mo != oviewer || (_g->paused || (_g->menuactive && !_g->demoplayback)))
-  {
-    oviewer = player->mo;
-  }
+  _g->viewx = player->mo->x;
+  _g->viewy = player->mo->y;
+  _g->viewz = player->viewz;
+  _g->viewangle = player->mo->angle;
 
-  viewx = player->mo->x;
-  viewy = player->mo->y;
-  viewz = player->viewz;
-  viewangle = player->mo->angle;
+  _g->extralight = player->extralight;
 
-  extralight = player->extralight;
-
-  viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
-  viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
+  _g->viewsin = finesine[_g->viewangle>>ANGLETOFINESHIFT];
+  _g->viewcos = finecosine[_g->viewangle>>ANGLETOFINESHIFT];
 
   // killough 3/20/98, 4/4/98: select colormap based on player status
 
   if (player->mo->subsector->sector->heightsec != -1)
     {
       const sector_t *s = player->mo->subsector->sector->heightsec + _g->sectors;
-      cm = viewz < s->floorheight ? s->bottommap : viewz > s->ceilingheight ?
+      cm = _g->viewz < s->floorheight ? s->bottommap : _g->viewz > s->ceilingheight ?
         s->topmap : s->midmap;
       if (cm < 0 || cm > NUMCOLORMAPS)
         cm = 0;
@@ -497,42 +442,18 @@ static void R_SetupFrame (player_t *player)
   else
     cm = 0;
 
-  fullcolormap = &colormaps[0];
-  zlight = c_zlight[cm];
+  _g->fullcolormap = &_g->colormaps[0];
+  _g->zlight = _g->c_zlight[cm];
 
   if (player->fixedcolormap)
     {
-      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
+      _g->fixedcolormap = _g->fullcolormap   // killough 3/20/98: use fullcolormap
         + player->fixedcolormap*256*sizeof(lighttable_t);
     }
   else
-    fixedcolormap = 0;
+    _g->fixedcolormap = 0;
 
-  validcount++;
-}
-
-//
-// R_ShowStats
-//
-int rendered_visplanes, rendered_segs, rendered_vissprites;
-boolean rendering_stats;
-
-static void R_ShowStats(void)
-{
-#define KEEPTIMES 10
-  static int keeptime[KEEPTIMES], showtime;
-  int now = I_GetTime();
-
-  if (now - showtime > 35) 
-  {
-    doom_printf("Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d",
-    (35*KEEPTIMES)/(now - keeptime[0]), rendered_segs,
-    rendered_visplanes, rendered_vissprites);
-    showtime = now;
-  }
-  memmove(keeptime, keeptime+1, sizeof(keeptime[0]) * (KEEPTIMES-1));
-  keeptime[KEEPTIMES-1] = now;
-
+  _g->validcount++;
 }
 
 //
@@ -548,8 +469,6 @@ void R_RenderPlayerView (player_t* player)
   R_ClearPlanes ();
   R_ClearSprites ();
 
-  rendered_segs = rendered_visplanes = 0;
-
   // The head node is the last node output.
   R_RenderBSPNode (_g->numnodes-1);
 
@@ -557,8 +476,4 @@ void R_RenderPlayerView (player_t* player)
 
     R_DrawMasked ();
 
-
-
-  if (rendering_stats)
-      R_ShowStats();
 }

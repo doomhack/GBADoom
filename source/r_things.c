@@ -404,7 +404,7 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   frac = vis->startfrac;
 
   spryscale = vis->scale;
-  sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid,spryscale);
+  sprtopscreen = _g->centeryfrac - FixedMul(dcvars.texturemid,spryscale);
 
   for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
@@ -452,11 +452,11 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     fy = thing->y;
     fz = thing->z;
   }
-  tr_x = fx - viewx;
-  tr_y = fy - viewy;
+  tr_x = fx - _g->viewx;
+  tr_y = fy - _g->viewy;
 
-  gxt = FixedMul(tr_x,viewcos);
-  gyt = -FixedMul(tr_y,viewsin);
+  gxt = FixedMul(tr_x,_g->viewcos);
+  gyt = -FixedMul(tr_y,_g->viewsin);
 
   tz = gxt-gyt;
 
@@ -464,10 +464,10 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   if (tz < MINZ)
     return;
 
-  xscale = FixedDiv(projection, tz);
+  xscale = FixedDiv(_g->projection, tz);
 
-  gxt = -FixedMul(tr_x,viewsin);
-  gyt = FixedMul(tr_y,viewcos);
+  gxt = -FixedMul(tr_x,_g->viewsin);
+  gyt = FixedMul(tr_y,_g->viewcos);
   tx = -(gyt+gxt);
 
   // too far off the side?
@@ -520,10 +520,10 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     } else {
       tx -= patch->leftoffset << FRACBITS;
     }
-    x1 = (centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
+    x1 = (_g->centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
 
     tx += patch->width<<FRACBITS;
-    x2 = ((centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
+    x2 = ((_g->centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
 
     gzt = fz + (patch->topoffset << FRACBITS);
     width = patch->width;
@@ -537,8 +537,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   // killough 4/9/98: clip things which are out of view due to height
   // e6y: fix of hanging decoration disappearing in Batman Doom MAP02
   // centeryfrac -> viewheightfrac
-  if (fz  > viewz + FixedDiv(viewheightfrac, xscale) ||
-      gzt < viewz - FixedDiv(viewheightfrac-_g->viewheight, xscale))
+  if (fz  > _g->viewz + FixedDiv(_g->viewheightfrac, xscale) ||
+      gzt < _g->viewz - FixedDiv(_g->viewheightfrac-_g->viewheight, xscale))
     return;
 
     // killough 3/27/98: exclude things totally separated
@@ -549,14 +549,14 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
   if (heightsec != -1)   // only clip things which are in special sectors
     {
-      int phs = viewplayer->mo->subsector->sector->heightsec;
-      if (phs != -1 && viewz < _g->sectors[phs].floorheight ?
+      int phs = _g->viewplayer->mo->subsector->sector->heightsec;
+      if (phs != -1 && _g->viewz < _g->sectors[phs].floorheight ?
           fz >= _g->sectors[heightsec].floorheight :
           gzt < _g->sectors[heightsec].floorheight)
         return;
-      if (phs != -1 && viewz > _g->sectors[phs].ceilingheight ?
+      if (phs != -1 && _g->viewz > _g->sectors[phs].ceilingheight ?
           gzt < _g->sectors[heightsec].ceilingheight &&
-          viewz >= _g->sectors[heightsec].ceilingheight :
+          _g->viewz >= _g->sectors[heightsec].ceilingheight :
           fz >= _g->sectors[heightsec].ceilingheight)
         return;
     }
@@ -569,12 +569,12 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
   vis->mobjflags = thing->flags;
 // proff 11/06/98: Changed for high-res
-  vis->scale = FixedDiv(projectiony, tz);
+  vis->scale = FixedDiv(_g->projectiony, tz);
   vis->gx = fx;
   vis->gy = fy;
   vis->gz = fz;
   vis->gzt = gzt;                          // killough 3/27/98
-  vis->texturemid = vis->gzt - viewz;
+  vis->texturemid = vis->gzt - _g->viewz;
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= _g->viewwidth ? _g->viewwidth-1 : x2;
   iscale = FixedDiv (FRACUNIT, xscale);
@@ -597,10 +597,10 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   // get light level
   if (thing->flags & MF_SHADOW)
       vis->colormap = NULL;             // shadow draw
-  else if (fixedcolormap)
-    vis->colormap = fixedcolormap;      // fixed map
+  else if (_g->fixedcolormap)
+    vis->colormap = _g->fixedcolormap;      // fixed map
   else if (thing->frame & FF_FULLBRIGHT)
-    vis->colormap = fullcolormap;     // full bright  // killough 3/20/98
+    vis->colormap = _g->fullcolormap;     // full bright  // killough 3/20/98
   else
     {      // diminished light
       vis->colormap = R_ColourMap(lightlevel,xscale);
@@ -622,11 +622,11 @@ void R_AddSprites(subsector_t* subsec, int lightlevel)
   //  subsectors during BSP building.
   // Thus we check whether its already added.
 
-  if (sec->validcount == validcount)
+  if (sec->validcount == _g->validcount)
     return;
 
   // Well, now it will be done.
-  sec->validcount = validcount;
+  sec->validcount = _g->validcount;
 
   // Handle all things in sector.
 
@@ -679,10 +679,10 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     tx = psp->sx-160*FRACUNIT;
 
     tx -= patch->leftoffset<<FRACBITS;
-    x1 = (centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
+    x1 = (_g->centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
 
     tx += patch->width<<FRACBITS;
-    x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
+    x2 = ((_g->centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
@@ -720,13 +720,13 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
   vis->patch = lump;
 
-  if (viewplayer->powers[pw_invisibility] > 4*32
-      || viewplayer->powers[pw_invisibility] & 8)
+  if (_g->viewplayer->powers[pw_invisibility] > 4*32
+      || _g->viewplayer->powers[pw_invisibility] & 8)
     vis->colormap = NULL;                    // shadow draw
-  else if (fixedcolormap)
-    vis->colormap = fixedcolormap;           // fixed color
+  else if (_g->fixedcolormap)
+    vis->colormap = _g->fixedcolormap;           // fixed color
   else if (psp->state->frame & FF_FULLBRIGHT)
-    vis->colormap = fullcolormap;            // full bright // killough 3/20/98
+    vis->colormap = _g->fullcolormap;            // full bright // killough 3/20/98
   else
     // add a fudge factor to better match the original game
     vis->colormap = R_ColourMap(lightlevel,
@@ -741,7 +741,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
 void R_DrawPlayerSprites(void)
 {
-  int i, lightlevel = viewplayer->mo->subsector->sector->lightlevel;
+  int i, lightlevel = _g->viewplayer->mo->subsector->sector->lightlevel;
   pspdef_t *psp;
 
   // clip to screen bounds
@@ -749,7 +749,7 @@ void R_DrawPlayerSprites(void)
   mceilingclip = negonearray;
 
   // add all active psprites
-  for (i=0, psp=viewplayer->psprites; i<NUMPSPRITES; i++,psp++)
+  for (i=0, psp=_g->viewplayer->psprites; i<NUMPSPRITES; i++,psp++)
     if (psp->state)
       R_DrawPSprite (psp, lightlevel);
 }
@@ -909,27 +909,27 @@ static void R_DrawSprite (vissprite_t* spr)
   if (spr->heightsec != -1)  // only things in specially marked sectors
     {
       fixed_t h,mh;
-      int phs = viewplayer->mo->subsector->sector->heightsec;
+      int phs = _g->viewplayer->mo->subsector->sector->heightsec;
       if ((mh = _g->sectors[spr->heightsec].floorheight) > spr->gz &&
-          (h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
+          (h = _g->centeryfrac - FixedMul(mh-=_g->viewz, spr->scale)) >= 0 &&
           (h >>= FRACBITS) < _g->viewheight) {
-        if (mh <= 0 || (phs != -1 && viewz > _g->sectors[phs].floorheight))
+        if (mh <= 0 || (phs != -1 && _g->viewz > _g->sectors[phs].floorheight))
           {                          // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
               if (clipbot[x] == -2 || h < clipbot[x])
                 clipbot[x] = h;
           }
         else                        // clip top
-    if (phs != -1 && viewz <= _g->sectors[phs].floorheight) // killough 11/98
+    if (phs != -1 && _g->viewz <= _g->sectors[phs].floorheight) // killough 11/98
       for (x=spr->x1 ; x<=spr->x2 ; x++)
         if (cliptop[x] == -2 || h > cliptop[x])
     cliptop[x] = h;
       }
 
       if ((mh = _g->sectors[spr->heightsec].ceilingheight) < spr->gzt &&
-          (h = centeryfrac - FixedMul(mh-viewz, spr->scale)) >= 0 &&
+          (h = _g->centeryfrac - FixedMul(mh-_g->viewz, spr->scale)) >= 0 &&
           (h >>= FRACBITS) < _g->viewheight) {
-        if (phs != -1 && viewz >= _g->sectors[phs].ceilingheight)
+        if (phs != -1 && _g->viewz >= _g->sectors[phs].ceilingheight)
           {                         // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
               if (clipbot[x] == -2 || h < clipbot[x])
@@ -972,7 +972,6 @@ void R_DrawMasked(void)
 
   // draw all vissprites back to front
 
-  rendered_vissprites = num_vissprite;
   for (i = num_vissprite ;--i>=0; )
     R_DrawSprite(vissprite_ptrs[i]);         // killough
 

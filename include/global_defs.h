@@ -435,6 +435,9 @@ int bombdamage;
 
 boolean crushchange, nofit;
 
+mobj_t*   usething;
+
+
 //******************************************************************************
 //p_maputl.c
 //******************************************************************************
@@ -659,6 +662,59 @@ draw_vars_t drawvars;
 
 int fuzzoffset[FUZZTABLE];
 int fuzzpos;
+
+//******************************************************************************
+//r_draw.c
+//******************************************************************************
+
+int validcount;         // increment every time a check is made
+const lighttable_t* fixedcolormap;
+int centerx, centery;
+fixed_t  centerxfrac, centeryfrac;
+fixed_t  viewheightfrac; //e6y: for correct clipping of things
+fixed_t  projection;
+// proff 11/06/98: Added for high-res
+fixed_t  projectiony;
+fixed_t  viewx, viewy, viewz;
+angle_t  viewangle;
+fixed_t  viewcos, viewsin;
+player_t *viewplayer;
+
+//
+// precalculated math tables
+//
+
+angle_t clipangle;
+
+// The viewangletox[viewangle + FINEANGLES/4] lookup
+// maps the visible view angles to screen X coordinates,
+// flattening the arc to a flat projection plane.
+// There will be many angles mapped to the same X.
+
+int viewangletox[FINEANGLES/2];
+
+// The xtoviewangleangle[] table maps a screen pixel
+// to the lowest viewangle that maps back to x ranges
+// from clipangle to -clipangle.
+
+angle_t xtoviewangle[MAX_SCREENWIDTH+1];   // killough 2/8/98
+
+// killough 3/20/98: Support dynamic colormaps, e.g. deep water
+// killough 4/4/98: support dynamic number of them as well
+
+const lighttable_t *(*c_zlight)[LIGHTLEVELS][MAXLIGHTZ];
+const lighttable_t *(*zlight)[MAXLIGHTZ];
+const lighttable_t *fullcolormap;
+const lighttable_t *colormaps;
+
+// killough 3/20/98, 4/4/98: end dynamic colormaps
+
+int extralight;                           // bumped light from gun blasts
+
+boolean setsizeneeded;
+int     setblocks;
+
+
 
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

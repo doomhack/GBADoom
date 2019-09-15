@@ -154,8 +154,6 @@ static void D_Wipe(void)
 //  draw current display, possibly wiping it from the previous
 //
 
-extern boolean setsizeneeded;
-
 void D_Display (void)
 {
 
@@ -199,7 +197,7 @@ void D_Display (void)
 
     HU_Erase();
 
-    if (setsizeneeded) {               // change the view size if needed
+    if (_g->setsizeneeded) {               // change the view size if needed
       R_ExecuteSetViewSize();
       _g->oldgamestate = -1;            // force background redraw
     }

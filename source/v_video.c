@@ -406,7 +406,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 
 				  dcvars.source = column->pixels + post->topdelta + yoffset;
 				  
-				  dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
+                  dcvars.texturemid = -((dcvars.yl-_g->centery)*dcvars.iscale);
 				  
 				  colfunc(&dcvars);
 			  }

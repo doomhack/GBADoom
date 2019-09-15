@@ -41,22 +41,6 @@
 #pragma interface
 #endif
 
-//
-// POV related.
-//
-
-extern fixed_t  viewcos;
-extern fixed_t  viewsin;
-
-extern int      centerx;
-extern int      centery;
-extern fixed_t  centerxfrac;
-extern fixed_t  centeryfrac;
-extern fixed_t  viewheightfrac; //e6y: for correct clipping of things
-extern fixed_t  projection;
-// proff 11/06/98: Added for high-res
-extern fixed_t  projectiony;
-extern int      validcount;
 
 //
 // Rendering stats
@@ -79,15 +63,6 @@ extern boolean rendering_stats;
 #define LIGHTSCALESHIFT   12
 #define MAXLIGHTZ        128
 #define LIGHTZSHIFT       20
-
-// killough 3/20/98: Allow colormaps to be dynamic (e.g. underwater)
-extern const lighttable_t *(*zlight)[MAXLIGHTZ];
-extern const lighttable_t *fullcolormap;
-extern const lighttable_t *colormaps;
-// killough 3/20/98, 4/4/98: end dynamic colormaps
-
-extern int          extralight;
-extern const lighttable_t *fixedcolormap;
 
 // Number of diminishing brightness levels.
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.

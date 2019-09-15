@@ -368,9 +368,9 @@ boolean P_BlockLinesIterator(int x, int y, boolean func(line_t*))
   for ( ; *list != -1 ; list++)                                   // phares
     {
       line_t *ld = &_g->lines[*list];
-      if (ld->validcount == validcount)
+      if (ld->validcount == _g->validcount)
         continue;       // line has already been checked
-      ld->validcount = validcount;
+      ld->validcount = _g->validcount;
       if (!func(ld))
         return false;
     }
@@ -566,7 +566,7 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
   int     mapxstep, mapystep;
   int     count;
 
-  validcount++;
+  _g->validcount++;
   intercept_p = intercepts;
 
   if (!((x1-_g->bmaporgx)&(MAPBLOCKSIZE-1)))
