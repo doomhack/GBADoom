@@ -71,7 +71,6 @@
 
 void I_Init(void)
 {
-
     if (!(nomusicparm && nosfxparm))
         I_InitSound();
 }
@@ -93,8 +92,6 @@ int main(int argc, const char * const * argv)
     Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
     InitGlobals();
-
-    I_SetAffinityMask();
 
     /* cphipps - call to video specific startup code */
     I_PreInitGraphics();

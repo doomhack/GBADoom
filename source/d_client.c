@@ -124,7 +124,6 @@ void TryRunTics (void)
             D_DoAdvanceDemo ();
 
         M_Ticker ();
-        I_GetTime_SaveMS();
         G_Ticker ();
         P_Checksum(_g->gametic);
         _g->gametic++;
