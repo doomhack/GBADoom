@@ -64,6 +64,8 @@
 // 4 players, 4 buttons each at once, max.
 // killough 2/14/98: redefine in terms of MAXPLAYERS
 #define MAXBUTTONS    (MAXPLAYERS*4)
+#define MAXSWITCHES		50
+
 
 // 1 second, in ticks.
 #define BUTTONTIME  TICRATE
@@ -783,16 +785,6 @@ typedef struct
 
 
 #define MAXANIMS 32
-
-
-//////////////////////////////////////////////////////////////////
-//
-// external data declarations
-//
-//////////////////////////////////////////////////////////////////
-
-// list of retriggerable buttons active
-extern button_t buttonlist[MAXBUTTONS];
 
 ////////////////////////////////////////////////////////////////
 //

@@ -2275,36 +2275,36 @@ void P_UpdateSpecials (void)
 
   // Check buttons (retriggerable switches) and change texture on timeout
   for (i = 0; i < MAXBUTTONS; i++)
-    if (buttonlist[i].btimer)
+    if (_g->buttonlist[i].btimer)
     {
-      buttonlist[i].btimer--;
-      if (!buttonlist[i].btimer)
+      _g->buttonlist[i].btimer--;
+      if (!_g->buttonlist[i].btimer)
       {
-        switch(buttonlist[i].where)
+        switch(_g->buttonlist[i].where)
         {
           case top:
-            _g->sides[buttonlist[i].line->sidenum[0]].toptexture =
-              buttonlist[i].btexture;
+            _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
+              _g->buttonlist[i].btexture;
             break;
 
           case middle:
-            _g->sides[buttonlist[i].line->sidenum[0]].midtexture =
-              buttonlist[i].btexture;
+            _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
+              _g->buttonlist[i].btexture;
             break;
 
           case bottom:
-            _g->sides[buttonlist[i].line->sidenum[0]].bottomtexture =
-              buttonlist[i].btexture;
+            _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
+              _g->buttonlist[i].btexture;
             break;
         }
         {
           /* don't take the address of the switch's sound origin,
            * unless in a compatibility mode. */
-          mobj_t *so = (mobj_t *)buttonlist[i].soundorg;
+          mobj_t *so = (mobj_t *)_g->buttonlist[i].soundorg;
 
           S_StartSound(so, sfx_swtchn);
         }
-        memset(&buttonlist[i],0,sizeof(button_t));
+        memset(&_g->buttonlist[i],0,sizeof(button_t));
       }
     }
 }
@@ -2407,7 +2407,7 @@ void P_SpawnSpecials (void)
   P_RemoveAllActivePlats();     // killough
 
   for (i = 0;i < MAXBUTTONS;i++)
-    memset(&buttonlist[i],0,sizeof(button_t));
+    memset(&_g->buttonlist[i],0,sizeof(button_t));
 
   // P_InitTagLists() must be called before P_FindSectorFromLineTag()
   // or P_FindLineFromLineTag() can be called.

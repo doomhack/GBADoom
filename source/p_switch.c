@@ -42,15 +42,9 @@
 
 #include "global_data.h"
 
-#define MAXSWITCHES		50
 
-int		switchlist[MAXSWITCHES * 2];
-static int max_numswitches;                       // killough
-static int numswitches;                           // killough
 
-button_t  buttonlist[MAXBUTTONS];
-
-const switchlist_t alphSwitchList[] =
+static const switchlist_t alphSwitchList[] =
 {
     // Doom shareware episode 1 switches
     {"SW1BRCOM",	"SW2BRCOM",	1},
@@ -124,15 +118,15 @@ void P_InitSwitchList(void)
     {
         if (!alphSwitchList[i].episode)
         {
-            numswitches = index/2;
-            switchlist[index] = -1;
+            _g->numswitches = index/2;
+            _g->switchlist[index] = -1;
             break;
         }
 
         if (alphSwitchList[i].episode <= episode)
         {
-            switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name1);
-            switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name2);
+            _g->switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name1);
+            _g->switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name2);
         }
     }
 }
@@ -156,19 +150,19 @@ static void P_StartButton
 
   // See if button is already pressed
   for (i = 0;i < MAXBUTTONS;i++)
-    if (buttonlist[i].btimer && buttonlist[i].line == line)
+    if (_g->buttonlist[i].btimer && _g->buttonlist[i].line == line)
       return;
 
   for (i = 0;i < MAXBUTTONS;i++)
-    if (!buttonlist[i].btimer)    // use first unused element of list
+    if (!_g->buttonlist[i].btimer)    // use first unused element of list
     {
-      buttonlist[i].line = line;
-      buttonlist[i].where = w;
-      buttonlist[i].btexture = texture;
-      buttonlist[i].btimer = time;
+      _g->buttonlist[i].line = line;
+      _g->buttonlist[i].where = w;
+      _g->buttonlist[i].btexture = texture;
+      _g->buttonlist[i].btimer = time;
       /* use sound origin of line itself - no need to compatibility-wrap
        * as the popout code gets it wrong whatever its value */
-      buttonlist[i].soundorg = (mobj_t *)&line->soundorg;
+      _g->buttonlist[i].soundorg = (mobj_t *)&line->soundorg;
       return;
     }
 
@@ -211,23 +205,23 @@ void P_ChangeSwitchTexture
 
   /* search for a texture to change */
   texture = NULL; position = 0;
-  for (i = 0;i < numswitches*2;i++) { /* this could be more efficient... */
-    if (switchlist[i] == *ttop) {
+  for (i = 0;i < _g->numswitches*2;i++) { /* this could be more efficient... */
+    if (_g->switchlist[i] == *ttop) {
       texture = ttop; position = top; break;
-    } else if (switchlist[i] == *tmid) {
+    } else if (_g->switchlist[i] == *tmid) {
       texture = tmid; position = middle; break;
-    } else if (switchlist[i] == *tbot) {
+    } else if (_g->switchlist[i] == *tbot) {
       texture = tbot; position = bottom; break;
     }
   }
   if (texture == NULL)
     return; /* no switch texture was found to change */
-  *texture = switchlist[i^1];
+  *texture = _g->switchlist[i^1];
 
   S_StartSound(soundorg, sound);
 
   if (useAgain)
-    P_StartButton(line, position, switchlist[i], BUTTONTIME);
+    P_StartButton(line, position, _g->switchlist[i], BUTTONTIME);
 }
 
 
@@ -383,7 +377,6 @@ P_UseSpecialLine
 
       default:
         return false;
-        break;
     }
   }
 

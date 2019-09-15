@@ -579,7 +579,10 @@ pusher_t* tmpusher; // pusher structure for blockmap searches
 //p_switch.c
 //******************************************************************************
 
+int		switchlist[MAXSWITCHES * 2];
+int numswitches;                           // killough
 
+button_t  buttonlist[MAXBUTTONS];
 
 //******************************************************************************
 #endif // GLOBAL_DEFS_H
