@@ -18,6 +18,8 @@
 #include "p_maputl.h"
 
 #include "p_mobj.h"
+#include "p_tick.h"
+
 
 #include "mmus2mid.h"
 

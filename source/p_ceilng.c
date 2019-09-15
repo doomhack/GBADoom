@@ -81,7 +81,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
             );
 
       // if not a silent crusher, make moving sound
-      if (!(leveltime&7))
+      if (!(_g->leveltime&7))
       {
         switch(ceiling->type)
         {
@@ -145,7 +145,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
             );
 
       // if not silent crusher type make moving sound
-      if (!(leveltime&7))
+      if (!(_g->leveltime&7))
       {
         switch(ceiling->type)
         {

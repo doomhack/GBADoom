@@ -39,9 +39,6 @@
 
 #include "global_data.h"
 
-int leveltime;
-
-static boolean newthinkerpresent;
 
 //
 // THINKERS
@@ -51,9 +48,7 @@ static boolean newthinkerpresent;
 // but the first element must be thinker_t.
 //
 
-// killough 8/29/98: we maintain several separate threads, each containing
-// a special class of thinkers, to allow more efficient searches.
-thinker_t thinkerclasscap[th_all+1];
+
 
 //
 // P_InitThinkers
@@ -64,7 +59,7 @@ void P_InitThinkers(void)
   int i;
 
   for (i=0; i<NUMTHCLASS; i++)  // killough 8/29/98: initialize threaded lists
-    thinkerclasscap[i].cprev = thinkerclasscap[i].cnext = &thinkerclasscap[i];
+    _g->thinkerclasscap[i].cprev = _g->thinkerclasscap[i].cnext = &_g->thinkerclasscap[i];
 
   thinkercap.prev = thinkercap.next  = &thinkercap;
 }
@@ -97,7 +92,7 @@ void P_UpdateThinker(thinker_t *thinker)
   }
 
   // Add to appropriate thread
-  th = &thinkerclasscap[class];
+  th = &_g->thinkerclasscap[class];
   th->cprev->cnext = thinker;
   thinker->cnext = th;
   thinker->cprev = th->cprev;
@@ -121,7 +116,6 @@ void P_AddThinker(thinker_t* thinker)
   // killough 8/29/98: set sentinel pointers, and then add to appropriate list
   thinker->cnext = thinker->cprev = NULL;
   P_UpdateThinker(thinker);
-  newthinkerpresent = true;
 }
 
 //
@@ -130,7 +124,6 @@ void P_AddThinker(thinker_t* thinker)
 // Make currentthinker external, so that P_RemoveThinkerDelayed
 // can adjust currentthinker when thinkers self-remove.
 
-static thinker_t *currentthinker;
 
 //
 // P_RemoveThinkerDelayed()
@@ -153,7 +146,7 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
          * and since we're freeing our memory, we had better change that. So
          * point it to thinker->prev, so the iterator will correctly move on to
          * thinker->prev->next = thinker->next */
-        (next->prev = currentthinker = thinker->prev)->next = next;
+        (next->prev = _g->currentthinker = thinker->prev)->next = next;
       }
       {
         /* Remove from current thinker class list */
@@ -189,7 +182,7 @@ void P_RemoveThinker(thinker_t *thinker)
  */
 thinker_t* P_NextThinker(thinker_t* th, th_class cl)
 {
-  thinker_t* top = &thinkerclasscap[cl];
+  thinker_t* top = &_g->thinkerclasscap[cl];
   if (!th) th = top;
   th = cl == th_all ? th->next : th->cnext;
   return th == top ? NULL : th;
@@ -240,14 +233,13 @@ void P_SetTarget(mobj_t **mop, mobj_t *targ)
 
 static void P_RunThinkers (void)
 {
-  for (currentthinker = thinkercap.next;
-       currentthinker != &thinkercap;
-       currentthinker = currentthinker->next)
+  for (_g->currentthinker = thinkercap.next;
+       _g->currentthinker != &thinkercap;
+       _g->currentthinker = _g->currentthinker->next)
   {
-    if (currentthinker->function)
-      currentthinker->function(currentthinker);
+    if (_g->currentthinker->function)
+      _g->currentthinker->function(_g->currentthinker);
   }
-  newthinkerpresent = false;
 }
 
 //
@@ -282,6 +274,6 @@ void P_Ticker (void)
   P_UpdateSpecials();
   P_RespawnSpecials();
   P_MapEnd();
-  leveltime++;                       // for par times
+  _g->leveltime++;                       // for par times
 }
 

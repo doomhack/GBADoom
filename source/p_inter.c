@@ -795,7 +795,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
        */
       if (target->health*2 < target->info->spawnhealth)
   {
-    thinker_t *cap = &thinkerclasscap[target->flags & MF_FRIEND ?
+    thinker_t *cap = &_g->thinkerclasscap[target->flags & MF_FRIEND ?
              th_friends : th_enemies];
     (target->thinker.cprev->cnext = target->thinker.cnext)->cprev =
       target->thinker.cprev;

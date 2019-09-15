@@ -584,5 +584,26 @@ int numswitches;                           // killough
 
 button_t  buttonlist[MAXBUTTONS];
 
+
+//******************************************************************************
+//p_tick.c
+//******************************************************************************
+
+int leveltime; // tics in game play for par
+
+// killough 8/29/98: we maintain several separate threads, each containing
+// a special class of thinkers, to allow more efficient searches.
+thinker_t thinkerclasscap[th_all+1];
+
+thinker_t *currentthinker;
+
+
+//******************************************************************************
+//p_user.c
+//******************************************************************************
+
+boolean onground; // whether player is on ground or in air
+
+
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

@@ -1774,7 +1774,7 @@ boolean PIT_ChangeSector (mobj_t* thing)
 
   _g->nofit = true;
 
-  if (_g->crushchange && !(leveltime&3)) {
+  if (_g->crushchange && !(_g->leveltime&3)) {
     int t;
     P_DamageMobj(thing,NULL,NULL,10);
 

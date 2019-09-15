@@ -1006,7 +1006,7 @@ void G_DoCompleted (void)
       _g->wminfo.plyr[i].skills = _g->players[i].killcount;
       _g->wminfo.plyr[i].sitems = _g->players[i].itemcount;
       _g->wminfo.plyr[i].ssecret = _g->players[i].secretcount;
-      _g->wminfo.plyr[i].stime = leveltime;
+      _g->wminfo.plyr[i].stime = _g->leveltime;
       memcpy (_g->wminfo.plyr[i].frags, _g->players[i].frags,
               sizeof(_g->wminfo.plyr[i].frags));
     }
@@ -1016,7 +1016,7 @@ void G_DoCompleted (void)
    *  the times in seconds shown for each level. Also means our total time
    *  will agree with Compet-n.
    */
-  _g->wminfo.totaltimes = (_g->totalleveltimes += (leveltime - leveltime%35));
+  _g->wminfo.totaltimes = (_g->totalleveltimes += (_g->leveltime - _g->leveltime%35));
 
   _g->gamestate = GS_INTERMISSION;
   _g->automapmode &= ~am_active;
@@ -1183,8 +1183,8 @@ void G_DoLoadGame(void)
   G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
 
   /* get the times - killough 11/98: save entire word */
-  memcpy(&leveltime, _g->save_p, sizeof leveltime);
-  _g->save_p += sizeof leveltime;
+  memcpy(&_g->leveltime, _g->save_p, sizeof _g->leveltime);
+  _g->save_p += sizeof _g->leveltime;
 
 
     memcpy(&_g->totalleveltimes, _g->save_p, sizeof _g->totalleveltimes);
@@ -1329,8 +1329,8 @@ static void G_DoSaveGame (boolean menu)
 
   /* cph - FIXME - endianness? */
   /* killough 11/98: save entire word */
-  memcpy(_g->save_p, &leveltime, sizeof leveltime);
-  _g->save_p += sizeof leveltime;
+  memcpy(_g->save_p, &_g->leveltime, sizeof _g->leveltime);
+  _g->save_p += sizeof _g->leveltime;
 
     memcpy(_g->save_p, &_g->totalleveltimes, sizeof _g->totalleveltimes);
     _g->save_p += sizeof _g->totalleveltimes;

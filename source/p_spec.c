@@ -2157,14 +2157,14 @@ void P_PlayerInSpecialSector (player_t* player)
       case 5:
         // 5/10 unit damage per 31 ticks
         if (!player->powers[pw_ironfeet])
-          if (!(leveltime&0x1f))
+          if (!(_g->leveltime&0x1f))
             P_DamageMobj (player->mo, NULL, NULL, 10);
         break;
 
       case 7:
         // 2/5 unit damage per 31 ticks
         if (!player->powers[pw_ironfeet])
-          if (!(leveltime&0x1f))
+          if (!(_g->leveltime&0x1f))
             P_DamageMobj (player->mo, NULL, NULL, 5);
         break;
 
@@ -2175,7 +2175,7 @@ void P_PlayerInSpecialSector (player_t* player)
         if (!player->powers[pw_ironfeet]
             || (P_Random()<5) ) // even with suit, take damage
         {
-          if (!(leveltime&0x1f))
+          if (!(_g->leveltime&0x1f))
             P_DamageMobj (player->mo, NULL, NULL, 20);
         }
         break;
@@ -2187,7 +2187,7 @@ void P_PlayerInSpecialSector (player_t* player)
         break;
 
       case 11:
-        if (!(leveltime&0x1f))
+        if (!(_g->leveltime&0x1f))
           P_DamageMobj (player->mo, NULL, NULL, 20);
 
         if (player->health <= 10)
@@ -2207,19 +2207,19 @@ void P_PlayerInSpecialSector (player_t* player)
         break;
       case 1: // 2/5 damage per 31 ticks
         if (!player->powers[pw_ironfeet])
-          if (!(leveltime&0x1f))
+          if (!(_g->leveltime&0x1f))
             P_DamageMobj (player->mo, NULL, NULL, 5);
         break;
       case 2: // 5/10 damage per 31 ticks
         if (!player->powers[pw_ironfeet])
-          if (!(leveltime&0x1f))
+          if (!(_g->leveltime&0x1f))
             P_DamageMobj (player->mo, NULL, NULL, 10);
         break;
       case 3: // 10/20 damage per 31 ticks
         if (!player->powers[pw_ironfeet]
             || (P_Random()<5))  // take damage even with suit
         {
-          if (!(leveltime&0x1f))
+          if (!(_g->leveltime&0x1f))
             P_DamageMobj (player->mo, NULL, NULL, 20);
         }
         break;
@@ -2265,7 +2265,7 @@ void P_UpdateSpecials (void)
   {
     for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
     {
-      pic = anim->basepic + ( (leveltime/anim->speed + i)%anim->numpics );
+      pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
       if (anim->istexture)
         texturetranslation[i] = pic;
       else

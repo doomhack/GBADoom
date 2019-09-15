@@ -55,7 +55,6 @@
 
 #define MAXBOB  0x100000
 
-boolean onground; // whether player is on ground or in air
 
 //
 // P_Thrust
@@ -117,7 +116,7 @@ void P_CalcHeight (player_t* player)
   if (player->bob > MAXBOB)
     player->bob = MAXBOB;
 
-  if (!onground || player->cheats & CF_NOMOMENTUM)
+  if (!_g->onground || player->cheats & CF_NOMOMENTUM)
     {
     player->viewz = player->mo->z + VIEWHEIGHT;
 
@@ -132,7 +131,7 @@ void P_CalcHeight (player_t* player)
     return;
     }
 
-  angle = (FINEANGLES/20*leveltime)&FINEMASK;
+  angle = (FINEANGLES/20*_g->leveltime)&FINEMASK;
   bob = FixedMul(player->bob/2,finesine[angle]);
 
   // move viewheight
@@ -182,7 +181,7 @@ void P_MovePlayer (player_t* player)
   mobj_t *mo = player->mo;
 
   mo->angle += cmd->angleturn << 16;
-  onground = mo->z <= mo->floorz;
+  _g->onground = mo->z <= mo->floorz;
 
   // killough 10/98:
   //
@@ -194,7 +193,7 @@ void P_MovePlayer (player_t* player)
   //e6y
   if ((cmd->forwardmove | cmd->sidemove)) // killough 10/98
     {
-      if (onground || mo->flags & MF_BOUNCES) // killough 8/9/98
+      if (_g->onground || mo->flags & MF_BOUNCES) // killough 8/9/98
       {
         int friction, movefactor = P_GetMoveFactor(mo, &friction);
 
@@ -246,7 +245,7 @@ void P_DeathThink (player_t* player)
     player->viewheight = 6*FRACUNIT;
 
   player->deltaviewheight = 0;
-  onground = (player->mo->z <= player->mo->floorz);
+  _g->onground = (player->mo->z <= player->mo->floorz);
   P_CalcHeight (player);
 
   if (player->attacker && player->attacker != player->mo)

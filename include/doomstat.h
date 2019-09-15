@@ -91,11 +91,6 @@ extern enum automapmode_e automapmode; // Mode that the automap is in
 extern const int consoleplayer;
 extern const int displayplayer;
 
-// Timer, for scores.
-
-extern  int leveltime;  // tics in game play for par
-
-
 //-----------------------------------------
 // Internal parameters, used for engine.
 //

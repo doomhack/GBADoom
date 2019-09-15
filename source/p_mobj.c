@@ -720,7 +720,7 @@ void P_MobjThinker (mobj_t* mobj)
     if (mobj->movecount < 12*35)
       return;
 
-    if (leveltime & 31)
+    if (_g->leveltime & 31)
       return;
 
     if (P_Random () > 4)
@@ -812,7 +812,7 @@ void P_RemoveMobj (mobj_t* mobj)
       && (mobj->type != MT_INS))
     {
     _g->itemrespawnque[_g->iquehead] = mobj->spawnpoint;
-    _g->itemrespawntime[_g->iquehead] = leveltime;
+    _g->itemrespawntime[_g->iquehead] = _g->leveltime;
     _g->iquehead = (_g->iquehead+1)&(ITEMQUESIZE-1);
 
     // lose one off the end?

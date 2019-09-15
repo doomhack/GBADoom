@@ -714,7 +714,7 @@ static boolean PIT_FindTarget(mobj_t *mo)
   // list, so that it gets searched last next time.
 
   {
-    thinker_t *cap = &thinkerclasscap[mo->flags & MF_FRIEND ?
+    thinker_t *cap = &_g->thinkerclasscap[mo->flags & MF_FRIEND ?
              th_friends : th_enemies];
     (mo->thinker.cprev->cnext = mo->thinker.cnext)->cprev = mo->thinker.cprev;
     (mo->thinker.cprev = cap->cprev)->cnext = &mo->thinker;
@@ -824,7 +824,7 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
     }
 
   // Search the threaded list corresponding to this object's potential targets
-  cap = &thinkerclasscap[actor->flags & MF_FRIEND ? th_enemies : th_friends];
+  cap = &_g->thinkerclasscap[actor->flags & MF_FRIEND ? th_enemies : th_friends];
 
   // Search for new enemy
 
@@ -911,7 +911,7 @@ static boolean P_HelpFriend(mobj_t *actor)
   _g->current_allaround = true;
 
   // Possibly help a friend under 50% health
-  cap = &thinkerclasscap[actor->flags & MF_FRIEND ? th_friends : th_enemies];
+  cap = &_g->thinkerclasscap[actor->flags & MF_FRIEND ? th_friends : th_enemies];
 
   for (th = cap->cnext; th != cap; th = th->cnext)
     if (((mobj_t *) th)->health*2 >= ((mobj_t *) th)->info->spawnhealth)
