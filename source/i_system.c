@@ -59,7 +59,6 @@
 #include "i_system.h"
 #include "i_system_e32.h"
 
-int ms_to_next_tick;
 
 /* CPhipps - believe it or not, it is possible with consecutive calls to 
  * gettimeofday to receive times out of order, e.g you query the time twice and 
@@ -109,7 +108,7 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
 #endif
 
 
-int I_GetTime_RealTime (void)
+int I_GetTime(void)
 {
   struct timeval tv;
   struct timezone tz;

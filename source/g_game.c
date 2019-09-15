@@ -1899,7 +1899,7 @@ void G_DoPlayDemo(void)
   _g->demoplayback = true;
   R_SmoothPlaying_Reset(NULL); // e6y
 
-  _g->starttime = I_GetTime_RealTime ();
+  _g->starttime = I_GetTime();
 }
 
 /* G_CheckDemoStatus
@@ -1913,7 +1913,7 @@ boolean G_CheckDemoStatus (void)
 
   if (_g->timingdemo)
     {
-      int endtime = I_GetTime_RealTime ();
+      int endtime = I_GetTime();
       // killough -- added fps information and made it work for longer demos:
       unsigned realtics = endtime-_g->starttime;
       I_Error ("Timed %u gametics in %u realtics = %-.1f frames per second",

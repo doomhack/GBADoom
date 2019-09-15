@@ -146,7 +146,6 @@ boolean command_loadgame;
 
 boolean         usergame;      // ok to save / end game
 boolean         timingdemo;    // if true, exit with report on completion
-boolean         fastdemo;      // if true, run at full speed -- killough
 boolean         nodrawers;     // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
 boolean         playeringame[MAXPLAYERS];
