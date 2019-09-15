@@ -505,7 +505,6 @@ boolean G_Responder (event_t* ev)
 void G_Ticker (void)
 {
   int i;
-  static gamestate_t prevgamestate;
 
   P_MapStart();
   // do player reborns if needed
@@ -626,8 +625,8 @@ void G_Ticker (void)
   }
 
   // cph - if the gamestate changed, we may need to clean up the old gamestate
-  if (_g->gamestate != prevgamestate) {
-    switch (prevgamestate) {
+  if (_g->gamestate != _g->prevgamestate) {
+    switch (_g->prevgamestate) {
     case GS_LEVEL:
       // This causes crashes at level end - Neil Stevens
       // The crash is because the sounds aren't stopped before freeing them
@@ -642,7 +641,7 @@ void G_Ticker (void)
     default:
       break;
     }
-    prevgamestate = _g->gamestate;
+    _g->prevgamestate = _g->gamestate;
   }
 
   // e6y
@@ -799,22 +798,22 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
   // killough 8/1/98: Fix bugs causing strange crashes
 
   if (bodyquesize > 0)
-    {
-      static int queuesize;
-      if (queuesize < bodyquesize)
-	{
-      _g->bodyque = realloc(_g->bodyque, bodyquesize*sizeof*_g->bodyque);
-      memset(_g->bodyque+queuesize, 0,
-         (bodyquesize-queuesize)*sizeof*_g->bodyque);
-	  queuesize = bodyquesize;
-	}
+  {
+      if (_g->bodyquecount < bodyquesize)
+      {
+          _g->bodyque = realloc(_g->bodyque, bodyquesize*sizeof*_g->bodyque);
+          memset(_g->bodyque+_g->bodyquecount, 0, (bodyquesize-_g->bodyquecount)*sizeof*_g->bodyque);
+          _g->bodyquecount = bodyquesize;
+      }
+
       if (_g->bodyqueslot >= bodyquesize)
-    P_RemoveMobj(_g->bodyque[_g->bodyqueslot % bodyquesize]);
+          P_RemoveMobj(_g->bodyque[_g->bodyqueslot % bodyquesize]);
+
       _g->bodyque[_g->bodyqueslot++ % bodyquesize] = _g->players[playernum].mo;
-    }
+  }
   else
-    if (!bodyquesize)
-      P_RemoveMobj(_g->players[playernum].mo);
+      if (!bodyquesize)
+          P_RemoveMobj(_g->players[playernum].mo);
 
   // spawn a teleport fog
   ss = R_PointInSubsector (x,y);
@@ -892,11 +891,10 @@ const int cpars[32] = {
   120,30          // 31-32
 };
 
-static boolean secretexit;
 
 void G_ExitLevel (void)
 {
-  secretexit = false;
+  _g->secretexit = false;
   _g->gameaction = ga_completed;
 }
 
@@ -906,9 +904,9 @@ void G_ExitLevel (void)
 void G_SecretExitLevel (void)
 {
   if (_g->gamemode!=commercial || _g->haswolflevels)
-    secretexit = true;
+    _g->secretexit = true;
   else
-    secretexit = false;
+    _g->secretexit = false;
   _g->gameaction = ga_completed;
 }
 
@@ -946,7 +944,7 @@ void G_DoCompleted (void)
   // wminfo.next is 0 biased, unlike gamemap
   if (_g->gamemode == commercial)
     {
-      if (secretexit)
+      if (_g->secretexit)
         switch(_g->gamemap)
           {
           case 15:
@@ -966,7 +964,7 @@ void G_DoCompleted (void)
     }
   else
     {
-      if (secretexit)
+      if (_g->secretexit)
         _g->wminfo.next = 8;  // go to secret level
       else
         if (_g->gamemap == 9)
@@ -1045,7 +1043,7 @@ void G_WorldDone (void)
 {
   _g->gameaction = ga_worlddone;
 
-  if (secretexit)
+  if (_g->secretexit)
     _g->players[consoleplayer].didsecret = true;
 
   if (_g->gamemode == commercial)
@@ -1054,7 +1052,7 @@ void G_WorldDone (void)
         {
         case 15:
         case 31:
-          if (!secretexit)
+          if (!_g->secretexit)
             break;
         case 6:
         case 11:
@@ -1086,51 +1084,6 @@ void G_DoWorldDone (void)
 #define MIN_MAXPLAYERS 32
 
 extern boolean setsizeneeded;
-
-//CPhipps - savename variable redundant
-
-/* killough 12/98:
- * This function returns a signature for the current wad.
- * It is used to distinguish between wads, for the purposes
- * of savegame compatibility warnings, and options lookups.
- */
-
-static uint_64_t G_UpdateSignature(uint_64_t s, const char *name)
-{
-  int i, lump = W_CheckNumForName(name);
-  if (lump != -1 && (i = lump+10) < numlumps)
-    do
-      {
-  int size = W_LumpLength(i);
-  const byte *p = W_CacheLumpNum(i);
-  while (size--)
-    s <<= 1, s += *p++;
-  W_UnlockLumpNum(i);
-      }
-    while (--i > lump);
-  return s;
-}
-
-static uint_64_t G_Signature(void)
-{
-  static uint_64_t s = 0;
-  static boolean computed = false;
-  char name[9];
-  int episode, map;
-
-  if (!computed) {
-   computed = true;
-   if (_g->gamemode == commercial)
-    for (map = _g->haswolflevels ? 32 : 30; map; map--)
-      sprintf(name, "map%02d", map), s = G_UpdateSignature(s, name);
-   else
-    for (episode = _g->gamemode==retail ? 4 :
-     _g->gamemode==shareware ? 1 : 3; episode; episode--)
-      for (map = 9; map; map--)
-  sprintf(name, "E%dM%d", episode, map), s = G_UpdateSignature(s, name);
-  }
-  return s;
-}
 
 //
 // killough 5/15/98: add forced loadgames, which allow user to override checks
@@ -1203,7 +1156,7 @@ void G_DoLoadGame(void)
   {  // killough 3/16/98: check lump name checksum (independent of order)
     uint_64_t checksum = 0;
 
-    checksum = G_Signature();
+    checksum = 0;
 
     save_p += sizeof checksum;
    }
@@ -1338,7 +1291,7 @@ static void G_DoSaveGame (boolean menu)
   save_p += VERSIONSIZE;
 
   { /* killough 3/16/98, 12/98: store lump name checksum */
-    uint_64_t checksum = G_Signature();
+    uint_64_t checksum = 0;
     memcpy(save_p, &checksum, sizeof checksum);
     save_p += sizeof checksum;
   }
@@ -1428,15 +1381,13 @@ static void G_DoSaveGame (boolean menu)
   _g->savedescription[0] = 0;
 }
 
-static skill_t d_skill;
-static int     d_episode;
-static int     d_map;
+
 
 void G_DeferedInitNew(skill_t skill, int episode, int map)
 {
-  d_skill = skill;
-  d_episode = episode;
-  d_map = map;
+  _g->d_skill = skill;
+  _g->d_episode = episode;
+  _g->d_map = map;
   _g->gameaction = ga_newgame;
 }
 
@@ -1461,7 +1412,7 @@ void G_ReloadDefaults(void)
 void G_DoNewGame (void)
 {
   G_ReloadDefaults();            // killough 3/1/98
-  G_InitNew (d_skill, d_episode, d_map);
+  G_InitNew (_g->d_skill, _g->d_episode, _g->d_map);
   _g->gameaction = ga_nothing;
 
   //jff 4/26/98 wake up the status bar in case were coming out of a DM demo
@@ -1473,27 +1424,7 @@ void G_DoNewGame (void)
 
 void G_SetFastParms(int fast_pending)
 {
-  static int fast = 0;            // remembers fast state
-  int i;
-  if (fast != fast_pending) {     /* only change if necessary */
-    if ((fast = fast_pending))
-      {
-        for (i=S_SARG_RUN1; i<=S_SARG_PAIN2; i++)
-          if (states[i].tics != 1) // killough 4/10/98
-            states[i].tics >>= 1;  // don't change 1->0 since it causes cycles
-        mobjinfo[MT_BRUISERSHOT].speed = 20*FRACUNIT;
-        mobjinfo[MT_HEADSHOT].speed = 20*FRACUNIT;
-        mobjinfo[MT_TROOPSHOT].speed = 20*FRACUNIT;
-      }
-    else
-      {
-        for (i=S_SARG_RUN1; i<=S_SARG_PAIN2; i++)
-          states[i].tics <<= 1;
-        mobjinfo[MT_BRUISERSHOT].speed = 15*FRACUNIT;
-        mobjinfo[MT_HEADSHOT].speed = 10*FRACUNIT;
-        mobjinfo[MT_TROOPSHOT].speed = 10*FRACUNIT;
-      }
-  }
+
 }
 
 //

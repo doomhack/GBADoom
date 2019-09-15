@@ -178,8 +178,16 @@ char         savedescription[SAVEDESCLEN];  // Description to save in savegame i
 // killough 2/8/98: make corpse queue variable in size
 int    bodyqueslot;
 mobj_t **bodyque;
+int bodyquecount;
 
 
+gamestate_t prevgamestate;
+
+boolean secretexit;
+
+skill_t d_skill;
+int     d_episode;
+int     d_map;
 
 //******************************************************************************
 
