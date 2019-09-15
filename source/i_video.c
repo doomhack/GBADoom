@@ -63,17 +63,7 @@
 
 #include "i_system_e32.h"
 
-
-////////////////////////////////////////////////////////////////////////////
-// Input code
-int             leds_always_off = 0; // Expected by m_misc, not relevant
-
-// Mouse handling
-static boolean mouse_enabled; // usemouse, but can be overriden by -nomouse
-static boolean mouse_currently_grabbed;
-
-unsigned char* current_pallete = NULL;
-unsigned char* pallete_list[32];
+#include "global_data.h"
 
 //
 // I_StartTic
@@ -125,37 +115,22 @@ static void I_UploadNewPalette(int pal)
   
 	int pplump;
 
-
 	const byte* palette;
 
 	unsigned int num_pals;
 
-	unsigned int i;
-
-	if(pal > 31)
-	{
-		pal = 0;
-	}
-		
-	if(pallete_list[pal] == NULL)
-	{
-        current_pallete = pallete_list[pal] = (unsigned char*)malloc(256*3);
-	}
-	else
-	{
-		current_pallete = pallete_list[pal];
-		return;
-	}
-		  
 	pplump = W_GetNumForName("PLAYPAL");
 	
 	palette = W_CacheLumpNum(pplump);
 		
     num_pals = W_LumpLength(pplump) / (3*256);
 	
+    if(pal >= num_pals)
+        pal = 0;
+
 	palette += (pal*256*3);
 
-    memcpy(current_pallete, palette, 3*256);
+    memcpy(_g->current_pallete, palette, 3*256);
 
 	W_UnlockLumpNum(pplump);
 	
@@ -182,30 +157,25 @@ void I_UpdateNoBlit (void)
 //
 // I_FinishUpdate
 //
-static int newpal = 0;
 #define NO_PALETTE_CHANGE 1000
 
 void I_FinishUpdate (void)
 {
-	if (newpal != NO_PALETTE_CHANGE) 
+    if (_g->newpal != NO_PALETTE_CHANGE)
 	{
-		I_UploadNewPalette(newpal);
-		newpal = NO_PALETTE_CHANGE;
+        I_UploadNewPalette(_g->newpal);
+        _g->newpal = NO_PALETTE_CHANGE;
 	}
 
-	I_FinishUpdate_e32(screens[0].data, current_pallete, SCREENWIDTH, SCREENHEIGHT);
+    I_FinishUpdate_e32(screens[0].data, _g->current_pallete, SCREENWIDTH, SCREENHEIGHT);
 }
-
-//
-// I_ScreenShot - moved to i_sshot.c
-//
 
 //
 // I_SetPalette
 //
 void I_SetPalette (int pal)
 {
-	newpal = pal;
+    _g->newpal = pal;
 }
 
 
@@ -235,7 +205,7 @@ void I_SetRes(void)
 
 void I_InitGraphics(void)
 {
-  char titlebuffer[2048];
+  char titlebuffer[1024];
   static int    firsttime=1;
 
   if (firsttime)
@@ -258,13 +228,6 @@ void I_InitGraphics(void)
 
 	I_CreateBackBuffer_e32();
   }
-
-
-}
-
-int I_GetModeFromString(const char *modestr)
-{
-  return VID_MODE8;
 }
 
 void I_UpdateVideoMode(void)
@@ -273,7 +236,7 @@ void I_UpdateVideoMode(void)
 
   lprintf(LO_INFO, "I_UpdateVideoMode: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
-  mode = I_GetModeFromString("");
+  mode = VID_MODE8;
 
   V_InitMode(mode);
   V_FreeScreens();
@@ -282,28 +245,7 @@ void I_UpdateVideoMode(void)
 
   lprintf(LO_INFO, "I_UpdateVideoMode:\n");
 
-  mouse_currently_grabbed = false;
-
-
   V_AllocScreens();
 
   R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
-}
-
-// CPhipps -
-// I_CalculateRes
-// Calculates the screen resolution, possibly using the supplied guide
-void I_CalculateRes(unsigned int width, unsigned int height)
-{
-
-}
-
-
-//
-// I_ScreenShot - BMP version
-//
-
-int I_ScreenShot (const char *fname)
-{
-	return 0;
 }

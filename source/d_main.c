@@ -693,9 +693,6 @@ static void D_DoomMainSetup(void)
     G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
     // jff 3/24/98 this sets startskill if it was -1
 
-    I_CalculateRes(240, 160);
-
-
     //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"V_Init: allocate screens.\n");
     V_Init();

@@ -42,7 +42,6 @@
 #endif
 
 void I_PreInitGraphics(void); /* CPhipps - do stuff immediately on start */
-void I_CalculateRes(unsigned int width, unsigned int height); /* calculate resolution */
 void I_SetRes(void); /* set resolution */
 void I_InitGraphics (void);
 void I_UpdateVideoMode(void);
@@ -53,8 +52,6 @@ void I_SetPalette(int pal); /* CPhipps - pass down palette number */
 
 void I_UpdateNoBlit (void);
 void I_FinishUpdate (void);
-
-int I_ScreenShot (const char *fname);
 
 /* I_StartTic
  * Called by D_DoomLoop,
