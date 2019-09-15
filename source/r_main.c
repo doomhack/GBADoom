@@ -420,8 +420,6 @@ void R_ExecuteSetViewSize (void)
 // R_Init
 //
 
-extern int screenblocks;
-
 void R_Init (void)
 {
   // CPhipps - R_DrawColumn isn't constant anymore, so must
@@ -431,7 +429,7 @@ void R_Init (void)
   R_LoadTrigTables();
   lprintf(LO_INFO, "\nR_InitData: ");
   R_InitData();
-  R_SetViewSize(screenblocks);
+  R_SetViewSize(_g->screenblocks);
   lprintf(LO_INFO, "\nR_Init: R_InitPlanes ");
   R_InitPlanes();
   lprintf(LO_INFO, "R_InitLightTables ");
@@ -472,7 +470,7 @@ static void R_SetupFrame (player_t *player)
 
   viewplayer = player;
 
-  if (player->mo != oviewer || (_g->paused || (menuactive && !_g->demoplayback)))
+  if (player->mo != oviewer || (_g->paused || (_g->menuactive && !_g->demoplayback)))
   {
     oviewer = player->mo;
   }

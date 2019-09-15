@@ -61,45 +61,16 @@
 
 #include "global_data.h"
 
-//
-// defaulted values
-//
-int showMessages = 1;    // Show messages has default, 0 = off, 1 = on
-int screenblocks = 10;    // has default
-
-static int screenSize;      // temp for screenblocks (0-9)
-
-static int messageToPrint;  // 1 = message to be printed
-
-// CPhipps - static const
-static const char* messageString; // ...and here is the message string!
-
-static int messageLastMenuActive;
-
-static boolean messageNeedsInput; // timed message = no input from user
-
 static void (*messageRoutine)(int response);
 
-#define SAVESTRINGSIZE  24
 
 /* cphipps - M_DrawBackground renamed and moved to v_video.c */
 #define M_DrawBackground V_DrawBackground
 
 // we are going to be entering a savegame string
 
-int saveStringEnter;
-int saveSlot;        // which slot to save in
-int saveCharIndex;   // which char we're editing
-// old save description before edit
-char saveOldString[SAVESTRINGSIZE];
-
-boolean menuactive;    // The menus are up
-
 #define SKULLXOFF  -32
 #define LINEHEIGHT  16
-
-char savegamestrings[10][SAVESTRINGSIZE];
-
 //
 // MENU TYPEDEFS
 //
@@ -466,7 +437,7 @@ void M_DrawLoad(void)
   V_DrawNamePatch(72 ,LOADGRAPHIC_Y, 0, "M_LOADG", CR_DEFAULT, VPT_STRETCH);
   for (i = 0 ; i < load_end ; i++) {
     M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
+    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,_g->savegamestrings[i]);
   }
 }
 
@@ -511,7 +482,7 @@ static void M_VerifyForcedLoadGame(int ch)
 {
   if (ch=='y')
     G_ForcedLoadGame();
-  free(messageString);       // free the message strdup()'ed below
+  free(_g->messageString);       // free the message strdup()'ed below
   M_ClearMenus();
 }
 
@@ -577,11 +548,11 @@ void M_ReadSaveStrings(void)
     G_SaveGameName(name,sizeof(name),i,false);
     fp = fopen(name,"rb");
     if (!fp) {   // Ty 03/27/98 - externalized:
-      strcpy(&savegamestrings[i][0],EMPTYSTRING);
+      strcpy(&_g->savegamestrings[i][0],EMPTYSTRING);
       LoadMenue[i].status = 0;
       continue;
     }
-    fread(&savegamestrings[i], SAVESTRINGSIZE, 1, fp);
+    fread(&_g->savegamestrings[i], SAVESTRINGSIZE, 1, fp);
     fclose(fp);
     LoadMenue[i].status = 1;
   }
@@ -600,13 +571,13 @@ void M_DrawSave(void)
   for (i = 0 ; i < load_end ; i++)
     {
     M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
+    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,_g->savegamestrings[i]);
     }
 
-  if (saveStringEnter)
+  if (_g->saveStringEnter)
     {
-    i = M_StringWidth(savegamestrings[saveSlot]);
-    M_WriteText(LoadDef.x + i,LoadDef.y+LINEHEIGHT*saveSlot,"_");
+    i = M_StringWidth(_g->savegamestrings[_g->saveSlot]);
+    M_WriteText(LoadDef.x + i,LoadDef.y+LINEHEIGHT*_g->saveSlot,"_");
     }
 }
 
@@ -615,7 +586,7 @@ void M_DrawSave(void)
 //
 static void M_DoSave(int slot)
 {
-  G_SaveGame (slot,savegamestrings[slot]);
+  G_SaveGame (slot,_g->savegamestrings[slot]);
   M_ClearMenus ();
 }
 
@@ -625,13 +596,13 @@ static void M_DoSave(int slot)
 void M_SaveSelect(int choice)
 {
   // we are going to be intercepting all chars
-  saveStringEnter = 1;
+  _g->saveStringEnter = 1;
 
-  saveSlot = choice;
-  strcpy(saveOldString,savegamestrings[choice]);
-  if (!strcmp(savegamestrings[choice],EMPTYSTRING)) // Ty 03/27/98 - externalized
-    savegamestrings[choice][0] = 0;
-  saveCharIndex = strlen(savegamestrings[choice]);
+  _g->saveSlot = choice;
+  strcpy(_g->saveOldString,_g->savegamestrings[choice]);
+  if (!strcmp(_g->savegamestrings[choice],EMPTYSTRING)) // Ty 03/27/98 - externalized
+    _g->savegamestrings[choice][0] = 0;
+  _g->saveCharIndex = strlen(_g->savegamestrings[choice]);
 }
 
 //
@@ -703,10 +674,10 @@ void M_DrawOptions(void)
   V_DrawNamePatch(108, 15, 0, "M_OPTTTL", CR_DEFAULT, VPT_STRETCH);
 
   V_DrawNamePatch(OptionsDef.x + 120, OptionsDef.y+LINEHEIGHT*messages, 0,
-      msgNames[showMessages], CR_DEFAULT, VPT_STRETCH);
+      msgNames[_g->showMessages], CR_DEFAULT, VPT_STRETCH);
 
   M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
-   9,screenSize);
+   9,_g->screenSize);
 }
 
 void M_Options(int choice)
@@ -834,9 +805,9 @@ void M_ChangeMessages(int choice)
 {
   // warning: unused parameter `int choice'
   choice = 0;
-  showMessages = 1 - showMessages;
+  _g->showMessages = 1 - _g->showMessages;
 
-  if (!showMessages)
+  if (!_g->showMessages)
     _g->players[consoleplayer].message = MSGOFF; // Ty 03/27/98 - externalized
   else
     _g->players[consoleplayer].message = MSGON ; // Ty 03/27/98 - externalized
@@ -856,22 +827,22 @@ void M_SizeDisplay(int choice)
 {
   switch(choice) {
   case 0:
-    if (screenSize > 0) {
-      screenblocks--;
-      screenSize--;
+    if (_g->screenSize > 0) {
+      _g->screenblocks--;
+      _g->screenSize--;
       _g->hud_displayed = 0;
     }
     break;
   case 1:
-    if (screenSize < 8) {
-      screenblocks++;
-      screenSize++;
+    if (_g->screenSize < 8) {
+      _g->screenblocks++;
+      _g->screenSize++;
     }
     else
       _g->hud_displayed = !_g->hud_displayed;
     break;
   }
-  R_SetViewSize (screenblocks /*, detailLevel obsolete -- killough */);
+  R_SetViewSize (_g->screenblocks /*, detailLevel obsolete -- killough */);
 }
 
 //
@@ -1056,37 +1027,37 @@ boolean M_Responder (event_t* ev)
 
     // Save Game string input
 
-    if (saveStringEnter)
+    if (_g->saveStringEnter)
     {
         if (ch == key_menu_backspace)                            // phares 3/7/98
         {
-            if (saveCharIndex > 0)
+            if (_g->saveCharIndex > 0)
             {
-                saveCharIndex--;
-                savegamestrings[saveSlot][saveCharIndex] = 0;
+                _g->saveCharIndex--;
+                _g->savegamestrings[_g->saveSlot][_g->saveCharIndex] = 0;
             }
         }
 
         else if (ch == key_menu_escape)                    // phares 3/7/98
         {
-            saveStringEnter = 0;
-            strcpy(&savegamestrings[saveSlot][0],saveOldString);
+            _g->saveStringEnter = 0;
+            strcpy(&_g->savegamestrings[_g->saveSlot][0],_g->saveOldString);
         }
         else if (ch == key_menu_enter)                     // phares 3/7/98
         {
-            saveStringEnter = 0;
-            if (savegamestrings[saveSlot][0])
-                M_DoSave(saveSlot);
+            _g->saveStringEnter = 0;
+            if (_g->savegamestrings[_g->saveSlot][0])
+                M_DoSave(_g->saveSlot);
         }
         else
         {
             ch = toupper(ch);
             if (ch >= 32 && ch <= 127 &&
-                    saveCharIndex < SAVESTRINGSIZE-1 &&
-                    M_StringWidth(savegamestrings[saveSlot]) < (SAVESTRINGSIZE-2)*8)
+                    _g->saveCharIndex < SAVESTRINGSIZE-1 &&
+                    M_StringWidth(_g->savegamestrings[_g->saveSlot]) < (SAVESTRINGSIZE-2)*8)
             {
-                savegamestrings[saveSlot][saveCharIndex++] = ch;
-                savegamestrings[saveSlot][saveCharIndex] = 0;
+                _g->savegamestrings[_g->saveSlot][_g->saveCharIndex++] = ch;
+                _g->savegamestrings[_g->saveSlot][_g->saveCharIndex] = 0;
             }
         }
         return true;
@@ -1094,25 +1065,25 @@ boolean M_Responder (event_t* ev)
 
     // Take care of any messages that need input
 
-    if (messageToPrint)
+    if (_g->messageToPrint)
     {
-        if (messageNeedsInput == true &&
+        if (_g->messageNeedsInput == true &&
                 !(ch == ' ' || ch == 'n' || ch == 'y' || ch == key_escape)) // phares
             return false;
 
-        menuactive = messageLastMenuActive;
-        messageToPrint = 0;
+        _g->menuactive = _g->messageLastMenuActive;
+        _g->messageToPrint = 0;
         if (messageRoutine)
             messageRoutine(ch);
 
-        menuactive = false;
+        _g->menuactive = false;
         S_StartSound(NULL,sfx_swtchx);
         return true;
     }
 
     // Pop-up Main menu?
 
-    if (!menuactive)
+    if (!_g->menuactive)
     {
         if (ch == key_escape)                                     // phares
         {
@@ -1224,7 +1195,7 @@ void M_StartControlPanel (void)
 {
   // intro might call this repeatedly
 
-  if (menuactive)
+  if (_g->menuactive)
     return;
 
   //jff 3/24/98 make default skill menu choice follow -skill or defaultskill
@@ -1234,7 +1205,7 @@ void M_StartControlPanel (void)
   // Fix to make "always floating" with menu selections, and to always follow
   // defaultskill, instead of -skill.
 
-  menuactive = 1;
+  _g->menuactive = 1;
   currentMenu = &MainDef;         // JDC
 }
 
@@ -1250,13 +1221,13 @@ void M_Drawer (void)
 {
   // Horiz. & Vertically center string and print it.
   // killough 9/29/98: simplified code, removed 40-character width limit
-  if (messageToPrint)
+  if (_g->messageToPrint)
     {
       /* cph - strdup string to writable memory */
-      char *ms = strdup(messageString);
+      char *ms = strdup(_g->messageString);
       char *p = ms;
 
-      int y = 100 - M_StringHeight(messageString)/2;
+      int y = 100 - M_StringHeight(_g->messageString)/2;
       while (*p)
       {
         char *string = p, c;
@@ -1271,7 +1242,7 @@ void M_Drawer (void)
       free(ms);
     }
   else
-    if (menuactive)
+    if (_g->menuactive)
       {
   int x,y,max,i;
 
@@ -1307,7 +1278,7 @@ void M_Drawer (void)
 
 void M_ClearMenus (void)
 {
-  menuactive = 0;
+  _g->menuactive = 0;
 }
 
 //
@@ -1338,12 +1309,12 @@ void M_Ticker (void)
 
 void M_StartMessage (const char* string,void* routine,boolean input)
 {
-  messageLastMenuActive = menuactive;
-  messageToPrint = 1;
-  messageString = string;
+  _g->messageLastMenuActive = _g->menuactive;
+  _g->messageToPrint = 1;
+  _g->messageString = string;
   messageRoutine = routine;
-  messageNeedsInput = input;
-  menuactive = true;
+  _g->messageNeedsInput = input;
+  _g->menuactive = true;
   return;
 }
 
@@ -1496,13 +1467,13 @@ void M_Init(void)
 {
   M_InitDefaults();                // killough 11/98
   currentMenu = &MainDef;
-  menuactive = 0;
+  _g->menuactive = 0;
   whichSkull = 0;
   skullAnimCounter = 10;
-  screenSize = screenblocks - 3;
-  messageToPrint = 0;
-  messageString = NULL;
-  messageLastMenuActive = menuactive;
+  _g->screenSize = _g->screenblocks - 3;
+  _g->messageToPrint = 0;
+  _g->messageString = NULL;
+  _g->messageLastMenuActive = _g->menuactive;
 
   // Here we could catch other version dependencies,
   //  like HELP1/2, and four episodes.

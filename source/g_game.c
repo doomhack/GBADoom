@@ -549,7 +549,7 @@ void G_Ticker (void)
         }
     }
 
-  if (_g->paused & 2 || (!_g->demoplayback && menuactive))
+  if (_g->paused & 2 || (!_g->demoplayback && _g->menuactive))
     _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
   else {
     // get commands, check consistancy, and build new consistancy check

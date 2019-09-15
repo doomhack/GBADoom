@@ -261,7 +261,7 @@ MidSong* midiSong;
 unsigned long lasttimereply;
 unsigned long basetime;
 
-//******************************************************************************
+
 
 //******************************************************************************
 //i_video.c
@@ -270,7 +270,37 @@ unsigned long basetime;
 unsigned char current_pallete[3*256];
 int newpal;
 
+//******************************************************************************
+//m_menu.c
+//******************************************************************************
+
+//
+// defaulted values
+//
+int showMessages;    // Show messages has default, 0 = off, 1 = on
+int screenblocks;    // has default
+
+int screenSize;      // temp for screenblocks (0-9)
+
+int messageToPrint;  // 1 = message to be printed
+
+// CPhipps - static const
+const char* messageString; // ...and here is the message string!
+
+int messageLastMenuActive;
+
+boolean messageNeedsInput; // timed message = no input from user
+
+int saveStringEnter;
+int saveSlot;        // which slot to save in
+int saveCharIndex;   // which char we're editing
+// old save description before edit
+char saveOldString[SAVESTRINGSIZE];
+
+boolean menuactive;    // The menus are up
+
+char savegamestrings[10][SAVESTRINGSIZE];
 
 
-
+//******************************************************************************
 #endif // GLOBAL_DEFS_H

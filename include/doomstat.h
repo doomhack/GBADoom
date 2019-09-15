@@ -87,8 +87,6 @@ enum automapmode_e {
 };
 extern enum automapmode_e automapmode; // Mode that the automap is in
 
-extern  boolean menuactive;    // Menu overlayed?
-
 // Player taking events, and displaying.
 extern const int consoleplayer;
 extern const int displayplayer;

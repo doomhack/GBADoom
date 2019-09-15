@@ -139,8 +139,6 @@ const char* player_names[] =
 };
 
 
-
-extern int        showMessages;
 extern boolean    automapactive;
 
 
@@ -1104,7 +1102,7 @@ void HU_Ticker(void)
 
   // if messages on, or "Messages Off" is being displayed
   // this allows the notification of turning messages off to be seen
-  if (showMessages || _g->message_dontfuckwithme)
+  if (_g->showMessages || _g->message_dontfuckwithme)
   {
     // display message if necessary
     if ((plr->message && !_g->message_nottobefuckedwith)

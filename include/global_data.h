@@ -1,6 +1,8 @@
 #ifndef GLOBAL_DATA_H
 #define GLOBAL_DATA_H
 
+#include "libtimidity/timidity.h"
+
 #include "doomstat.h"
 #include "m_fixed.h"
 #include "am_map.h"
@@ -9,7 +11,7 @@
 #include "hu_stuff.h"
 #include "r_defs.h"
 #include "i_sound.h"
-#include "libtimidity/timidity.h"
+#include "m_menu.h"
 
 
 typedef struct globals_t

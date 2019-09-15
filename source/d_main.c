@@ -156,7 +156,6 @@ static void D_Wipe(void)
 //
 
 extern boolean setsizeneeded;
-extern int     showMessages;
 
 void D_Display (void)
 {
@@ -220,7 +219,7 @@ void D_Display (void)
       redrawborderstuff = isborder && (!_g->isborderstate || _g->borderwillneedredraw);
       // The border may need redrawing next time if the border surrounds the screen,
       // and there is a menu being displayed
-      _g->borderwillneedredraw = menuactive && isborder && viewactive && (viewwidth != SCREENWIDTH);
+      _g->borderwillneedredraw = _g->menuactive && isborder && viewactive && (viewwidth != SCREENWIDTH);
     }
     if (redrawborderstuff)
       R_DrawViewBorder();

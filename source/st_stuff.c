@@ -714,7 +714,7 @@ static void ST_doPaletteStuff(void)
 
       /* cph 2006/08/06 - if in the menu, reduce the red tint - navigating to
        * load a game can be tricky if the screen is all red */
-      if (menuactive) palette >>=1;
+      if (_g->menuactive) palette >>=1;
 
       palette += STARTREDPALS;
     }

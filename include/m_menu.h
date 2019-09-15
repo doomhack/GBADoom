@@ -118,4 +118,8 @@ void M_DrawCredits(void);    // killough 11/98
 
 #define S_HASDEFPTR (S_STRING|S_YESNO|S_NUM|S_WEAP|S_COLOR|S_CRITEM|S_CHOICE)
 
+
+#define SAVESTRINGSIZE  24
+
+
 #endif
