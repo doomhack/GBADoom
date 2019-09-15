@@ -173,7 +173,7 @@ typedef struct
 
   // used by RANDOM and LEVEL when animating
   int   state;
-} anim_t;
+} wi_anim_t;
 
 
 static point_t lnodes[NUMEPISODES][NUMMAPS] =
@@ -224,7 +224,7 @@ static point_t lnodes[NUMEPISODES][NUMMAPS] =
 // Using patches saves a lot of space,
 //  as they replace 320x200 full screen frames.
 //
-static anim_t epsd0animinfo[] =
+static wi_anim_t epsd0animinfo[] =
 {
   { ANIM_ALWAYS, TICRATE/3, 3, { 224, 104 } },
   { ANIM_ALWAYS, TICRATE/3, 3, { 184, 160 } },
@@ -238,7 +238,7 @@ static anim_t epsd0animinfo[] =
   { ANIM_ALWAYS, TICRATE/3, 3, { 64, 24 } }
 };
 
-static anim_t epsd1animinfo[] =
+static wi_anim_t epsd1animinfo[] =
 {
   { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 1 },
   { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 2 },
@@ -251,7 +251,7 @@ static anim_t epsd1animinfo[] =
   { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 8 }
 };
 
-static anim_t epsd2animinfo[] =
+static wi_anim_t epsd2animinfo[] =
 {
   { ANIM_ALWAYS, TICRATE/3, 3, { 104, 168 } },
   { ANIM_ALWAYS, TICRATE/3, 3, { 40, 136 } },
@@ -268,7 +268,7 @@ static int NUMANIMS[NUMEPISODES] =
   sizeof(epsd2animinfo)/sizeof(anim_t)
 };
 
-static anim_t *anims[NUMEPISODES] =
+static wi_anim_t *anims[NUMEPISODES] =
 {
   epsd0animinfo,
   epsd1animinfo,
@@ -561,7 +561,7 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
 void WI_initAnimatedBack(void)
 {
   int   i;
-  anim_t* a;
+  wi_anim_t* a;
 
   if (_g->gamemode == commercial)  // no animation for DOOM2
     return;
@@ -598,7 +598,7 @@ void WI_initAnimatedBack(void)
 void WI_updateAnimatedBack(void)
 {
   int   i;
-  anim_t* a;
+  wi_anim_t* a;
 
   if (_g->gamemode == commercial)
     return;
@@ -655,7 +655,7 @@ void WI_updateAnimatedBack(void)
 void WI_drawAnimatedBack(void)
 {
   int     i;
-  anim_t*   a;
+  wi_anim_t*   a;
 
   if (_g->gamemode==commercial) //jff 4/25/98 Someone forgot commercial an enum
     return;
@@ -1820,7 +1820,7 @@ void WI_loadData(void)
   int   i;
   int   j;
   char  name[9];  // limited to 8 characters
-  anim_t* a;
+  wi_anim_t* a;
 
   if (_g->gamemode != commercial)
   {

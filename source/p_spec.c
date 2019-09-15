@@ -59,47 +59,8 @@
 
 #include "global_data.h"
 
-//
-// Animating textures and planes
-// There is another anim_t used in wi_stuff, unrelated.
-//
-typedef struct
-{
-    boolean     istexture;
-    int         picnum;
-    int         basepic;
-    int         numpics;
-    int         speed;
+                 // no longer a strict limit -- killough
 
-} anim_t;
-
-//
-//      source animation definition
-//
-//
-
-#ifdef _MSC_VER // proff: This is the same as __attribute__ ((packed)) in GNUC
-#pragma pack(push)
-#pragma pack(1)
-#endif //_MSC_VER
-
-typedef struct
-{
-  signed char istexture; //jff 3/23/98 make char for comparison // cph - make signed
-  char        endname[9];           //  if false, it is a flat
-  char        startname[9];
-  int         speed;
-} PACKEDATTR animdef_t; //jff 3/23/98 pack to read from memory
-
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif //_MSC_VER
-
-
-#define MAXANIMS 32                   // no longer a strict limit -- killough
-
-static anim_t*  lastanim;
-anim_t		anims[MAXANIMS];
 
 //
 // P_InitPicAnims
@@ -182,7 +143,7 @@ void P_InitPicAnims (void)
 
 
     //	Init animation
-    lastanim = anims;
+    _g->lastanim = _g->anims;
     for (i=0 ; animdefs[i].istexture != -1 ; i++)
     {
     if (animdefs[i].istexture)
@@ -191,28 +152,28 @@ void P_InitPicAnims (void)
         if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
         continue;
 
-        lastanim->picnum = R_TextureNumForName (animdefs[i].endname);
-        lastanim->basepic = R_TextureNumForName (animdefs[i].startname);
+        _g->lastanim->picnum = R_TextureNumForName (animdefs[i].endname);
+        _g->lastanim->basepic = R_TextureNumForName (animdefs[i].startname);
     }
     else
     {
         if (W_CheckNumForName(animdefs[i].startname) == -1)
         continue;
 
-        lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
-        lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
+        _g->lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
+        _g->lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
     }
 
-    lastanim->istexture = animdefs[i].istexture;
-    lastanim->numpics = lastanim->picnum - lastanim->basepic + 1;
+    _g->lastanim->istexture = animdefs[i].istexture;
+    _g->lastanim->numpics = _g->lastanim->picnum - _g->lastanim->basepic + 1;
 
-    if (lastanim->numpics < 2)
+    if (_g->lastanim->numpics < 2)
         I_Error ("P_InitPicAnims: bad cycle from %s to %s",
              animdefs[i].startname,
              animdefs[i].endname);
 
-    lastanim->speed = animdefs[i].speed;
-    lastanim++;
+    _g->lastanim->speed = animdefs[i].speed;
+    _g->lastanim++;
     }
 
 }
@@ -2292,10 +2253,6 @@ void P_PlayerInSpecialSector (player_t* player)
 //  levelFragLimit, levelFragLimitCount
 //
 
-static boolean  levelTimer;
-static int      levelTimeCount;
-boolean         levelFragLimit;      // Ty 03/18/98 Added -frags support
-int             levelFragLimitCount; // Ty 03/18/98 Added -frags support
 
 void P_UpdateSpecials (void)
 {
@@ -2303,38 +2260,8 @@ void P_UpdateSpecials (void)
   int         pic;
   int         i;
 
-  // Downcount level timer, exit level if elapsed
-  if (levelTimer == true)
-  {
-    levelTimeCount--;
-    if (!levelTimeCount)
-      G_ExitLevel();
-  }
-
-  // Check frag counters, if frag limit reached, exit level // Ty 03/18/98
-  //  Seems like the total frags should be kept in a simple
-  //  array somewhere, but until they are...
-  if (levelFragLimit == true)  // we used -frags so compare count
-  {
-    int k,m,fragcount,exitflag=false;
-    for (k=0;k<MAXPLAYERS;k++)
-    {
-      if (!_g->playeringame[k]) continue;
-      fragcount = 0;
-      for (m=0;m<MAXPLAYERS;m++)
-      {
-        if (!_g->playeringame[m]) continue;
-          fragcount += (m!=k)?  _g->players[k].frags[m] : -_g->players[k].frags[m];
-      }
-      if (fragcount >= levelFragLimitCount) exitflag = true;
-      if (exitflag == true) break; // skip out of the loop--we're done
-    }
-    if (exitflag == true)
-      G_ExitLevel();
-  }
-
   // Animate flats and textures globally
-  for (anim = anims ; anim < lastanim ; anim++)
+  for (anim = _g->anims ; anim < _g->lastanim ; anim++)
   {
     for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
     {
@@ -2404,12 +2331,6 @@ void P_SpawnSpecials (void)
   episode = 1;
   if (W_CheckNumForName("texture2") >= 0)
     episode = 2;
-
-  // See if -timer needs to be used.
-  levelTimer = false;
-
-  // See if -frags has been used
-  levelFragLimit = false;
 
   //  Init special sectors.
   sector = _g->sectors;
@@ -3038,7 +2959,6 @@ static void Add_Pusher(int type, int x_mag, int y_mag, mobj_t* source, int affec
 //
 // killough 10/98: allow to affect things besides players
 
-pusher_t* tmpusher; // pusher structure for blockmap searches
 
 static boolean PIT_PushThing(mobj_t* thing)
 {
@@ -3049,10 +2969,10 @@ static boolean PIT_PushThing(mobj_t* thing)
     {
       angle_t pushangle;
       fixed_t speed;
-      fixed_t sx = tmpusher->x;
-      fixed_t sy = tmpusher->y;
+      fixed_t sx = _g->tmpusher->x;
+      fixed_t sy = _g->tmpusher->y;
 
-      speed = (tmpusher->magnitude -
+      speed = (_g->tmpusher->magnitude -
                ((P_AproxDistance(thing->x - sx,thing->y - sy)
                  >>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
 
@@ -3068,16 +2988,16 @@ static boolean PIT_PushThing(mobj_t* thing)
         {
           int x = (thing->x-sx) >> FRACBITS;
           int y = (thing->y-sy) >> FRACBITS;
-          speed = (int)(((uint_64_t) tmpusher->magnitude << 23) / (x*x+y*y+1));
+          speed = (int)(((uint_64_t) _g->tmpusher->magnitude << 23) / (x*x+y*y+1));
         }
 
       // If speed <= 0, you're outside the effective radius. You also have
       // to be able to see the push/pull source point.
 
-      if (speed > 0 && P_CheckSight(thing,tmpusher->source))
+      if (speed > 0 && P_CheckSight(thing,_g->tmpusher->source))
         {
           pushangle = R_PointToAngle2(thing->x,thing->y,sx,sy);
-          if (tmpusher->source->type == MT_PUSH)
+          if (_g->tmpusher->source->type == MT_PUSH)
             pushangle += ANG180;    // away
           pushangle >>= ANGLETOFINESHIFT;
           thing->momx += FixedMul(speed,finecosine[pushangle]);
@@ -3131,7 +3051,7 @@ void T_Pusher(pusher_t *p)
         // Seek out all pushable things within the force radius of this
         // point pusher. Crosses sectors, so use blockmap.
 
-        tmpusher = p; // MT_PUSH/MT_PULL point source
+        _g->tmpusher = p; // MT_PUSH/MT_PULL point source
         radius = p->radius; // where force goes to zero
         _g->tmbbox[BOXTOP]    = p->y + radius;
         _g->tmbbox[BOXBOTTOM] = p->y - radius;

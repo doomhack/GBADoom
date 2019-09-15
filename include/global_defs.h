@@ -565,6 +565,13 @@ mapthing_t playerstarts[MAXPLAYERS];
 
 los_t los; // cph - made static
 
+//******************************************************************************
+//p_spec.c
+//******************************************************************************
+anim_t*     lastanim;
+anim_t		anims[MAXANIMS];
+
+pusher_t* tmpusher; // pusher structure for blockmap searches
 
 
 //******************************************************************************
