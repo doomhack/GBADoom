@@ -70,26 +70,21 @@ typedef struct
   int columnofs[8];     // only [width] used
 } patch_t;
 
-//---------------------------------------------------------------------------
-// Re-engineered patch support
-//---------------------------------------------------------------------------
-static rpatch_t *patches = 0;
 
-static rpatch_t *texture_composites = 0;
 
 //---------------------------------------------------------------------------
 void R_InitPatches(void) {
-  if (!patches)
+  if (!_g->patches)
   {
-    patches = (rpatch_t*)malloc(numlumps * sizeof(rpatch_t));
+    _g->patches = (rpatch_t*)malloc(numlumps * sizeof(rpatch_t));
     // clear out new patches to signal they're uninitialized
-    memset(patches, 0, sizeof(rpatch_t)*numlumps);
+    memset(_g->patches, 0, sizeof(rpatch_t)*numlumps);
   }
-  if (!texture_composites)
+  if (!_g->texture_composites)
   {
-    texture_composites = (rpatch_t*)malloc(_g->numtextures * sizeof(rpatch_t));
+    _g->texture_composites = (rpatch_t*)malloc(_g->numtextures * sizeof(rpatch_t));
     // clear out new patches to signal they're uninitialized
-    memset(texture_composites, 0, sizeof(rpatch_t)*_g->numtextures);
+    memset(_g->texture_composites, 0, sizeof(rpatch_t)*_g->numtextures);
   }
 }
 
@@ -97,21 +92,21 @@ void R_InitPatches(void) {
 void R_FlushAllPatches(void) {
   int i;
 
-  if (patches)
+  if (_g->patches)
   {
     for (i=0; i < numlumps; i++)
-      if (patches[i].locks > 0)
+      if (_g->patches[i].locks > 0)
         I_Error("R_FlushAllPatches: patch number %i still locked",i);
-    free(patches);
-    patches = NULL;
+    free(_g->patches);
+    _g->patches = NULL;
   }
-  if (texture_composites)
+  if (_g->texture_composites)
   {
     for (i=0; i<_g->numtextures; i++)
-      if (texture_composites[i].data)
-        free(texture_composites[i].data);
-    free(texture_composites);
-    texture_composites = NULL;
+      if (_g->texture_composites[i].data)
+        free(_g->texture_composites[i].data);
+    free(_g->texture_composites);
+    _g->texture_composites = NULL;
   }
 }
 
@@ -183,7 +178,7 @@ static void createPatch(int id) {
     I_Error("createPatch: %i >= numlumps", id);
 #endif
 
-  patch = &patches[id];
+  patch = &_g->patches[id];
   // proff - 2003-02-16 What about endianess?
   patch->width = SHORT(oldPatch->width);
   patch->widthmask = 0;
@@ -382,7 +377,7 @@ static void createTextureCompositePatch(int id) {
     I_Error("createTextureCompositePatch: %i >= numtextures", id);
 #endif
 
-  composite_patch = &texture_composites[id];
+  composite_patch = &_g->texture_composites[id];
 
   texture = _g->textures[id];
 
@@ -632,7 +627,7 @@ const rpatch_t *R_CachePatchNum(int id)
 {
   const int locks = 1;
 
-  if (!patches)
+  if (!_g->patches)
     I_Error("R_CachePatchNum: Patches not initialized");
 
 #ifdef RANGECHECK
@@ -640,45 +635,45 @@ const rpatch_t *R_CachePatchNum(int id)
     I_Error("createPatch: %i >= numlumps", id);
 #endif
 
-  if (!patches[id].data)
+  if (!_g->patches[id].data)
     createPatch(id);
 
   /* cph - if wasn't locked but now is, tell z_zone to hold it */
-  if (!patches[id].locks && locks) {
-    Z_ChangeTag(patches[id].data,PU_STATIC);
+  if (!_g->patches[id].locks && locks) {
+    Z_ChangeTag(_g->patches[id].data,PU_STATIC);
   }
-  patches[id].locks += locks;
+  _g->patches[id].locks += locks;
 
 #ifdef SIMPLECHECKS
-  if (!((patches[id].locks+1) & 0xf))
+  if (!((_g->patches[id].locks+1) & 0xf))
     lprintf(LO_DEBUG, "R_CachePatchNum: High lock on %8s (%d)\n", 
-	    lumpinfo[id].name, patches[id].locks);
+        lumpinfo[id].name, _g->patches[id].locks);
 #endif
 
-  return &patches[id];
+  return &_g->patches[id];
 }
 
 void R_UnlockPatchNum(int id)
 {
   const int unlocks = 1;
 #ifdef SIMPLECHECKS
-  if ((signed short)patches[id].locks < unlocks)
+  if ((signed short)_g->patches[id].locks < unlocks)
     lprintf(LO_DEBUG, "R_UnlockPatchNum: Excess unlocks on %8s (%d-%d)\n", 
-	    lumpinfo[id].name, patches[id].locks, unlocks);
+        lumpinfo[id].name, _g->patches[id].locks, unlocks);
 #endif
-  patches[id].locks -= unlocks;
+  _g->patches[id].locks -= unlocks;
   /* cph - Note: must only tell z_zone to make purgeable if currently locked, 
    * else it might already have been purged
    */
-  if (unlocks && !patches[id].locks)
-    Z_ChangeTag(patches[id].data, PU_CACHE);
+  if (unlocks && !_g->patches[id].locks)
+    Z_ChangeTag(_g->patches[id].data, PU_CACHE);
 }
 
 //---------------------------------------------------------------------------
 const rpatch_t *R_CacheTextureCompositePatchNum(int id) {
   const int locks = 1;
 
-  if (!texture_composites)
+  if (!_g->texture_composites)
     I_Error("R_CacheTextureCompositePatchNum: Composite patches not initialized");
 
 #ifdef RANGECHECK
@@ -686,25 +681,25 @@ const rpatch_t *R_CacheTextureCompositePatchNum(int id) {
     I_Error("createTextureCompositePatch: %i >= numtextures", id);
 #endif
 
-  if (!texture_composites[id].data)
+  if (!_g->texture_composites[id].data)
     createTextureCompositePatch(id);
 
   /* cph - if wasn't locked but now is, tell z_zone to hold it */
-  if (!texture_composites[id].locks && locks) {
-    Z_ChangeTag(texture_composites[id].data,PU_STATIC);
+  if (!_g->texture_composites[id].locks && locks) {
+    Z_ChangeTag(_g->texture_composites[id].data,PU_STATIC);
 #ifdef TIMEDIAG
     texture_composites[id].locktic = gametic;
 #endif
   }
-  texture_composites[id].locks += locks;
+  _g->texture_composites[id].locks += locks;
 
 #ifdef SIMPLECHECKS
-  if (!((texture_composites[id].locks+1) & 0xf))
+  if (!((_g->texture_composites[id].locks+1) & 0xf))
     lprintf(LO_DEBUG, "R_CacheTextureCompositePatchNum: High lock on %8s (%d)\n", 
-        _g->textures[id]->name, texture_composites[id].locks);
+        _g->textures[id]->name, _g->texture_composites[id].locks);
 #endif
 
-  return &texture_composites[id];
+  return &_g->texture_composites[id];
 
 }
 
@@ -712,16 +707,16 @@ void R_UnlockTextureCompositePatchNum(int id)
 {
   const int unlocks = 1;
 #ifdef SIMPLECHECKS
-  if ((signed short)texture_composites[id].locks < unlocks)
+  if ((signed short)_g->texture_composites[id].locks < unlocks)
     lprintf(LO_DEBUG, "R_UnlockTextureCompositePatchNum: Excess unlocks on %8s (%d-%d)\n", 
-        _g->textures[id]->name, texture_composites[id].locks, unlocks);
+        _g->textures[id]->name, _g->texture_composites[id].locks, unlocks);
 #endif
-  texture_composites[id].locks -= unlocks;
+  _g->texture_composites[id].locks -= unlocks;
   /* cph - Note: must only tell z_zone to make purgeable if currently locked, 
    * else it might already have been purged
    */
-  if (unlocks && !texture_composites[id].locks)
-    Z_ChangeTag(texture_composites[id].data, PU_CACHE);
+  if (unlocks && !_g->texture_composites[id].locks)
+    Z_ChangeTag(_g->texture_composites[id].data, PU_CACHE);
 }
 
 //---------------------------------------------------------------------------
