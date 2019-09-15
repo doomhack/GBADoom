@@ -739,7 +739,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   {
   mobj_t*     mobj;
   state_t*    st;
-  mobjinfo_t* info;
+  const mobjinfo_t* info;
 
   mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
   memset (mobj, 0, sizeof (*mobj));
@@ -800,13 +800,6 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   return mobj;
   }
 
-
-static mapthing_t itemrespawnque[ITEMQUESIZE];
-static int        itemrespawntime[ITEMQUESIZE];
-int        iquehead;
-int        iquetail;
-
-
 //
 // P_RemoveMobj
 //
@@ -818,14 +811,14 @@ void P_RemoveMobj (mobj_t* mobj)
       && (mobj->type != MT_INV)
       && (mobj->type != MT_INS))
     {
-    itemrespawnque[iquehead] = mobj->spawnpoint;
-    itemrespawntime[iquehead] = leveltime;
-    iquehead = (iquehead+1)&(ITEMQUESIZE-1);
+    _g->itemrespawnque[_g->iquehead] = mobj->spawnpoint;
+    _g->itemrespawntime[_g->iquehead] = leveltime;
+    _g->iquehead = (_g->iquehead+1)&(ITEMQUESIZE-1);
 
     // lose one off the end?
 
-    if (iquehead == iquetail)
-      iquetail = (iquetail+1)&(ITEMQUESIZE-1);
+    if (_g->iquehead == _g->iquetail)
+      _g->iquetail = (_g->iquetail+1)&(ITEMQUESIZE-1);
     }
 
   // unlink from sector and block lists
@@ -876,26 +869,25 @@ void P_RemoveMobj (mobj_t* mobj)
 
 static PUREFUNC int P_FindDoomedNum(unsigned type)
 {
-  static struct { int first, next; } *hash;
   register int i;
 
-  if (!hash)
+  if (!_g->doomed_hash)
     {
-      hash = Z_Malloc(sizeof *hash * NUMMOBJTYPES, PU_CACHE, (void **) &hash);
+      _g->doomed_hash = Z_Malloc(sizeof *_g->doomed_hash * NUMMOBJTYPES, PU_CACHE, (void **) &_g->doomed_hash);
       for (i=0; i<NUMMOBJTYPES; i++)
-  hash[i].first = NUMMOBJTYPES;
+        _g->doomed_hash[i].first = NUMMOBJTYPES;
       for (i=0; i<NUMMOBJTYPES; i++)
   if (mobjinfo[i].doomednum != -1)
     {
       unsigned h = (unsigned) mobjinfo[i].doomednum % NUMMOBJTYPES;
-      hash[i].next = hash[h].first;
-      hash[h].first = i;
+      _g->doomed_hash[i].next = _g->doomed_hash[h].first;
+      _g->doomed_hash[h].first = i;
     }
     }
 
-  i = hash[type % NUMMOBJTYPES].first;
+  i = _g->doomed_hash[type % NUMMOBJTYPES].first;
   while ((i < NUMMOBJTYPES) && ((unsigned)mobjinfo[i].doomednum != type))
-    i = hash[i].next;
+    i = _g->doomed_hash[i].next;
   return i;
 }
 

@@ -1602,7 +1602,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     P_SpawnBrainTargets();
 
   // clear special respawning que
-  iquehead = iquetail = 0;
+  _g->iquehead = _g->iquetail = 0;
 
   // set up world state
   P_SpawnSpecials();

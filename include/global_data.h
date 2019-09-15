@@ -17,6 +17,8 @@
 #include "p_map.h"
 #include "p_maputl.h"
 
+#include "p_mobj.h"
+
 #include "mmus2mid.h"
 
 

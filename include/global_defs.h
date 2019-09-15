@@ -436,9 +436,6 @@ int bombdamage;
 boolean crushchange, nofit;
 
 
-//******************************************************************************
-//p_maputl.c
-//******************************************************************************
 
 
 fixed_t opentop;
@@ -453,6 +450,19 @@ sector_t *openfrontsector; // made global                    // phares
 sector_t *openbacksector;  // made global
 
 divline_t trace;
+
+
+
+//******************************************************************************
+//p_maputl.c
+//******************************************************************************
+
+mapthing_t itemrespawnque[ITEMQUESIZE];
+int        itemrespawntime[ITEMQUESIZE];
+int        iquehead;
+int        iquetail;
+
+struct { int first, next; } *doomed_hash;
 
 
 //******************************************************************************
