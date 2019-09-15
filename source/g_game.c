@@ -852,7 +852,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 
   for (j=0 ; j<20 ; j++)
     {
-      int i = P_Random(pr_dmspawn) % selections;
+      int i = P_Random() % selections;
       if (G_CheckSpot (playernum, &deathmatchstarts[i]) )
         {
           deathmatchstarts[i].type = playernum+1;
@@ -1404,8 +1404,6 @@ void G_ReloadDefaults(void)
 
   // killough 2/21/98:
   memset(_g->playeringame+1, 0, sizeof(*_g->playeringame)*(MAXPLAYERS-1));
-
-  rngseed += I_GetRandomTimeSeed() + _g->gametic; // CPhipps
 }
 
 void G_DoNewGame (void)
@@ -1575,10 +1573,10 @@ byte *G_WriteOptions(byte *demo_p)
   *demo_p++ = 0;        // killough 3/31/98
 
   // killough 3/26/98: Added rngseed. 3/31/98: moved here
-  *demo_p++ = (byte)((rngseed >> 24) & 0xff);
-  *demo_p++ = (byte)((rngseed >> 16) & 0xff);
-  *demo_p++ = (byte)((rngseed >>  8) & 0xff);
-  *demo_p++ = (byte)( rngseed        & 0xff);
+  *demo_p++ = (byte)((0 >> 24) & 0xff);
+  *demo_p++ = (byte)((0 >> 16) & 0xff);
+  *demo_p++ = (byte)((0 >>  8) & 0xff);
+  *demo_p++ = (byte)( 0        & 0xff);
 
   // Options new to v2.03 begin here
 
@@ -1650,13 +1648,11 @@ const byte *G_ReadOptions(const byte *demo_p)
 
   // killough 3/26/98: Added rngseed to demos; 3/31/98: moved here
 
-  rngseed  = *demo_p++ & 0xff;
-  rngseed <<= 8;
-  rngseed += *demo_p++ & 0xff;
-  rngseed <<= 8;
-  rngseed += *demo_p++ & 0xff;
-  rngseed <<= 8;
-  rngseed += *demo_p++ & 0xff;
+  demo_p++;
+  demo_p++;
+  demo_p++;
+  demo_p++;
+
 
 
       demo_p++;   // killough 7/19/98

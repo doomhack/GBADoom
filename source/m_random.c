@@ -46,7 +46,7 @@
 // M_Random
 // Returns a 0-255 number
 //
-static const unsigned char rndtable[256] = { // 1/19/98 killough -- made const
+static const unsigned char rndtable[256] = {
     0,   8, 109, 220, 222, 241, 149, 107,  75, 248, 254, 140,  16,  66 ,
     74,  21, 211,  47,  80, 242, 154,  27, 205, 128, 161,  89,  77,  36 ,
     95, 110,  85,  48, 212, 140, 211, 249,  22,  79, 200,  50,  28, 188 ,
@@ -68,62 +68,23 @@ static const unsigned char rndtable[256] = { // 1/19/98 killough -- made const
     120, 163, 236, 249
 };
 
-rng_t rng;     // the random number state
+static int	rndindex = 0;
+static int	prndindex = 0;
 
-unsigned long rngseed = 1993;   // killough 3/26/98: The seed
-
-int (P_Random)(pr_class_t pr_class
-#ifdef INSTRUMENTED
-     , const char *file, int line
-#endif
-)
+// Which one is deterministic?
+int P_Random (void)
 {
-  // killough 2/16/98:  We always update both sets of random number
-  // generators, to ensure repeatability if the demo_compatibility
-  // flag is changed while the program is running. Changing the
-  // demo_compatibility flag does not change the sequences generated,
-  // only which one is selected from.
-  //
-  // All of this RNG stuff is tricky as far as demo sync goes --
-  // it's like playing with explosives :) Lee
-
-  int compat = pr_class == pr_misc ?
-    (rng.prndindex = (rng.prndindex + 1) & 255) :
-    (rng. rndindex = (rng. rndindex + 1) & 255) ;
-
-  unsigned long boom;
-
-  // killough 3/31/98:
-  // If demo sync insurance is not requested, use
-  // much more unstable method by putting everything
-  // except pr_misc into pr_all_in_one
-
-  if (pr_class != pr_misc)      // killough 3/31/98
-    pr_class = pr_all_in_one;
-
-  boom = rng.seed[pr_class];
-
-  // killough 3/26/98: add pr_class*2 to addend
-
-  rng.seed[pr_class] = boom * 1664525ul + 221297ul + pr_class*2;
-
-  boom >>= 20;
-
-  return boom & 255;
+    prndindex = (prndindex+1)&0xff;
+    return rndtable[prndindex];
 }
 
-// Initialize all the seeds
-//
-// This initialization method is critical to maintaining demo sync.
-// Each seed is initialized according to its class, so if new classes
-// are added they must be added to end of pr_class_t list. killough
-//
+int M_Random (void)
+{
+    rndindex = (rndindex+1)&0xff;
+    return rndtable[rndindex];
+}
 
 void M_ClearRandom (void)
 {
-  int i;
-  unsigned long seed = rngseed*2+1;    // add 3/26/98: add rngseed
-  for (i=0; i<NUMPRCLASS; i++)         // go through each pr_class and set
-    rng.seed[i] = seed *= 69069ul;     // each starting seed differently
-  rng.prndindex = rng.rndindex = 0;    // clear two compatibility indices
+    rndindex = prndindex = 0;
 }

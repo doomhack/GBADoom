@@ -118,7 +118,7 @@ void P_ExplodeMissile (mobj_t* mo)
 
   P_SetMobjState (mo, mobjinfo[mo->type].deathstate);
 
-  mo->tics -= P_Random(pr_explode)&3;
+  mo->tics -= P_Random()&3;
 
   if (mo->tics < 1)
     mo->tics = 1;
@@ -723,7 +723,7 @@ void P_MobjThinker (mobj_t* mobj)
     if (leveltime & 31)
       return;
 
-    if (P_Random (pr_respawn) > 4)
+    if (P_Random () > 4)
       return;
 
     P_NightmareRespawn (mobj);
@@ -760,7 +760,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   if (_g->gameskill != sk_nightmare)
     mobj->reactiontime = info->reactiontime;
 
-  mobj->lastlook = P_Random (pr_lastlook) % MAXPLAYERS;
+  mobj->lastlook = P_Random () % MAXPLAYERS;
 
   // do not set the state with P_SetMobjState,
   // because action routines can not be called yet
@@ -1135,7 +1135,7 @@ void P_SpawnMapThing (const mapthing_t* mthing)
   mobj->spawnpoint = *mthing;
 
   if (mobj->tics > 0)
-    mobj->tics = 1 + (P_Random (pr_spawnthing) % mobj->tics);
+    mobj->tics = 1 + (P_Random () % mobj->tics);
 
   if (!(mobj->flags & MF_FRIEND) &&
       options & MTF_FRIEND)
@@ -1171,12 +1171,12 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
   {
   mobj_t* th;
   // killough 5/5/98: remove dependence on order of evaluation:
-  int t = P_Random(pr_spawnpuff);
-  z += (t - P_Random(pr_spawnpuff))<<10;
+  int t = P_Random();
+  z += (t - P_Random())<<10;
 
   th = P_SpawnMobj (x,y,z, MT_PUFF);
   th->momz = FRACUNIT;
-  th->tics -= P_Random(pr_spawnpuff)&3;
+  th->tics -= P_Random()&3;
 
   if (th->tics < 1)
     th->tics = 1;
@@ -1195,11 +1195,11 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage)
   {
   mobj_t* th;
   // killough 5/5/98: remove dependence on order of evaluation:
-  int t = P_Random(pr_spawnblood);
-  z += (t - P_Random(pr_spawnblood))<<10;
+  int t = P_Random();
+  z += (t - P_Random())<<10;
   th = P_SpawnMobj(x,y,z, MT_BLOOD);
   th->momz = FRACUNIT*2;
-  th->tics -= P_Random(pr_spawnblood)&3;
+  th->tics -= P_Random()&3;
 
   if (th->tics < 1)
     th->tics = 1;
@@ -1219,7 +1219,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage)
 
 void P_CheckMissileSpawn (mobj_t* th)
   {
-  th->tics -= P_Random(pr_missile)&3;
+  th->tics -= P_Random()&3;
   if (th->tics < 1)
     th->tics = 1;
 
@@ -1263,8 +1263,8 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 
   if (dest->flags & MF_SHADOW)
     {  // killough 5/5/98: remove dependence on order of evaluation:
-    int t = P_Random(pr_shadow);
-    an += (t - P_Random(pr_shadow))<<20;
+    int t = P_Random();
+    an += (t - P_Random())<<20;
     }
 
   th->angle = an;

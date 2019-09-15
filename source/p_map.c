@@ -485,7 +485,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       // A flying skull is smacking something.
       // Determine damage amount, and the skull comes to a dead stop.
 
-      int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
+      int damage = ((P_Random()%8)+1)*tmthing->info->damage;
 
       P_DamageMobj (thing, tmthing, tmthing, damage);
 
@@ -546,7 +546,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
       // damage / explode
 
-      damage = ((P_Random(pr_damage)%8)+1)*tmthing->info->damage;
+      damage = ((P_Random()%8)+1)*tmthing->info->damage;
       P_DamageMobj (thing, tmthing, tmthing->target, damage);
 
       // don't traverse any more
@@ -1849,10 +1849,10 @@ boolean PIT_ChangeSector (mobj_t* thing)
                       thing->z + thing->height/2, MT_BLOOD);
 
     /* killough 8/10/98: remove dependence on order of evaluation */
-    t = P_Random(pr_crush);
-    mo->momx = (t - P_Random (pr_crush))<<12;
-    t = P_Random(pr_crush);
-    mo->momy = (t - P_Random (pr_crush))<<12;
+    t = P_Random();
+    mo->momx = (t - P_Random ())<<12;
+    t = P_Random();
+    mo->momy = (t - P_Random ())<<12;
   }
 
   // keep checking (crush other things)

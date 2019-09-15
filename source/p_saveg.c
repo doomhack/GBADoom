@@ -963,15 +963,12 @@ void P_UnArchiveSpecials (void)
 
 void P_ArchiveRNG(void)
 {
-  CheckSaveGame(sizeof rng);
-  memcpy(save_p, &rng, sizeof rng);
-  save_p += sizeof rng;
+
 }
 
 void P_UnArchiveRNG(void)
 {
-  memcpy(&rng, save_p, sizeof rng);
-  save_p += sizeof rng;
+
 }
 
 // killough 2/22/98: Save/restore automap state

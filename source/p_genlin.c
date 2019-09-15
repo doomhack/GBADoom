@@ -557,7 +557,7 @@ manual_lift:
         plat->high = P_FindHighestFloorSurrounding(sec);
         if (plat->high < sec->floorheight)
           plat->high = sec->floorheight;
-        plat->status = P_Random(pr_genlift)&1;
+        plat->status = P_Random()&1;
         break;
       default:
         break;

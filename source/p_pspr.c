@@ -467,7 +467,7 @@ void A_GunFlash(player_t *player, pspdef_t *psp)
 void A_Punch(player_t *player, pspdef_t *psp)
 {
   angle_t angle;
-  int t, slope, damage = (P_Random(pr_punch)%10+1)<<1;
+  int t, slope, damage = (P_Random()%10+1)<<1;
 
   if (player->powers[pw_strength])
     damage *= 10;
@@ -475,8 +475,8 @@ void A_Punch(player_t *player, pspdef_t *psp)
   angle = player->mo->angle;
 
   // killough 5/5/98: remove dependence on order of evaluation:
-  t = P_Random(pr_punchangle);
-  angle += (t - P_Random(pr_punchangle))<<18;
+  t = P_Random();
+  angle += (t - P_Random())<<18;
 
   /* killough 8/2/98: make autoaiming prefer enemies */
   if (
@@ -504,11 +504,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
 
 void A_Saw(player_t *player, pspdef_t *psp)
 {
-  int slope, damage = 2*(P_Random(pr_saw)%10+1);
+  int slope, damage = 2*(P_Random()%10+1);
   angle_t angle = player->mo->angle;
   // killough 5/5/98: remove dependence on order of evaluation:
-  int t = P_Random(pr_saw);
-  angle += (t - P_Random(pr_saw))<<18;
+  int t = P_Random();
+  angle += (t - P_Random())<<18;
 
   /* Use meleerange + 1 so that the puff doesn't skip the flash
    * killough 8/2/98: make autoaiming prefer enemies */
@@ -575,7 +575,7 @@ void A_FirePlasma(player_t *player, pspdef_t *psp)
 {
   player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
-  A_FireSomething(player,P_Random(pr_plasma)&1);              // phares
+  A_FireSomething(player,P_Random()&1);              // phares
   P_SpawnPlayerMissile(player->mo, MT_PLASMA);
 }
 
@@ -611,13 +611,13 @@ static void P_BulletSlope(mobj_t *mo)
 
 static void P_GunShot(mobj_t *mo, boolean accurate)
 {
-  int damage = 5*(P_Random(pr_gunshot)%3+1);
+  int damage = 5*(P_Random()%3+1);
   angle_t angle = mo->angle;
 
   if (!accurate)
     {  // killough 5/5/98: remove dependence on order of evaluation:
-      int t = P_Random(pr_misfire);
-      angle += (t - P_Random(pr_misfire))<<18;
+      int t = P_Random();
+      angle += (t - P_Random())<<18;
     }
 
   P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
@@ -678,14 +678,14 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
 
   for (i=0; i<20; i++)
     {
-      int damage = 5*(P_Random(pr_shotgun)%3+1);
+      int damage = 5*(P_Random()%3+1);
       angle_t angle = player->mo->angle;
       // killough 5/5/98: remove dependence on order of evaluation:
-      int t = P_Random(pr_shotgun);
-      angle += (t - P_Random(pr_shotgun))<<19;
-      t = P_Random(pr_shotgun);
+      int t = P_Random();
+      angle += (t - P_Random())<<19;
+      t = P_Random();
       P_LineAttack(player->mo, angle, MISSILERANGE, bulletslope +
-                   ((t - P_Random(pr_shotgun))<<5), damage);
+                   ((t - P_Random())<<5), damage);
     }
 }
 
@@ -755,7 +755,7 @@ void A_BFGSpray(mobj_t *mo)
                   linetarget->z + (linetarget->height>>2), MT_EXTRABFG);
 
       for (damage=j=0; j<15; j++)
-        damage += (P_Random(pr_bfg)&7) + 1;
+        damage += (P_Random()&7) + 1;
 
       P_DamageMobj(linetarget, mo->target, mo->target, damage);
     }

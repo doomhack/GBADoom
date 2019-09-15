@@ -187,7 +187,7 @@ static boolean P_CheckMissileRange(mobj_t *actor)
               (actor->target->health > 0 &&
                (!(actor->target->flags & MF_FRIEND) ||
                 (actor->target->player ? true :
-                     !(actor->target->flags & MF_JUSTHIT) && P_Random(pr_defect) >128)));
+                     !(actor->target->flags & MF_JUSTHIT) && P_Random() >128)));
   }
 
   /* killough 7/18/98: friendly monsters don't attack other friendly
@@ -231,7 +231,7 @@ static boolean P_CheckMissileRange(mobj_t *actor)
   if (actor->type == MT_CYBORG && dist > 160)
     dist = 160;
 
-  if (P_Random(pr_missrange) < dist)
+  if (P_Random() < dist)
     return false;
 
   if (P_HitFriend(actor))
@@ -404,7 +404,7 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
        * MBF plays even more games
        */
       if (!good) return good;
-  return ((P_Random(pr_opendoor) >= 230) ^ (good & 1));
+  return ((P_Random() >= 230) ^ (good & 1));
     }
   else
     actor->flags &= ~MF_INFLOAT;
@@ -440,12 +440,12 @@ static boolean P_SmartMove(mobj_t *actor)
 
   // killough 9/9/98: avoid crushing ceilings or other damaging areas
   if (
-      (on_lift && P_Random(pr_stayonlift) < 230 &&      // Stay on lift
+      (on_lift && P_Random() < 230 &&      // Stay on lift
        !P_IsOnLift(actor))
       ||
       (!under_damage &&  // Get away from damage
        (under_damage = P_IsUnderDamage(actor)) &&
-       (under_damage < 0 || P_Random(pr_avoidcrush) < 200))
+       (under_damage < 0 || P_Random() < 200))
       )
     actor->movedir = DI_NODIR;    // avoid the area (most of the time anyway)
 
@@ -468,7 +468,7 @@ static boolean P_TryWalk(mobj_t *actor)
 {
   if (!P_SmartMove(actor))
     return false;
-  actor->movecount = P_Random(pr_trywalk)&15;
+  actor->movecount = P_Random()&15;
   return true;
 }
 
@@ -505,7 +505,7 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
     return;
 
   // try other directions
-  if (P_Random(pr_newchase) > 200 || D_abs(deltay)>D_abs(deltax))
+  if (P_Random() > 200 || D_abs(deltay)>D_abs(deltax))
     tdir = xdir, xdir = ydir, ydir = tdir;
 
   if ((xdir == turnaround ? xdir = DI_NODIR : xdir) != DI_NODIR &&
@@ -521,7 +521,7 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
     return;
 
   // randomly determine direction of search
-  if (P_Random(pr_newchasedir) & 1)
+  if (P_Random() & 1)
     {
       for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
         if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
@@ -706,7 +706,7 @@ static boolean PIT_FindTarget(mobj_t *mo)
   {
     const mobj_t *targ = mo->target;
     if (targ && targ->target == mo &&
-  P_Random(pr_skiptarget) > 100 &&
+  P_Random() > 100 &&
   (targ->flags ^ mo->flags) & MF_FRIEND &&
   targ->health*2 >= targ->info->spawnhealth)
       return true;
@@ -871,7 +871,7 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
   }
 
       {   // Random number of monsters, to prevent patterns from forming
-  int n = (P_Random(pr_friends) & 31) + 15;
+  int n = (P_Random() & 31) + 15;
 
   for (th = cap->cnext; th != cap; th = th->cnext)
     if (--n < 0)
@@ -929,7 +929,7 @@ static boolean P_HelpFriend(mobj_t *actor)
   for (th = cap->cnext; th != cap; th = th->cnext)
     if (((mobj_t *) th)->health*2 >= ((mobj_t *) th)->info->spawnhealth)
       {
-  if (P_Random(pr_helpfriend) < 180)
+  if (P_Random() < 180)
     break;
       }
     else
@@ -1012,12 +1012,12 @@ void A_Look(mobj_t *actor)
         case sfx_posit1:
         case sfx_posit2:
         case sfx_posit3:
-          sound = sfx_posit1+P_Random(pr_see)%3;
+          sound = sfx_posit1+P_Random()%3;
           break;
 
         case sfx_bgsit1:
         case sfx_bgsit2:
-          sound = sfx_bgsit1+P_Random(pr_see)%2;
+          sound = sfx_bgsit1+P_Random()%2;
           break;
 
         default:
@@ -1171,7 +1171,7 @@ void A_Chase(mobj_t *actor)
     P_NewChaseDir(actor);
 
   // make active sound
-  if (actor->info->activesound && P_Random(pr_see)<3)
+  if (actor->info->activesound && P_Random()<3)
     S_StartSound(actor, actor->info->activesound);
 }
 
@@ -1187,8 +1187,8 @@ void A_FaceTarget(mobj_t *actor)
                                  actor->target->x, actor->target->y);
   if (actor->target->flags & MF_SHADOW)
     { // killough 5/5/98: remove dependence on order of evaluation:
-      int t = P_Random(pr_facetarget);
-      actor->angle += (t-P_Random(pr_facetarget))<<21;
+      int t = P_Random();
+      actor->angle += (t-P_Random())<<21;
     }
 }
 
@@ -1208,9 +1208,9 @@ void A_PosAttack(mobj_t *actor)
   S_StartSound(actor, sfx_pistol);
 
   // killough 5/5/98: remove dependence on order of evaluation:
-  t = P_Random(pr_posattack);
-  angle += (t - P_Random(pr_posattack))<<20;
-  damage = (P_Random(pr_posattack)%5 + 1)*3;
+  t = P_Random();
+  angle += (t - P_Random())<<20;
+  damage = (P_Random()%5 + 1)*3;
   P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
 }
 
@@ -1226,9 +1226,9 @@ void A_SPosAttack(mobj_t* actor)
   slope = P_AimLineAttack(actor, bangle, MISSILERANGE, 0); /* killough 8/2/98 */
   for (i=0; i<3; i++)
     {  // killough 5/5/98: remove dependence on order of evaluation:
-      int t = P_Random(pr_sposattack);
-      int angle = bangle + ((t - P_Random(pr_sposattack))<<20);
-      int damage = ((P_Random(pr_sposattack)%5)+1)*3;
+      int t = P_Random();
+      int angle = bangle + ((t - P_Random())<<20);
+      int damage = ((P_Random()%5)+1)*3;
       P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
     }
 }
@@ -1245,9 +1245,9 @@ void A_CPosAttack(mobj_t *actor)
   slope = P_AimLineAttack(actor, bangle, MISSILERANGE, 0); /* killough 8/2/98 */
 
   // killough 5/5/98: remove dependence on order of evaluation:
-  t = P_Random(pr_cposattack);
-  angle = bangle + ((t - P_Random(pr_cposattack))<<20);
-  damage = ((P_Random(pr_cposattack)%5)+1)*3;
+  t = P_Random();
+  angle = bangle + ((t - P_Random())<<20);
+  damage = ((P_Random()%5)+1)*3;
   P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
 }
 
@@ -1261,7 +1261,7 @@ void A_CPosRefire(mobj_t *actor)
     goto stop;
 
   /* killough 11/98: prevent refiring on friends continuously */
-  if (P_Random(pr_cposrefire) < 40) {
+  if (P_Random() < 40) {
     if (actor->target && actor->flags & actor->target->flags & MF_FRIEND)
       goto stop;
     else
@@ -1282,7 +1282,7 @@ void A_SpidRefire(mobj_t* actor)
   if (P_HitFriend(actor))
     goto stop;
 
-  if (P_Random(pr_spidrefire) < 10)
+  if (P_Random() < 10)
     return;
 
   // killough 11/98: prevent refiring on friends continuously
@@ -1313,7 +1313,7 @@ void A_TroopAttack(mobj_t *actor)
     {
       int damage;
       S_StartSound(actor, sfx_claw);
-      damage = (P_Random(pr_troopattack)%8+1)*3;
+      damage = (P_Random()%8+1)*3;
       P_DamageMobj(actor->target, actor, actor, damage);
       return;
     }
@@ -1327,7 +1327,7 @@ void A_SargAttack(mobj_t *actor)
   A_FaceTarget(actor);
   if (P_CheckMeleeRange(actor))
     {
-      int damage = ((P_Random(pr_sargattack)%10)+1)*4;
+      int damage = ((P_Random()%10)+1)*4;
       P_DamageMobj(actor->target, actor, actor, damage);
     }
 }
@@ -1339,7 +1339,7 @@ void A_HeadAttack(mobj_t *actor)
   A_FaceTarget (actor);
   if (P_CheckMeleeRange(actor))
     {
-      int damage = (P_Random(pr_headattack)%6+1)*10;
+      int damage = (P_Random()%6+1)*10;
       P_DamageMobj(actor->target, actor, actor, damage);
       return;
     }
@@ -1362,7 +1362,7 @@ void A_BruisAttack(mobj_t *actor)
     {
       int damage;
       S_StartSound(actor, sfx_claw);
-      damage = (P_Random(pr_bruisattack)%8+1)*10;
+      damage = (P_Random()%8+1)*10;
       P_DamageMobj(actor->target, actor, actor, damage);
       return;
     }
@@ -1426,7 +1426,7 @@ void A_Tracer(mobj_t *actor)
                     actor->z, MT_SMOKE);
 
   th->momz = FRACUNIT;
-  th->tics -= P_Random(pr_tracer) & 3;
+  th->tics -= P_Random() & 3;
   if (th->tics < 1)
     th->tics = 1;
 
@@ -1489,7 +1489,7 @@ void A_SkelFist(mobj_t *actor)
   A_FaceTarget(actor);
   if (P_CheckMeleeRange(actor))
     {
-      int damage = ((P_Random(pr_skelfist)%10)+1)*6;
+      int damage = ((P_Random()%10)+1)*6;
       S_StartSound(actor, sfx_skepch);
       P_DamageMobj(actor->target, actor, actor, damage);
     }
@@ -1957,12 +1957,12 @@ void A_Scream(mobj_t *actor)
     case sfx_podth1:
     case sfx_podth2:
     case sfx_podth3:
-      sound = sfx_podth1 + P_Random(pr_scream)%3;
+      sound = sfx_podth1 + P_Random()%3;
       break;
 
     case sfx_bgdth1:
     case sfx_bgdth2:
-      sound = sfx_bgdth1 + P_Random(pr_scream)%2;
+      sound = sfx_bgdth1 + P_Random()%2;
       break;
 
     default:
@@ -2234,11 +2234,11 @@ void A_BrainScream(mobj_t *mo)
   for (x=mo->x - 196*FRACUNIT ; x< mo->x + 320*FRACUNIT ; x+= FRACUNIT*8)
     {
       int y = mo->y - 320*FRACUNIT;
-      int z = 128 + P_Random(pr_brainscream)*2*FRACUNIT;
+      int z = 128 + P_Random()*2*FRACUNIT;
       mobj_t *th = P_SpawnMobj (x,y,z, MT_ROCKET);
-      th->momz = P_Random(pr_brainscream)*512;
+      th->momz = P_Random()*512;
       P_SetMobjState(th, S_BRAINEXPLODE1);
-      th->tics -= P_Random(pr_brainscream)&7;
+      th->tics -= P_Random()&7;
       if (th->tics < 1)
         th->tics = 1;
     }
@@ -2247,14 +2247,14 @@ void A_BrainScream(mobj_t *mo)
 
 void A_BrainExplode(mobj_t *mo)
 {  // killough 5/5/98: remove dependence on order of evaluation:
-  int t = P_Random(pr_brainexp);
-  int x = mo->x + (t - P_Random(pr_brainexp))*2048;
+  int t = P_Random();
+  int x = mo->x + (t - P_Random())*2048;
   int y = mo->y;
-  int z = 128 + P_Random(pr_brainexp)*2*FRACUNIT;
+  int z = 128 + P_Random()*2*FRACUNIT;
   mobj_t *th = P_SpawnMobj(x,y,z, MT_ROCKET);
-  th->momz = P_Random(pr_brainexp)*512;
+  th->momz = P_Random()*512;
   P_SetMobjState(th, S_BRAINEXPLODE1);
-  th->tics -= P_Random(pr_brainexp)&7;
+  th->tics -= P_Random()&7;
   if (th->tics < 1)
     th->tics = 1;
 }
@@ -2318,7 +2318,7 @@ void A_SpawnFly(mobj_t *mo)
   S_StartSound(fog, sfx_telept);
 
   // Randomly select monster to spawn.
-  r = P_Random(pr_spawnfly);
+  r = P_Random();
 
   // Probability distribution (kind of :), decreasing likelihood.
   if ( r<50 )
@@ -2460,7 +2460,7 @@ void A_PlaySound(mobj_t *mo)
 
 void A_RandomJump(mobj_t *mo)
 {
-  if (P_Random(pr_randomjump) < mo->state->misc2)
+  if (P_Random() < mo->state->misc2)
     P_SetMobjState(mo, mo->state->misc1);
 }
 
