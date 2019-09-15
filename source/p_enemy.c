@@ -106,7 +106,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks,
 
       P_LineOpening(check);
 
-      if (openrange <= 0)
+      if (_g->openrange <= 0)
         continue;       // closed door
 
       other=sides[check->sidenum[sides[check->sidenum[0]].sector==sec]].sector;

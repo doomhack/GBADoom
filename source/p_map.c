@@ -351,22 +351,22 @@ boolean PIT_CheckLine (line_t* ld)
 
   // adjust floor & ceiling heights
 
-  if (opentop < _g->tmceilingz)
+  if (_g->opentop < _g->tmceilingz)
     {
-      _g->tmceilingz = opentop;
+      _g->tmceilingz = _g->opentop;
       _g->ceilingline = ld;
       _g->blockline = ld;
     }
 
-  if (openbottom > _g->tmfloorz)
+  if (_g->openbottom > _g->tmfloorz)
     {
-      _g->tmfloorz = openbottom;
+      _g->tmfloorz = _g->openbottom;
       _g->floorline = ld;          // killough 8/1/98: remember floor linedef
       _g->blockline = ld;
     }
 
-  if (lowfloor < _g->tmdropoffz)
-    _g->tmdropoffz = lowfloor;
+  if (_g->lowfloor < _g->tmdropoffz)
+    _g->tmdropoffz = _g->lowfloor;
 
   // if contacted a special line, add it to the list
 
@@ -1093,13 +1093,13 @@ boolean PTR_SlideTraverse (intercept_t* in)
 
   P_LineOpening (li);
 
-  if (openrange < _g->slidemo->height)
+  if (_g->openrange < _g->slidemo->height)
     goto isblocking;  // doesn't fit
 
-  if (opentop - _g->slidemo->z < _g->slidemo->height)
+  if (_g->opentop - _g->slidemo->z < _g->slidemo->height)
     goto isblocking;  // mobj is too high
 
-  if (openbottom - _g->slidemo->z > 24*FRACUNIT )
+  if (_g->openbottom - _g->slidemo->z > 24*FRACUNIT )
     goto isblocking;  // too big a step up
 
   // this line doesn't block movement
@@ -1269,21 +1269,21 @@ boolean PTR_AimTraverse (intercept_t* in)
 
     P_LineOpening (li);
 
-    if (openbottom >= opentop)
+    if (_g->openbottom >= _g->opentop)
       return false;   // stop
 
     dist = FixedMul (_g->attackrange, in->frac);
 
     if (li->frontsector->floorheight != li->backsector->floorheight)
       {
-      slope = FixedDiv (openbottom - _g->shootz , dist);
+      slope = FixedDiv (_g->openbottom - _g->shootz , dist);
       if (slope > _g->bottomslope)
         _g->bottomslope = slope;
       }
 
     if (li->frontsector->ceilingheight != li->backsector->ceilingheight)
       {
-      slope = FixedDiv (opentop - _g->shootz , dist);
+      slope = FixedDiv (_g->opentop - _g->shootz , dist);
       if (slope < _g->topslope)
         _g->topslope = slope;
       }
@@ -1369,9 +1369,9 @@ boolean PTR_ShootTraverse (intercept_t* in)
     // killough 11/98: simplify
 
     if ((li->frontsector->floorheight==li->backsector->floorheight ||
-         (slope = FixedDiv(openbottom - _g->shootz , dist)) <= _g->aimslope) &&
+         (slope = FixedDiv(_g->openbottom - _g->shootz , dist)) <= _g->aimslope) &&
         (li->frontsector->ceilingheight==li->backsector->ceilingheight ||
-         (slope = FixedDiv (opentop - _g->shootz , dist)) >= _g->aimslope))
+         (slope = FixedDiv (_g->opentop - _g->shootz , dist)) >= _g->aimslope))
       return true;      // shot continues
   }
 
@@ -1379,8 +1379,8 @@ boolean PTR_ShootTraverse (intercept_t* in)
     // position a bit closer
 
     frac = in->frac - FixedDiv (4*FRACUNIT,_g->attackrange);
-    x = trace.x + FixedMul (trace.dx, frac);
-    y = trace.y + FixedMul (trace.dy, frac);
+    x = _g->trace.x + FixedMul (_g->trace.dx, frac);
+    y = _g->trace.y + FixedMul (_g->trace.dy, frac);
     z = _g->shootz + FixedMul (_g->aimslope, FixedMul(frac, _g->attackrange));
 
     if (li->frontsector->ceilingpic == skyflatnum)
@@ -1437,8 +1437,8 @@ boolean PTR_ShootTraverse (intercept_t* in)
 
   frac = in->frac - FixedDiv (10*FRACUNIT,_g->attackrange);
 
-  x = trace.x + FixedMul (trace.dx, frac);
-  y = trace.y + FixedMul (trace.dy, frac);
+  x = _g->trace.x + FixedMul (_g->trace.dx, frac);
+  y = _g->trace.y + FixedMul (_g->trace.dy, frac);
   z = _g->shootz + FixedMul (_g->aimslope, FixedMul(frac, _g->attackrange));
 
   // Spawn bullet puffs or blod spots,
@@ -1533,7 +1533,7 @@ boolean PTR_UseTraverse (intercept_t* in)
   if (!in->d.line->special)
     {
     P_LineOpening (in->d.line);
-    if (openrange <= 0)
+    if (_g->openrange <= 0)
       {
       S_StartSound (usething, sfx_noway);
 
@@ -1578,9 +1578,9 @@ boolean PTR_NoWayTraverse(intercept_t* in)
   return ld->special || !(                 // Ignore specials
    ld->flags & ML_BLOCKING || (            // Always blocking
    P_LineOpening(ld),                      // Find openings
-   openrange <= 0 ||                       // No opening
-   openbottom > usething->z+24*FRACUNIT || // Too high it blocks
-   opentop < usething->z+usething->height  // Too low it blocks
+   _g->openrange <= 0 ||                       // No opening
+   _g->openbottom > usething->z+24*FRACUNIT || // Too high it blocks
+   _g->opentop < usething->z+usething->height  // Too low it blocks
   )
   );
   }

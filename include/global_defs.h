@@ -435,5 +435,25 @@ int bombdamage;
 
 boolean crushchange, nofit;
 
+
+//******************************************************************************
+//p_maputl.c
+//******************************************************************************
+
+
+fixed_t opentop;
+fixed_t openbottom;
+fixed_t openrange;
+fixed_t lowfloor;
+
+// moved front and back outside P-LineOpening and changed    // phares 3/7/98
+// them to these so we can pick up the new friction value
+// in PIT_CheckLine()
+sector_t *openfrontsector; // made global                    // phares
+sector_t *openbacksector;  // made global
+
+divline_t trace;
+
+
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

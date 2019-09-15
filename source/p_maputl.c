@@ -81,9 +81,10 @@ int PUREFUNC P_PointOnLineSide(fixed_t x, fixed_t y, const line_t *line)
 
 int PUREFUNC P_BoxOnLineSide(const fixed_t *tmbox, const line_t *ld)
 {
+    int p;
   switch (ld->slopetype)
     {
-      int p;
+
     default: // shut up compiler warnings -- killough
     case ST_HORIZONTAL:
       return
@@ -169,44 +170,34 @@ fixed_t PUREFUNC P_InterceptVector(const divline_t *v2, const divline_t *v1)
 // OPTIMIZE: keep this precalculated
 //
 
-fixed_t opentop;
-fixed_t openbottom;
-fixed_t openrange;
-fixed_t lowfloor;
-
-// moved front and back outside P-LineOpening and changed    // phares 3/7/98
-// them to these so we can pick up the new friction value
-// in PIT_CheckLine()
-sector_t *openfrontsector; // made global                    // phares
-sector_t *openbacksector;  // made global
 
 void P_LineOpening(const line_t *linedef)
 {
   if (linedef->sidenum[1] == NO_INDEX)      // single sided line
     {
-      openrange = 0;
+      _g->openrange = 0;
       return;
     }
 
-  openfrontsector = linedef->frontsector;
-  openbacksector = linedef->backsector;
+  _g->openfrontsector = linedef->frontsector;
+  _g->openbacksector = linedef->backsector;
 
-  if (openfrontsector->ceilingheight < openbacksector->ceilingheight)
-    opentop = openfrontsector->ceilingheight;
+  if (_g->openfrontsector->ceilingheight < _g->openbacksector->ceilingheight)
+    _g->opentop = _g->openfrontsector->ceilingheight;
   else
-    opentop = openbacksector->ceilingheight;
+    _g->opentop = _g->openbacksector->ceilingheight;
 
-  if (openfrontsector->floorheight > openbacksector->floorheight)
+  if (_g->openfrontsector->floorheight > _g->openbacksector->floorheight)
     {
-      openbottom = openfrontsector->floorheight;
-      lowfloor = openbacksector->floorheight;
+      _g->openbottom = _g->openfrontsector->floorheight;
+      _g->lowfloor = _g->openbacksector->floorheight;
     }
   else
     {
-      openbottom = openbacksector->floorheight;
-      lowfloor = openfrontsector->floorheight;
+      _g->openbottom = _g->openbacksector->floorheight;
+      _g->lowfloor = _g->openfrontsector->floorheight;
     }
-  openrange = opentop - openbottom;
+  _g->openrange = _g->opentop - _g->openbottom;
 }
 
 //
@@ -421,7 +412,6 @@ static void check_intercept(void)
     }
 }
 
-divline_t trace;
 
 // PIT_AddLineIntercepts.
 // Looks for lines in the given block
@@ -441,16 +431,16 @@ boolean PIT_AddLineIntercepts(line_t *ld)
   divline_t dl;
 
   // avoid precision problems with two routines
-  if (trace.dx >  FRACUNIT*16 || trace.dy >  FRACUNIT*16 ||
-      trace.dx < -FRACUNIT*16 || trace.dy < -FRACUNIT*16)
+  if (_g->trace.dx >  FRACUNIT*16 || _g->trace.dy >  FRACUNIT*16 ||
+      _g->trace.dx < -FRACUNIT*16 || _g->trace.dy < -FRACUNIT*16)
     {
-      s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace);
-      s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace);
+      s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &_g->trace);
+      s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &_g->trace);
     }
   else
     {
-      s1 = P_PointOnLineSide (trace.x, trace.y, ld);
-      s2 = P_PointOnLineSide (trace.x+trace.dx, trace.y+trace.dy, ld);
+      s1 = P_PointOnLineSide (_g->trace.x, _g->trace.y, ld);
+      s2 = P_PointOnLineSide (_g->trace.x+_g->trace.dx, _g->trace.y+_g->trace.dy, ld);
     }
 
   if (s1 == s2)
@@ -458,7 +448,7 @@ boolean PIT_AddLineIntercepts(line_t *ld)
 
   // hit the line
   P_MakeDivline(ld, &dl);
-  frac = P_InterceptVector(&trace, &dl);
+  frac = P_InterceptVector(&_g->trace, &dl);
 
   if (frac < 0)
     return true;        // behind source
@@ -487,7 +477,7 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
   fixed_t   frac;
 
   // check a corner to corner crossection for hit
-  if ((trace.dx ^ trace.dy) > 0)
+  if ((_g->trace.dx ^ _g->trace.dy) > 0)
     {
       x1 = thing->x - thing->radius;
       y1 = thing->y + thing->radius;
@@ -502,8 +492,8 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
       y2 = thing->y + thing->radius;
     }
 
-  s1 = P_PointOnDivlineSide (x1, y1, &trace);
-  s2 = P_PointOnDivlineSide (x2, y2, &trace);
+  s1 = P_PointOnDivlineSide (x1, y1, &_g->trace);
+  s2 = P_PointOnDivlineSide (x2, y2, &_g->trace);
 
   if (s1 == s2)
     return true;                // line isn't crossed
@@ -513,7 +503,7 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
   dl.dx = x2-x1;
   dl.dy = y2-y1;
 
-  frac = P_InterceptVector (&trace, &dl);
+  frac = P_InterceptVector (&_g->trace, &dl);
 
   if (frac < 0)
     return true;                // behind source
@@ -585,10 +575,10 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
   if (!((y1-bmaporgy)&(MAPBLOCKSIZE-1)))
     y1 += FRACUNIT;     // don't side exactly on a line
 
-  trace.x = x1;
-  trace.y = y1;
-  trace.dx = x2 - x1;
-  trace.dy = y2 - y1;
+  _g->trace.x = x1;
+  _g->trace.y = y1;
+  _g->trace.dx = x2 - x1;
+  _g->trace.dy = y2 - y1;
 
   x1 -= bmaporgx;
   y1 -= bmaporgy;

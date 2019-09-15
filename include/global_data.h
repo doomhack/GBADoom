@@ -14,6 +14,8 @@
 #include "m_menu.h"
 #include "p_spec.h"
 #include "p_enemy.h"
+#include "p_map.h"
+#include "p_maputl.h"
 
 #include "mmus2mid.h"
 

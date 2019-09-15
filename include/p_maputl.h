@@ -80,10 +80,4 @@ boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t *));
 boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
                        int flags, boolean trav(intercept_t *));
 
-extern fixed_t opentop;
-extern fixed_t openbottom;
-extern fixed_t openrange;
-extern fixed_t lowfloor;
-extern divline_t trace;
-
 #endif  /* __P_MAPUTL__ */
