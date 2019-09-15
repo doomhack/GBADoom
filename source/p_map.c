@@ -120,7 +120,7 @@ int P_GetFriction(const mobj_t *mo, int *frictionfactor)
     (sec->friction < friction || friction == ORIG_FRICTION) &&
     (mo->z <= sec->floorheight ||
      (sec->heightsec != -1 &&
-      mo->z <= sectors[sec->heightsec].floorheight)))
+      mo->z <= _g->sectors[sec->heightsec].floorheight)))
   friction = sec->friction, movefactor = sec->movefactor;
 
   if (frictionfactor)
@@ -211,10 +211,10 @@ boolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, boolean boss)
 
   // stomp on any things contacted
 
-  xl = (_g->tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-  xh = (_g->tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-  yl = (_g->tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-  yh = (_g->tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+  xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
+  xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
+  yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
+  yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
@@ -566,10 +566,10 @@ boolean Check_Sides(mobj_t* actor, int x, int y)
 
   // Determine which blocks to look in for blocking lines
 
-  xl = (_g->tmbbox[BOXLEFT]   - bmaporgx)>>MAPBLOCKSHIFT;
-  xh = (_g->tmbbox[BOXRIGHT]  - bmaporgx)>>MAPBLOCKSHIFT;
-  yl = (_g->tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
-  yh = (_g->tmbbox[BOXTOP]    - bmaporgy)>>MAPBLOCKSHIFT;
+  xl = (_g->tmbbox[BOXLEFT]   - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  xh = (_g->tmbbox[BOXRIGHT]  - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy)>>MAPBLOCKSHIFT;
+  yh = (_g->tmbbox[BOXTOP]    - _g->bmaporgy)>>MAPBLOCKSHIFT;
 
   // xl->xh, yl->yh determine the mapblock set to search
 
@@ -656,10 +656,10 @@ boolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
   // based on their origin point, and can overlap
   // into adjacent blocks by up to MAXRADIUS units.
 
-  xl = (_g->tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-  xh = (_g->tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-  yl = (_g->tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-  yh = (_g->tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+  xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
+  xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
+  yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
+  yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
 
   for (bx=xl ; bx<=xh ; bx++)
@@ -669,10 +669,10 @@ boolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
 
   // check lines
 
-  xl = (_g->tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
-  xh = (_g->tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
-  yl = (_g->tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
-  yh = (_g->tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
+  xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy)>>MAPBLOCKSHIFT;
+  yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy)>>MAPBLOCKSHIFT;
 
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
@@ -869,13 +869,13 @@ static boolean PIT_ApplyTorque(line_t *ld)
 void P_ApplyTorque(mobj_t *mo)
 {
   int xl = ((_g->tmbbox[BOXLEFT] =
-       mo->x - mo->radius) - bmaporgx) >> MAPBLOCKSHIFT;
+       mo->x - mo->radius) - _g->bmaporgx) >> MAPBLOCKSHIFT;
   int xh = ((_g->tmbbox[BOXRIGHT] =
-       mo->x + mo->radius) - bmaporgx) >> MAPBLOCKSHIFT;
+       mo->x + mo->radius) - _g->bmaporgx) >> MAPBLOCKSHIFT;
   int yl = ((_g->tmbbox[BOXBOTTOM] =
-       mo->y - mo->radius) - bmaporgy) >> MAPBLOCKSHIFT;
+       mo->y - mo->radius) - _g->bmaporgy) >> MAPBLOCKSHIFT;
   int yh = ((_g->tmbbox[BOXTOP] =
-       mo->y + mo->radius) - bmaporgy) >> MAPBLOCKSHIFT;
+       mo->y + mo->radius) - _g->bmaporgy) >> MAPBLOCKSHIFT;
   int bx,by,flags = mo->intflags; //Remember the current state, for gear-change
 
   _g->tmthing = mo;
@@ -1694,10 +1694,10 @@ void P_RadiusAttack(mobj_t* spot,mobj_t* source,int damage)
   fixed_t dist;
 
   dist = (damage+MAXRADIUS)<<FRACBITS;
-  yh = (spot->y + dist - bmaporgy)>>MAPBLOCKSHIFT;
-  yl = (spot->y - dist - bmaporgy)>>MAPBLOCKSHIFT;
-  xh = (spot->x + dist - bmaporgx)>>MAPBLOCKSHIFT;
-  xl = (spot->x - dist - bmaporgx)>>MAPBLOCKSHIFT;
+  yh = (spot->y + dist - _g->bmaporgy)>>MAPBLOCKSHIFT;
+  yl = (spot->y - dist - _g->bmaporgy)>>MAPBLOCKSHIFT;
+  xh = (spot->x + dist - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  xl = (spot->x - dist - _g->bmaporgx)>>MAPBLOCKSHIFT;
   _g->bombspot = spot;
   _g->bombsource = source;
   _g->bombdamage = damage;
@@ -2067,10 +2067,10 @@ void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
 
   validcount++; // used to make sure we only process a line once
 
-  xl = (_g->tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
-  xh = (_g->tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
-  yl = (_g->tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
-  yh = (_g->tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
+  xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy)>>MAPBLOCKSHIFT;
+  yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy)>>MAPBLOCKSHIFT;
 
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
@@ -2124,7 +2124,7 @@ void P_MapEnd(void) {
 static void SpechitOverrun(line_t *ld)
 {
   //int addr = 0x01C09C98 + (ld - lines) * 0x3E;
-    int addr = 0x00C09C98 + (ld - lines) * 0x3E;
+    int addr = 0x00C09C98 + (ld - _g->lines) * 0x3E;
 
     switch(_g->numspechit)
     {

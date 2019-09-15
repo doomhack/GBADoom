@@ -449,15 +449,15 @@ void R_Init (void)
 
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 {
-  int nodenum = numnodes-1;
+  int nodenum = _g->numnodes-1;
 
   // special case for trivial maps (single subsector, no nodes)
-  if (numnodes == 0)
-    return subsectors;
+  if (_g->numnodes == 0)
+    return _g->subsectors;
 
   while (!(nodenum & NF_SUBSECTOR))
-    nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
-  return &subsectors[nodenum & ~NF_SUBSECTOR];
+    nodenum = _g->nodes[nodenum].children[R_PointOnSide(x, y, _g->nodes+nodenum)];
+  return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
 //
@@ -489,7 +489,7 @@ static void R_SetupFrame (player_t *player)
 
   if (player->mo->subsector->sector->heightsec != -1)
     {
-      const sector_t *s = player->mo->subsector->sector->heightsec + sectors;
+      const sector_t *s = player->mo->subsector->sector->heightsec + _g->sectors;
       cm = viewz < s->floorheight ? s->bottommap : viewz > s->ceilingheight ?
         s->topmap : s->midmap;
       if (cm < 0 || cm > NUMCOLORMAPS)
@@ -561,7 +561,7 @@ void R_RenderPlayerView (player_t* player)
     }
 
   // The head node is the last node output.
-  R_RenderBSPNode (numnodes-1);
+  R_RenderBSPNode (_g->numnodes-1);
 
   R_DrawPlanes ();
 

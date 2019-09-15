@@ -311,14 +311,14 @@ void P_SetThingPosition(mobj_t *thing)
   if (!(thing->flags & MF_NOBLOCKMAP))
     {
       // inert things don't need to be in blockmap
-      int blockx = (thing->x - bmaporgx)>>MAPBLOCKSHIFT;
-      int blocky = (thing->y - bmaporgy)>>MAPBLOCKSHIFT;
-      if (blockx>=0 && blockx < bmapwidth && blocky>=0 && blocky < bmapheight)
+      int blockx = (thing->x - _g->bmaporgx)>>MAPBLOCKSHIFT;
+      int blocky = (thing->y - _g->bmaporgy)>>MAPBLOCKSHIFT;
+      if (blockx>=0 && blockx < _g->bmapwidth && blocky>=0 && blocky < _g->bmapheight)
         {
         // killough 8/11/98: simpler scheme using pointer-to-pointer prev
         // pointers, allows head nodes to be treated like everything else
 
-        mobj_t **link = &blocklinks[blocky*bmapwidth+blockx];
+        mobj_t **link = &_g->blocklinks[blocky*_g->bmapwidth+blockx];
         mobj_t *bnext = *link;
         if ((thing->bnext = bnext))
           bnext->bprev = &thing->bnext;
@@ -353,11 +353,11 @@ boolean P_BlockLinesIterator(int x, int y, boolean func(line_t*))
   int        offset;
   const long *list;   // killough 3/1/98: for removal of blockmap limit
 
-  if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
+  if (x<0 || y<0 || x>=_g->bmapwidth || y>=_g->bmapheight)
     return true;
-  offset = y*bmapwidth+x;
-  offset = *(blockmap+offset);
-  list = blockmaplump+offset;     // original was reading         // phares
+  offset = y*_g->bmapwidth+x;
+  offset = *(_g->blockmap+offset);
+  list = _g->blockmaplump+offset;     // original was reading         // phares
                                   // delmiting 0 as linedef 0     // phares
 
   // killough 1/31/98: for compatibility we need to use the old method.
@@ -367,7 +367,7 @@ boolean P_BlockLinesIterator(int x, int y, boolean func(line_t*))
     list++;     // skip 0 starting delimiter                      // phares
   for ( ; *list != -1 ; list++)                                   // phares
     {
-      line_t *ld = &lines[*list];
+      line_t *ld = &_g->lines[*list];
       if (ld->validcount == validcount)
         continue;       // line has already been checked
       ld->validcount = validcount;
@@ -385,8 +385,8 @@ boolean P_BlockLinesIterator(int x, int y, boolean func(line_t*))
 boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t*))
 {
   mobj_t *mobj;
-  if (!(x<0 || y<0 || x>=bmapwidth || y>=bmapheight))
-    for (mobj = blocklinks[y*bmapwidth+x]; mobj; mobj = mobj->bnext)
+  if (!(x<0 || y<0 || x>=_g->bmapwidth || y>=_g->bmapheight))
+    for (mobj = _g->blocklinks[y*_g->bmapwidth+x]; mobj; mobj = mobj->bnext)
       if (!func(mobj))
         return false;
   return true;
@@ -569,10 +569,10 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
   validcount++;
   intercept_p = intercepts;
 
-  if (!((x1-bmaporgx)&(MAPBLOCKSIZE-1)))
+  if (!((x1-_g->bmaporgx)&(MAPBLOCKSIZE-1)))
     x1 += FRACUNIT;     // don't side exactly on a line
 
-  if (!((y1-bmaporgy)&(MAPBLOCKSIZE-1)))
+  if (!((y1-_g->bmaporgy)&(MAPBLOCKSIZE-1)))
     y1 += FRACUNIT;     // don't side exactly on a line
 
   _g->trace.x = x1;
@@ -580,13 +580,13 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
   _g->trace.dx = x2 - x1;
   _g->trace.dy = y2 - y1;
 
-  x1 -= bmaporgx;
-  y1 -= bmaporgy;
+  x1 -= _g->bmaporgx;
+  y1 -= _g->bmaporgy;
   xt1 = x1>>MAPBLOCKSHIFT;
   yt1 = y1>>MAPBLOCKSHIFT;
 
-  x2 -= bmaporgx;
-  y2 -= bmaporgy;
+  x2 -= _g->bmaporgx;
+  y2 -= _g->bmaporgy;
   xt2 = x2>>MAPBLOCKSHIFT;
   yt2 = y2>>MAPBLOCKSHIFT;
 

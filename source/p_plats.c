@@ -207,7 +207,7 @@ int EV_DoPlat
   // act on all sectors tagged the same as the activating linedef
   while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
   {
-    sec = &sectors[secnum];
+    sec = &_g->sectors[secnum];
 
     // don't start a second floor function if already moving
     if (P_SectorActive(floor_special,sec)) //jff 2/23/98 multiple thinkers
@@ -235,7 +235,7 @@ int EV_DoPlat
     {
       case raiseToNearestAndChange:
         plat->speed = PLATSPEED/2;
-        sec->floorpic = sides[line->sidenum[0]].sector->floorpic;
+        sec->floorpic = _g->sides[line->sidenum[0]].sector->floorpic;
         plat->high = P_FindNextHighestFloor(sec,sec->floorheight);
         plat->wait = 0;
         plat->status = up;
@@ -248,7 +248,7 @@ int EV_DoPlat
 
       case raiseAndChange:
         plat->speed = PLATSPEED/2;
-        sec->floorpic = sides[line->sidenum[0]].sector->floorpic;
+        sec->floorpic = _g->sides[line->sidenum[0]].sector->floorpic;
         plat->high = sec->floorheight + amount*FRACUNIT;
         plat->wait = 0;
         plat->status = up;

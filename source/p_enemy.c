@@ -109,7 +109,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks,
       if (_g->openrange <= 0)
         continue;       // closed door
 
-      other=sides[check->sidenum[sides[check->sidenum[0]].sector==sec]].sector;
+      other=_g->sides[check->sidenum[_g->sides[check->sidenum[0]].sector==sec]].sector;
 
       if (!(check->flags & ML_SOUNDBLOCK))
         P_RecursiveSound(other, soundblocks, soundtarget);
@@ -263,7 +263,7 @@ static boolean P_IsOnLift(const mobj_t *actor)
   // Check to see if it's in a sector which can be activated as a lift.
   if ((line.tag = sec->tag))
     for (l = -1; (l = P_FindLineFromLineTag(&line, l)) >= 0;)
-      switch (lines[l].special)
+      switch (_g->lines[l].special)
   {
   case  10: case  14: case  15: case  20: case  21: case  22:
   case  47: case  53: case  62: case  66: case  67: case  68:
@@ -580,10 +580,10 @@ static boolean PIT_AvoidDropoff(line_t *line)
 
 static fixed_t P_AvoidDropoff(mobj_t *actor)
 {
-  int yh=((_g->tmbbox[BOXTOP]   = actor->y+actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
-  int yl=((_g->tmbbox[BOXBOTTOM]= actor->y-actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
-  int xh=((_g->tmbbox[BOXRIGHT] = actor->x+actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
-  int xl=((_g->tmbbox[BOXLEFT]  = actor->x-actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
+  int yh=((_g->tmbbox[BOXTOP]   = actor->y+actor->radius)-_g->bmaporgy)>>MAPBLOCKSHIFT;
+  int yl=((_g->tmbbox[BOXBOTTOM]= actor->y-actor->radius)-_g->bmaporgy)>>MAPBLOCKSHIFT;
+  int xh=((_g->tmbbox[BOXRIGHT] = actor->x+actor->radius)-_g->bmaporgx)>>MAPBLOCKSHIFT;
+  int xl=((_g->tmbbox[BOXLEFT]  = actor->x-actor->radius)-_g->bmaporgx)>>MAPBLOCKSHIFT;
   int bx, by;
 
   _g->floorz = actor->z;            // remember floor height
@@ -830,8 +830,8 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
 
   if (cap->cnext != cap)        // Empty list? bail out early
     {
-      int x = (actor->x - bmaporgx)>>MAPBLOCKSHIFT;
-      int y = (actor->y - bmaporgy)>>MAPBLOCKSHIFT;
+      int x = (actor->x - _g->bmaporgx)>>MAPBLOCKSHIFT;
+      int y = (actor->y - _g->bmaporgy)>>MAPBLOCKSHIFT;
       int d;
 
       _g->current_actor = actor;
@@ -1559,10 +1559,10 @@ void A_VileChase(mobj_t* actor)
       _g->viletryy =
         actor->y + actor->info->speed*yspeed[actor->movedir];
 
-      xl = (_g->viletryx - bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-      xh = (_g->viletryx - bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
-      yl = (_g->viletryy - bmaporgy - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-      yh = (_g->viletryy - bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
+      xl = (_g->viletryx - _g->bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
+      xh = (_g->viletryx - _g->bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
+      yl = (_g->viletryy - _g->bmaporgy - MAXRADIUS*2)>>MAPBLOCKSHIFT;
+      yh = (_g->viletryy - _g->bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
 
       for (bx=xl ; bx<=xh ; bx++)
         {

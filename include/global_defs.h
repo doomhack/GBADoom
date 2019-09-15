@@ -485,6 +485,79 @@ fixed_t bulletslope;
 
 byte *save_p;
 
+//******************************************************************************
+//p_setup.c
+//******************************************************************************
+
+
+//
+// MAP related Lookup tables.
+// Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
+//
+
+int      numvertexes;
+vertex_t *vertexes;
+
+int      numsegs;
+seg_t    *segs;
+
+int      numsectors;
+sector_t *sectors;
+
+int      numsubsectors;
+subsector_t *subsectors;
+
+int      numnodes;
+node_t   *nodes;
+
+int      numlines;
+line_t   *lines;
+
+int      numsides;
+side_t   *sides;
+
+// BLOCKMAP
+// Created from axis aligned bounding box
+// of the map, a rectangular array of
+// blocks of size ...
+// Used to speed up collision detection
+// by spatial subdivision in 2D.
+//
+// Blockmap size.
+
+int       bmapwidth, bmapheight;  // size in mapblocks
+
+// killough 3/1/98: remove blockmap limit internally:
+long      *blockmap;              // was short -- killough
+
+// offsets in blockmap are from here
+long      *blockmaplump;          // was short -- killough
+
+fixed_t   bmaporgx, bmaporgy;     // origin of block map
+
+mobj_t    **blocklinks;           // for thing chains
+
+//
+// REJECT
+// For fast sight rejection.
+// Speeds up enemy AI by skipping detailed
+//  LineOf Sight calculation.
+// Without the special effect, this could
+// be used as a PVS lookup as well.
+//
+
+int rejectlump;// cph - store reject lump num if cached
+const byte *rejectmatrix; // cph - const*
+
+// Maintain single and multi player starting spots.
+
+// 1/11/98 killough: Remove limit on deathmatch starts
+mapthing_t *deathmatchstarts;      // killough
+size_t     num_deathmatchstarts;   // killough
+
+mapthing_t *deathmatch_p;
+mapthing_t playerstarts[MAXPLAYERS];
+
 
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

@@ -40,6 +40,8 @@
 #include "dstrings.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 ///////////////////////////////////////////////////////////////
 //
 // Door action routines, called once per tick
@@ -348,7 +350,7 @@ int EV_DoDoor
   // open all doors with the same tag as the activating line
   while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
   {
-    sec = &sectors[secnum];
+    sec = &_g->sectors[secnum];
     // if the ceiling already moving, don't start the door action
     if (P_SectorActive(ceiling_special,sec)) //jff 2/22/98
         continue;
@@ -491,8 +493,8 @@ int EV_VerticalDoor
   }
 
   // get the sector on the second side of activating linedef
-  sec = sides[line->sidenum[1]].sector;
-  secnum = sec-sectors;
+  sec = _g->sides[line->sidenum[1]].sector;
+  secnum = sec-_g->sectors;
 
   /* if door already has a thinker, use it
    * cph 2001/04/05 -

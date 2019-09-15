@@ -843,7 +843,7 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
 //
 void G_DeathMatchSpawnPlayer (int playernum)
 {
-  int j, selections = deathmatch_p - deathmatchstarts;
+  int j, selections = _g->deathmatch_p - _g->deathmatchstarts;
 
   if (selections < MAXPLAYERS)
     I_Error("G_DeathMatchSpawnPlayer: Only %i deathmatch spots, %d required",
@@ -852,16 +852,16 @@ void G_DeathMatchSpawnPlayer (int playernum)
   for (j=0 ; j<20 ; j++)
     {
       int i = P_Random() % selections;
-      if (G_CheckSpot (playernum, &deathmatchstarts[i]) )
+      if (G_CheckSpot (playernum, &_g->deathmatchstarts[i]) )
         {
-          deathmatchstarts[i].type = playernum+1;
-          P_SpawnPlayer (playernum, &deathmatchstarts[i]);
+          _g->deathmatchstarts[i].type = playernum+1;
+          P_SpawnPlayer (playernum, &_g->deathmatchstarts[i]);
           return;
         }
     }
 
   // no good spot, so the player will probably get stuck
-  P_SpawnPlayer (playernum, &playerstarts[playernum]);
+  P_SpawnPlayer (playernum, &_g->playerstarts[playernum]);
 }
 
 //
@@ -1546,8 +1546,6 @@ void G_RecordDemo (const char* name)
 // byte(s) should still be skipped over or padded with 0's.
 // Lee Killough 3/1/98
 
-extern int forceOldBsp;
-
 byte *G_WriteOptions(byte *demo_p)
 {
   byte *target = demo_p + GAME_OPTION_SIZE;
@@ -1677,7 +1675,7 @@ const byte *G_ReadOptions(const byte *demo_p)
 
       demo_p++;
 
-      forceOldBsp = *demo_p++; // cph 2002/07/20
+      demo_p++; // cph 2002/07/20
 
   return target;
 }

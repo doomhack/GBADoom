@@ -43,15 +43,4 @@
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill);
 void P_Init(void);               /* Called by startup code. */
 
-extern const byte *rejectmatrix;   /* for fast sight rejection -  cph - const* */
-
-/* killough 3/1/98: change blockmap from "short" to "long" offsets: */
-extern long     *blockmaplump;   /* offsets in blockmap are from here */
-extern long     *blockmap;
-extern int      bmapwidth;
-extern int      bmapheight;      /* in mapblocks */
-extern fixed_t  bmaporgx;
-extern fixed_t  bmaporgy;        /* origin of block map */
-extern mobj_t   **blocklinks;    /* for thing chains */
-
 #endif

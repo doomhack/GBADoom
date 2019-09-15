@@ -195,9 +195,9 @@ void P_ChangeSwitchTexture
   short   *texture, *ttop, *tmid, *tbot;
   bwhere_e position;
 
-  ttop = &sides[line->sidenum[0]].toptexture;
-  tmid = &sides[line->sidenum[0]].midtexture;
-  tbot = &sides[line->sidenum[0]].bottomtexture;
+  ttop = &_g->sides[line->sidenum[0]].toptexture;
+  tmid = &_g->sides[line->sidenum[0]].midtexture;
+  tbot = &_g->sides[line->sidenum[0]].bottomtexture;
 
   sound = sfx_swtchn;
   /* use the sound origin of the linedef (its midpoint)

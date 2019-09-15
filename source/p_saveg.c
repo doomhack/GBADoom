@@ -118,14 +118,14 @@ void P_ArchiveWorld (void)
   // killough 10/98: adjust size for changes below
   size_t size =
     (sizeof(short)*5 + sizeof sec->floorheight + sizeof sec->ceilingheight)
-    * numsectors + sizeof(short)*3*numlines + 4;
+    * _g->numsectors + sizeof(short)*3*_g->numlines + 4;
 
-  for (i=0; i<numlines; i++)
+  for (i=0; i<_g->numlines; i++)
     {
-      if (lines[i].sidenum[0] != NO_INDEX)
+      if (_g->lines[i].sidenum[0] != NO_INDEX)
         size +=
     sizeof(short)*3 + sizeof si->textureoffset + sizeof si->rowoffset;
-      if (lines[i].sidenum[1] != NO_INDEX)
+      if (_g->lines[i].sidenum[1] != NO_INDEX)
   size +=
     sizeof(short)*3 + sizeof si->textureoffset + sizeof si->rowoffset;
     }
@@ -137,7 +137,7 @@ void P_ArchiveWorld (void)
   put = (short *)_g->save_p;
 
   // do sectors
-  for (i=0, sec = sectors ; i<numsectors ; i++,sec++)
+  for (i=0, sec = _g->sectors ; i<_g->numsectors ; i++,sec++)
     {
       // killough 10/98: save full floor & ceiling heights, including fraction
       memcpy(put, &sec->floorheight, sizeof sec->floorheight);
@@ -153,7 +153,7 @@ void P_ArchiveWorld (void)
     }
 
   // do lines
-  for (i=0, li = lines ; i<numlines ; i++,li++)
+  for (i=0, li = _g->lines ; i<_g->numlines ; i++,li++)
     {
       int j;
 
@@ -164,7 +164,7 @@ void P_ArchiveWorld (void)
       for (j=0; j<2; j++)
         if (li->sidenum[j] != NO_INDEX)
           {
-      si = &sides[li->sidenum[j]];
+      si = &_g->sides[li->sidenum[j]];
 
       // killough 10/98: save full sidedef offsets,
       // preserving fractional scroll offsets
@@ -199,7 +199,7 @@ void P_UnArchiveWorld (void)
   get = (short *) _g->save_p;
 
   // do sectors
-  for (i=0, sec = sectors ; i<numsectors ; i++,sec++)
+  for (i=0, sec = _g->sectors ; i<_g->numsectors ; i++,sec++)
     {
       // killough 10/98: load full floor & ceiling heights, including fractions
 
@@ -220,7 +220,7 @@ void P_UnArchiveWorld (void)
     }
 
   // do lines
-  for (i=0, li = lines ; i<numlines ; i++,li++)
+  for (i=0, li = _g->lines ; i<_g->numlines ; i++,li++)
     {
       int j;
 
@@ -230,7 +230,7 @@ void P_UnArchiveWorld (void)
       for (j=0 ; j<2 ; j++)
         if (li->sidenum[j] != NO_INDEX)
           {
-            side_t *si = &sides[li->sidenum[j]];
+            side_t *si = &_g->sides[li->sidenum[j]];
 
       // killough 10/98: load full sidedef offsets, including fractions
 
@@ -380,10 +380,10 @@ void P_ArchiveThinkers (void)
   // killough 9/14/98: save soundtargets
   {
     int i;
-    CheckSaveGame(numsectors * sizeof(mobj_t *));       // killough 9/14/98
-    for (i = 0; i < numsectors; i++)
+    CheckSaveGame(_g->numsectors * sizeof(mobj_t *));       // killough 9/14/98
+    for (i = 0; i < _g->numsectors; i++)
     {
-      mobj_t *target = sectors[i].soundtarget;
+      mobj_t *target = _g->sectors[i].soundtarget;
       // Fix crash on reload when a soundtarget points to a removed corpse
       // (prboom bug #1590350)
       if (target && target->thinker.function == P_MobjThinker)
@@ -537,13 +537,13 @@ void P_UnArchiveThinkers (void)
 
   {  // killough 9/14/98: restore soundtargets
     int i;
-    for (i = 0; i < numsectors; i++)
+    for (i = 0; i < _g->numsectors; i++)
     {
       mobj_t *target;
       memcpy(&target, _g->save_p, sizeof target);
       _g->save_p += sizeof target;
       // Must verify soundtarget. See P_ArchiveThinkers.
-      P_SetNewTarget(&sectors[i].soundtarget, mobj_p[P_GetMobj(target,size)]);
+      P_SetNewTarget(&_g->sectors[i].soundtarget, mobj_p[P_GetMobj(target,size)]);
     }
   }
 
@@ -664,7 +664,7 @@ void P_ArchiveSpecials (void)
           ceiling = (ceiling_t *)_g->save_p;
           memcpy (ceiling, th, sizeof(*ceiling));
           _g->save_p += sizeof(*ceiling);
-          ceiling->sector = (sector_t *)(ceiling->sector - sectors);
+          ceiling->sector = (sector_t *)(ceiling->sector - _g->sectors);
           continue;
         }
 
@@ -676,9 +676,9 @@ void P_ArchiveSpecials (void)
           door = (vldoor_t *) _g->save_p;
           memcpy (door, th, sizeof *door);
           _g->save_p += sizeof(*door);
-          door->sector = (sector_t *)(door->sector - sectors);
+          door->sector = (sector_t *)(door->sector - _g->sectors);
           //jff 1/31/98 archive line remembered by door as well
-          door->line = (line_t *) (door->line ? door->line-lines : -1);
+          door->line = (line_t *) (door->line ? door->line-_g->lines : -1);
           continue;
         }
 
@@ -690,7 +690,7 @@ void P_ArchiveSpecials (void)
           floor = (floormove_t *)_g->save_p;
           memcpy (floor, th, sizeof(*floor));
           _g->save_p += sizeof(*floor);
-          floor->sector = (sector_t *)(floor->sector - sectors);
+          floor->sector = (sector_t *)(floor->sector - _g->sectors);
           continue;
         }
 
@@ -703,7 +703,7 @@ void P_ArchiveSpecials (void)
           plat = (plat_t *)_g->save_p;
           memcpy (plat, th, sizeof(*plat));
           _g->save_p += sizeof(*plat);
-          plat->sector = (sector_t *)(plat->sector - sectors);
+          plat->sector = (sector_t *)(plat->sector - _g->sectors);
           continue;
         }
 
@@ -715,7 +715,7 @@ void P_ArchiveSpecials (void)
           flash = (lightflash_t *)_g->save_p;
           memcpy (flash, th, sizeof(*flash));
           _g->save_p += sizeof(*flash);
-          flash->sector = (sector_t *)(flash->sector - sectors);
+          flash->sector = (sector_t *)(flash->sector - _g->sectors);
           continue;
         }
 
@@ -727,7 +727,7 @@ void P_ArchiveSpecials (void)
           strobe = (strobe_t *)_g->save_p;
           memcpy (strobe, th, sizeof(*strobe));
           _g->save_p += sizeof(*strobe);
-          strobe->sector = (sector_t *)(strobe->sector - sectors);
+          strobe->sector = (sector_t *)(strobe->sector - _g->sectors);
           continue;
         }
 
@@ -739,7 +739,7 @@ void P_ArchiveSpecials (void)
           glow = (glow_t *)_g->save_p;
           memcpy (glow, th, sizeof(*glow));
           _g->save_p += sizeof(*glow);
-          glow->sector = (sector_t *)(glow->sector - sectors);
+          glow->sector = (sector_t *)(glow->sector - _g->sectors);
           continue;
         }
 
@@ -752,7 +752,7 @@ void P_ArchiveSpecials (void)
           flicker = (fireflicker_t *)_g->save_p;
           memcpy (flicker, th, sizeof(*flicker));
           _g->save_p += sizeof(*flicker);
-          flicker->sector = (sector_t *)(flicker->sector - sectors);
+          flicker->sector = (sector_t *)(flicker->sector - _g->sectors);
           continue;
         }
 
@@ -765,7 +765,7 @@ void P_ArchiveSpecials (void)
           elevator = (elevator_t *)_g->save_p;
           memcpy (elevator, th, sizeof(*elevator));
           _g->save_p += sizeof(*elevator);
-          elevator->sector = (sector_t *)(elevator->sector - sectors);
+          elevator->sector = (sector_t *)(elevator->sector - _g->sectors);
           continue;
         }
 
@@ -811,7 +811,7 @@ void P_UnArchiveSpecials (void)
           ceiling_t *ceiling = Z_Malloc (sizeof(*ceiling), PU_LEVEL, NULL);
           memcpy (ceiling, _g->save_p, sizeof(*ceiling));
           _g->save_p += sizeof(*ceiling);
-          ceiling->sector = &sectors[(int)ceiling->sector];
+          ceiling->sector = &_g->sectors[(int)ceiling->sector];
           ceiling->sector->ceilingdata = ceiling; //jff 2/22/98
 
           if (ceiling->thinker.function)
@@ -828,10 +828,10 @@ void P_UnArchiveSpecials (void)
           vldoor_t *door = Z_Malloc (sizeof(*door), PU_LEVEL, NULL);
           memcpy (door, _g->save_p, sizeof(*door));
           _g->save_p += sizeof(*door);
-          door->sector = &sectors[(int)door->sector];
+          door->sector = &_g->sectors[(int)door->sector];
 
           //jff 1/31/98 unarchive line remembered by door as well
-          door->line = (int)door->line!=-1? &lines[(int)door->line] : NULL;
+          door->line = (int)door->line!=-1? &_g->lines[(int)door->line] : NULL;
 
           door->sector->ceilingdata = door;       //jff 2/22/98
           door->thinker.function = T_VerticalDoor;
@@ -845,7 +845,7 @@ void P_UnArchiveSpecials (void)
           floormove_t *floor = Z_Malloc (sizeof(*floor), PU_LEVEL, NULL);
           memcpy (floor, _g->save_p, sizeof(*floor));
           _g->save_p += sizeof(*floor);
-          floor->sector = &sectors[(int)floor->sector];
+          floor->sector = &_g->sectors[(int)floor->sector];
           floor->sector->floordata = floor; //jff 2/22/98
           floor->thinker.function = T_MoveFloor;
           P_AddThinker (&floor->thinker);
@@ -858,7 +858,7 @@ void P_UnArchiveSpecials (void)
           plat_t *plat = Z_Malloc (sizeof(*plat), PU_LEVEL, NULL);
           memcpy (plat, _g->save_p, sizeof(*plat));
           _g->save_p += sizeof(*plat);
-          plat->sector = &sectors[(int)plat->sector];
+          plat->sector = &_g->sectors[(int)plat->sector];
           plat->sector->floordata = plat; //jff 2/22/98
 
           if (plat->thinker.function)
@@ -875,7 +875,7 @@ void P_UnArchiveSpecials (void)
           lightflash_t *flash = Z_Malloc (sizeof(*flash), PU_LEVEL, NULL);
           memcpy (flash, _g->save_p, sizeof(*flash));
           _g->save_p += sizeof(*flash);
-          flash->sector = &sectors[(int)flash->sector];
+          flash->sector = &_g->sectors[(int)flash->sector];
           flash->thinker.function = T_LightFlash;
           P_AddThinker (&flash->thinker);
           break;
@@ -887,7 +887,7 @@ void P_UnArchiveSpecials (void)
           strobe_t *strobe = Z_Malloc (sizeof(*strobe), PU_LEVEL, NULL);
           memcpy (strobe, _g->save_p, sizeof(*strobe));
           _g->save_p += sizeof(*strobe);
-          strobe->sector = &sectors[(int)strobe->sector];
+          strobe->sector = &_g->sectors[(int)strobe->sector];
           strobe->thinker.function = T_StrobeFlash;
           P_AddThinker (&strobe->thinker);
           break;
@@ -899,7 +899,7 @@ void P_UnArchiveSpecials (void)
           glow_t *glow = Z_Malloc (sizeof(*glow), PU_LEVEL, NULL);
           memcpy (glow, _g->save_p, sizeof(*glow));
           _g->save_p += sizeof(*glow);
-          glow->sector = &sectors[(int)glow->sector];
+          glow->sector = &_g->sectors[(int)glow->sector];
           glow->thinker.function = T_Glow;
           P_AddThinker (&glow->thinker);
           break;
@@ -911,7 +911,7 @@ void P_UnArchiveSpecials (void)
           fireflicker_t *flicker = Z_Malloc (sizeof(*flicker), PU_LEVEL, NULL);
           memcpy (flicker, _g->save_p, sizeof(*flicker));
           _g->save_p += sizeof(*flicker);
-          flicker->sector = &sectors[(int)flicker->sector];
+          flicker->sector = &_g->sectors[(int)flicker->sector];
           flicker->thinker.function = T_FireFlicker;
           P_AddThinker (&flicker->thinker);
           break;
@@ -924,7 +924,7 @@ void P_UnArchiveSpecials (void)
           elevator_t *elevator = Z_Malloc (sizeof(*elevator), PU_LEVEL, NULL);
           memcpy (elevator, _g->save_p, sizeof(*elevator));
           _g->save_p += sizeof(*elevator);
-          elevator->sector = &sectors[(int)elevator->sector];
+          elevator->sector = &_g->sectors[(int)elevator->sector];
           elevator->sector->floordata = elevator; //jff 2/22/98
           elevator->sector->ceilingdata = elevator; //jff 2/22/98
           elevator->thinker.function = T_MoveElevator;

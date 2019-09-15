@@ -95,21 +95,6 @@ extern const int displayplayer;
 
 extern  int leveltime;  // tics in game play for par
 
-//-----------------------------
-// Internal parameters, fixed.
-// These are set by the engine, and not changed
-//  according to user inputs. Partly load from
-//  WAD, partly set at startup time.
-
-extern  mapthing_t *deathmatchstarts;     // killough
-extern  size_t     num_deathmatchstarts; // killough
-
-extern  mapthing_t *deathmatch_p;
-
-// Player spawn spots.
-extern  mapthing_t playerstarts[];
-
-
 
 //-----------------------------------------
 // Internal parameters, used for engine.

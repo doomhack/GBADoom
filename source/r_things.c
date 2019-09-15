@@ -41,6 +41,8 @@
 #include "v_video.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 #define MINZ        (FRACUNIT*4)
 #define BASEYCENTER 100
 
@@ -548,14 +550,14 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   if (heightsec != -1)   // only clip things which are in special sectors
     {
       int phs = viewplayer->mo->subsector->sector->heightsec;
-      if (phs != -1 && viewz < sectors[phs].floorheight ?
-          fz >= sectors[heightsec].floorheight :
-          gzt < sectors[heightsec].floorheight)
+      if (phs != -1 && viewz < _g->sectors[phs].floorheight ?
+          fz >= _g->sectors[heightsec].floorheight :
+          gzt < _g->sectors[heightsec].floorheight)
         return;
-      if (phs != -1 && viewz > sectors[phs].ceilingheight ?
-          gzt < sectors[heightsec].ceilingheight &&
-          viewz >= sectors[heightsec].ceilingheight :
-          fz >= sectors[heightsec].ceilingheight)
+      if (phs != -1 && viewz > _g->sectors[phs].ceilingheight ?
+          gzt < _g->sectors[heightsec].ceilingheight &&
+          viewz >= _g->sectors[heightsec].ceilingheight :
+          fz >= _g->sectors[heightsec].ceilingheight)
         return;
     }
 
@@ -915,26 +917,26 @@ static void R_DrawSprite (vissprite_t* spr)
     {
       fixed_t h,mh;
       int phs = viewplayer->mo->subsector->sector->heightsec;
-      if ((mh = sectors[spr->heightsec].floorheight) > spr->gz &&
+      if ((mh = _g->sectors[spr->heightsec].floorheight) > spr->gz &&
           (h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
           (h >>= FRACBITS) < viewheight) {
-        if (mh <= 0 || (phs != -1 && viewz > sectors[phs].floorheight))
+        if (mh <= 0 || (phs != -1 && viewz > _g->sectors[phs].floorheight))
           {                          // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
               if (clipbot[x] == -2 || h < clipbot[x])
                 clipbot[x] = h;
           }
         else                        // clip top
-    if (phs != -1 && viewz <= sectors[phs].floorheight) // killough 11/98
+    if (phs != -1 && viewz <= _g->sectors[phs].floorheight) // killough 11/98
       for (x=spr->x1 ; x<=spr->x2 ; x++)
         if (cliptop[x] == -2 || h > cliptop[x])
     cliptop[x] = h;
       }
 
-      if ((mh = sectors[spr->heightsec].ceilingheight) < spr->gzt &&
+      if ((mh = _g->sectors[spr->heightsec].ceilingheight) < spr->gzt &&
           (h = centeryfrac - FixedMul(mh-viewz, spr->scale)) >= 0 &&
           (h >>= FRACBITS) < viewheight) {
-        if (phs != -1 && viewz >= sectors[phs].ceilingheight)
+        if (phs != -1 && viewz >= _g->sectors[phs].ceilingheight)
           {                         // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
               if (clipbot[x] == -2 || h < clipbot[x])

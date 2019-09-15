@@ -214,17 +214,17 @@ static void AM_findMinMaxBoundaries(void)
   _g->min_x = _g->min_y =  INT_MAX;
   _g->max_x = _g->max_y = -INT_MAX;
 
-  for (i=0;i<numvertexes;i++)
+  for (i=0;i<_g->numvertexes;i++)
   {
-    if (vertexes[i].x < _g->min_x)
-      _g->min_x = vertexes[i].x;
-    else if (vertexes[i].x > _g->max_x)
-      _g->max_x = vertexes[i].x;
+    if (_g->vertexes[i].x < _g->min_x)
+      _g->min_x = _g->vertexes[i].x;
+    else if (_g->vertexes[i].x > _g->max_x)
+      _g->max_x = _g->vertexes[i].x;
 
-    if (vertexes[i].y < _g->min_y)
-      _g->min_y = vertexes[i].y;
-    else if (vertexes[i].y > _g->max_y)
-      _g->max_y = vertexes[i].y;
+    if (_g->vertexes[i].y < _g->min_y)
+      _g->min_y = _g->vertexes[i].y;
+    else if (_g->vertexes[i].y > _g->max_y)
+      _g->max_y = _g->vertexes[i].y;
   }
 
   _g->max_w = (_g->max_x >>= FRACTOMAPBITS) - (_g->min_x >>= FRACTOMAPBITS);//e6y
@@ -789,9 +789,9 @@ static void AM_drawGrid(int color)
 
   // Figure out start of vertical gridlines
   start =  _g->m_x;
-  if ((start-bmaporgx)%(MAPBLOCKUNITS<<MAPBITS))//e6y
+  if ((start-_g->bmaporgx)%(MAPBLOCKUNITS<<MAPBITS))//e6y
     start += (MAPBLOCKUNITS<<MAPBITS)//e6y
-      - ((start-bmaporgx)%(MAPBLOCKUNITS<<MAPBITS));//e6y
+      - ((start-_g->bmaporgx)%(MAPBLOCKUNITS<<MAPBITS));//e6y
   end =  _g->m_x + _g->m_w;
 
   // draw vertical gridlines
@@ -806,9 +806,9 @@ static void AM_drawGrid(int color)
 
   // Figure out start of horizontal gridlines
   start =  _g->m_y;
-  if ((start-bmaporgy)%(MAPBLOCKUNITS<<MAPBITS))//e6y
+  if ((start-_g->bmaporgy)%(MAPBLOCKUNITS<<MAPBITS))//e6y
     start += (MAPBLOCKUNITS<<MAPBITS)//e6y
-      - ((start-bmaporgy)%(MAPBLOCKUNITS<<MAPBITS));//e6y
+      - ((start-_g->bmaporgy)%(MAPBLOCKUNITS<<MAPBITS));//e6y
   end =  _g->m_y + _g->m_h;
 
   // draw horizontal gridlines
@@ -884,12 +884,12 @@ static void AM_drawWalls(void)
   mline_t l;
 
   // draw the unclipped visible portions of all lines
-  for (i=0;i<numlines;i++)
+  for (i=0;i<_g->numlines;i++)
   {
-    l.a.x = lines[i].v1->x >> FRACTOMAPBITS;//e6y
-    l.a.y = lines[i].v1->y >> FRACTOMAPBITS;//e6y
-    l.b.x = lines[i].v2->x >> FRACTOMAPBITS;//e6y
-    l.b.y = lines[i].v2->y >> FRACTOMAPBITS;//e6y
+    l.a.x = _g->lines[i].v1->x >> FRACTOMAPBITS;//e6y
+    l.a.y = _g->lines[i].v1->y >> FRACTOMAPBITS;//e6y
+    l.b.x = _g->lines[i].v2->x >> FRACTOMAPBITS;//e6y
+    l.b.y = _g->lines[i].v2->y >> FRACTOMAPBITS;//e6y
 
     if (_g->automapmode & am_rotate) {
       AM_rotate(&l.a.x, &l.a.y, ANG90-_g->plr->mo->angle, _g->plr->mo->x, _g->plr->mo->y);
@@ -897,16 +897,16 @@ static void AM_drawWalls(void)
     }
 
     // if line has been seen or IDDT has been used
-    if (_g->ddt_cheating || (lines[i].flags & ML_MAPPED))
+    if (_g->ddt_cheating || (_g->lines[i].flags & ML_MAPPED))
     {
-      if ((lines[i].flags & ML_DONTDRAW) && !_g->ddt_cheating)
+      if ((_g->lines[i].flags & ML_DONTDRAW) && !_g->ddt_cheating)
         continue;
       {
         /* cph - show keyed doors and lines */
         int amd;
         if ((mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
-            !(lines[i].flags & ML_SECRET) &&    /* non-secret */
-          (amd = AM_DoorColor(lines[i].special)) != -1
+            !(_g->lines[i].flags & ML_SECRET) &&    /* non-secret */
+          (amd = AM_DoorColor(_g->lines[i].special)) != -1
         )
         {
           {
@@ -940,32 +940,32 @@ static void AM_drawWalls(void)
         (
           mapcolor_exit &&
           (
-            lines[i].special==11 ||
-            lines[i].special==52 ||
-            lines[i].special==197 ||
-            lines[i].special==51  ||
-            lines[i].special==124 ||
-            lines[i].special==198
+            _g->lines[i].special==11 ||
+            _g->lines[i].special==52 ||
+            _g->lines[i].special==197 ||
+            _g->lines[i].special==51  ||
+            _g->lines[i].special==124 ||
+            _g->lines[i].special==198
           )
         ) {
           AM_drawMline(&l, mapcolor_exit); /* exit line */
           continue;
         }
 
-      if (!lines[i].backsector)
+      if (!_g->lines[i].backsector)
       {
         // jff 1/10/98 add new color for 1S secret sector boundary
         if (mapcolor_secr && //jff 4/3/98 0 is disable
             (
              (
               map_secret_after &&
-              P_WasSecret(lines[i].frontsector) &&
-              !P_IsSecret(lines[i].frontsector)
+              P_WasSecret(_g->lines[i].frontsector) &&
+              !P_IsSecret(_g->lines[i].frontsector)
              )
              ||
              (
               !map_secret_after &&
-              P_WasSecret(lines[i].frontsector)
+              P_WasSecret(_g->lines[i].frontsector)
              )
             )
           )
@@ -978,23 +978,23 @@ static void AM_drawWalls(void)
         // jff 1/10/98 add color change for all teleporter types
         if
         (
-            mapcolor_tele && !(lines[i].flags & ML_SECRET) &&
-            (lines[i].special == 39 || lines[i].special == 97 ||
-            lines[i].special == 125 || lines[i].special == 126)
+            mapcolor_tele && !(_g->lines[i].flags & ML_SECRET) &&
+            (_g->lines[i].special == 39 || _g->lines[i].special == 97 ||
+            _g->lines[i].special == 125 || _g->lines[i].special == 126)
         )
         { // teleporters
           AM_drawMline(&l, mapcolor_tele);
         }
-        else if (lines[i].flags & ML_SECRET)    // secret door
+        else if (_g->lines[i].flags & ML_SECRET)    // secret door
         {
           AM_drawMline(&l, mapcolor_wall);      // wall color
         }
         else if
         (
             mapcolor_clsd &&
-            !(lines[i].flags & ML_SECRET) &&    // non-secret closed door
-            ((lines[i].backsector->floorheight==lines[i].backsector->ceilingheight) ||
-            (lines[i].frontsector->floorheight==lines[i].frontsector->ceilingheight))
+            !(_g->lines[i].flags & ML_SECRET) &&    // non-secret closed door
+            ((_g->lines[i].backsector->floorheight==_g->lines[i].backsector->ceilingheight) ||
+            (_g->lines[i].frontsector->floorheight==_g->lines[i].frontsector->ceilingheight))
         )
         {
           AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
@@ -1005,30 +1005,30 @@ static void AM_drawWalls(void)
             (                    // special was cleared after getting it
               (map_secret_after &&
                (
-                (P_WasSecret(lines[i].frontsector)
-                 && !P_IsSecret(lines[i].frontsector)) ||
-                (P_WasSecret(lines[i].backsector)
-                 && !P_IsSecret(lines[i].backsector))
+                (P_WasSecret(_g->lines[i].frontsector)
+                 && !P_IsSecret(_g->lines[i].frontsector)) ||
+                (P_WasSecret(_g->lines[i].backsector)
+                 && !P_IsSecret(_g->lines[i].backsector))
                )
               )
               ||  //jff 3/9/98 add logic to not show secret til after entered
               (   // if map_secret_after is true
                 !map_secret_after &&
-                 (P_WasSecret(lines[i].frontsector) ||
-                  P_WasSecret(lines[i].backsector))
+                 (P_WasSecret(_g->lines[i].frontsector) ||
+                  P_WasSecret(_g->lines[i].backsector))
               )
             )
         )
         {
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
         } //jff 1/6/98 end secret sector line change
-        else if (lines[i].backsector->floorheight !=
-                  lines[i].frontsector->floorheight)
+        else if (_g->lines[i].backsector->floorheight !=
+                  _g->lines[i].frontsector->floorheight)
         {
           AM_drawMline(&l, mapcolor_fchg); // floor level change
         }
-        else if (lines[i].backsector->ceilingheight !=
-                  lines[i].frontsector->ceilingheight)
+        else if (_g->lines[i].backsector->ceilingheight !=
+                  _g->lines[i].frontsector->ceilingheight)
         {
           AM_drawMline(&l, mapcolor_cchg); // ceiling level change
         }
@@ -1040,19 +1040,19 @@ static void AM_drawWalls(void)
     } // now draw the lines only visible because the player has computermap
     else if (_g->plr->powers[pw_allmap]) // computermap visible lines
     {
-      if (!(lines[i].flags & ML_DONTDRAW)) // invisible flag lines do not show
+      if (!(_g->lines[i].flags & ML_DONTDRAW)) // invisible flag lines do not show
       {
         if
         (
           mapcolor_flat
           ||
-          !lines[i].backsector
+          !_g->lines[i].backsector
           ||
-          lines[i].backsector->floorheight
-          != lines[i].frontsector->floorheight
+          _g->lines[i].backsector->floorheight
+          != _g->lines[i].frontsector->floorheight
           ||
-          lines[i].backsector->ceilingheight
-          != lines[i].frontsector->ceilingheight
+          _g->lines[i].backsector->ceilingheight
+          != _g->lines[i].frontsector->ceilingheight
         )
           AM_drawMline(&l, mapcolor_unsn);
       }
@@ -1167,9 +1167,9 @@ static void AM_drawThings(void)
   mobj_t* t;
 
   // for all sectors
-  for (i=0;i<numsectors;i++)
+  for (i=0;i<_g->numsectors;i++)
   {
-    t = sectors[i].thinglist;
+    t = _g->sectors[i].thinglist;
     while (t) // for all things in that sector
     {
       fixed_t x = t->x >> FRACTOMAPBITS, y = t->y >> FRACTOMAPBITS;//e6y

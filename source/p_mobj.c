@@ -1048,24 +1048,24 @@ void P_SpawnMapThing (const mapthing_t* mthing)
   // doom2.exe has at most 10 deathmatch starts
   if (mthing->type == 11)
     {
-    if (!(deathmatch_p-deathmatchstarts < 10)) {
+    if (!(_g->deathmatch_p-_g->deathmatchstarts < 10)) {
 		return;
 	} else {
     // 1/11/98 killough -- new code removes limit on deathmatch starts:
 
-    size_t offset = deathmatch_p - deathmatchstarts;
+    size_t offset = _g->deathmatch_p - _g->deathmatchstarts;
 
-    if (offset >= num_deathmatchstarts)
+    if (offset >= _g->num_deathmatchstarts)
       {
-      num_deathmatchstarts = num_deathmatchstarts ?
-                 num_deathmatchstarts*2 : 16;
-      deathmatchstarts = realloc(deathmatchstarts,
-                   num_deathmatchstarts *
-                   sizeof(*deathmatchstarts));
-      deathmatch_p = deathmatchstarts + offset;
+      _g->num_deathmatchstarts = _g->num_deathmatchstarts ?
+                 _g->num_deathmatchstarts*2 : 16;
+      _g->deathmatchstarts = realloc(_g->deathmatchstarts,
+                   _g->num_deathmatchstarts *
+                   sizeof(*_g->deathmatchstarts));
+      _g->deathmatch_p = _g->deathmatchstarts + offset;
       }
-    memcpy(deathmatch_p++, mthing, sizeof(*mthing));
-    (deathmatch_p-1)->options = 1;
+    memcpy(_g->deathmatch_p++, mthing, sizeof(*mthing));
+    (_g->deathmatch_p-1)->options = 1;
     return;
 	}
     }
@@ -1075,14 +1075,14 @@ void P_SpawnMapThing (const mapthing_t* mthing)
   if (mthing->type <= 4 && mthing->type > 0)  // killough 2/26/98 -- fix crashes
     {
     // save spots for respawning in coop games
-    playerstarts[mthing->type-1] = *mthing;
+    _g->playerstarts[mthing->type-1] = *mthing;
     /* cph 2006/07/24 - use the otherwise-unused options field to flag that
      * this start is present (so we know which elements of the array are filled
      * in, in effect). Also note that the call below to P_SpawnPlayer must use
      * the playerstarts version with this field set */
-    playerstarts[mthing->type-1].options = 1;
+    _g->playerstarts[mthing->type-1].options = 1;
 
-    P_SpawnPlayer (mthing->type-1, &playerstarts[mthing->type-1]);
+    P_SpawnPlayer (mthing->type-1, &_g->playerstarts[mthing->type-1]);
 
     return;
     }

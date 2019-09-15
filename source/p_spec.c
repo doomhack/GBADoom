@@ -237,7 +237,7 @@ side_t* getSide
   int           line,
   int           side )
 {
-  return &sides[ (sectors[currentSector].lines[line])->sidenum[side] ];
+  return &_g->sides[ (_g->sectors[currentSector].lines[line])->sidenum[side] ];
 }
 
 
@@ -255,7 +255,7 @@ sector_t* getSector
   int           line,
   int           side )
 {
-  return sides[ (sectors[currentSector].lines[line])->sidenum[side] ].sector;
+  return _g->sides[ (_g->sectors[currentSector].lines[line])->sidenum[side] ].sector;
 }
 
 
@@ -275,7 +275,7 @@ int twoSided
   //jff 1/26/98 return what is actually needed, whether the line
   //has two sidedefs, rather than whether the 2S flag is set
 
-  return (sectors[sector].lines[line])->sidenum[1] != NO_INDEX;
+  return (_g->sectors[sector].lines[line])->sidenum[1] != NO_INDEX;
 }
 
 
@@ -580,7 +580,7 @@ fixed_t P_FindShortestTextureAround(int secnum)
   int minsize = INT_MAX;
   side_t*     side;
   int i;
-  sector_t *sec = &sectors[secnum];
+  sector_t *sec = &_g->sectors[secnum];
 
     minsize = 32000<<FRACBITS; //jff 3/13/98 prevent overflow in height calcs
 
@@ -618,7 +618,7 @@ fixed_t P_FindShortestUpperAround(int secnum)
   int minsize = INT_MAX;
   side_t*     side;
   int i;
-  sector_t *sec = &sectors[secnum];
+  sector_t *sec = &_g->sectors[secnum];
 
     minsize = 32000<<FRACBITS; //jff 3/13/98 prevent overflow
                                // in height calcs
@@ -660,7 +660,7 @@ sector_t *P_FindModelFloorSector(fixed_t floordestheight,int secnum)
   sector_t *sec=NULL;
   int linecount;
 
-  sec = &sectors[secnum]; //jff 3/2/98 woops! better do this
+  sec = &_g->sectors[secnum]; //jff 3/2/98 woops! better do this
   //jff 5/23/98 don't disturb sec->linecount while searching
   // but allow early exit in old demos
   linecount = sec->linecount;
@@ -668,7 +668,7 @@ sector_t *P_FindModelFloorSector(fixed_t floordestheight,int secnum)
   {
     if ( twoSided(secnum, i) )
     {
-      if (getSide(secnum,i,0)->sector-sectors == secnum)
+      if (getSide(secnum,i,0)->sector-_g->sectors == secnum)
           sec = getSector(secnum,i,1);
       else
           sec = getSector(secnum,i,0);
@@ -702,7 +702,7 @@ sector_t *P_FindModelCeilingSector(fixed_t ceildestheight,int secnum)
   sector_t *sec=NULL;
   int linecount;
 
-  sec = &sectors[secnum]; //jff 3/2/98 woops! better do this
+  sec = &_g->sectors[secnum]; //jff 3/2/98 woops! better do this
   //jff 5/23/98 don't disturb sec->linecount while searching
   // but allow early exit in old demos
   linecount = sec->linecount;
@@ -710,7 +710,7 @@ sector_t *P_FindModelCeilingSector(fixed_t ceildestheight,int secnum)
   {
     if ( twoSided(secnum, i) )
     {
-      if (getSide(secnum,i,0)->sector-sectors == secnum)
+      if (getSide(secnum,i,0)->sector-_g->sectors == secnum)
           sec = getSector(secnum,i,1);
       else
           sec = getSector(secnum,i,0);
@@ -731,10 +731,10 @@ sector_t *P_FindModelCeilingSector(fixed_t ceildestheight,int secnum)
 
 int P_FindSectorFromLineTag(const line_t *line, int start)
 {
-  start = start >= 0 ? sectors[start].nexttag :
-    sectors[(unsigned) line->tag % (unsigned) numsectors].firsttag;
-  while (start >= 0 && sectors[start].tag != line->tag)
-    start = sectors[start].nexttag;
+  start = start >= 0 ? _g->sectors[start].nexttag :
+    _g->sectors[(unsigned) line->tag % (unsigned) _g->numsectors].firsttag;
+  while (start >= 0 && _g->sectors[start].tag != line->tag)
+    start = _g->sectors[start].nexttag;
   return start;
 }
 
@@ -742,10 +742,10 @@ int P_FindSectorFromLineTag(const line_t *line, int start)
 
 int P_FindLineFromLineTag(const line_t *line, int start)
 {
-  start = start >= 0 ? lines[start].nexttag :
-    lines[(unsigned) line->tag % (unsigned) numlines].firsttag;
-  while (start >= 0 && lines[start].tag != line->tag)
-    start = lines[start].nexttag;
+  start = start >= 0 ? _g->lines[start].nexttag :
+    _g->lines[(unsigned) line->tag % (unsigned) _g->numlines].firsttag;
+  while (start >= 0 && _g->lines[start].tag != line->tag)
+    start = _g->lines[start].nexttag;
   return start;
 }
 
@@ -754,24 +754,24 @@ static void P_InitTagLists(void)
 {
   register int i;
 
-  for (i=numsectors; --i>=0; )        // Initially make all slots empty.
-    sectors[i].firsttag = -1;
-  for (i=numsectors; --i>=0; )        // Proceed from last to first sector
+  for (i=_g->numsectors; --i>=0; )        // Initially make all slots empty.
+    _g->sectors[i].firsttag = -1;
+  for (i=_g->numsectors; --i>=0; )        // Proceed from last to first sector
     {                                 // so that lower sectors appear first
-      int j = (unsigned) sectors[i].tag % (unsigned) numsectors; // Hash func
-      sectors[i].nexttag = sectors[j].firsttag;   // Prepend sector to chain
-      sectors[j].firsttag = i;
+      int j = (unsigned) _g->sectors[i].tag % (unsigned) _g->numsectors; // Hash func
+      _g->sectors[i].nexttag = _g->sectors[j].firsttag;   // Prepend sector to chain
+      _g->sectors[j].firsttag = i;
     }
 
   // killough 4/17/98: same thing, only for linedefs
 
-  for (i=numlines; --i>=0; )        // Initially make all slots empty.
-    lines[i].firsttag = -1;
-  for (i=numlines; --i>=0; )        // Proceed from last to first linedef
+  for (i=_g->numlines; --i>=0; )        // Initially make all slots empty.
+    _g->lines[i].firsttag = -1;
+  for (i=_g->numlines; --i>=0; )        // Proceed from last to first linedef
     {                               // so that lower linedefs appear first
-      int j = (unsigned) lines[i].tag % (unsigned) numlines; // Hash func
-      lines[i].nexttag = lines[j].firsttag;   // Prepend linedef to chain
-      lines[j].firsttag = i;
+      int j = (unsigned) _g->lines[i].tag % (unsigned) _g->numlines; // Hash func
+      _g->lines[i].nexttag = _g->lines[j].firsttag;   // Prepend linedef to chain
+      _g->lines[j].firsttag = i;
     }
 }
 
@@ -2356,17 +2356,17 @@ void P_UpdateSpecials (void)
         switch(buttonlist[i].where)
         {
           case top:
-            sides[buttonlist[i].line->sidenum[0]].toptexture =
+            _g->sides[buttonlist[i].line->sidenum[0]].toptexture =
               buttonlist[i].btexture;
             break;
 
           case middle:
-            sides[buttonlist[i].line->sidenum[0]].midtexture =
+            _g->sides[buttonlist[i].line->sidenum[0]].midtexture =
               buttonlist[i].btexture;
             break;
 
           case bottom:
-            sides[buttonlist[i].line->sidenum[0]].bottomtexture =
+            _g->sides[buttonlist[i].line->sidenum[0]].bottomtexture =
               buttonlist[i].btexture;
             break;
         }
@@ -2412,8 +2412,8 @@ void P_SpawnSpecials (void)
   levelFragLimit = false;
 
   //  Init special sectors.
-  sector = sectors;
-  for (i=0 ; i<numsectors ; i++, sector++)
+  sector = _g->sectors;
+  for (i=0 ; i<_g->numsectors ; i++, sector++)
   {
     if (!sector->special)
       continue;
@@ -2499,33 +2499,33 @@ void P_SpawnSpecials (void)
 
   P_SpawnPushers();   // phares 3/20/98: New pusher model using linedefs
 
-  for (i=0; i<numlines; i++)
-    switch (lines[i].special)
+  for (i=0; i<_g->numlines; i++)
+    switch (_g->lines[i].special)
     {
       int s, sec;
 
       // killough 3/7/98:
       // support for drawn heights coming from different sector
       case 242:
-        sec = sides[*lines[i].sidenum].sector-sectors;
-        for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
-          sectors[s].heightsec = sec;
+        sec = _g->sides[*_g->lines[i].sidenum].sector-_g->sectors;
+        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
+          _g->sectors[s].heightsec = sec;
         break;
 
       // killough 3/16/98: Add support for setting
       // floor lighting independently (e.g. lava)
       case 213:
-        sec = sides[*lines[i].sidenum].sector-sectors;
-        for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
-          sectors[s].floorlightsec = sec;
+        sec = _g->sides[*_g->lines[i].sidenum].sector-_g->sectors;
+        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
+          _g->sectors[s].floorlightsec = sec;
         break;
 
       // killough 4/11/98: Add support for setting
       // ceiling lighting independently
       case 261:
-        sec = sides[*lines[i].sidenum].sector-sectors;
-        for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
-          sectors[s].ceilinglightsec = sec;
+        sec = _g->sides[*_g->lines[i].sidenum].sector-_g->sectors;
+        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
+          _g->sectors[s].ceilinglightsec = sec;
         break;
 
         // killough 10/98:
@@ -2539,8 +2539,8 @@ void P_SpawnSpecials (void)
 
       case 271:   // Regular sky
       case 272:   // Same, only flipped
-        for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
-          sectors[s].sky = i | PL_SKYFLAT;
+        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
+          _g->sectors[s].sky = i | PL_SKYFLAT;
         break;
    }
 }
@@ -2570,8 +2570,8 @@ void T_Scroll(scroll_t *s)
 
   if (s->control != -1)
     {   // compute scroll amounts based on a sector's height changes
-      fixed_t height = sectors[s->control].floorheight +
-        sectors[s->control].ceilingheight;
+      fixed_t height = _g->sectors[s->control].floorheight +
+        _g->sectors[s->control].ceilingheight;
       fixed_t delta = height - s->last_height;
       s->last_height = height;
       dx = FixedMul(dx, delta);
@@ -2597,19 +2597,19 @@ void T_Scroll(scroll_t *s)
       mobj_t *thing;
 
     case sc_side:                   // killough 3/7/98: Scroll wall texture
-        side = sides + s->affectee;
+        side = _g->sides + s->affectee;
         side->textureoffset += dx;
         side->rowoffset += dy;
         break;
 
     case sc_floor:                  // killough 3/7/98: Scroll floor texture
-        sec = sectors + s->affectee;
+        sec = _g->sectors + s->affectee;
         sec->floor_xoffs += dx;
         sec->floor_yoffs += dy;
         break;
 
     case sc_ceiling:               // killough 3/7/98: Scroll ceiling texture
-        sec = sectors + s->affectee;
+        sec = _g->sectors + s->affectee;
         sec->ceiling_xoffs += dx;
         sec->ceiling_yoffs += dy;
         break;
@@ -2621,11 +2621,11 @@ void T_Scroll(scroll_t *s)
       // killough 3/27/98: fix carrier bug
       // killough 4/4/98: Underwater, carry things even w/o gravity
 
-      sec = sectors + s->affectee;
+      sec = _g->sectors + s->affectee;
       height = sec->floorheight;
       waterheight = sec->heightsec != -1 &&
-        sectors[sec->heightsec].floorheight > height ?
-        sectors[sec->heightsec].floorheight : INT_MIN;
+        _g->sectors[sec->heightsec].floorheight > height ?
+        _g->sectors[sec->heightsec].floorheight : INT_MIN;
 
       for (node = sec->touching_thinglist; node; node = node->m_snext)
         if (!((thing = node->m_thing)->flags & MF_NOCLIP) &&
@@ -2674,7 +2674,7 @@ static void Add_Scroller(int type, fixed_t dx, fixed_t dy,
   s->vdx = s->vdy = 0;
   if ((s->control = control) != -1)
     s->last_height =
-      sectors[control].floorheight + sectors[control].ceilingheight;
+      _g->sectors[control].floorheight + _g->sectors[control].ceilingheight;
   s->affectee = affectee;
   P_AddThinker(&s->thinker);
 }
@@ -2716,9 +2716,9 @@ static void Add_WallScroller(fixed_t dx, fixed_t dy, const line_t *l,
 static void P_SpawnScrollers(void)
 {
   int i;
-  line_t *l = lines;
+  line_t *l = _g->lines;
 
-  for (i=0;i<numlines;i++,l++)
+  for (i=0;i<_g->numlines;i++,l++)
     {
       fixed_t dx = l->dx >> SCROLL_SHIFT;  // direction and speed of scrolling
       fixed_t dy = l->dy >> SCROLL_SHIFT;
@@ -2736,14 +2736,14 @@ static void P_SpawnScrollers(void)
       if (special >= 245 && special <= 249)         // displacement scrollers
         {
           special += 250-245;
-          control = sides[*l->sidenum].sector - sectors;
+          control = _g->sides[*l->sidenum].sector - _g->sectors;
         }
       else
         if (special >= 214 && special <= 218)       // accelerative scrollers
           {
             accel = 1;
             special += 250-214;
-            control = sides[*l->sidenum].sector - sectors;
+            control = _g->sides[*l->sidenum].sector - _g->sectors;
           }
 
       switch (special)
@@ -2774,21 +2774,21 @@ static void P_SpawnScrollers(void)
         case 254:
           for (s=-1; (s = P_FindLineFromLineTag(l,s)) >= 0;)
             if (s != i)
-              Add_WallScroller(dx, dy, lines+s, control, accel);
+              Add_WallScroller(dx, dy, _g->lines+s, control, accel);
           break;
 
         case 255:    // killough 3/2/98: scroll according to sidedef offsets
-          s = lines[i].sidenum[0];
-          Add_Scroller(sc_side, -sides[s].textureoffset,
-                       sides[s].rowoffset, -1, s, accel);
+          s = _g->lines[i].sidenum[0];
+          Add_Scroller(sc_side, -_g->sides[s].textureoffset,
+                       _g->sides[s].rowoffset, -1, s, accel);
           break;
 
         case 48:                  // scroll first side
-          Add_Scroller(sc_side,  FRACUNIT, 0, -1, lines[i].sidenum[0], accel);
+          Add_Scroller(sc_side,  FRACUNIT, 0, -1, _g->lines[i].sidenum[0], accel);
           break;
 
         case 85:                  // jff 1/30/98 2-way scroll
-          Add_Scroller(sc_side, -FRACUNIT, 0, -1, lines[i].sidenum[0], accel);
+          Add_Scroller(sc_side, -FRACUNIT, 0, -1, _g->lines[i].sidenum[0], accel);
           break;
         }
     }
@@ -2810,7 +2810,7 @@ void T_Friction(friction_t *f)
     mobj_t   *thing;
     msecnode_t* node;
 
-    sec = sectors + f->affectee;
+    sec = _g->sectors + f->affectee;
 
     // Be sure the special sector type is still turned on. If so, proceed.
     // Else, bail out; the sector type has been changed on us.
@@ -2902,16 +2902,16 @@ void T_Friction(friction_t *f)
 static void P_SpawnFriction(void)
 {
   int i;
-  line_t *l = lines;
+  line_t *l = _g->lines;
 
   // killough 8/28/98: initialize all sectors to normal friction first
-  for (i = 0; i < numsectors; i++)
+  for (i = 0; i < _g->numsectors; i++)
     {
-      sectors[i].friction = ORIG_FRICTION;
-      sectors[i].movefactor = ORIG_FRICTION_FACTOR;
+      _g->sectors[i].friction = ORIG_FRICTION;
+      _g->sectors[i].movefactor = ORIG_FRICTION_FACTOR;
     }
 
-  for (i = 0 ; i < numlines ; i++,l++)
+  for (i = 0 ; i < _g->numlines ; i++,l++)
     if (l->special == 223)
       {
         int length = P_AproxDistance(l->dx,l->dy)>>FRACBITS;
@@ -2947,8 +2947,8 @@ static void P_SpawnFriction(void)
             // drag on CPU. New code adjusts friction of sector only once
             // at level startup, and then uses this friction value.
 
-            sectors[s].friction = friction;
-            sectors[s].movefactor = movefactor;
+            _g->sectors[s].friction = friction;
+            _g->sectors[s].movefactor = movefactor;
           }
       }
 }
@@ -3103,7 +3103,7 @@ void T_Pusher(pusher_t *p)
     int radius;
     int ht = 0;
 
-    sec = sectors + p->affectee;
+    sec = _g->sectors + p->affectee;
 
     // Be sure the special sector type is still turned on. If so, proceed.
     // Else, bail out; the sector type has been changed on us.
@@ -3138,10 +3138,10 @@ void T_Pusher(pusher_t *p)
         _g->tmbbox[BOXRIGHT]  = p->x + radius;
         _g->tmbbox[BOXLEFT]   = p->x - radius;
 
-        xl = (_g->tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-        xh = (_g->tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-        yl = (_g->tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-        yh = (_g->tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+        xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
+        xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
+        yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
+        yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
         for (bx=xl ; bx<=xh ; bx++)
             for (by=yl ; by<=yh ; by++)
                 P_BlockThingsIterator(bx,by,PIT_PushThing);
@@ -3151,7 +3151,7 @@ void T_Pusher(pusher_t *p)
     // constant pushers p_wind and p_current
 
     if (sec->heightsec != -1) // special water sector?
-        ht = sectors[sec->heightsec].floorheight;
+        ht = _g->sectors[sec->heightsec].floorheight;
     node = sec->touching_thinglist; // things touching this sector
     for ( ; node ; node = node->m_snext)
         {
@@ -3221,7 +3221,7 @@ mobj_t* P_GetPushThing(int s)
     mobj_t* thing;
     sector_t* sec;
 
-    sec = sectors + s;
+    sec = _g->sectors + s;
     thing = sec->thinglist;
     while (thing)
         {
@@ -3246,11 +3246,11 @@ mobj_t* P_GetPushThing(int s)
 static void P_SpawnPushers(void)
     {
     int i;
-    line_t *l = lines;
+    line_t *l = _g->lines;
     register int s;
     mobj_t* thing;
 
-    for (i = 0 ; i < numlines ; i++,l++)
+    for (i = 0 ; i < _g->numlines ; i++,l++)
         switch(l->special)
             {
           case 224: // wind

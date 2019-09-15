@@ -38,6 +38,14 @@ _g->showMessages = 1;    // Show messages has default, 0 = off, 1 = on
 _g->screenblocks = 10;    // has default
 
 
+//******************************************************************************
+//p_setup.c
+//******************************************************************************
+
+
+_g->rejectlump = -1;// cph - store reject lump num if cached
+
+
 
 
 #endif // GLOBAL_INIT_H

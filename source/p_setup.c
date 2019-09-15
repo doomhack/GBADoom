@@ -53,134 +53,6 @@
 
 #include "global_data.h"
 
-//
-// MAP related Lookup tables.
-// Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
-//
-
-int      numvertexes;
-vertex_t *vertexes;
-
-int      numsegs;
-seg_t    *segs;
-
-int      numsectors;
-sector_t *sectors;
-
-int      numsubsectors;
-subsector_t *subsectors;
-
-int      numnodes;
-node_t   *nodes;
-
-int      numlines;
-line_t   *lines;
-
-int      numsides;
-side_t   *sides;
-
-
-////////////////////////////////////////////////////////////////////////////////////////////
-// figgi 08/21/00 -- constants and globals for glBsp support
-#define gNd2            0x32644E67  // figgi -- suppport for new GL_VERT format v2.0
-#define gNd3            0x33644E67
-#define gNd4            0x34644E67
-#define gNd5            0x35644E67
-#define ZNOD            0x444F4E5A
-#define ZGLN            0x4E4C475A
-#define GL_VERT_OFFSET  4
-
-int     firstglvertex = 0;
-int     nodesVersion  = 0;
-boolean forceOldBsp   = false;
-
-// figgi 08/21/00 -- glSegs
-typedef struct
-{
-  unsigned short  v1;    // start vertex    (16 bit)
-  unsigned short  v2;    // end vertex      (16 bit)
-  unsigned short  linedef; // linedef, or -1 for minisegs
-  short     side;  // side on linedef: 0 for right, 1 for left
-  unsigned short  partner; // corresponding partner seg, or -1 on one-sided walls
-} glseg_t;
-
-// fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
-typedef struct
-{
-  fixed_t x,y;
-} mapglvertex_t;
-
-enum
-{
-   ML_GL_LABEL=0,  // A separator name, GL_ExMx or GL_MAPxx
-   ML_GL_VERTS,     // Extra Vertices
-   ML_GL_SEGS,     // Segs, from linedefs & minisegs
-   ML_GL_SSECT,    // SubSectors, list of segs
-   ML_GL_NODES     // GL BSP nodes
-};
-////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// BLOCKMAP
-// Created from axis aligned bounding box
-// of the map, a rectangular array of
-// blocks of size ...
-// Used to speed up collision detection
-// by spatial subdivision in 2D.
-//
-// Blockmap size.
-
-int       bmapwidth, bmapheight;  // size in mapblocks
-
-// killough 3/1/98: remove blockmap limit internally:
-long      *blockmap;              // was short -- killough
-
-// offsets in blockmap are from here
-long      *blockmaplump;          // was short -- killough
-
-fixed_t   bmaporgx, bmaporgy;     // origin of block map
-
-mobj_t    **blocklinks;           // for thing chains
-
-//
-// REJECT
-// For fast sight rejection.
-// Speeds up enemy AI by skipping detailed
-//  LineOf Sight calculation.
-// Without the special effect, this could
-// be used as a PVS lookup as well.
-//
-
-static int rejectlump = -1;// cph - store reject lump num if cached
-const byte *rejectmatrix; // cph - const*
-
-// Maintain single and multi player starting spots.
-
-// 1/11/98 killough: Remove limit on deathmatch starts
-mapthing_t *deathmatchstarts;      // killough
-size_t     num_deathmatchstarts;   // killough
-
-mapthing_t *deathmatch_p;
-mapthing_t playerstarts[MAXPLAYERS];
-
-//
-// P_CheckForZDoomNodes
-//
-
-static boolean P_CheckForZDoomNodes(int lumpnum, int gl_lumpnum)
-{
-  const void *data;
-
-  data = W_CacheLumpNum(lumpnum + ML_NODES);
-  if (*(const int *)data == ZNOD)
-    I_Error("P_CheckForZDoomNodes: ZDoom nodes not supported yet");
-
-  data = W_CacheLumpNum(lumpnum + ML_SSECTORS);
-  if (*(const int *)data == ZGLN)
-    I_Error("P_CheckForZDoomNodes: ZDoom GL nodes not supported yet");
-
-  return false;
-}
 
 //
 // P_GetNodesVersion
@@ -188,38 +60,7 @@ static boolean P_CheckForZDoomNodes(int lumpnum, int gl_lumpnum)
 
 static void P_GetNodesVersion(int lumpnum, int gl_lumpnum)
 {
-  const void *data;
-
-  data = W_CacheLumpNum(gl_lumpnum+ML_GL_VERTS);
-  if ( (gl_lumpnum > lumpnum) && (forceOldBsp == false))
-  {
-    if (*(const int *)data == gNd2) {
-      data = W_CacheLumpNum(gl_lumpnum+ML_GL_SEGS);
-      if (*(const int *)data == gNd3) {
-        nodesVersion = gNd3;
-        lprintf(LO_DEBUG, "P_GetNodesVersion: found version 3 nodes\n");
-        I_Error("P_GetNodesVersion: version 3 nodes not supported\n");
-      } else {
-        nodesVersion = gNd2;
-        lprintf(LO_DEBUG, "P_GetNodesVersion: found version 2 nodes\n");
-      }
-    }
-    if (*(const int *)data == gNd4) {
-      nodesVersion = gNd4;
-      lprintf(LO_DEBUG, "P_GetNodesVersion: found version 4 nodes\n");
-      I_Error("P_GetNodesVersion: version 4 nodes not supported\n");
-    }
-    if (*(const int *)data == gNd5) {
-      nodesVersion = gNd5;
-      lprintf(LO_DEBUG, "P_GetNodesVersion: found version 5 nodes\n");
-      I_Error("P_GetNodesVersion: version 5 nodes not supported\n");
-    }
-  } else {
-    nodesVersion = 0;
     lprintf(LO_DEBUG,"P_GetNodesVersion: using normal BSP nodes\n");
-    if (P_CheckForZDoomNodes(lumpnum, gl_lumpnum))
-      I_Error("P_GetNodesVersion: ZDoom nodes not supported yet");
-  }
 }
 
 //
@@ -234,10 +75,10 @@ static void P_LoadVertexes (int lump)
 
   // Determine number of lumps:
   //  total lump length / vertex record length.
-  numvertexes = W_LumpLength(lump) / sizeof(mapvertex_t);
+  _g->numvertexes = W_LumpLength(lump) / sizeof(mapvertex_t);
 
   // Allocate zone memory for buffer.
-  vertexes = Z_Malloc(numvertexes*sizeof(vertex_t),PU_LEVEL,0);
+  _g->vertexes = Z_Malloc(_g->numvertexes*sizeof(vertex_t),PU_LEVEL,0);
 
   // Load data into cache.
   // cph 2006/07/29 - cast to mapvertex_t here, making the loop below much neater
@@ -245,104 +86,21 @@ static void P_LoadVertexes (int lump)
 
   // Copy and convert vertex coordinates,
   // internal representation as fixed.
-  for (i=0; i<numvertexes; i++)
+  for (i=0; i<_g->numvertexes; i++)
     {
-      vertexes[i].x = SHORT(data[i].x)<<FRACBITS;
-      vertexes[i].y = SHORT(data[i].y)<<FRACBITS;
+      _g->vertexes[i].x = SHORT(data[i].x)<<FRACBITS;
+      _g->vertexes[i].y = SHORT(data[i].y)<<FRACBITS;
     }
 
   // Free buffer memory.
   W_UnlockLumpNum(lump);
 }
 
-/*******************************************
- * Name     : P_LoadVertexes2        *
- * modified : 09/18/00, adapted for PrBoom *
- * author   : figgi              *
- * what   : support for gl nodes       *
- *******************************************/
-
-// figgi -- FIXME: Automap showes wrong zoom boundaries when starting game
-//           when P_LoadVertexes2 is used with classic BSP nodes.
-
-static void P_LoadVertexes2(int lump, int gllump)
-{
-  const byte         *gldata;
-  int                 i;
-  const mapvertex_t*  ml;
-
-  firstglvertex = W_LumpLength(lump) / sizeof(mapvertex_t);
-  numvertexes   = W_LumpLength(lump) / sizeof(mapvertex_t);
-
-  if (gllump >= 0)  // check for glVertices
-  {
-    gldata = W_CacheLumpNum(gllump);
-
-    if (nodesVersion == gNd2) // 32 bit GL_VERT format (16.16 fixed)
-    {
-      const mapglvertex_t*  mgl;
-
-      numvertexes += (W_LumpLength(gllump) - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
-      vertexes   = Z_Malloc (numvertexes*sizeof(vertex_t),PU_LEVEL,0);
-      mgl      = (const mapglvertex_t *) (gldata + GL_VERT_OFFSET);
-
-      for (i = firstglvertex; i < numvertexes; i++)
-      {
-        vertexes[i].x = mgl->x;
-        vertexes[i].y = mgl->y;
-        mgl++;
-      }
-    }
-    else
-    {
-      numvertexes += W_LumpLength(gllump)/sizeof(mapvertex_t);
-      vertexes     = Z_Malloc (numvertexes*sizeof(vertex_t),PU_LEVEL,0);
-      ml       = (const mapvertex_t *)gldata;
-
-      for (i = firstglvertex; i < numvertexes; i++)
-      {
-        vertexes[i].x = SHORT(ml->x)<<FRACBITS;
-        vertexes[i].y = SHORT(ml->y)<<FRACBITS;
-        ml++;
-      }
-    }
-    W_UnlockLumpNum(gllump);
-  }
-
-  ml = (const mapvertex_t*) W_CacheLumpNum(lump);
-
-  for (i=0; i < firstglvertex; i++)
-  {
-    vertexes[i].x = SHORT(ml->x)<<FRACBITS;
-    vertexes[i].y = SHORT(ml->y)<<FRACBITS;
-    ml++;
-  }
-  W_UnlockLumpNum(lump);
-}
-
-
-/*******************************************
- * created  : 08/13/00             *
- * modified : 09/18/00, adapted for PrBoom *
- * author   : figgi              *
- * what   : basic functions needed for   *
- *            computing  gl nodes      *
- *******************************************/
-
-static int checkGLVertex(int num)
-{
-  if (num & 0x8000)
-    num = (num&0x7FFF)+firstglvertex;
-  return num;
-}
-
-
 static float GetDistance(int dx, int dy)
 {
   float fx = (float)(dx)/FRACUNIT, fy = (float)(dy)/FRACUNIT;
   return (float)sqrt(fx*fx + fy*fy);
 }
-
 
 static int GetOffset(vertex_t *v1, vertex_t *v2)
 {
@@ -366,16 +124,16 @@ static void P_LoadSegs (int lump)
   int  i;
   const mapseg_t *data; // cph - const
 
-  numsegs = W_LumpLength(lump) / sizeof(mapseg_t);
-  segs = Z_Calloc(numsegs,sizeof(seg_t),PU_LEVEL,0);
+  _g->numsegs = W_LumpLength(lump) / sizeof(mapseg_t);
+  _g->segs = Z_Calloc(_g->numsegs,sizeof(seg_t),PU_LEVEL,0);
   data = (const mapseg_t *)W_CacheLumpNum(lump); // cph - wad lump handling updated
 
-  if ((!data) || (!numsegs))
+  if ((!data) || (!_g->numsegs))
     I_Error("P_LoadSegs: no segs in level");
 
-  for (i=0; i<numsegs; i++)
+  for (i=0; i<_g->numsegs; i++)
     {
-      seg_t *li = segs+i;
+      seg_t *li = _g->segs+i;
       const mapseg_t *ml = data + i;
       unsigned short v1, v2;
 
@@ -386,101 +144,36 @@ static void P_LoadSegs (int lump)
 
       v1 = (unsigned short)SHORT(ml->v1);
       v2 = (unsigned short)SHORT(ml->v2);
-      li->v1 = &vertexes[v1];
-      li->v2 = &vertexes[v2];
+      li->v1 = &_g->vertexes[v1];
+      li->v2 = &_g->vertexes[v2];
 
       li->miniseg = false; // figgi -- there are no minisegs in classic BSP nodes
       li->length  = GetDistance(li->v2->x - li->v1->x, li->v2->y - li->v1->y);
       li->angle = (SHORT(ml->angle))<<16;
       li->offset =(SHORT(ml->offset))<<16;
       linedef = (unsigned short)SHORT(ml->linedef);
-      ldef = &lines[linedef];
+      ldef = &_g->lines[linedef];
       li->linedef = ldef;
       side = SHORT(ml->side);
-      li->sidedef = &sides[ldef->sidenum[side]];
+      li->sidedef = &_g->sides[ldef->sidenum[side]];
 
       /* cph 2006/09/30 - our frontsector can be the second side of the
        * linedef, so must check for NO_INDEX in case we are incorrectly
        * referencing the back of a 1S line */
       if (ldef->sidenum[side] != NO_INDEX)
-        li->frontsector = sides[ldef->sidenum[side]].sector;
+        li->frontsector = _g->sides[ldef->sidenum[side]].sector;
       else {
         li->frontsector = 0;
         lprintf(LO_WARN, "P_LoadSegs: front of seg %i has no sidedef\n", i);
       }
 
       if (ldef->flags & ML_TWOSIDED && ldef->sidenum[side^1]!=NO_INDEX)
-        li->backsector = sides[ldef->sidenum[side^1]].sector;
+        li->backsector = _g->sides[ldef->sidenum[side^1]].sector;
       else
         li->backsector = 0;
     }
 
   W_UnlockLumpNum(lump); // cph - release the data
-}
-
-
-
-/*******************************************
- * Name     : P_LoadGLSegs           *
- * created  : 08/13/00             *
- * modified : 09/18/00, adapted for PrBoom *
- * author   : figgi              *
- * what   : support for gl nodes       *
- *******************************************/
-static void P_LoadGLSegs(int lump)
-{
-  int     i;
-  const glseg_t   *ml;
-  line_t    *ldef;
-
-  numsegs = W_LumpLength(lump) / sizeof(glseg_t);
-  segs = Z_Malloc(numsegs * sizeof(seg_t), PU_LEVEL, 0);
-  memset(segs, 0, numsegs * sizeof(seg_t));
-  ml = (const glseg_t*)W_CacheLumpNum(lump);
-
-  if ((!ml) || (!numsegs))
-    I_Error("P_LoadGLSegs: no glsegs in level");
-
-  for(i = 0; i < numsegs; i++)
-  {             // check for gl-vertices
-    segs[i].v1 = &vertexes[checkGLVertex(SHORT(ml->v1))];
-    segs[i].v2 = &vertexes[checkGLVertex(SHORT(ml->v2))];
-    segs[i].iSegID  = i;
-
-    if(ml->linedef != (unsigned short)-1) // skip minisegs
-    {
-      ldef = &lines[ml->linedef];
-      segs[i].linedef = ldef;
-      segs[i].miniseg = false;
-      segs[i].angle = R_PointToAngle2(segs[i].v1->x,segs[i].v1->y,segs[i].v2->x,segs[i].v2->y);
-
-      segs[i].sidedef = &sides[ldef->sidenum[ml->side]];
-      segs[i].length  = GetDistance(segs[i].v2->x - segs[i].v1->x, segs[i].v2->y - segs[i].v1->y);
-      segs[i].frontsector = sides[ldef->sidenum[ml->side]].sector;
-      if (ldef->flags & ML_TWOSIDED)
-        segs[i].backsector = sides[ldef->sidenum[ml->side^1]].sector;
-      else
-        segs[i].backsector = 0;
-
-      if (ml->side)
-        segs[i].offset = GetOffset(segs[i].v1, ldef->v2);
-      else
-        segs[i].offset = GetOffset(segs[i].v1, ldef->v1);
-    }
-    else
-    {
-      segs[i].miniseg = true;
-      segs[i].angle  = 0;
-      segs[i].offset  = 0;
-      segs[i].length  = 0;
-      segs[i].linedef = NULL;
-      segs[i].sidedef = NULL;
-      segs[i].frontsector = NULL;
-      segs[i].backsector  = NULL;
-    }
-    ml++;
-  }
-  W_UnlockLumpNum(lump);
 }
 
 //
@@ -494,17 +187,17 @@ static void P_LoadSubsectors (int lump)
   const mapsubsector_t *data;
   int  i;
 
-  numsubsectors = W_LumpLength (lump) / sizeof(mapsubsector_t);
-  subsectors = Z_Calloc(numsubsectors,sizeof(subsector_t),PU_LEVEL,0);
+  _g->numsubsectors = W_LumpLength (lump) / sizeof(mapsubsector_t);
+  _g->subsectors = Z_Calloc(_g->numsubsectors,sizeof(subsector_t),PU_LEVEL,0);
   data = (const mapsubsector_t *)W_CacheLumpNum(lump);
 
-  if ((!data) || (!numsubsectors))
+  if ((!data) || (!_g->numsubsectors))
     I_Error("P_LoadSubsectors: no subsectors in level");
 
-  for (i=0; i<numsubsectors; i++)
+  for (i=0; i<_g->numsubsectors; i++)
   {
-    subsectors[i].numlines  = (unsigned short)SHORT(data[i].numsegs );
-    subsectors[i].firstline = (unsigned short)SHORT(data[i].firstseg);
+    _g->subsectors[i].numlines  = (unsigned short)SHORT(data[i].numsegs );
+    _g->subsectors[i].firstline = (unsigned short)SHORT(data[i].firstseg);
   }
 
   W_UnlockLumpNum(lump); // cph - release the data
@@ -520,13 +213,13 @@ static void P_LoadSectors (int lump)
   const byte *data; // cph - const*
   int  i;
 
-  numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
-  sectors = Z_Calloc (numsectors,sizeof(sector_t),PU_LEVEL,0);
+  _g->numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
+  _g->sectors = Z_Calloc (_g->numsectors,sizeof(sector_t),PU_LEVEL,0);
   data = W_CacheLumpNum (lump); // cph - wad lump handling updated
 
-  for (i=0; i<numsectors; i++)
+  for (i=0; i<_g->numsectors; i++)
     {
-      sector_t *ss = sectors + i;
+      sector_t *ss = _g->sectors + i;
       const mapsector_t *ms = (const mapsector_t *) data + i;
 
       ss->iSectorID=i; // proff 04/05/2000: needed for OpenGL
@@ -577,23 +270,23 @@ static void P_LoadNodes (int lump)
   const byte *data; // cph - const*
   int  i;
 
-  numnodes = W_LumpLength (lump) / sizeof(mapnode_t);
-  nodes = Z_Malloc (numnodes*sizeof(node_t),PU_LEVEL,0);
+  _g->numnodes = W_LumpLength (lump) / sizeof(mapnode_t);
+  _g->nodes = Z_Malloc (_g->numnodes*sizeof(node_t),PU_LEVEL,0);
   data = W_CacheLumpNum (lump); // cph - wad lump handling updated
 
-  if ((!data) || (!numnodes))
+  if ((!data) || (!_g->numnodes))
   {
     // allow trivial maps
-    if (numsubsectors == 1)
+    if (_g->numsubsectors == 1)
       lprintf(LO_INFO,
           "P_LoadNodes: trivial map (no nodes, one subsector)\n");
     else
       I_Error("P_LoadNodes: no nodes in level");
   }
 
-  for (i=0; i<numnodes; i++)
+  for (i=0; i<_g->numnodes; i++)
     {
-      node_t *no = nodes + i;
+      node_t *no = _g->nodes + i;
       const mapnode_t *mn = (const mapnode_t *) data + i;
       int j;
 
@@ -667,21 +360,21 @@ static void P_LoadLineDefs (int lump)
   const byte *data; // cph - const*
   int  i;
 
-  numlines = W_LumpLength (lump) / sizeof(maplinedef_t);
-  lines = Z_Calloc (numlines,sizeof(line_t),PU_LEVEL,0);
+  _g->numlines = W_LumpLength (lump) / sizeof(maplinedef_t);
+  _g->lines = Z_Calloc (_g->numlines,sizeof(line_t),PU_LEVEL,0);
   data = W_CacheLumpNum (lump); // cph - wad lump handling updated
 
-  for (i=0; i<numlines; i++)
+  for (i=0; i<_g->numlines; i++)
     {
       const maplinedef_t *mld = (const maplinedef_t *) data + i;
-      line_t *ld = lines+i;
+      line_t *ld = _g->lines+i;
       vertex_t *v1, *v2;
 
       ld->flags = (unsigned short)SHORT(mld->flags);
       ld->special = SHORT(mld->special);
       ld->tag = SHORT(mld->tag);
-      v1 = ld->v1 = &vertexes[(unsigned short)SHORT(mld->v1)];
-      v2 = ld->v2 = &vertexes[(unsigned short)SHORT(mld->v2)];
+      v1 = ld->v1 = &_g->vertexes[(unsigned short)SHORT(mld->v1)];
+      v2 = ld->v2 = &_g->vertexes[(unsigned short)SHORT(mld->v2)];
       ld->dx = v2->x - v1->x;
       ld->dy = v2->y - v1->y;
 
@@ -729,9 +422,9 @@ static void P_LoadLineDefs (int lump)
         
         for (j=0; j < 2; j++)
         {
-          if (ld->sidenum[j] != NO_INDEX && ld->sidenum[j] >= numsides) {
+          if (ld->sidenum[j] != NO_INDEX && ld->sidenum[j] >= _g->numsides) {
             ld->sidenum[j] = NO_INDEX;
-            lprintf(LO_WARN, "P_LoadLineDefs: linedef %d has out-of-range sidedef number\n",numlines-i-1);
+            lprintf(LO_WARN, "P_LoadLineDefs: linedef %d has out-of-range sidedef number\n",_g->numlines-i-1);
           }
         }
         
@@ -740,19 +433,19 @@ static void P_LoadLineDefs (int lump)
         if (ld->sidenum[0] == NO_INDEX) {
           ld->sidenum[0] = 0;  // Substitute dummy sidedef for missing right side
           // cph - print a warning about the bug
-          lprintf(LO_WARN, "P_LoadLineDefs: linedef %d missing first sidedef\n",numlines-i-1);
+          lprintf(LO_WARN, "P_LoadLineDefs: linedef %d missing first sidedef\n",_g->numlines-i-1);
         }
         
         if ((ld->sidenum[1] == NO_INDEX) && (ld->flags & ML_TWOSIDED)) {
           ld->flags &= ~ML_TWOSIDED;  // Clear 2s flag for missing left side
           // cph - print a warning about the bug
-          lprintf(LO_WARN, "P_LoadLineDefs: linedef %d has two-sided flag set, but no second sidedef\n",numlines-i-1);
+          lprintf(LO_WARN, "P_LoadLineDefs: linedef %d has two-sided flag set, but no second sidedef\n",_g->numlines-i-1);
         }
       }
 
       // killough 4/4/98: support special sidedef interpretation below
       if (ld->sidenum[0] != NO_INDEX && ld->special)
-        sides[*ld->sidenum].special = ld->special;
+        _g->sides[*ld->sidenum].special = ld->special;
     }
 
   W_UnlockLumpNum(lump); // cph - release the lump
@@ -763,24 +456,24 @@ static void P_LoadLineDefs (int lump)
 
 static void P_LoadLineDefs2(int lump)
 {
-  int i = numlines;
-  register line_t *ld = lines;
+  int i = _g->numlines;
+  register line_t *ld = _g->lines;
   for (;i--;ld++)
     {
-      ld->frontsector = sides[ld->sidenum[0]].sector; //e6y: Can't be NO_INDEX here
-      ld->backsector  = ld->sidenum[1]!=NO_INDEX ? sides[ld->sidenum[1]].sector : 0;
+      ld->frontsector = _g->sides[ld->sidenum[0]].sector; //e6y: Can't be NO_INDEX here
+      ld->backsector  = ld->sidenum[1]!=NO_INDEX ? _g->sides[ld->sidenum[1]].sector : 0;
       switch (ld->special)
         {                       // killough 4/11/98: handle special types
           int lump, j;
 
         case 260:               // killough 4/11/98: translucent 2s textures
-            lump = sides[*ld->sidenum].special; // translucency from sidedef
+            lump = _g->sides[*ld->sidenum].special; // translucency from sidedef
             if (!ld->tag)                       // if tag==0,
               ld->tranlump = lump;              // affect this linedef only
             else
-              for (j=0;j<numlines;j++)          // if tag!=0,
-                if (lines[j].tag == ld->tag)    // affect all matching linedefs
-                  lines[j].tranlump = lump;
+              for (j=0;j<_g->numlines;j++)          // if tag!=0,
+                if (_g->lines[j].tag == ld->tag)    // affect all matching linedefs
+                  _g->lines[j].tranlump = lump;
             break;
         }
     }
@@ -793,8 +486,8 @@ static void P_LoadLineDefs2(int lump)
 
 static void P_LoadSideDefs (int lump)
 {
-  numsides = W_LumpLength(lump) / sizeof(mapsidedef_t);
-  sides = Z_Calloc(numsides,sizeof(side_t),PU_LEVEL,0);
+  _g->numsides = W_LumpLength(lump) / sizeof(mapsidedef_t);
+  _g->sides = Z_Calloc(_g->numsides,sizeof(side_t),PU_LEVEL,0);
 }
 
 // killough 4/4/98: delay using texture names until
@@ -806,10 +499,10 @@ static void P_LoadSideDefs2(int lump)
   const byte *data = W_CacheLumpNum(lump); // cph - const*, wad lump handling updated
   int  i;
 
-  for (i=0; i<numsides; i++)
+  for (i=0; i<_g->numsides; i++)
     {
       register const mapsidedef_t *msd = (const mapsidedef_t *) data + i;
-      register side_t *sd = sides + i;
+      register side_t *sd = _g->sides + i;
       register sector_t *sec;
 
       sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
@@ -817,11 +510,11 @@ static void P_LoadSideDefs2(int lump)
 
       { /* cph 2006/09/30 - catch out-of-range sector numbers; use sector 0 instead */
         unsigned short sector_num = SHORT(msd->sector);
-        if (sector_num >= numsectors) {
+        if (sector_num >= _g->numsectors) {
           lprintf(LO_WARN,"P_LoadSideDefs2: sidedef %i has out-of-range sector num %u\n", i, sector_num);
           sector_num = 0;
         }
-        sd->sector = sec = &sectors[sector_num];
+        sd->sector = sec = &_g->sectors[sector_num];
       }
 
       // killough 4/4/98: allow sidedef texture names to be overloaded
@@ -932,15 +625,15 @@ static void P_CreateBlockMap(void)
 
   // scan for map limits, which the blockmap must enclose
 
-  for (i=0;i<numvertexes;i++)
+  for (i=0;i<_g->numvertexes;i++)
   {
     fixed_t t;
 
-    if ((t=vertexes[i].x) < map_minx)
+    if ((t=_g->vertexes[i].x) < map_minx)
       map_minx = t;
     else if (t > map_maxx)
       map_maxx = t;
-    if ((t=vertexes[i].y) < map_miny)
+    if ((t=_g->vertexes[i].y) < map_miny)
       map_miny = t;
     else if (t > map_maxy)
       map_maxy = t;
@@ -981,12 +674,12 @@ static void P_CreateBlockMap(void)
   // For each linedef in the wad, determine all blockmap blocks it touches,
   // and add the linedef number to the blocklists for those blocks
 
-  for (i=0;i<numlines;i++)
+  for (i=0;i<_g->numlines;i++)
   {
-    int x1 = lines[i].v1->x>>FRACBITS;         // lines[i] map coords
-    int y1 = lines[i].v1->y>>FRACBITS;
-    int x2 = lines[i].v2->x>>FRACBITS;
-    int y2 = lines[i].v2->y>>FRACBITS;
+    int x1 = _g->lines[i].v1->x>>FRACBITS;         // lines[i] map coords
+    int y1 = _g->lines[i].v1->y>>FRACBITS;
+    int x2 = _g->lines[i].v2->x>>FRACBITS;
+    int y2 = _g->lines[i].v2->y>>FRACBITS;
     int dx = x2-x1;
     int dy = y2-y1;
     int vert = !dx;                            // lines[i] slopetype
@@ -1138,22 +831,22 @@ static void P_CreateBlockMap(void)
 
   // Create the blockmap lump
 
-  blockmaplump = Z_Malloc(sizeof(*blockmaplump) * (4+NBlocks+linetotal),
+  _g->blockmaplump = Z_Malloc(sizeof(*_g->blockmaplump) * (4+NBlocks+linetotal),
                           PU_LEVEL, 0);
   // blockmap header
 
-  blockmaplump[0] = bmaporgx = xorg << FRACBITS;
-  blockmaplump[1] = bmaporgy = yorg << FRACBITS;
-  blockmaplump[2] = bmapwidth  = ncols;
-  blockmaplump[3] = bmapheight = nrows;
+  _g->blockmaplump[0] = _g->bmaporgx = xorg << FRACBITS;
+  _g->blockmaplump[1] = _g->bmaporgy = yorg << FRACBITS;
+  _g->blockmaplump[2] = _g->bmapwidth  = ncols;
+  _g->blockmaplump[3] = _g->bmapheight = nrows;
 
   // offsets to lists and block lists
 
   for (i=0;i<NBlocks;i++)
   {
     linelist_t *bl = blocklists[i];
-    long offs = blockmaplump[4+i] =   // set offset to block's list
-      (i? blockmaplump[4+i-1] : 4+NBlocks) + (i? blockcount[i-1] : 0);
+    long offs = _g->blockmaplump[4+i] =   // set offset to block's list
+      (i? _g->blockmaplump[4+i-1] : 4+NBlocks) + (i? blockcount[i-1] : 0);
 
     // add the lines in each block's list to the blockmaplump
     // delete each list node as we go
@@ -1161,7 +854,7 @@ static void P_CreateBlockMap(void)
     while (bl)
     {
       linelist_t *tmp = bl->next;
-      blockmaplump[offs++] = bl->num;
+      _g->blockmaplump[offs++] = bl->num;
       free(bl);
       bl = tmp;
     }
@@ -1198,35 +891,35 @@ static void P_LoadBlockMap (int lump)
       long i;
       // cph - const*, wad lump handling updated
       const short *wadblockmaplump = W_CacheLumpNum(lump);
-      blockmaplump = Z_Malloc(sizeof(*blockmaplump) * count, PU_LEVEL, 0);
+      _g->blockmaplump = Z_Malloc(sizeof(*_g->blockmaplump) * count, PU_LEVEL, 0);
 
       // killough 3/1/98: Expand wad blockmap into larger internal one,
       // by treating all offsets except -1 as unsigned and zero-extending
       // them. This potentially doubles the size of blockmaps allowed,
       // because Doom originally considered the offsets as always signed.
 
-      blockmaplump[0] = SHORT(wadblockmaplump[0]);
-      blockmaplump[1] = SHORT(wadblockmaplump[1]);
-      blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & 0xffff;
-      blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & 0xffff;
+      _g->blockmaplump[0] = SHORT(wadblockmaplump[0]);
+      _g->blockmaplump[1] = SHORT(wadblockmaplump[1]);
+      _g->blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & 0xffff;
+      _g->blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & 0xffff;
 
       for (i=4 ; i<count ; i++)
         {
           short t = SHORT(wadblockmaplump[i]);          // killough 3/1/98
-          blockmaplump[i] = t == -1 ? -1l : (long) t & 0xffff;
+          _g->blockmaplump[i] = t == -1 ? -1l : (long) t & 0xffff;
         }
 
       W_UnlockLumpNum(lump); // cph - unlock the lump
 
-      bmaporgx = blockmaplump[0]<<FRACBITS;
-      bmaporgy = blockmaplump[1]<<FRACBITS;
-      bmapwidth = blockmaplump[2];
-      bmapheight = blockmaplump[3];
+      _g->bmaporgx = _g->blockmaplump[0]<<FRACBITS;
+      _g->bmaporgy = _g->blockmaplump[1]<<FRACBITS;
+      _g->bmapwidth = _g->blockmaplump[2];
+      _g->bmapheight = _g->blockmaplump[3];
     }
 
   // clear out mobj chains - CPhipps - use calloc
-  blocklinks = Z_Calloc (bmapwidth*bmapheight,sizeof(*blocklinks),PU_LEVEL,0);
-  blockmap = blockmaplump+4;
+  _g->blocklinks = Z_Calloc (_g->bmapwidth*_g->bmapheight,sizeof(*_g->blocklinks),PU_LEVEL,0);
+  _g->blockmap = _g->blockmaplump+4;
 }
 
 //
@@ -1246,13 +939,13 @@ static void P_LoadReject(int lumpnum, int totallines)
   byte *newreject;
 
   // dump any old cached reject lump, then cache the new one
-  if (rejectlump != -1)
-    W_UnlockLumpNum(rejectlump);
-  rejectlump = lumpnum + ML_REJECT;
-  rejectmatrix = W_CacheLumpNum(rejectlump);
+  if (_g->rejectlump != -1)
+    W_UnlockLumpNum(_g->rejectlump);
+  _g->rejectlump = lumpnum + ML_REJECT;
+  _g->rejectmatrix = W_CacheLumpNum(_g->rejectlump);
 
-  required = (numsectors * numsectors + 7) / 8;
-  length = W_LumpLength(rejectlump);
+  required = (_g->numsectors * _g->numsectors + 7) / 8;
+  length = W_LumpLength(_g->rejectlump);
 
   if (length >= required)
     return; // nothing to do
@@ -1260,11 +953,11 @@ static void P_LoadReject(int lumpnum, int totallines)
   // allocate a new block and copy the reject table into it; zero the rest
   // PU_LEVEL => will be freed on level exit
   newreject = Z_Malloc(required, PU_LEVEL, NULL);
-  rejectmatrix = (const byte *)memmove(newreject, rejectmatrix, length);
+  _g->rejectmatrix = (const byte *)memmove(newreject, _g->rejectmatrix, length);
   memset(newreject + length, 0, required - length);
   // unlock the original lump, it is no longer needed
-  W_UnlockLumpNum(rejectlump);
-  rejectlump = -1;
+  W_UnlockLumpNum(_g->rejectlump);
+  _g->rejectlump = -1;
 
   lprintf(LO_WARN, "P_LoadReject: REJECT too short (%u<%u) - padded\n",
           length, required);
@@ -1295,28 +988,28 @@ static int P_GroupLines (void)
 {
   register line_t *li;
   register sector_t *sector;
-  int i,j, total = numlines;
+  int i,j, total = _g->numlines;
 
   // figgi
-  for (i=0 ; i<numsubsectors ; i++)
+  for (i=0 ; i<_g->numsubsectors ; i++)
   {
-    seg_t *seg = &segs[subsectors[i].firstline];
-    subsectors[i].sector = NULL;
-    for(j=0; j<subsectors[i].numlines; j++)
+    seg_t *seg = &_g->segs[_g->subsectors[i].firstline];
+    _g->subsectors[i].sector = NULL;
+    for(j=0; j<_g->subsectors[i].numlines; j++)
     {
       if(seg->sidedef)
       {
-        subsectors[i].sector = seg->sidedef->sector;
+        _g->subsectors[i].sector = seg->sidedef->sector;
         break;
       }
       seg++;
     }
-    if(subsectors[i].sector == NULL)
+    if(_g->subsectors[i].sector == NULL)
       I_Error("P_GroupLines: Subsector a part of no sector!\n");
   }
 
   // count number of lines in each sector
-  for (i=0,li=lines; i<numlines; i++, li++)
+  for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
     {
       li->frontsector->linecount++;
       if (li->backsector && li->backsector != li->frontsector)
@@ -1332,7 +1025,7 @@ static int P_GroupLines (void)
     // e6y: REJECT overrun emulation code
     // moved to P_LoadReject
 
-    for (i=0, sector = sectors; i<numsectors; i++, sector++)
+    for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)
     {
       sector->lines = linebuffer;
       linebuffer += sector->linecount;
@@ -1342,14 +1035,14 @@ static int P_GroupLines (void)
   }
 
   // Enter those lines
-  for (i=0,li=lines; i<numlines; i++, li++)
+  for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
   {
     P_AddLineToSector(li, li->frontsector);
     if (li->backsector && li->backsector != li->frontsector)
       P_AddLineToSector(li, li->backsector);
   }
 
-  for (i=0, sector = sectors; i<numsectors; i++, sector++)
+  for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)
   {
     fixed_t *bbox = (void*)sector->blockbox; // cph - For convenience, so
                                   // I can sue the old code unchanged
@@ -1362,106 +1055,24 @@ static int P_GroupLines (void)
     }
 
     // adjust bounding box to map blocks
-    block = (bbox[BOXTOP]-bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;
-    block = block >= bmapheight ? bmapheight-1 : block;
+    block = (bbox[BOXTOP]-_g->bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;
+    block = block >= _g->bmapheight ? _g->bmapheight-1 : block;
     sector->blockbox[BOXTOP]=block;
 
-    block = (bbox[BOXBOTTOM]-bmaporgy-MAXRADIUS)>>MAPBLOCKSHIFT;
+    block = (bbox[BOXBOTTOM]-_g->bmaporgy-MAXRADIUS)>>MAPBLOCKSHIFT;
     block = block < 0 ? 0 : block;
     sector->blockbox[BOXBOTTOM]=block;
 
-    block = (bbox[BOXRIGHT]-bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
-    block = block >= bmapwidth ? bmapwidth-1 : block;
+    block = (bbox[BOXRIGHT]-_g->bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
+    block = block >= _g->bmapwidth ? _g->bmapwidth-1 : block;
     sector->blockbox[BOXRIGHT]=block;
 
-    block = (bbox[BOXLEFT]-bmaporgx-MAXRADIUS)>>MAPBLOCKSHIFT;
+    block = (bbox[BOXLEFT]-_g->bmaporgx-MAXRADIUS)>>MAPBLOCKSHIFT;
     block = block < 0 ? 0 : block;
     sector->blockbox[BOXLEFT]=block;
   }
 
   return total; // this value is needed by the reject overrun emulation code
-}
-
-//
-// killough 10/98
-//
-// Remove slime trails.
-//
-// Slime trails are inherent to Doom's coordinate system -- i.e. there is
-// nothing that a node builder can do to prevent slime trails ALL of the time,
-// because it's a product of the integer coodinate system, and just because
-// two lines pass through exact integer coordinates, doesn't necessarily mean
-// that they will intersect at integer coordinates. Thus we must allow for
-// fractional coordinates if we are to be able to split segs with node lines,
-// as a node builder must do when creating a BSP tree.
-//
-// A wad file does not allow fractional coordinates, so node builders are out
-// of luck except that they can try to limit the number of splits (they might
-// also be able to detect the degree of roundoff error and try to avoid splits
-// with a high degree of roundoff error). But we can use fractional coordinates
-// here, inside the engine. It's like the difference between square inches and
-// square miles, in terms of granularity.
-//
-// For each vertex of every seg, check to see whether it's also a vertex of
-// the linedef associated with the seg (i.e, it's an endpoint). If it's not
-// an endpoint, and it wasn't already moved, move the vertex towards the
-// linedef by projecting it using the law of cosines. Formula:
-//
-//      2        2                         2        2
-//    dx  x0 + dy  x1 + dx dy (y0 - y1)  dy  y0 + dx  y1 + dx dy (x0 - x1)
-//   {---------------------------------, ---------------------------------}
-//                  2     2                            2     2
-//                dx  + dy                           dx  + dy
-//
-// (x0,y0) is the vertex being moved, and (x1,y1)-(x1+dx,y1+dy) is the
-// reference linedef.
-//
-// Segs corresponding to orthogonal linedefs (exactly vertical or horizontal
-// linedefs), which comprise at least half of all linedefs in most wads, don't
-// need to be considered, because they almost never contribute to slime trails
-// (because then any roundoff error is parallel to the linedef, which doesn't
-// cause slime). Skipping simple orthogonal lines lets the code finish quicker.
-//
-// Please note: This section of code is not interchangable with TeamTNT's
-// code which attempts to fix the same problem.
-//
-// Firelines (TM) is a Rezistered Trademark of MBF Productions
-//
-
-static void P_RemoveSlimeTrails(void)         // killough 10/98
-{
-  byte *hit = calloc(1, numvertexes);         // Hitlist for vertices
-  int i;
-  for (i=0; i<numsegs; i++)                   // Go through each seg
-  {
-    const line_t *l;
-
-    if (segs[i].miniseg == true)        //figgi -- skip minisegs
-      return;
-
-    l = segs[i].linedef;            // The parent linedef
-    if (l->dx && l->dy)                     // We can ignore orthogonal lines
-    {
-    vertex_t *v = segs[i].v1;
-    do
-      if (!hit[v - vertexes])           // If we haven't processed vertex
-        {
-    hit[v - vertexes] = 1;        // Mark this vertex as processed
-    if (v != l->v1 && v != l->v2) // Exclude endpoints of linedefs
-      { // Project the vertex back onto the parent linedef
-        int_64_t dx2 = (l->dx >> FRACBITS) * (l->dx >> FRACBITS);
-        int_64_t dy2 = (l->dy >> FRACBITS) * (l->dy >> FRACBITS);
-        int_64_t dxy = (l->dx >> FRACBITS) * (l->dy >> FRACBITS);
-        int_64_t s = dx2 + dy2;
-        int x0 = v->x, y0 = v->y, x1 = l->v1->x, y1 = l->v1->y;
-        v->x = (int)((dx2 * x0 + dy2 * x1 + dxy * (y0 - y1)) / s);
-        v->y = (int)((dy2 * y0 + dx2 * y1 + dxy * (x0 - x1)) / s);
-      }
-        }  // Obsfucated C contest entry:   :)
-    while ((v != segs[i].v2) && (v = segs[i].v2));
-  }
-    }
-  free(hit);
 }
 
 //
@@ -1474,9 +1085,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   int   i;
   char  lumpname[9];
   int   lumpnum;
-
-  char  gl_lumpname[9];
-  int   gl_lumpnum;
 
   _g->totallive = _g->totalkills = _g->totalitems = _g->totalsecret = _g->wminfo.maxfrags = 0;
   _g->wminfo.partime = 180;
@@ -1491,9 +1099,9 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   S_Start();
 
   Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
-  if (rejectlump != -1) { // cph - unlock the reject table
-    W_UnlockLumpNum(rejectlump);
-    rejectlump = -1;
+  if (_g->rejectlump != -1) { // cph - unlock the reject table
+    W_UnlockLumpNum(_g->rejectlump);
+    _g->rejectlump = -1;
   }
 
   P_InitThinkers();
@@ -1505,16 +1113,13 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   if (_g->gamemode == commercial)
   {
     sprintf(lumpname, "map%02d", map);           // killough 1/24/98: simplify
-    sprintf(gl_lumpname, "gl_map%02d", map);    // figgi
   }
   else
   {
     sprintf(lumpname, "E%dM%d", episode, map);   // killough 1/24/98: simplify
-    sprintf(gl_lumpname, "GL_E%iM%i", episode, map); // figgi
   }
 
   lumpnum = W_GetNumForName(lumpname);
-  gl_lumpnum = W_CheckNumForName(gl_lumpname); // figgi
 
   leveltime = 0; _g->totallive = 0;
 
@@ -1529,14 +1134,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
       && !strncasecmp(lumpinfo[i].name, "BEHAVIOR", 8))
     I_Error("P_SetupLevel: %s: Hexen format not supported", lumpname);
 
-#if 1
   // figgi 10/19/00 -- check for gl lumps and load them
-  P_GetNodesVersion(lumpnum,gl_lumpnum);
+  P_GetNodesVersion(lumpnum,0);
 
-  if (nodesVersion > 0)
-    P_LoadVertexes2 (lumpnum+ML_VERTEXES,gl_lumpnum+ML_GL_VERTS);
-  else
-    P_LoadVertexes  (lumpnum+ML_VERTEXES);
+
+  P_LoadVertexes  (lumpnum+ML_VERTEXES);
   P_LoadSectors   (lumpnum+ML_SECTORS);
   P_LoadSideDefs  (lumpnum+ML_SIDEDEFS);
   P_LoadLineDefs  (lumpnum+ML_LINEDEFS);
@@ -1544,33 +1146,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);
   P_LoadBlockMap  (lumpnum+ML_BLOCKMAP);
 
-  if (nodesVersion > 0)
-  {
-    P_LoadSubsectors(gl_lumpnum + ML_GL_SSECT);
-    P_LoadNodes(gl_lumpnum + ML_GL_NODES);
-    P_LoadGLSegs(gl_lumpnum + ML_GL_SEGS);
-  }
-  else
-  {
+
     P_LoadSubsectors(lumpnum + ML_SSECTORS);
     P_LoadNodes(lumpnum + ML_NODES);
     P_LoadSegs(lumpnum + ML_SEGS);
-  }
-
-#else
-
-  P_LoadVertexes  (lumpnum+ML_VERTEXES);
-  P_LoadSectors   (lumpnum+ML_SECTORS);
-  P_LoadSideDefs  (lumpnum+ML_SIDEDEFS);             // killough 4/4/98
-  P_LoadLineDefs  (lumpnum+ML_LINEDEFS);             //       |
-  P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);             //       |
-  P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);             // killough 4/4/98
-  P_LoadBlockMap  (lumpnum+ML_BLOCKMAP);             // killough 3/1/98
-  P_LoadSubsectors(lumpnum+ML_SSECTORS);
-  P_LoadNodes     (lumpnum+ML_NODES);
-  P_LoadSegs      (lumpnum+ML_SEGS);
-
-#endif
 
   // reject loading and underflow padding separated out into new function
   // P_GroupLines modified to return a number the underflow padding needs
@@ -1582,8 +1161,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   _g->bodyqueslot = 0;
 
   /* cph - reset all multiplayer starts */
-  memset(playerstarts,0,sizeof(playerstarts));
-  deathmatch_p = deathmatchstarts;
+  memset(_g->playerstarts,0,sizeof(_g->playerstarts));
+  _g->deathmatch_p = _g->deathmatchstarts;
   for (i = 0; i < MAXPLAYERS; i++)
     _g->players[i].mo = NULL;
 

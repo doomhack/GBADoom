@@ -524,8 +524,8 @@ void R_PrecacheLevel(void)
 
   memset(hitlist, 0, numflats);
 
-  for (i = numsectors; --i >= 0; )
-    hitlist[sectors[i].floorpic] = hitlist[sectors[i].ceilingpic] = 1;
+  for (i = _g->numsectors; --i >= 0; )
+    hitlist[_g->sectors[i].floorpic] = hitlist[_g->sectors[i].ceilingpic] = 1;
 
   for (i = numflats; --i >= 0; )
     if (hitlist[i])
@@ -535,10 +535,10 @@ void R_PrecacheLevel(void)
 
   memset(hitlist, 0, numtextures);
 
-  for (i = numsides; --i >= 0;)
-    hitlist[sides[i].bottomtexture] =
-      hitlist[sides[i].toptexture] =
-      hitlist[sides[i].midtexture] = 1;
+  for (i = _g->numsides; --i >= 0;)
+    hitlist[_g->sides[i].bottomtexture] =
+      hitlist[_g->sides[i].toptexture] =
+      hitlist[_g->sides[i].midtexture] = 1;
 
   // Sky texture is always present.
   // Note that F_SKY1 is the name used to

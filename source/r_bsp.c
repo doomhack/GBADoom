@@ -204,17 +204,17 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 {
   if (floorlightlevel)
     *floorlightlevel = sec->floorlightsec == -1 ?
-      sec->lightlevel : sectors[sec->floorlightsec].lightlevel;
+      sec->lightlevel : _g->sectors[sec->floorlightsec].lightlevel;
 
   if (ceilinglightlevel)
     *ceilinglightlevel = sec->ceilinglightsec == -1 ? // killough 4/11/98
-      sec->lightlevel : sectors[sec->ceilinglightsec].lightlevel;
+      sec->lightlevel : _g->sectors[sec->ceilinglightsec].lightlevel;
 
   if (sec->heightsec != -1)
     {
-      const sector_t *s = &sectors[sec->heightsec];
+      const sector_t *s = &_g->sectors[sec->heightsec];
       int heightsec = viewplayer->mo->subsector->sector->heightsec;
-      int underwater = heightsec!=-1 && viewz<=sectors[heightsec].floorheight;
+      int underwater = heightsec!=-1 && viewz<=_g->sectors[heightsec].floorheight;
 
       // Replace sector being drawn, with a copy to be hacked
       *tempsec = *sec;
@@ -248,14 +248,14 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
           if (floorlightlevel)
             *floorlightlevel = s->floorlightsec == -1 ? s->lightlevel :
-            sectors[s->floorlightsec].lightlevel; // killough 3/16/98
+            _g->sectors[s->floorlightsec].lightlevel; // killough 3/16/98
 
           if (ceilinglightlevel)
             *ceilinglightlevel = s->ceilinglightsec == -1 ? s->lightlevel :
-            sectors[s->ceilinglightsec].lightlevel; // killough 4/11/98
+            _g->sectors[s->ceilinglightsec].lightlevel; // killough 4/11/98
         }
       else
-        if (heightsec != -1 && viewz >= sectors[heightsec].ceilingheight &&
+        if (heightsec != -1 && viewz >= _g->sectors[heightsec].ceilingheight &&
             sec->ceilingheight > s->ceilingheight)
           {   // Above-ceiling hack
             tempsec->ceilingheight = s->ceilingheight;
@@ -277,11 +277,11 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
             if (floorlightlevel)
               *floorlightlevel = s->floorlightsec == -1 ? s->lightlevel :
-              sectors[s->floorlightsec].lightlevel; // killough 3/16/98
+              _g->sectors[s->floorlightsec].lightlevel; // killough 3/16/98
 
             if (ceilinglightlevel)
               *ceilinglightlevel = s->ceilinglightsec == -1 ? s->lightlevel :
-              sectors[s->ceilinglightsec].lightlevel; // killough 4/11/98
+              _g->sectors[s->ceilinglightsec].lightlevel; // killough 4/11/98
           }
       sec = tempsec;               // Use other sector
     }
@@ -481,10 +481,10 @@ static void R_Subsector(int num)
     I_Error ("R_Subsector: ss %i with numss = %i", num, numsubsectors);
 #endif
 
-  sub = &subsectors[num];
+  sub = &_g->subsectors[num];
   frontsector = sub->sector;
   count = sub->numlines;
-  line = &segs[sub->firstline];
+  line = &_g->segs[sub->firstline];
 
   // killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
   frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
@@ -496,7 +496,7 @@ static void R_Subsector(int num)
 
   floorplane = frontsector->floorheight < viewz || // killough 3/7/98
     (frontsector->heightsec != -1 &&
-     sectors[frontsector->heightsec].ceilingpic == skyflatnum) ?
+     _g->sectors[frontsector->heightsec].ceilingpic == skyflatnum) ?
     R_FindPlane(frontsector->floorheight,
                 frontsector->floorpic == skyflatnum &&  // kilough 10/98
                 frontsector->sky & PL_SKYFLAT ? frontsector->sky :
@@ -509,7 +509,7 @@ static void R_Subsector(int num)
   ceilingplane = frontsector->ceilingheight > viewz ||
     frontsector->ceilingpic == skyflatnum ||
     (frontsector->heightsec != -1 &&
-     sectors[frontsector->heightsec].floorpic == skyflatnum) ?
+     _g->sectors[frontsector->heightsec].floorpic == skyflatnum) ?
     R_FindPlane(frontsector->ceilingheight,     // killough 3/8/98
                 frontsector->ceilingpic == skyflatnum &&  // kilough 10/98
                 frontsector->sky & PL_SKYFLAT ? frontsector->sky :
@@ -554,7 +554,7 @@ void R_RenderBSPNode(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
     {
-      const node_t *bsp = &nodes[bspnum];
+      const node_t *bsp = &_g->nodes[bspnum];
 
       // Decide which side the view point is on.
       int side = R_PointOnSide(viewx, viewy, bsp);

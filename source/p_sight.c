@@ -39,6 +39,8 @@
 #include "m_bbox.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 //
 // P_CheckSight
 //
@@ -81,7 +83,7 @@ inline static int P_DivlineSide(fixed_t x, fixed_t y, const divline_t *node)
 
 static boolean P_CrossSubsector(int num)
 {
-  seg_t *seg = segs + subsectors[num].firstline;
+  seg_t *seg = _g->segs + _g->subsectors[num].firstline;
   int count;
   fixed_t opentop = 0, openbottom = 0;
   const sector_t *front = NULL, *back = NULL;
@@ -91,7 +93,7 @@ static boolean P_CrossSubsector(int num)
     I_Error("P_CrossSubsector: ss %i with numss = %i", num, numsubsectors);
 #endif
 
-  for (count = subsectors[num].numlines; --count >= 0; seg++) { // check lines
+  for (count = _g->subsectors[num].numlines; --count >= 0; seg++) { // check lines
     line_t *line = seg->linedef;
     divline_t divl;
 
@@ -202,7 +204,7 @@ static boolean P_CrossBSPNode_LxDoom(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))
     {
-      register const node_t *bsp = nodes + bspnum;
+      register const node_t *bsp = _g->nodes + bspnum;
       int side,side2;
       side = R_PointOnSide(los.strace.x, los.strace.y, bsp);
       side2 = R_PointOnSide(los.t2x, los.t2y, bsp);
@@ -221,7 +223,7 @@ static boolean P_CrossBSPNode_PrBoom(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))
     {
-      register const node_t *bsp = nodes + bspnum;
+      register const node_t *bsp = _g->nodes + bspnum;
       int side,side2;
       side = P_DivlineSide(los.strace.x,los.strace.y,(const divline_t *)bsp)&1;
       side2= P_DivlineSide(los.t2x, los.t2y, (const divline_t *) bsp);
@@ -256,29 +258,29 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
 {
   const sector_t *s1 = t1->subsector->sector;
   const sector_t *s2 = t2->subsector->sector;
-  int pnum = (s1-sectors)*numsectors + (s2-sectors);
+  int pnum = (s1-_g->sectors)*_g->numsectors + (s2-_g->sectors);
 
   // First check for trivial rejection.
   // Determine subsector entries in REJECT table.
   //
   // Check in REJECT table.
 
-  if (rejectmatrix[pnum>>3] & (1 << (pnum&7)))   // can't possibly be connected
+  if (_g->rejectmatrix[pnum>>3] & (1 << (pnum&7)))   // can't possibly be connected
     return false;
 
   // killough 4/19/98: make fake floors and ceilings block monster view
 
   if ((s1->heightsec != -1 &&
-       ((t1->z + t1->height <= sectors[s1->heightsec].floorheight &&
-         t2->z >= sectors[s1->heightsec].floorheight) ||
-        (t1->z >= sectors[s1->heightsec].ceilingheight &&
-         t2->z + t1->height <= sectors[s1->heightsec].ceilingheight)))
+       ((t1->z + t1->height <= _g->sectors[s1->heightsec].floorheight &&
+         t2->z >= _g->sectors[s1->heightsec].floorheight) ||
+        (t1->z >= _g->sectors[s1->heightsec].ceilingheight &&
+         t2->z + t1->height <= _g->sectors[s1->heightsec].ceilingheight)))
       ||
       (s2->heightsec != -1 &&
-       ((t2->z + t2->height <= sectors[s2->heightsec].floorheight &&
-         t1->z >= sectors[s2->heightsec].floorheight) ||
-        (t2->z >= sectors[s2->heightsec].ceilingheight &&
-         t1->z + t2->height <= sectors[s2->heightsec].ceilingheight))))
+       ((t2->z + t2->height <= _g->sectors[s2->heightsec].floorheight &&
+         t1->z >= _g->sectors[s2->heightsec].floorheight) ||
+        (t2->z >= _g->sectors[s2->heightsec].ceilingheight &&
+         t1->z + t2->height <= _g->sectors[s2->heightsec].ceilingheight))))
     return false;
 
   /* killough 11/98: shortcut for melee situations
@@ -312,5 +314,5 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
     los.maxz = INT_MAX; los.minz = INT_MIN;
 
   // the head node is the last node output
-  return P_CrossBSPNode(numnodes-1);
+  return P_CrossBSPNode(_g->numnodes-1);
 }

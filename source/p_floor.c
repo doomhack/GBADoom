@@ -40,6 +40,8 @@
 #include "s_sound.h"
 #include "sounds.h"
 
+#include "global_data.h"
+
 ///////////////////////////////////////////////////////////////////////
 //
 // Plane (floor or ceiling), Floor motion and Elevator action routines
@@ -298,19 +300,19 @@ void T_MoveFloor(floormove_t* floor)
       sector_t *sec = floor->sector;
       sec->stairlock=-1;              // thinker done, promote lock to -1
 
-      while (sec->prevsec!=-1 && sectors[sec->prevsec].stairlock!=-2)
-        sec = &sectors[sec->prevsec]; // search for a non-done thinker
+      while (sec->prevsec!=-1 && _g->sectors[sec->prevsec].stairlock!=-2)
+        sec = &_g->sectors[sec->prevsec]; // search for a non-done thinker
       if (sec->prevsec==-1)           // if all thinkers previous are done
       {
         sec = floor->sector;          // search forward
-        while (sec->nextsec!=-1 && sectors[sec->nextsec].stairlock!=-2)
-          sec = &sectors[sec->nextsec];
+        while (sec->nextsec!=-1 && _g->sectors[sec->nextsec].stairlock!=-2)
+          sec = &_g->sectors[sec->nextsec];
         if (sec->nextsec==-1)         // if all thinkers ahead are done too
         {
           while (sec->prevsec!=-1)    // clear all locks
           {
             sec->stairlock = 0;
-            sec = &sectors[sec->prevsec];
+            sec = &_g->sectors[sec->prevsec];
           }
           sec->stairlock = 0;
         }
@@ -427,7 +429,7 @@ int EV_DoFloor
   // move all floors with the same tag as the linedef
   while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
   {
-    sec = &sectors[secnum];
+    sec = &_g->sectors[secnum];
 
     // Don't start a second thinker on the same floor
     if (P_SectorActive(floor_special,sec)) //jff 2/23/98
@@ -605,7 +607,7 @@ int EV_DoFloor
         floor->oldspecial = sec->oldspecial;
 
         //jff 5/23/98 use model subroutine to unify fixes and handling
-        sec = P_FindModelFloorSector(floor->floordestheight,sec-sectors);
+        sec = P_FindModelFloorSector(floor->floordestheight,sec-_g->sectors);
         if (sec)
         {
           floor->texture = sec->floorpic;
@@ -646,7 +648,7 @@ int EV_DoChange
   // change all sectors with the same tag as the linedef
   while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
   {
-    sec = &sectors[secnum];
+    sec = &_g->sectors[secnum];
 
     rtn = 1;
 
@@ -723,7 +725,7 @@ int EV_BuildStairs
   while ((ssec = P_FindSectorFromLineTagWithLowerBound(line,ssec,minssec)) >= 0)
   {
    int           secnum = ssec;
-   sector_t*     sec = &sectors[secnum];
+   sector_t*     sec = &_g->sectors[secnum];
 
     // don't start a stair if the first step's floor is already moving
    if (!P_SectorActive(floor_special,sec)) { //jff 2/22/98
@@ -781,14 +783,14 @@ int EV_BuildStairs
         if ( !((sec->lines[i])->flags & ML_TWOSIDED) )
           continue;
 
-        newsecnum = tsec-sectors;
+        newsecnum = tsec-_g->sectors;
 
         if (secnum != newsecnum)
           continue;
 
         tsec = (sec->lines[i])->backsector;
         if (!tsec) continue;     //jff 5/7/98 if no backside, continue
-        newsecnum = tsec - sectors;
+        newsecnum = tsec - _g->sectors;
 
         // if sector's floor is different texture, look for another
         if (tsec->floorpic != texture)
@@ -851,7 +853,7 @@ int EV_DoDonut(line_t*  line)
   // do function on all sectors with same tag as linedef
   while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
   {
-    s1 = &sectors[secnum];                // s1 is pillar's sector
+    s1 = &_g->sectors[secnum];                // s1 is pillar's sector
 
     // do not start the donut if the pillar is already moving
     if (P_SectorActive(floor_special,s1)) //jff 2/22/98
@@ -932,7 +934,7 @@ int EV_DoElevator
   // act on all sectors with the same tag as the triggering linedef
   while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
   {
-    sec = &sectors[secnum];
+    sec = &_g->sectors[secnum];
 
     // If either floor or ceiling is already activated, skip it
     if (sec->floordata || sec->ceilingdata) //jff 2/22/98
