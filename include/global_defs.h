@@ -763,6 +763,52 @@ fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
 
 fixed_t yslope[MAX_SCREENHEIGHT], distscale[MAX_SCREENWIDTH];
 
+//******************************************************************************
+//r_segs.c
+//******************************************************************************
+
+
+// True if any of the segs textures might be visible.
+boolean  segtextured;
+boolean  markfloor;      // False if the back side is the same plane.
+boolean  markceiling;
+boolean  maskedtexture;
+int      toptexture;
+int      bottomtexture;
+int      midtexture;
+
+angle_t         rw_normalangle; // angle to line origin
+int             rw_angle1;
+fixed_t         rw_distance;
+
+//
+// regular wall
+//
+int      rw_x;
+int      rw_stopx;
+angle_t  rw_centerangle;
+fixed_t  rw_offset;
+fixed_t  rw_scale;
+fixed_t  rw_scalestep;
+fixed_t  rw_midtexturemid;
+fixed_t  rw_toptexturemid;
+fixed_t  rw_bottomtexturemid;
+int      rw_lightlevel;
+int      worldtop;
+int      worldbottom;
+int      worldhigh;
+int      worldlow;
+fixed_t  pixhigh;
+fixed_t  pixlow;
+fixed_t  pixhighstep;
+fixed_t  pixlowstep;
+fixed_t  topfrac;
+fixed_t  topstep;
+fixed_t  bottomfrac;
+fixed_t  bottomstep;
+int      *maskedtexturecol; // dropoff overflow
+
+int didsolidcol; /* True if at least one column was marked solid */
 
 
 //******************************************************************************
