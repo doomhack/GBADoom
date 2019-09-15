@@ -138,25 +138,13 @@ const int     key_weapon9 = '9';                                                
 #define TURBOTHRESHOLD  0x32
 #define SLOWTURNTICS  6
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
-#define NUMKEYS   512
 
 const fixed_t forwardmove[2] = {0x19, 0x32};
 const fixed_t sidemove[2]    = {0x18, 0x28};
 const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
-// CPhipps - made lots of key/button state vars static
-static boolean gamekeydown[NUMKEYS];
-static int     turnheld;       // for accelerative turning
-
-// Game events info
-static buttoncode_t special_event; // Event triggered by local player, to send
-static byte  savegameslot;         // Slot to load if gameaction == ga_loadgame
-char         savedescription[SAVEDESCLEN];  // Description to save in savegame if gameaction == ga_savegame
-
-// killough 2/8/98: make corpse queue variable in size
-int    bodyqueslot;
 const int bodyquesize = 32;        // killough 2/8/98
-mobj_t **bodyque = 0;                   // phares 8/10/98
+
 
 static void G_DoSaveGame (boolean menu);
 static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, boolean failonerror);
@@ -195,20 +183,20 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd,0,sizeof*cmd);
 
-  strafe = gamekeydown[key_strafe];
+  strafe = _g->gamekeydown[key_strafe];
 
-  speed = (gamekeydown[key_speed]); // phares
+  speed = (_g->gamekeydown[key_speed]); // phares
 
   forward = side = 0;
 
     // use two stage accelerative turning
     // on the keyboard and joystick
-  if (gamekeydown[key_right] || gamekeydown[key_left])
-    turnheld ++;
+  if (_g->gamekeydown[key_right] || _g->gamekeydown[key_left])
+    _g->turnheld ++;
   else
-    turnheld = 0;
+    _g->turnheld = 0;
 
-  if (turnheld < SLOWTURNTICS)
+  if (_g->turnheld < SLOWTURNTICS)
     tspeed = 2;             // slow turn
   else
     tspeed = speed;
@@ -217,35 +205,35 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (strafe)
     {
-      if (gamekeydown[key_right])
+      if (_g->gamekeydown[key_right])
         side += sidemove[speed];
-      if (gamekeydown[key_left])
+      if (_g->gamekeydown[key_left])
         side -= sidemove[speed];
     }
   else
     {
-      if (gamekeydown[key_right])
+      if (_g->gamekeydown[key_right])
         cmd->angleturn -= angleturn[tspeed];
-      if (gamekeydown[key_left])
+      if (_g->gamekeydown[key_left])
         cmd->angleturn += angleturn[tspeed];
     }
 
-  if (gamekeydown[key_up])
+  if (_g->gamekeydown[key_up])
     forward += forwardmove[speed];
-  if (gamekeydown[key_down])
+  if (_g->gamekeydown[key_down])
     forward -= forwardmove[speed];
-  if (gamekeydown[key_straferight])
+  if (_g->gamekeydown[key_straferight])
     side += sidemove[speed];
-  if (gamekeydown[key_strafeleft])
+  if (_g->gamekeydown[key_strafeleft])
     side -= sidemove[speed];
 
     // buttons
   cmd->chatchar = HU_dequeueChatChar();
 
-  if (gamekeydown[key_fire])
+  if (_g->gamekeydown[key_fire])
     cmd->buttons |= BT_ATTACK;
 
-  if (gamekeydown[key_use])
+  if (_g->gamekeydown[key_use])
     {
       cmd->buttons |= BT_USE;
     }
@@ -262,20 +250,20 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
   if ((_g->players[consoleplayer].attackdown && // killough
-       !P_CheckAmmo(&_g->players[consoleplayer])) || gamekeydown[key_weapontoggle])
+       !P_CheckAmmo(&_g->players[consoleplayer])) || _g->gamekeydown[key_weapontoggle])
     newweapon = P_SwitchWeapon(&_g->players[consoleplayer]);           // phares
   else
     {                                 // phares 02/26/98: Added gamemode checks
       newweapon =
-        gamekeydown[key_weapon1] ? wp_fist :    // killough 5/2/98: reformatted
-        gamekeydown[key_weapon2] ? wp_pistol :
-        gamekeydown[key_weapon3] ? wp_shotgun :
-        gamekeydown[key_weapon4] ? wp_chaingun :
-        gamekeydown[key_weapon5] ? wp_missile :
-        gamekeydown[key_weapon6] && _g->gamemode != shareware ? wp_plasma :
-        gamekeydown[key_weapon7] && _g->gamemode != shareware ? wp_bfg :
-        gamekeydown[key_weapon8] ? wp_chainsaw :
-        (gamekeydown[key_weapon9] && _g->gamemode == commercial) ? wp_supershotgun :
+        _g->gamekeydown[key_weapon1] ? wp_fist :    // killough 5/2/98: reformatted
+        _g->gamekeydown[key_weapon2] ? wp_pistol :
+        _g->gamekeydown[key_weapon3] ? wp_shotgun :
+        _g->gamekeydown[key_weapon4] ? wp_chaingun :
+        _g->gamekeydown[key_weapon5] ? wp_missile :
+        _g->gamekeydown[key_weapon6] && _g->gamemode != shareware ? wp_plasma :
+        _g->gamekeydown[key_weapon7] && _g->gamemode != shareware ? wp_bfg :
+        _g->gamekeydown[key_weapon8] ? wp_chainsaw :
+        (_g->gamekeydown[key_weapon9] && _g->gamemode == commercial) ? wp_supershotgun :
         wp_nochange;
 
       // killough 3/22/98: For network and demo consistency with the
@@ -340,9 +328,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   cmd->angleturn = fudgea(cmd->angleturn);
 
   // CPhipps - special events (game new/load/save/pause)
-  if (special_event & BT_SPECIAL) {
-    cmd->buttons = special_event;
-    special_event = 0;
+  if (_g->special_event & BT_SPECIAL) {
+    cmd->buttons = _g->special_event;
+    _g->special_event = 0;
   }
 }
 
@@ -352,7 +340,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
 void G_RestartLevel(void)
 {
-  special_event = BT_SPECIAL | (BTS_RESTARTLEVEL & BT_SPECIALMASK);
+  _g->special_event = BT_SPECIAL | (BTS_RESTARTLEVEL & BT_SPECIALMASK);
 }
 
 #include "z_bmalloc.h"
@@ -434,9 +422,9 @@ static void G_DoLoadLevel (void)
   Z_CheckHeap ();
 
   // clear cmd building stuff
-  memset (gamekeydown, 0, sizeof(gamekeydown));
+  memset (_g->gamekeydown, 0, sizeof(_g->gamekeydown));
 
-  special_event = 0; _g->paused = false;
+  _g->special_event = 0; _g->paused = false;
 
   // killough 5/13/98: in case netdemo has consoleplayer other than green
   ST_Start();
@@ -491,16 +479,16 @@ boolean G_Responder (event_t* ev)
     case ev_keydown:
       if (ev->data1 == key_pause)           // phares
         {
-          special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
+          _g->special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
           return true;
         }
       if (ev->data1 <NUMKEYS)
-        gamekeydown[ev->data1] = true;
+        _g->gamekeydown[ev->data1] = true;
       return true;    // eat key down events
 
     case ev_keyup:
       if (ev->data1 <NUMKEYS)
-        gamekeydown[ev->data1] = false;
+        _g->gamekeydown[ev->data1] = false;
       return false;   // always let key up events filter down
 
     default:
@@ -609,16 +597,16 @@ void G_Ticker (void)
                   break;
 
                 case BTS_SAVEGAME:
-                  if (!savedescription[0])
-                    strcpy(savedescription, "NET GAME");
-                  savegameslot =
+                  if (!_g->savedescription[0])
+                    strcpy(_g->savedescription, "NET GAME");
+                  _g->savegameslot =
                     (_g->players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
                   _g->gameaction = ga_savegame;
                   break;
 
       // CPhipps - remote loadgame request
                 case BTS_LOADGAME:
-                  savegameslot =
+                  _g->savegameslot =
                     (_g->players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
                   _g->gameaction = ga_loadgame;
                     _g->command_loadgame = false;
@@ -815,14 +803,14 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
       static int queuesize;
       if (queuesize < bodyquesize)
 	{
-	  bodyque = realloc(bodyque, bodyquesize*sizeof*bodyque);
-	  memset(bodyque+queuesize, 0,
-		 (bodyquesize-queuesize)*sizeof*bodyque);
+      _g->bodyque = realloc(_g->bodyque, bodyquesize*sizeof*_g->bodyque);
+      memset(_g->bodyque+queuesize, 0,
+         (bodyquesize-queuesize)*sizeof*_g->bodyque);
 	  queuesize = bodyquesize;
 	}
-      if (bodyqueslot >= bodyquesize)
-	P_RemoveMobj(bodyque[bodyqueslot % bodyquesize]);
-      bodyque[bodyqueslot++ % bodyquesize] = _g->players[playernum].mo;
+      if (_g->bodyqueslot >= bodyquesize)
+    P_RemoveMobj(_g->bodyque[_g->bodyqueslot % bodyquesize]);
+      _g->bodyque[_g->bodyqueslot++ % bodyquesize] = _g->players[playernum].mo;
     }
   else
     if (!bodyquesize)
@@ -1163,12 +1151,12 @@ void G_LoadGame(int slot, boolean command)
     // CPhipps - handle savegame filename in G_DoLoadGame
     //         - Delay load so it can be communicated in net game
     //         - store info in special_event
-    special_event = BT_SPECIAL | (BTS_LOADGAME & BT_SPECIALMASK) |
+    _g->special_event = BT_SPECIAL | (BTS_LOADGAME & BT_SPECIALMASK) |
       ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
   } else {
     // Do the old thing, immediate load
     _g->gameaction = ga_loadgame;
-    savegameslot = slot;
+    _g->savegameslot = slot;
     _g->demoplayback = false;
   }
   _g->command_loadgame = command;
@@ -1198,7 +1186,7 @@ void G_DoLoadGame(void)
   // CPhipps - do savegame filename stuff here
   char name[PATH_MAX+1];     // killough 3/22/98
 
-  G_SaveGameName(name,sizeof(name),savegameslot, _g->demoplayback);
+  G_SaveGameName(name,sizeof(name),_g->savegameslot, _g->demoplayback);
 
   _g->gameaction = ga_nothing;
 
@@ -1296,16 +1284,16 @@ void G_DoLoadGame(void)
 
 void G_SaveGame(int slot, char *description)
 {
-  strcpy(savedescription, description);
+  strcpy(_g->savedescription, description);
   if (_g->demoplayback) {
     /* cph - We're doing a user-initiated save game while a demo is
      * running so, go outside normal mechanisms
      */
-    savegameslot = slot;
+    _g->savegameslot = slot;
     G_DoSaveGame(true);
   }
   // CPhipps - store info in special_event
-  special_event = BT_SPECIAL | (BTS_SAVEGAME & BT_SPECIALMASK) |
+  _g->special_event = BT_SPECIAL | (BTS_SAVEGAME & BT_SPECIALMASK) |
     ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
 
 }
@@ -1336,9 +1324,9 @@ static void G_DoSaveGame (boolean menu)
   _g->gameaction = ga_nothing; // cph - cancel savegame at top of this function,
     // in case later problems cause a premature exit
 
-  G_SaveGameName(name,sizeof(name),savegameslot, _g->demoplayback && !menu);
+  G_SaveGameName(name,sizeof(name),_g->savegameslot, _g->demoplayback && !menu);
 
-  description = savedescription;
+  description = _g->savedescription;
 
   save_p = _g->savebuffer = malloc(savegamesize);
 
@@ -1437,7 +1425,7 @@ static void G_DoSaveGame (boolean menu)
   free(_g->savebuffer);  // killough
   _g->savebuffer = save_p = NULL;
 
-  savedescription[0] = 0;
+  _g->savedescription[0] = 0;
 }
 
 static skill_t d_skill;

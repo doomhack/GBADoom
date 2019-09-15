@@ -166,6 +166,21 @@ int             totalleveltimes;      // CPhipps - total time for all completed 
 int             longtics;
 
 
+// CPhipps - made lots of key/button state vars static
+boolean gamekeydown[NUMKEYS];
+int     turnheld;       // for accelerative turning
+
+// Game events info
+buttoncode_t special_event; // Event triggered by local player, to send
+byte  savegameslot;         // Slot to load if gameaction == ga_loadgame
+char         savedescription[SAVEDESCLEN];  // Description to save in savegame if gameaction == ga_savegame
+
+// killough 2/8/98: make corpse queue variable in size
+int    bodyqueslot;
+mobj_t **bodyque;
+
+
+
 //******************************************************************************
 
 #endif // GLOBAL_DEFS_H

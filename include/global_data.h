@@ -4,6 +4,7 @@
 #include "doomstat.h"
 #include "m_fixed.h"
 #include "am_map.h"
+#include "g_game.h"
 
 
 typedef struct globals_t

@@ -164,6 +164,8 @@ extern const int pars[4][10];  // hardcoded array size
 extern const int cpars[32];    // hardcoded array size
 // CPhipps - Make savedesciption visible in wider scope
 #define SAVEDESCLEN 32
-extern char savedescription[SAVEDESCLEN];  // Description to save in savegame
+
+#define NUMKEYS   512
+
 
 #endif

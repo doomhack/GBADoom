@@ -45,8 +45,8 @@
 // boolean : whether the screen is always erased
 #define noterased viewwindowx
 
-extern int  key_backspace;                                          // phares
-extern int  key_enter;                                              // phares
+extern const int  key_backspace;                                          // phares
+extern const int  key_enter;                                              // phares
 
 ////////////////////////////////////////////////////////
 //

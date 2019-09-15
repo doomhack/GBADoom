@@ -117,9 +117,6 @@ extern  mapthing_t playerstarts[];
 // Internal parameters, used for engine.
 //
 
-// wipegamestate can be set to -1
-//  to force a wipe on the next draw
-extern  int             bodyqueslot;
 
 // Needed to store the number of the dummy sky flat.
 // Used for rendering, as well as tracking projectiles etc.

@@ -1580,7 +1580,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // Note: you don't need to clear player queue slots --
   // a much simpler fix is in g_game.c -- killough 10/98
 
-  bodyqueslot = 0;
+  _g->bodyqueslot = 0;
 
   /* cph - reset all multiplayer starts */
   memset(playerstarts,0,sizeof(playerstarts));
