@@ -606,4 +606,29 @@ boolean onground; // whether player is on ground or in air
 
 
 //******************************************************************************
+//r_bsp.c
+//******************************************************************************
+
+seg_t     *curline;
+side_t    *sidedef;
+line_t    *linedef;
+sector_t  *frontsector;
+sector_t  *backsector;
+drawseg_t *ds_p;
+
+// killough 4/7/98: indicates doors closed wrt automap bugfix:
+// cph - replaced by linedef rendering flags - int      doorclosed;
+
+// killough: New code which removes 2s linedef limit
+drawseg_t *drawsegs;
+unsigned  maxdrawsegs;
+
+// CPhipps -
+// Instead of clipsegs, let's try using an array with one entry for each column,
+// indicating whether it's blocked by a solid wall yet or not.
+
+byte solidcol[MAX_SCREENWIDTH];
+
+
+//******************************************************************************
 #endif // GLOBAL_DEFS_H

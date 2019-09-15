@@ -43,35 +43,14 @@
 
 #include "global_data.h"
 
-seg_t     *curline;
-side_t    *sidedef;
-line_t    *linedef;
-sector_t  *frontsector;
-sector_t  *backsector;
-drawseg_t *ds_p;
-
-// killough 4/7/98: indicates doors closed wrt automap bugfix:
-// cph - replaced by linedef rendering flags - int      doorclosed;
-
-// killough: New code which removes 2s linedef limit
-drawseg_t *drawsegs;
-unsigned  maxdrawsegs;
-// drawseg_t drawsegs[MAXDRAWSEGS];       // old code -- killough
-
 //
 // R_ClearDrawSegs
 //
 
 void R_ClearDrawSegs(void)
 {
-  ds_p = drawsegs;
+  _g->ds_p = _g->drawsegs;
 }
-
-// CPhipps -
-// Instead of clipsegs, let's try using an array with one entry for each column,
-// indicating whether it's blocked by a solid wall yet or not.
-
-byte solidcol[MAX_SCREENWIDTH];
 
 // CPhipps -
 // R_ClipWallSegment
@@ -81,22 +60,26 @@ byte solidcol[MAX_SCREENWIDTH];
 
 static void R_ClipWallSegment(int first, int last, boolean solid)
 {
-  byte *p;
-  while (first < last) {
-    if (solidcol[first]) {
-      if (!(p = memchr(solidcol+first, 0, last-first))) return; // All solid
-      first = p - solidcol;
-    } else {
-      int to;
-      if (!(p = memchr(solidcol+first, 1, last-first))) to = last;
-      else to = p - solidcol;
-      R_StoreWallRange(first, to-1);
-      if (solid) {
-  memset(solidcol+first,1,to-first);
-      }
-  first = to;
+    byte *p;
+    while (first < last)
+    {
+        if (_g->solidcol[first])
+        {
+            if (!(p = memchr(_g->solidcol+first, 0, last-first))) return; // All solid
+            first = p - _g->solidcol;
+        }
+        else
+        {
+            int to;
+            if (!(p = memchr(_g->solidcol+first, 1, last-first))) to = last;
+            else to = p - _g->solidcol;
+            R_StoreWallRange(first, to-1);
+            if (solid) {
+                memset(_g->solidcol+first,1,to-first);
+            }
+            first = to;
+        }
     }
-  }
 }
 
 //
@@ -105,7 +88,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
 
 void R_ClearClipSegs (void)
 {
-  memset(solidcol, 0, SCREENWIDTH);
+  memset(_g->solidcol, 0, SCREENWIDTH);
 }
 
 // killough 1/18/98 -- This function is used to fix the automap bug which
@@ -116,29 +99,29 @@ void R_ClearClipSegs (void)
 
 static void R_RecalcLineFlags(void)
 {
-  linedef->r_validcount = _g->gametic;
+  _g->linedef->r_validcount = _g->gametic;
 
   /* First decide if the line is closed, normal, or invisible */
-  if (!(linedef->flags & ML_TWOSIDED)
-      || backsector->ceilingheight <= frontsector->floorheight
-      || backsector->floorheight >= frontsector->ceilingheight
+  if (!(_g->linedef->flags & ML_TWOSIDED)
+      || _g->backsector->ceilingheight <= _g->frontsector->floorheight
+      || _g->backsector->floorheight >= _g->frontsector->ceilingheight
       || (
     // if door is closed because back is shut:
-    backsector->ceilingheight <= backsector->floorheight
+    _g->backsector->ceilingheight <= _g->backsector->floorheight
 
     // preserve a kind of transparent door/lift special effect:
-    && (backsector->ceilingheight >= frontsector->ceilingheight ||
-        curline->sidedef->toptexture)
+    && (_g->backsector->ceilingheight >= _g->frontsector->ceilingheight ||
+        _g->curline->sidedef->toptexture)
 
-    && (backsector->floorheight <= frontsector->floorheight ||
-        curline->sidedef->bottomtexture)
+    && (_g->backsector->floorheight <= _g->frontsector->floorheight ||
+        _g->curline->sidedef->bottomtexture)
 
     // properly render skies (consider door "open" if both ceilings are sky):
-    && (backsector->ceilingpic !=skyflatnum ||
-        frontsector->ceilingpic!=skyflatnum)
+    && (_g->backsector->ceilingpic !=skyflatnum ||
+        _g->frontsector->ceilingpic!=skyflatnum)
     )
       )
-    linedef->r_flags = RF_CLOSED;
+    _g->linedef->r_flags = RF_CLOSED;
   else {
     // Reject empty lines used for triggers
     //  and special events.
@@ -146,42 +129,42 @@ static void R_RecalcLineFlags(void)
     // identical light levels on both sides,
     // and no middle texture.
     // CPhipps - recode for speed, not certain if this is portable though
-    if (backsector->ceilingheight != frontsector->ceilingheight
-  || backsector->floorheight != frontsector->floorheight
-  || curline->sidedef->midtexture
-  || memcmp(&backsector->floor_xoffs, &frontsector->floor_xoffs,
-      sizeof(frontsector->floor_xoffs) + sizeof(frontsector->floor_yoffs) +
-      sizeof(frontsector->ceiling_xoffs) + sizeof(frontsector->ceiling_yoffs) +
-      sizeof(frontsector->ceilingpic) + sizeof(frontsector->floorpic) +
-      sizeof(frontsector->lightlevel) + sizeof(frontsector->floorlightsec) +
-      sizeof(frontsector->ceilinglightsec))) {
-      linedef->r_flags = 0; return;
+    if (_g->backsector->ceilingheight != _g->frontsector->ceilingheight
+  || _g->backsector->floorheight != _g->frontsector->floorheight
+  || _g->curline->sidedef->midtexture
+  || memcmp(&_g->backsector->floor_xoffs, &_g->frontsector->floor_xoffs,
+      sizeof(_g->frontsector->floor_xoffs) + sizeof(_g->frontsector->floor_yoffs) +
+      sizeof(_g->frontsector->ceiling_xoffs) + sizeof(_g->frontsector->ceiling_yoffs) +
+      sizeof(_g->frontsector->ceilingpic) + sizeof(_g->frontsector->floorpic) +
+      sizeof(_g->frontsector->lightlevel) + sizeof(_g->frontsector->floorlightsec) +
+      sizeof(_g->frontsector->ceilinglightsec))) {
+      _g->linedef->r_flags = 0; return;
     } else
-      linedef->r_flags = RF_IGNORE;
+      _g->linedef->r_flags = RF_IGNORE;
   }
 
   /* cph - I'm too lazy to try and work with offsets in this */
-  if (curline->sidedef->rowoffset) return;
+  if (_g->curline->sidedef->rowoffset) return;
 
   /* Now decide on texture tiling */
-  if (linedef->flags & ML_TWOSIDED) {
+  if (_g->linedef->flags & ML_TWOSIDED) {
     int c;
 
     /* Does top texture need tiling */
-    if ((c = frontsector->ceilingheight - backsector->ceilingheight) > 0 &&
-   (textureheight[texturetranslation[curline->sidedef->toptexture]] > c))
-      linedef->r_flags |= RF_TOP_TILE;
+    if ((c = _g->frontsector->ceilingheight - _g->backsector->ceilingheight) > 0 &&
+   (textureheight[texturetranslation[_g->curline->sidedef->toptexture]] > c))
+      _g->linedef->r_flags |= RF_TOP_TILE;
 
     /* Does bottom texture need tiling */
-    if ((c = frontsector->floorheight - backsector->floorheight) > 0 &&
-   (textureheight[texturetranslation[curline->sidedef->bottomtexture]] > c))
-      linedef->r_flags |= RF_BOT_TILE;
+    if ((c = _g->frontsector->floorheight - _g->backsector->floorheight) > 0 &&
+   (textureheight[texturetranslation[_g->curline->sidedef->bottomtexture]] > c))
+      _g->linedef->r_flags |= RF_BOT_TILE;
   } else {
     int c;
     /* Does middle texture need tiling */
-    if ((c = frontsector->ceilingheight - frontsector->floorheight) > 0 &&
-   (textureheight[texturetranslation[curline->sidedef->midtexture]] > c))
-      linedef->r_flags |= RF_MID_TILE;
+    if ((c = _g->frontsector->ceilingheight - _g->frontsector->floorheight) > 0 &&
+   (textureheight[texturetranslation[_g->curline->sidedef->midtexture]] > c))
+      _g->linedef->r_flags |= RF_MID_TILE;
   }
 }
 
@@ -304,7 +287,7 @@ static void R_AddLine (seg_t *line)
   angle_t  tspan;
   static sector_t tempsec;     // killough 3/8/98: ceiling/water hack
 
-  curline = line;
+  _g->curline = line;
 
   angle1 = R_PointToAngle (line->v1->x, line->v1->y);
   angle2 = R_PointToAngle (line->v2->x, line->v2->y);
@@ -358,23 +341,23 @@ static void R_AddLine (seg_t *line)
   if (x1 >= x2)       // killough 1/31/98 -- change == to >= for robustness
     return;
 
-  backsector = line->backsector;
+  _g->backsector = line->backsector;
 
   // Single sided line?
-  if (backsector)
+  if (_g->backsector)
     // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-    backsector = R_FakeFlat(backsector, &tempsec, NULL, NULL, true);
+    _g->backsector = R_FakeFlat(_g->backsector, &tempsec, NULL, NULL, true);
 
   /* cph - roll up linedef properties in flags */
-  if ((linedef = curline->linedef)->r_validcount != _g->gametic)
+  if ((_g->linedef = _g->curline->linedef)->r_validcount != _g->gametic)
     R_RecalcLineFlags();
 
-  if (linedef->r_flags & RF_IGNORE)
+  if (_g->linedef->r_flags & RF_IGNORE)
   {
     return;
   }
   else
-    R_ClipWallSegment (x1, x2, linedef->r_flags & RF_CLOSED);
+    R_ClipWallSegment (x1, x2, _g->linedef->r_flags & RF_CLOSED);
 }
 
 //
@@ -452,7 +435,7 @@ static boolean R_CheckBBox(const fixed_t *bspcoord)
     if (sx1 == sx2)
       return false;
 
-    if (!memchr(solidcol+sx1, 0, sx2-sx1)) return false;
+    if (!memchr(_g->solidcol+sx1, 0, sx2-sx1)) return false;
     // All columns it covers are already solidly covered
   }
 
@@ -482,41 +465,41 @@ static void R_Subsector(int num)
 #endif
 
   sub = &_g->subsectors[num];
-  frontsector = sub->sector;
+  _g->frontsector = sub->sector;
   count = sub->numlines;
   line = &_g->segs[sub->firstline];
 
   // killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
-  frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
+  _g->frontsector = R_FakeFlat(_g->frontsector, &tempsec, &floorlightlevel,
                            &ceilinglightlevel, false);   // killough 4/11/98
 
   // killough 3/7/98: Add (x,y) offsets to flats, add deep water check
   // killough 3/16/98: add floorlightlevel
   // killough 10/98: add support for skies transferred from sidedefs
 
-  floorplane = frontsector->floorheight < viewz || // killough 3/7/98
-    (frontsector->heightsec != -1 &&
-     _g->sectors[frontsector->heightsec].ceilingpic == skyflatnum) ?
-    R_FindPlane(frontsector->floorheight,
-                frontsector->floorpic == skyflatnum &&  // kilough 10/98
-                frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-                frontsector->floorpic,
+  floorplane = _g->frontsector->floorheight < viewz || // killough 3/7/98
+    (_g->frontsector->heightsec != -1 &&
+     _g->sectors[_g->frontsector->heightsec].ceilingpic == skyflatnum) ?
+    R_FindPlane(_g->frontsector->floorheight,
+                _g->frontsector->floorpic == skyflatnum &&  // kilough 10/98
+                _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
+                _g->frontsector->floorpic,
                 floorlightlevel,                // killough 3/16/98
-                frontsector->floor_xoffs,       // killough 3/7/98
-                frontsector->floor_yoffs
+                _g->frontsector->floor_xoffs,       // killough 3/7/98
+                _g->frontsector->floor_yoffs
                 ) : NULL;
 
-  ceilingplane = frontsector->ceilingheight > viewz ||
-    frontsector->ceilingpic == skyflatnum ||
-    (frontsector->heightsec != -1 &&
-     _g->sectors[frontsector->heightsec].floorpic == skyflatnum) ?
-    R_FindPlane(frontsector->ceilingheight,     // killough 3/8/98
-                frontsector->ceilingpic == skyflatnum &&  // kilough 10/98
-                frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-                frontsector->ceilingpic,
+  ceilingplane = _g->frontsector->ceilingheight > viewz ||
+    _g->frontsector->ceilingpic == skyflatnum ||
+    (_g->frontsector->heightsec != -1 &&
+     _g->sectors[_g->frontsector->heightsec].floorpic == skyflatnum) ?
+    R_FindPlane(_g->frontsector->ceilingheight,     // killough 3/8/98
+                _g->frontsector->ceilingpic == skyflatnum &&  // kilough 10/98
+                _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
+                _g->frontsector->ceilingpic,
                 ceilinglightlevel,              // killough 4/11/98
-                frontsector->ceiling_xoffs,     // killough 3/7/98
-                frontsector->ceiling_yoffs
+                _g->frontsector->ceiling_xoffs,     // killough 3/7/98
+                _g->frontsector->ceiling_yoffs
                 ) : NULL;
 
   // killough 9/18/98: Fix underwater slowdown, by passing real sector
@@ -538,7 +521,7 @@ static void R_Subsector(int num)
     if (line->miniseg == false)
       R_AddLine (line);
     line++;
-    curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
+    _g->curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
   }
 }
 

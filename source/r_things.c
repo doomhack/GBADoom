@@ -865,7 +865,7 @@ static void R_DrawSprite (vissprite_t* spr)
 
   //    for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
 
-  for (ds=ds_p ; ds-- > drawsegs ; )  // new -- killough
+  for (ds=_g->ds_p ; ds-- > _g->drawsegs ; )  // new -- killough
     {      // determine if the drawseg obscures the sprite
       if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
           (!ds->silhouette && !ds->maskedtexturecol))
@@ -991,7 +991,7 @@ void R_DrawMasked(void)
 
   //    for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
 
-  for (ds=ds_p ; ds-- > drawsegs ; )  // new -- killough
+  for (ds=_g->ds_p ; ds-- > _g->drawsegs ; )  // new -- killough
     if (ds->maskedtexturecol)
       R_RenderMaskedSegRange(ds, ds->x1, ds->x2);
 
