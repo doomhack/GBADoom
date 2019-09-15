@@ -51,7 +51,6 @@ SOURCES += \
         source/libtimidity/timidity.c \
         source/lprintf.c \
         source/m_bbox.c \
-        source/m_cheat.c \
         source/m_menu.c \
         source/m_misc.c \
         source/m_random.c \
@@ -154,7 +153,6 @@ HEADERS += \
     include/libtimidity/timidity_internal.h \
     include/lprintf.h \
     include/m_bbox.h \
-    include/m_cheat.h \
     include/m_fixed.h \
     include/m_menu.h \
     include/m_misc.h \

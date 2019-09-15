@@ -42,7 +42,6 @@
 #include "st_lib.h"
 #include "r_main.h"
 #include "am_map.h"
-#include "m_cheat.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "dstrings.h"
@@ -416,9 +415,7 @@ boolean ST_Responder(const event_t *ev)
           break;
         }
     }
-  else  // if a user keypress...
-    if (ev->type == ev_keydown)       // Try cheat responder in m_cheat.c
-      return M_FindCheats(ev->data1); // killough 4/17/98, 5/2/98
+
   return false;
 }
 
