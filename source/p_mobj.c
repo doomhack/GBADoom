@@ -1164,9 +1164,6 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 //
 // P_SpawnPuff
 //
-
-extern fixed_t attackrange;
-
 void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
   {
   mobj_t* th;
@@ -1183,7 +1180,7 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 
   // don't make punches spark on the wall
 
-  if (attackrange == MELEERANGE)
+  if (_g->attackrange == MELEERANGE)
     P_SetMobjState (th, S_PUFF3);
   }
 
@@ -1307,14 +1304,14 @@ void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
       do
   {
     slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
-    if (!linetarget)
+    if (!_g->linetarget)
       slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
-    if (!linetarget)
+    if (!_g->linetarget)
       slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
-    if (!linetarget)
+    if (!_g->linetarget)
       an = source->angle, slope = 0;
   }
-      while (mask && (mask=0, !linetarget));  // killough 8/2/98
+      while (mask && (mask=0, !_g->linetarget));  // killough 8/2/98
     }
 
   x = source->x;

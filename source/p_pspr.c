@@ -481,12 +481,12 @@ void A_Punch(player_t *player, pspdef_t *psp)
   /* killough 8/2/98: make autoaiming prefer enemies */
   if (
       (slope = P_AimLineAttack(player->mo, angle, MELEERANGE, MF_FRIEND),
-       !linetarget))
+       !_g->linetarget))
     slope = P_AimLineAttack(player->mo, angle, MELEERANGE, 0);
 
   P_LineAttack(player->mo, angle, MELEERANGE, slope, damage);
 
-  if (!linetarget)
+  if (!_g->linetarget)
     return;
 
   S_StartSound(player->mo, sfx_punch);
@@ -494,7 +494,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
   // turn to face target
 
   player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
-                                      linetarget->x, linetarget->y);
+                                      _g->linetarget->x, _g->linetarget->y);
   R_SmoothPlaying_Reset(player); // e6y
 }
 
@@ -514,12 +514,12 @@ void A_Saw(player_t *player, pspdef_t *psp)
    * killough 8/2/98: make autoaiming prefer enemies */
   if (
       (slope = P_AimLineAttack(player->mo, angle, MELEERANGE+1, MF_FRIEND),
-       !linetarget))
+       !_g->linetarget))
     slope = P_AimLineAttack(player->mo, angle, MELEERANGE+1, 0);
 
   P_LineAttack(player->mo, angle, MELEERANGE+1, slope, damage);
 
-  if (!linetarget)
+  if (!_g->linetarget)
     {
       S_StartSound(player->mo, sfx_sawful);
       return;
@@ -529,7 +529,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
 
   // turn to face target
   angle = R_PointToAngle2(player->mo->x, player->mo->y,
-                          linetarget->x, linetarget->y);
+                          _g->linetarget->x, _g->linetarget->y);
 
   if (angle - player->mo->angle > ANG180) {
     if (angle - player->mo->angle < -ANG90/20)
@@ -597,12 +597,12 @@ static void P_BulletSlope(mobj_t *mo)
   do
     {
       bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
-      if (!linetarget)
+      if (!_g->linetarget)
   bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
-      if (!linetarget)
+      if (!_g->linetarget)
   bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
     }
-  while (mask && (mask=0, !linetarget));  /* killough 8/2/98 */
+  while (mask && (mask=0, !_g->linetarget));  /* killough 8/2/98 */
 }
 
 //
@@ -745,19 +745,19 @@ void A_BFGSpray(mobj_t *mo)
       // killough 8/2/98: make autoaiming prefer enemies
       if (
          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND),
-         !linetarget))
+         !_g->linetarget))
         P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, 0);
 
-      if (!linetarget)
+      if (!_g->linetarget)
         continue;
 
-      P_SpawnMobj(linetarget->x, linetarget->y,
-                  linetarget->z + (linetarget->height>>2), MT_EXTRABFG);
+      P_SpawnMobj(_g->linetarget->x, _g->linetarget->y,
+                  _g->linetarget->z + (_g->linetarget->height>>2), MT_EXTRABFG);
 
       for (damage=j=0; j<15; j++)
         damage += (P_Random()&7) + 1;
 
-      P_DamageMobj(linetarget, mo->target, mo->target, damage);
+      P_DamageMobj(_g->linetarget, mo->target, mo->target, damage);
     }
 }
 

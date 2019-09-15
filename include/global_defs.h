@@ -396,6 +396,44 @@ int numspechit;
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list;                             // phares 3/16/98
 
+boolean telefrag;   /* killough 8/9/98: whether to telefrag at exit */
+
+
+
+/* killough 8/2/98: make variables static */
+fixed_t   bestslidefrac;
+line_t*   bestslideline;
+mobj_t*   slidemo;
+fixed_t   tmxmove;
+fixed_t   tmymove;
+
+
+
+mobj_t*   linetarget; // who got hit (or NULL)
+mobj_t*   shootthing;
+
+/* killough 8/2/98: for more intelligent autoaiming */
+uint_64_t aim_flags_mask;
+
+// Height if not aiming up or down
+fixed_t   shootz;
+
+int       la_damage;
+fixed_t   attackrange;
+
+fixed_t   aimslope;
+
+// slopes to top and bottom of target
+// killough 4/20/98: make static instead of using ones in p_sight.c
+
+fixed_t  topslope;
+fixed_t  bottomslope;
+
+
+mobj_t *bombsource, *bombspot;
+int bombdamage;
+
+boolean crushchange, nofit;
 
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

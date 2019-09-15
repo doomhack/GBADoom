@@ -77,6 +77,4 @@ void    P_ApplyTorque(mobj_t *mo);                          // killough 9/12/98
 void	P_MapStart(void);
 void	P_MapEnd(void);
 
-extern mobj_t *linetarget;     // who got hit (or NULL)
-
 #endif // __P_MAP__

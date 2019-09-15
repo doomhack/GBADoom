@@ -159,8 +159,8 @@ static boolean P_HitFriend(mobj_t *actor)
              actor->target->x, actor->target->y),
          P_AproxDistance(actor->x-actor->target->x,
              actor->y-actor->target->y), 0),
-     linetarget) && linetarget != actor->target &&
-    !((linetarget->flags ^ actor->flags) & MF_FRIEND);
+     _g->linetarget) && _g->linetarget != actor->target &&
+    !((_g->linetarget->flags ^ actor->flags) & MF_FRIEND);
 }
 
 //
