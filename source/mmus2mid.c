@@ -56,18 +56,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#ifdef MSDOS /* proff: I don't use allegro in windows */
-#include <allegro.h>
-#endif /* !MSDOS */
+
 #include "mmus2mid.h"
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 
-//#define STANDALONE  /* uncomment this to make MMUS2MID.EXE */
-#ifndef STANDALONE
 #include "m_swap.h"
 #include "z_zone.h"
 #include "config.h"
-#endif
+
+#include "global_data.h"
 
 // some macros to decode mus event bit fields
 
@@ -101,25 +98,16 @@ typedef struct
   UWORD       InstrCnt;         // number of instruments
 } PACKEDATTR MUSheader;
 
-// to keep track of information in a MIDI track
-
-typedef struct Track
-{
-  char  velocity;
-  long  deltaT;
-  UBYTE lastEvt;
-  long  alloced;
-} TrackInfo;
 
 // array of info about tracks
 
-static TrackInfo track[MIDI_TRACKS];
+//static
 
 // initial track size allocation
 #define TRACKBUFFERSIZE 1024
 
 // lookup table MUS -> MID controls
-static UBYTE MUS2MIDcontrol[15] =
+static const UBYTE MUS2MIDcontrol[15] =
 {
   0,         // Program change - not a MIDI control change
   0x00,      // Bank select
@@ -140,14 +128,18 @@ static UBYTE MUS2MIDcontrol[15] =
 
 // some strings of bytes used in the midi format
 
-static UBYTE midikey[]   =
+static const UBYTE midikey[]   =
 {0x00,0xff,0x59,0x02,0x00,0x00};        // C major
-static UBYTE miditempo[] =
+static const UBYTE miditempo[] =
 {0x00,0xff,0x51,0x03,0x09,0xa3,0x1a};   // uS/qnote
-static UBYTE midihdr[]   =
-{'M','T','h','d',0,0,0,6,0,1,0,0,0,0};  // header (length 6, format 1)
-static UBYTE trackhdr[]  =
+ // header (length 6, format 1)
+static const UBYTE trackhdr[]  =
 {'M','T','r','k'};                      // track header
+
+//MIDI ID.
+static const UBYTE midihdr4[] = {'M','T','h','d'};
+
+
 
 // static routine prototypes
 
@@ -175,16 +167,16 @@ static int TWriteByte(MIDI *mididata, int MIDItrack, UBYTE byte)
   ULONG pos ;
 
   pos = mididata->track[MIDItrack].len;
-  if (pos >= (ULONG)track[MIDItrack].alloced)
+  if (pos >= (ULONG)_g->track[MIDItrack].alloced)
   {
-    track[MIDItrack].alloced =        // double allocation
-      track[MIDItrack].alloced?       // or set initial TRACKBUFFERSIZE
-        2*track[MIDItrack].alloced :
+    _g->track[MIDItrack].alloced =        // double allocation
+      _g->track[MIDItrack].alloced?       // or set initial TRACKBUFFERSIZE
+        2*_g->track[MIDItrack].alloced :
         TRACKBUFFERSIZE;
 
     if (!(mididata->track[MIDItrack].data =     // attempt to reallocate
       realloc(mididata->track[MIDItrack].data,
-              track[MIDItrack].alloced)))
+              _g->track[MIDItrack].alloced)))
       return MEMALLOC;
   }
   mididata->track[MIDItrack].data[pos] = byte;
@@ -300,11 +292,11 @@ static UBYTE MidiEvent(MIDI *mididata,UBYTE midicode,UBYTE MIDIchannel,
   UBYTE newevent;
 
   newevent = midicode | MIDIchannel;
-  if ((newevent != track[MIDItrack].lastEvt) || nocomp)
+  if ((newevent != _g->track[MIDItrack].lastEvt) || nocomp)
   {
     if (TWriteByte(mididata,MIDItrack, newevent))
       return 0;                                    // indicates MEMALLOC error
-    track[MIDItrack].lastEvt = newevent;
+    _g->track[MIDItrack].lastEvt = newevent;
   }
   return newevent;
 }
@@ -353,12 +345,12 @@ int mmus2mid(const UBYTE *mus, MIDI *mididata, UWORD division, int nocomp)
   for (i = 0; i < MIDI_TRACKS; i++)   // init the track structure's tracks
   {
     MUS2MIDchannel[i] = -1;       // flag for channel not used yet
-    track[i].velocity = 64;
-    track[i].deltaT = 0;
-    track[i].lastEvt = 0;
+    _g->track[i].velocity = 64;
+    _g->track[i].deltaT = 0;
+    _g->track[i].lastEvt = 0;
     //free(mididata->track[i].data);//jff 3/5/98 remove old allocations
     mididata->track[i].data=NULL;
-    track[i].alloced = 0;
+    _g->track[i].alloced = 0;
     mididata->track[i].len = 0;
   }
 
@@ -411,9 +403,9 @@ int mmus2mid(const UBYTE *mus, MIDI *mididata, UWORD division, int nocomp)
       MIDItrack   = MIDIchan2track[MIDIchannel];
     }
 
-    if (TWriteVarLen(mididata, MIDItrack, track[MIDItrack].deltaT))
+    if (TWriteVarLen(mididata, MIDItrack, _g->track[MIDItrack].deltaT))
       return MEMALLOC;
-    track[MIDItrack].deltaT = 0;
+    _g->track[MIDItrack].deltaT = 0;
 
     switch(evt)
     {
@@ -437,8 +429,8 @@ int mmus2mid(const UBYTE *mus, MIDI *mididata, UWORD division, int nocomp)
           if (TWriteByte(mididata, MIDItrack, (UBYTE)(data & 0x7F)))
             return MEMALLOC;
           if( data & 0x80 )
-            track[MIDItrack].velocity = (*musptr++) & 0x7f;
-          if (TWriteByte(mididata, MIDItrack, track[MIDItrack].velocity))
+            _g->track[MIDItrack].velocity = (*musptr++) & 0x7f;
+          if (TWriteByte(mididata, MIDItrack, _g->track[MIDItrack].velocity))
             return MEMALLOC;
           break;
 
@@ -510,7 +502,7 @@ int mmus2mid(const UBYTE *mus, MIDI *mididata, UWORD division, int nocomp)
     {
           ULONG DeltaTime = ReadTime(&musptr); // killough 10/7/98: make local
     for (i = 0;i < MIDI_TRACKS; i++) //jff 3/13/98 update all tracks
-      track[i].deltaT += DeltaTime;  //whether allocated yet or not
+      _g->track[i].deltaT += DeltaTime;  //whether allocated yet or not
     }
 
     }
@@ -593,7 +585,7 @@ int MidiToMIDI(UBYTE *mid,MIDI *mididata)
 
   // read the midi header
 
-  if (memcmp(mid,midihdr,4))
+  if (memcmp(mid,midihdr4,4))
     return BADMIDHDR;
 
   mididata->divisions = (mid[12]<<8)+mid[13];
@@ -700,6 +692,8 @@ int MIDIToMidi(MIDI *mididata,UBYTE **mid,int *midlen)
   int i,ntrks;
   UBYTE *midiptr;
 
+  UBYTE midihdr[] = {'M','T','h','d',0,0,0,6,0,1,0,0,0,0};
+
   // calculate how long the mid buffer must be, and allocate
 
   total = sizeof(midihdr);
@@ -747,121 +741,3 @@ int MIDIToMidi(MIDI *mididata,UBYTE **mid,int *midlen)
 
   return 0;
 }
-
-#ifdef STANDALONE /* this code unused by BOOM provided for future portability */
-                  /* it also provides a MUS to MID file converter*/
-// proff: I moved this down, because I need MIDItoMidi
-
-//
-// main()
-//
-// Main routine that will convert a globbed set of MUS files to the
-// correspondingly named MID files using mmus2mid(). Only compiled
-// if the STANDALONE symbol is defined.
-//
-// Passed the command line arguments, returns 0 if successful
-//
-int main(int argc,char **argv)
-{
-  FILE *musst,*midst;
-  char musfile[FILENAME_MAX],midfile[FILENAME_MAX];
-  MUSheader MUSh;
-  UBYTE *mus,*mid;
-  static MIDI mididata;
-  int err,midlen;
-  char *p,*q;
-  int i;
-
-  if (argc<2)
-  {
-    //jff 8/3/98 use logical output routine
-    lprintf(LO_INFO,"Usage: MMUS2MID musfile[.MUS]\n");
-    lprintf(LO_INFO,"writes musfile.MID as output\n");
-    lprintf(LO_INFO,"musfile may contain wildcards\n");
-    exit(1);
-  }
-
-  for (i=1;i<argc;i++)
-  {
-    strcpy(musfile,argv[i]);
-    p = strrchr(musfile,'.');
-    q = strrchr(musfile,'\\');
-    if (p && (!q || q<p)) *p='\0';
-    strcpy(midfile,musfile);
-    strcat(musfile,".MUS");
-    strcat(midfile,".MID");
-
-    musst = fopen(musfile,"rb");
-    if (musst)
-    {
-      fread(&MUSh,sizeof(MUSheader),1,musst);
-      mus = malloc(MUSh.ScoreLength+MUSh.ScoreStart);
-      if (mus)
-      {
-        fseek(musst,0,SEEK_SET);
-        if (!fread(mus,MUSh.ScoreLength+MUSh.ScoreStart,1,musst))
-        {
-          //jff 8/3/98 use logical output routine
-          lprintf(LO_FATAL,"Error reading MUS file\n");
-          free(mus);
-          exit(1);
-        }
-        fclose(musst);
-      }
-      else
-      {
-        //jff 8/3/98 use logical output routine
-        lprintf(LO_FATAL,"Out of memory\n");
-        free(mus);
-        exit(1);
-      }
-
-      err = mmus2mid(mus,&mididata,89,1);
-      if (err)
-      {
-        //jff 8/3/98 use logical output routine
-        lprintf(LO_FATAL,"Error converting MUS file to MIDI: %d\n",err);
-        exit(1);
-      }
-      free(mus);
-
-      MIDIToMidi(&mididata,&mid,&midlen);
-
-      midst = fopen(midfile,"wb");
-      if (midst)
-      {
-        if (!fwrite(mid,midlen,1,midst))
-        {
-          //jff 8/3/98 use logical output routine
-          lprintf(LO_FATAL,"Error writing MIDI file\n");
-          FreeTracks(&mididata);
-          free(mid);
-          exit(1);
-        }
-        fclose(midst);
-      }
-      else
-      {
-        //jff 8/3/98 use logical output routine
-        lprintf(LO_FATAL,"Can't open MIDI file for output: %s\n", midfile);
-        FreeTracks(&mididata);
-        free(mid);
-        exit(1);
-      }
-    }
-    else
-    {
-      //jff 8/3/98 use logical output routine
-      lprintf(LO_FATAL,"Can't open MUS file for input: %s\n", midfile);
-      exit(1);
-    }
-
-    //jff 8/3/98 use logical output routine
-    lprintf(LO_CONFIRM,"MUS file %s converted to MIDI file %s\n",musfile,midfile);
-    FreeTracks(&mididata);
-    free(mid);
-  }
-  exit(0);
-}
-
-#endif

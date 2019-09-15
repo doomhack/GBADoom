@@ -315,6 +315,40 @@ int	rndindex;
 int	prndindex;
 
 
+//******************************************************************************
+//mmus2mis.c
+//******************************************************************************
+
+TrackInfo track[MIDI_TRACKS];
+
+//******************************************************************************
+//p_ceiling.c
+//******************************************************************************
+
+// the list of ceilings moving currently, including crushers
+ceilinglist_t *activeceilings;
+
+//******************************************************************************
+//p_ememy.c
+//******************************************************************************
+
+mobj_t *current_actor;
+
+fixed_t dropoff_deltax, dropoff_deltay, floorz;
+
+int current_allaround;
+
+mobj_t* corpsehit;
+fixed_t viletryx;
+fixed_t viletryy;
+
+// killough 2/7/98: Remove limit on icon landings:
+mobj_t **braintargets;
+int    numbraintargets_alloc;
+int    numbraintargets;
+
+brain_t brain;   // killough 3/26/98: global state of boss brain
+
 
 
 //******************************************************************************

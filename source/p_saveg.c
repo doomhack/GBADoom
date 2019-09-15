@@ -298,9 +298,9 @@ void P_ArchiveThinkers (void)
 {
   thinker_t *th;
 
-  CheckSaveGame(sizeof brain);      // killough 3/26/98: Save boss brain state
-  memcpy(save_p, &brain, sizeof brain);
-  save_p += sizeof brain;
+  CheckSaveGame(sizeof _g->brain);      // killough 3/26/98: Save boss brain state
+  memcpy(save_p, &_g->brain, sizeof _g->brain);
+  save_p += sizeof _g->brain;
 
   /* check that enough room is available in savegame buffer
    * - killough 2/14/98
@@ -434,8 +434,8 @@ void P_UnArchiveThinkers (void)
 
   _g->totallive = 0;
   // killough 3/26/98: Load boss brain state
-  memcpy(&brain, save_p, sizeof brain);
-  save_p += sizeof brain;
+  memcpy(&_g->brain, save_p, sizeof _g->brain);
+  save_p += sizeof _g->brain;
 
   // remove all the current thinkers
   for (th = thinkercap.next; th != &thinkercap; )
@@ -607,7 +607,7 @@ void P_ArchiveSpecials (void)
               size += 4+sizeof(plat_t);
               goto end;
             }
-        for (cl=activeceilings; cl; cl=cl->next) // search for activeceiling
+        for (cl=_g->activeceilings; cl; cl=cl->next) // search for activeceiling
           if (cl->ceiling == (ceiling_t *) th)   //jff 2/22/98
             {
               size += 4+sizeof(ceiling_t);
@@ -649,7 +649,7 @@ void P_ArchiveSpecials (void)
             if (pl->plat == (plat_t *) th)      // killough 2/14/98
               goto plat;
 
-          for (cl=activeceilings; cl; cl=cl->next)
+          for (cl=_g->activeceilings; cl; cl=cl->next)
             if (cl->ceiling == (ceiling_t *) th)      //jff 2/22/98
               goto ceiling;
 

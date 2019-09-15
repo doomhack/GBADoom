@@ -12,6 +12,10 @@
 #include "r_defs.h"
 #include "i_sound.h"
 #include "m_menu.h"
+#include "p_spec.h"
+#include "p_enemy.h"
+
+#include "mmus2mid.h"
 
 
 typedef struct globals_t

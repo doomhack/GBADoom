@@ -38,8 +38,8 @@
 #include "s_sound.h"
 #include "sounds.h"
 
-// the list of ceilings moving currently, including crushers
-ceilinglist_t *activeceilings;
+#include "global_data.h"
+
 
 /////////////////////////////////////////////////////////////////
 //
@@ -371,7 +371,7 @@ int P_ActivateInStasisCeiling(line_t *line)
   ceilinglist_t *cl;
   int rtn=0;
 
-  for (cl=activeceilings; cl; cl=cl->next)
+  for (cl=_g->activeceilings; cl; cl=cl->next)
   {
     ceiling_t *ceiling = cl->ceiling;
     if (ceiling->tag == line->tag && ceiling->direction == 0)
@@ -398,7 +398,7 @@ int EV_CeilingCrushStop(line_t* line)
   int rtn=0;
 
   ceilinglist_t *cl;
-  for (cl=activeceilings; cl; cl=cl->next)
+  for (cl=_g->activeceilings; cl; cl=cl->next)
   {
     ceiling_t *ceiling = cl->ceiling;
     if (ceiling->direction != 0 && ceiling->tag == line->tag)
@@ -425,10 +425,10 @@ void P_AddActiveCeiling(ceiling_t* ceiling)
   ceilinglist_t *list = malloc(sizeof *list);
   list->ceiling = ceiling;
   ceiling->list = list;
-  if ((list->next = activeceilings))
+  if ((list->next = _g->activeceilings))
     list->next->prev = &list->next;
-  list->prev = &activeceilings;
-  activeceilings = list;
+  list->prev = &_g->activeceilings;
+  _g->activeceilings = list;
 }
 
 //
@@ -458,10 +458,10 @@ void P_RemoveActiveCeiling(ceiling_t* ceiling)
 //
 void P_RemoveAllActiveCeilings(void)
 {
-  while (activeceilings)
+  while (_g->activeceilings)
   {
-    ceilinglist_t *next = activeceilings->next;
-    free(activeceilings);
-    activeceilings = next;
+    ceilinglist_t *next = _g->activeceilings->next;
+    free(_g->activeceilings);
+    _g->activeceilings = next;
   }
 }

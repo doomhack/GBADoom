@@ -366,8 +366,8 @@ typedef enum
 {
   normal,
   close30ThenOpen,
-  close,
-  open,
+  dclose,
+  dopen,
   raiseIn5Mins,
   blazeRaise,
   blazeOpen,
@@ -761,8 +761,6 @@ typedef struct {
 extern button_t buttonlist[MAXBUTTONS];
 
 extern platlist_t *activeplats;        // killough 2/14/98
-
-extern ceilinglist_t *activeceilings;  // jff 2/22/98
 
 ////////////////////////////////////////////////////////////////
 //
