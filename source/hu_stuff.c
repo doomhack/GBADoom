@@ -140,12 +140,6 @@ const char* player_names[] =
   HUSTR_PLRRED
 };
 
-//jff 3/17/98 translate player colmap to text color ranges
-int plyrcoltran[MAXPLAYERS]={CR_GREEN,CR_GRAY,CR_BROWN,CR_RED};
-
-char chat_char;                 // remove later.
-static player_t*  plr;
-
 // font sets
 patchnum_t hu_font[HU_FONTSIZE];
 patchnum_t hu_fontk[HU_FONTSIZE];//jff 3/7/98 added for graphic key indicators
@@ -515,11 +509,12 @@ void HU_Start(void)
 
   int   i;
   const char* s; /* cph - const */
+  player_t* plr = &_g->players[displayplayer];        // killough 3/7/98
 
   if (headsupactive)                    // stop before starting
     HU_Stop();
 
-  plr = &_g->players[displayplayer];        // killough 3/7/98
+
   message_on = false;
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
@@ -1250,6 +1245,8 @@ static int bscounter;
 
 void HU_Ticker(void)
 {
+    player_t* plr = &_g->players[displayplayer];        // killough 3/7/98
+
   // tick down message counter if message is up
   if (message_counter && !--message_counter)
   {
