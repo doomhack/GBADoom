@@ -54,10 +54,8 @@ SOURCES += \
         source/m_menu.c \
         source/m_misc.c \
         source/m_random.c \
-        source/md5.c \
         source/mmus2mid.c \
         source/p_ceilng.c \
-        source/p_checksum.c \
         source/p_doors.c \
         source/p_enemy.c \
         source/p_floor.c \
@@ -158,9 +156,7 @@ HEADERS += \
     include/m_misc.h \
     include/m_random.h \
     include/m_swap.h \
-    include/md5.h \
     include/mmus2mid.h \
-    include/p_checksum.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_map.h \

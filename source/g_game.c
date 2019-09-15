@@ -55,7 +55,6 @@
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "p_map.h"
-#include "p_checksum.h"
 #include "d_main.h"
 #include "wi_stuff.h"
 #include "hu_stuff.h"
@@ -1904,8 +1903,6 @@ void G_DoPlayDemo(void)
  */
 boolean G_CheckDemoStatus (void)
 {
-  P_ChecksumFinal();
-
   if (_g->timingdemo)
     {
       int endtime = I_GetTime();

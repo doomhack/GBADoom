@@ -55,7 +55,6 @@
 #include "f_wipe.h"
 #include "m_misc.h"
 #include "m_menu.h"
-#include "p_checksum.h"
 #include "i_main.h"
 #include "i_system.h"
 #include "i_sound.h"
@@ -291,7 +290,6 @@ static void D_DoomLoop(void)
 
 			M_Ticker ();
 			G_Ticker ();
-            P_Checksum(_g->gametic);
 			
             _g->gametic++;
             _g->maketic++;
