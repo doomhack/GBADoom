@@ -56,7 +56,7 @@
 
 boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
   {
-  state_t*  st;
+  const state_t*  st;
 
   // killough 4/9/98: remember states seen, to detect cycles:
 

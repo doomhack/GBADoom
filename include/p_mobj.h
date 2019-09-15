@@ -294,7 +294,7 @@ typedef struct mobj_s
     mobjinfo_t*         info;   // &mobjinfo[mobj->type]
 
     int                 tics;   // state tic counter
-    state_t*            state;
+    const state_t*      state;
     uint_64_t           flags;
     int                 intflags;  // killough 9/15/98: internal flags
     int                 health;

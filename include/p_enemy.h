@@ -113,6 +113,5 @@ void A_Face();            // killough 11/98
 void A_Scratch();         // killough 11/98
 void A_PlaySound();       // killough 11/98
 void A_RandomJump();      // killough 11/98
-void A_LineEffect();      // killough 11/98
 
 #endif // __P_ENEMY__

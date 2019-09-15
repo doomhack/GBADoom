@@ -2402,12 +2402,8 @@ void A_Spawn(mobj_t *mo)
 {
   if (mo->state->misc1)
     {
-      /* mobj_t *newmobj = */
       P_SpawnMobj(mo->x, mo->y, (mo->state->misc2 << FRACBITS) + mo->z,
       mo->state->misc1 - 1);
-      /* CPhipps - no friendlyness (yet)
-   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
-      */
     }
 }
 
@@ -2439,25 +2435,3 @@ void A_RandomJump(mobj_t *mo)
     P_SetMobjState(mo, mo->state->misc1);
 }
 
-//
-// This allows linedef effects to be activated inside deh frames.
-//
-
-void A_LineEffect(mobj_t *mo)
-{
-  line_t junk;
-  player_t player;
-  player_t *oldplayer;
-  junk = *lines;
-  oldplayer = mo->player;
-  mo->player = &player;
-  player.health = 100;
-  junk.special = (short)mo->state->misc1;
-  if (!junk.special)
-    return;
-  junk.tag = (short)mo->state->misc2;
-  if (!P_UseSpecialLine(mo, &junk, 0))
-    P_CrossSpecialLine(&junk, 0, mo);
-  mo->state->misc1 = junk.special;
-  mo->player = oldplayer;
-}
