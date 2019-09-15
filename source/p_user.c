@@ -39,7 +39,6 @@
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
-#include "r_demo.h"
 
 #include "global_data.h"
 
@@ -277,7 +276,7 @@ void P_DeathThink (player_t* player)
 
   if (player->cmd.buttons & BT_USE)
     player->playerstate = PST_REBORN;
-  R_SmoothPlaying_Reset(player); // e6y
+
   }
 
 

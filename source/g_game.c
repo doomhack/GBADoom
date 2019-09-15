@@ -74,7 +74,6 @@
 #include "lprintf.h"
 #include "i_main.h"
 #include "i_system.h"
-#include "r_demo.h"
 
 #include "global_data.h"
 
@@ -1111,7 +1110,6 @@ void G_LoadGame(int slot, boolean command)
     _g->demoplayback = false;
   }
   _g->command_loadgame = command;
-  R_SmoothPlaying_Reset(NULL); // e6y
 }
 
 // killough 5/15/98:
@@ -1203,7 +1201,6 @@ void G_DoLoadGame(void)
   P_UnArchiveRNG ();    // killough 1/18/98: load RNG information
   P_UnArchiveMap ();    // killough 1/22/98: load automap information
   P_MapEnd();
-  R_SmoothPlaying_Reset(NULL); // e6y
 
   if (*_g->save_p != 0xe6)
     I_Error ("G_DoLoadGame: Bad savegame");
@@ -1889,7 +1886,6 @@ void G_DoPlayDemo(void)
   _g->usergame = false;
 
   _g->demoplayback = true;
-  R_SmoothPlaying_Reset(NULL); // e6y
 
   _g->starttime = I_GetTime();
 }

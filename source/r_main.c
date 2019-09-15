@@ -54,7 +54,6 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "g_game.h"
-#include "r_demo.h"
 
 #include "global_data.h"
 

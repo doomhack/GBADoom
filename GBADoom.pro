@@ -77,7 +77,6 @@ SOURCES += \
         source/p_user.c \
         source/r_bsp.c \
         source/r_data.c \
-        source/r_demo.c \
         source/r_draw.c \
         source/r_main.c \
         source/r_patch.c \
@@ -172,7 +171,6 @@ HEADERS += \
     include/r_bsp.h \
     include/r_data.h \
     include/r_defs.h \
-    include/r_demo.h \
     include/r_draw.h \
     include/r_main.h \
     include/r_patch.h \

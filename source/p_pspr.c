@@ -42,7 +42,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "d_event.h"
-#include "r_demo.h"
 
 #include "global_data.h"
 
@@ -481,7 +480,6 @@ void A_Punch(player_t *player, pspdef_t *psp)
 
   player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
                                       _g->linetarget->x, _g->linetarget->y);
-  R_SmoothPlaying_Reset(player); // e6y
 }
 
 //
@@ -530,7 +528,6 @@ void A_Saw(player_t *player, pspdef_t *psp)
   }
 
   player->mo->flags |= MF_JUSTATTACKED;
-  R_SmoothPlaying_Reset(player); // e6y
 }
 
 //

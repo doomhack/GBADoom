@@ -46,7 +46,6 @@
 #include "g_game.h"
 #include "p_inter.h"
 #include "lprintf.h"
-#include "r_demo.h"
 
 #include "global_data.h"
 //
@@ -968,7 +967,6 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
     ST_Start(); // wake up the status bar
     HU_Start(); // wake up the heads up text
     }
-    R_SmoothPlaying_Reset(p); // e6y
   }
 
 /*
