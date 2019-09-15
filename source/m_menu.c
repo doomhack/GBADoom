@@ -71,48 +71,26 @@ static void (*messageRoutine)(int response);
 
 #define SKULLXOFF  -32
 #define LINEHEIGHT  16
-//
-// MENU TYPEDEFS
-//
-
-typedef struct
-{
-  short status; // 0 = no cursor here, 1 = ok, 2 = arrows ok
-  char  name[10];
-
-  // choice = menu item #.
-  // if status = 2,
-  //   choice=0:leftarrow,1:rightarrow
-  void  (*routine)(int choice);
-} menuitem_t;
-
-typedef struct menu_s
-{
-  short           numitems;     // # of menu items
-  const menuitem_t*     menuitems;    // menu items
-  void            (*routine)(); // draw routine
-  short           x;
-  short           y;            // x,y of menu
-} menu_t;
-
-short itemOn;           // menu item skull is on (for Big Font menus)
-short skullAnimCounter; // skull animation counter
-short whichSkull;       // which skull to draw (he blinks)
 
 // graphic name of skulls
 
-static const char skullName[2][/*8*/9] = {"M_SKULL1","M_SKULL2"};
-
-static const menu_t* currentMenu; // current menudef
+static const char skullName[2][9] = {"M_SKULL1","M_SKULL2"};
 
 
-static int epi;
+static const char savegamestrings[10][SAVESTRINGSIZE] =
+{
+    "SLOT1",
+    "SLOT2",
+    "SLOT3",
+    "SLOT4",
+    "SLOT5",
+    "SLOT6",
+    "SLOT7",
+    "SLOT8",
+    "SLOT9",
+    "SLOT10"
+};
 
-// The menu_buffer is used to construct strings for display on the screen.
-
-static char menu_buffer[64];
-
-menu_t NewDef;                                              // phares 5/04/98
 
 
 // end of externs added for setup menus
@@ -151,7 +129,7 @@ void M_DrawLoad(void);
 void M_DrawSave(void);
 
 void M_DrawSaveLoadBorder(int x,int y);
-void M_SetupNextMenu(menu_t *menudef);
+void M_SetupNextMenu(const menu_t *menudef);
 void M_DrawThermo(int x,int y,int thermWidth,int thermDot);
 void M_DrawEmptyCell(menu_t *menu,int item);
 void M_DrawSelCell(menu_t *menu,int item);
@@ -164,7 +142,6 @@ void M_ClearMenus (void);
 // phares 3/30/98
 // prototypes added to support Setup Menus and Extended HELP screens
 
-int  M_GetKeyString(int,int);
 void M_Setup(int choice);
 
 
@@ -199,7 +176,7 @@ enum
 // associated with the item.
 //
 
-const static menuitem_t MainMenu[]=
+static const menuitem_t MainMenu[]=
 {
   {1,"M_NGAME", M_NewGame},
   {1,"M_OPTION",M_Options},
@@ -207,7 +184,7 @@ const static menuitem_t MainMenu[]=
   {1,"M_SAVEG", M_SaveGame},
 };
 
-const static menu_t MainDef =
+static const menu_t MainDef =
 {
   main_end,       // number of menu items
   MainMenu,       // table that defines menu items
@@ -247,7 +224,7 @@ enum
 
 // The definitions of the Episodes menu
 
-const static menuitem_t EpisodeMenu[]=
+static const menuitem_t EpisodeMenu[]=
 {
   {1,"M_EPI1", M_Episode},
   {1,"M_EPI2", M_Episode},
@@ -255,12 +232,44 @@ const static menuitem_t EpisodeMenu[]=
   {1,"M_EPI4", M_Episode}
 };
 
-static menu_t EpiDef =
+static const menu_t EpiDef =
 {
   ep_end,        // # of menu items
   EpisodeMenu,   // menuitem_t ->
   M_DrawEpisode, // drawing routine ->
   48,63,         // x,y
+};
+
+
+// numerical values for the New Game menu items
+
+enum
+{
+  killthings,
+  toorough,
+  hurtme,
+  violence,
+  nightmare,
+  newg_end
+};
+
+// The definitions of the New Game menu
+
+static const menuitem_t NewGameMenu[]=
+{
+  {1,"M_JKILL", M_ChooseSkill},
+  {1,"M_ROUGH", M_ChooseSkill},
+  {1,"M_HURT",  M_ChooseSkill},
+  {1,"M_ULTRA", M_ChooseSkill},
+  {1,"M_NMARE", M_ChooseSkill}
+};
+
+static const menu_t NewDef =
+{
+  newg_end,       // # of menu items
+  NewGameMenu,    // menuitem_t ->
+  M_DrawNewGame,  // drawing routine ->
+  48,63,          // x,y
 };
 
 //
@@ -289,45 +298,9 @@ void M_Episode(int choice)
     choice = 0;
     }
 
-  epi = choice;
+  _g->epi = choice;
   M_SetupNextMenu(&NewDef);
 }
-
-/////////////////////////////
-//
-// NEW GAME
-//
-
-// numerical values for the New Game menu items
-
-enum
-{
-  killthings,
-  toorough,
-  hurtme,
-  violence,
-  nightmare,
-  newg_end
-};
-
-// The definitions of the New Game menu
-
-static const menuitem_t NewGameMenu[]=
-{
-  {1,"M_JKILL", M_ChooseSkill},
-  {1,"M_ROUGH", M_ChooseSkill},
-  {1,"M_HURT",  M_ChooseSkill},
-  {1,"M_ULTRA", M_ChooseSkill},
-  {1,"M_NMARE", M_ChooseSkill}
-};
-
-menu_t NewDef =
-{
-  newg_end,       // # of menu items
-  NewGameMenu,    // menuitem_t ->
-  M_DrawNewGame,  // drawing routine ->
-  48,63,          // x,y
-};
 
 //
 // M_NewGame
@@ -338,16 +311,6 @@ void M_DrawNewGame(void)
   // CPhipps - patch drawing updated
   V_DrawNamePatch(96, 14, 0, "M_NEWG", CR_DEFAULT, VPT_STRETCH);
   V_DrawNamePatch(54, 38, 0, "M_SKILL",CR_DEFAULT, VPT_STRETCH);
-}
-
-/* cph - make `New Game' restart the level in a netgame */
-static void M_RestartLevelResponse(int ch)
-{
-  if (ch != 'y')
-    return;
-
-  M_ClearMenus ();
-  G_RestartLevel ();
 }
 
 void M_NewGame(int choice)
@@ -364,7 +327,7 @@ static void M_VerifyNightmare(int ch)
   if (ch != 'y')
     return;
 
-  G_DeferedInitNew(nightmare,epi+1,1);
+  G_DeferedInitNew(nightmare,_g->epi+1,1);
   M_ClearMenus ();
 }
 
@@ -376,7 +339,7 @@ void M_ChooseSkill(int choice)
       return;
     }
 
-  G_DeferedInitNew(choice,epi+1,1);
+  G_DeferedInitNew(choice,_g->epi+1,1);
   M_ClearMenus ();
 }
 
@@ -402,7 +365,7 @@ enum
 
 // The definitions of the Load Game screen
 
-static menuitem_t LoadMenue[]=
+static const menuitem_t LoadMenue[]=
 {
   {1,"", M_LoadSelect},
   {1,"", M_LoadSelect},
@@ -437,7 +400,7 @@ void M_DrawLoad(void)
   V_DrawNamePatch(72 ,LOADGRAPHIC_Y, 0, "M_LOADG", CR_DEFAULT, VPT_STRETCH);
   for (i = 0 ; i < load_end ; i++) {
     M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,_g->savegamestrings[i]);
+    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
   }
 }
 
@@ -537,25 +500,7 @@ const static menu_t SaveDef =
 //
 void M_ReadSaveStrings(void)
 {
-  int i;
 
-  for (i = 0 ; i < load_end ; i++) {
-    char name[PATH_MAX+1];    // killough 3/22/98
-    FILE *fp;  // killough 11/98: change to use stdio
-
-    /* killough 3/22/98
-     * cph - add not-demoplayback parameter */
-    G_SaveGameName(name,sizeof(name),i,false);
-    fp = fopen(name,"rb");
-    if (!fp) {   // Ty 03/27/98 - externalized:
-      strcpy(&_g->savegamestrings[i][0],EMPTYSTRING);
-      LoadMenue[i].status = 0;
-      continue;
-    }
-    fread(&_g->savegamestrings[i], SAVESTRINGSIZE, 1, fp);
-    fclose(fp);
-    LoadMenue[i].status = 1;
-  }
 }
 
 //
@@ -563,21 +508,21 @@ void M_ReadSaveStrings(void)
 //
 void M_DrawSave(void)
 {
-  int i;
+    int i;
 
-  //jff 3/15/98 use symbolic load position
-  // CPhipps - patch drawing updated
-  V_DrawNamePatch(72, LOADGRAPHIC_Y, 0, "M_SAVEG", CR_DEFAULT, VPT_STRETCH);
-  for (i = 0 ; i < load_end ; i++)
+    //jff 3/15/98 use symbolic load position
+    // CPhipps - patch drawing updated
+    V_DrawNamePatch(72, LOADGRAPHIC_Y, 0, "M_SAVEG", CR_DEFAULT, VPT_STRETCH);
+    for (i = 0 ; i < load_end ; i++)
     {
-    M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,_g->savegamestrings[i]);
+        M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
+        M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
     }
 
-  if (_g->saveStringEnter)
+    if (_g->saveStringEnter)
     {
-    i = M_StringWidth(_g->savegamestrings[_g->saveSlot]);
-    M_WriteText(LoadDef.x + i,LoadDef.y+LINEHEIGHT*_g->saveSlot,"_");
+        i = M_StringWidth(savegamestrings[_g->saveSlot]);
+        M_WriteText(LoadDef.x + i,LoadDef.y+LINEHEIGHT*_g->saveSlot,"_");
     }
 }
 
@@ -586,7 +531,7 @@ void M_DrawSave(void)
 //
 static void M_DoSave(int slot)
 {
-  G_SaveGame (slot,_g->savegamestrings[slot]);
+  G_SaveGame (slot,savegamestrings[slot]);
   M_ClearMenus ();
 }
 
@@ -595,14 +540,12 @@ static void M_DoSave(int slot)
 //
 void M_SaveSelect(int choice)
 {
-  // we are going to be intercepting all chars
-  _g->saveStringEnter = 1;
+    // we are going to be intercepting all chars
+    _g->saveStringEnter = 1;
 
-  _g->saveSlot = choice;
-  strcpy(_g->saveOldString,_g->savegamestrings[choice]);
-  if (!strcmp(_g->savegamestrings[choice],EMPTYSTRING)) // Ty 03/27/98 - externalized
-    _g->savegamestrings[choice][0] = 0;
-  _g->saveCharIndex = strlen(_g->savegamestrings[choice]);
+    _g->saveSlot = choice;
+
+    _g->saveCharIndex = strlen(savegamestrings[choice]);
 }
 
 //
@@ -643,7 +586,7 @@ enum
 
 // The definitions of the Options menu
 
-const static menuitem_t OptionsMenu[]=
+static const menuitem_t OptionsMenu[]=
 {
   // killough 4/6/98: move setup to be a sub-menu of OPTIONs
   {1,"M_ENDGAM", M_EndGame},
@@ -664,7 +607,7 @@ const static menu_t OptionsDef =
 //
 // M_Options
 //
-const static char msgNames[2][9]  = {"M_MSGOFF","M_MSGON"};
+static const char msgNames[2][9]  = {"M_MSGOFF","M_MSGON"};
 
 
 void M_DrawOptions(void)
@@ -704,7 +647,7 @@ enum
 
 // The definitions of the Sound Volume menu
 
-const static menuitem_t SoundMenu[]=
+static const menuitem_t SoundMenu[]=
 {
   {2,"M_SFXVOL",M_SfxVol},
   {-1,"",0},
@@ -712,7 +655,7 @@ const static menuitem_t SoundMenu[]=
   {-1,"",0}
 };
 
-const static menu_t SoundDef =
+static const menu_t SoundDef =
 {
   sound_end,
   SoundMenu,
@@ -852,33 +795,6 @@ void M_SizeDisplay(int choice)
 
 /////////////////////////////
 //
-
-
-/////////////////////////////
-//
-// Here are the definitions of the individual Setup Menu screens. They
-// follow the format of the 'Big Font' menu structures. See the comments
-// for SetupDef (above) to help understand what each of these says.
-
-
-
-/////////////////////////////
-//
-// Data that's used by the Setup screen code
-//
-// Establish the message colors to be used
-
-#define CR_TITLE  CR_GOLD
-#define CR_SET    CR_GREEN
-#define CR_ITEM   CR_RED
-#define CR_HILITE CR_ORANGE
-#define CR_SELECT CR_GRAY
-
-#define PAL_BLACK   0
-#define PAL_WHITE   4
-
-/////////////////////////////
-//
 // General routines used by the Setup screens.
 //
 
@@ -902,100 +818,6 @@ static void M_InitDefaults(void)
 //
 /////////////////////////////////////////////////////////////////////////////
 
-
-
-
-////////////////////////////////////////////////////////////////////////////
-//
-// Dynamic HELP screen                     // phares 3/2/98
-//
-// Rather than providing the static HELP screens from DOOM and its versions,
-// BOOM provides the player with a dynamic HELP screen that displays the
-// current settings of major key bindings.
-//
-// The Dynamic HELP screen is defined in a manner similar to that used for
-// the Setup Screens above.
-//
-// M_GetKeyString finds the correct string to represent the key binding
-// for the current item being drawn.
-
-int M_GetKeyString(int c,int offset)
-{
-  const char* s;
-
-  if (c >= 33 && c <= 126) {
-
-    // The '=', ',', and '.' keys originally meant the shifted
-    // versions of those keys, but w/o having to shift them in
-    // the game. Any actions that are mapped to these keys will
-    // still mean their shifted versions. Could be changed later
-    // if someone can come up with a better way to deal with them.
-
-    if (c == '=')      // probably means the '+' key?
-      c = '+';
-    else if (c == ',') // probably means the '<' key?
-      c = '<';
-    else if (c == '.') // probably means the '>' key?
-      c = '>';
-    menu_buffer[offset++] = c; // Just insert the ascii key
-    menu_buffer[offset] = 0;
-
-  } else {
-
-    // Retrieve 4-letter (max) string representing the key
-
-    // cph - Keypad keys, general code reorganisation to
-    //  make this smaller and neater.
-    if ((0x100 <= c) && (c < 0x200)) {
-      if (c == KEYD_KEYPADENTER)
-  s = "PADE";
-      else {
-  strcpy(&menu_buffer[offset], "PAD");
-  offset+=4;
-  menu_buffer[offset-1] = c & 0xff;
-  menu_buffer[offset] = 0;
-      }
-    } else if ((KEYD_F1 <= c) && (c < KEYD_F10)) {
-      menu_buffer[offset++] = 'F';
-      menu_buffer[offset++] = '1' + c - KEYD_F1;
-      menu_buffer[offset]   = 0;
-    } else {
-      switch(c) {
-      case KEYD_TAB:      s = "TAB";  break;
-      case KEYD_ENTER:      s = "ENTR"; break;
-      case KEYD_ESCAPE:     s = "ESC";  break;
-      case KEYD_SPACEBAR:   s = "SPAC"; break;
-      case KEYD_BACKSPACE:  s = "BACK"; break;
-      case KEYD_RCTRL:      s = "CTRL"; break;
-      case KEYD_LEFTARROW:  s = "LARR"; break;
-      case KEYD_UPARROW:    s = "UARR"; break;
-      case KEYD_RIGHTARROW: s = "RARR"; break;
-      case KEYD_DOWNARROW:  s = "DARR"; break;
-      case KEYD_RSHIFT:     s = "SHFT"; break;
-      case KEYD_RALT:       s = "ALT";  break;
-      case KEYD_CAPSLOCK:   s = "CAPS"; break;
-      case KEYD_SCROLLLOCK: s = "SCRL"; break;
-      case KEYD_HOME:       s = "HOME"; break;
-      case KEYD_PAGEUP:     s = "PGUP"; break;
-      case KEYD_END:        s = "END";  break;
-      case KEYD_PAGEDOWN:   s = "PGDN"; break;
-      case KEYD_INSERT:     s = "INST"; break;
-      case KEYD_DEL:        s = "DEL"; break;
-      case KEYD_F10:        s = "F10";  break;
-      case KEYD_F11:        s = "F11";  break;
-      case KEYD_F12:        s = "F12";  break;
-      case KEYD_PAUSE:      s = "PAUS"; break;
-      default:              s = "JUNK"; break;
-      }
-
-      if (s) { // cph - Slight code change
-  strcpy(&menu_buffer[offset],s); // string to display
-  offset += strlen(s);
-      }
-    }
-  }
-  return offset;
-}
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1029,37 +851,17 @@ boolean M_Responder (event_t* ev)
 
     if (_g->saveStringEnter)
     {
-        if (ch == key_menu_backspace)                            // phares 3/7/98
-        {
-            if (_g->saveCharIndex > 0)
-            {
-                _g->saveCharIndex--;
-                _g->savegamestrings[_g->saveSlot][_g->saveCharIndex] = 0;
-            }
-        }
-
-        else if (ch == key_menu_escape)                    // phares 3/7/98
+        if (ch == key_menu_escape)                    // phares 3/7/98
         {
             _g->saveStringEnter = 0;
-            strcpy(&_g->savegamestrings[_g->saveSlot][0],_g->saveOldString);
         }
         else if (ch == key_menu_enter)                     // phares 3/7/98
         {
             _g->saveStringEnter = 0;
-            if (_g->savegamestrings[_g->saveSlot][0])
+            if (savegamestrings[_g->saveSlot][0])
                 M_DoSave(_g->saveSlot);
         }
-        else
-        {
-            ch = toupper(ch);
-            if (ch >= 32 && ch <= 127 &&
-                    _g->saveCharIndex < SAVESTRINGSIZE-1 &&
-                    M_StringWidth(_g->savegamestrings[_g->saveSlot]) < (SAVESTRINGSIZE-2)*8)
-            {
-                _g->savegamestrings[_g->saveSlot][_g->saveCharIndex++] = ch;
-                _g->savegamestrings[_g->saveSlot][_g->saveCharIndex] = 0;
-            }
-        }
+
         return true;
     }
 
@@ -1101,13 +903,13 @@ boolean M_Responder (event_t* ev)
     {
         do
         {
-            if (itemOn+1 > currentMenu->numitems-1)
-                itemOn = 0;
+            if (_g->itemOn+1 > _g->currentMenu->numitems-1)
+                _g->itemOn = 0;
             else
-                itemOn++;
+                _g->itemOn++;
             S_StartSound(NULL,sfx_pstop);
         }
-        while(currentMenu->menuitems[itemOn].status==-1);
+        while(_g->currentMenu->menuitems[_g->itemOn].status==-1);
         return true;
     }
 
@@ -1115,51 +917,51 @@ boolean M_Responder (event_t* ev)
     {
         do
         {
-            if (!itemOn)
-                itemOn = currentMenu->numitems-1;
+            if (!_g->itemOn)
+                _g->itemOn = _g->currentMenu->numitems-1;
             else
-                itemOn--;
+                _g->itemOn--;
             S_StartSound(NULL,sfx_pstop);
         }
-        while(currentMenu->menuitems[itemOn].status==-1);
+        while(_g->currentMenu->menuitems[_g->itemOn].status==-1);
         return true;
     }
 
     if (ch == key_menu_left)                             // phares 3/7/98
     {
-        if (currentMenu->menuitems[itemOn].routine &&
-                currentMenu->menuitems[itemOn].status == 2)
+        if (_g->currentMenu->menuitems[_g->itemOn].routine &&
+                _g->currentMenu->menuitems[_g->itemOn].status == 2)
         {
             S_StartSound(NULL,sfx_stnmov);
-            currentMenu->menuitems[itemOn].routine(0);
+            _g->currentMenu->menuitems[_g->itemOn].routine(0);
         }
         return true;
     }
 
     if (ch == key_menu_right)                            // phares 3/7/98
     {
-        if (currentMenu->menuitems[itemOn].routine &&
-                currentMenu->menuitems[itemOn].status == 2)
+        if (_g->currentMenu->menuitems[_g->itemOn].routine &&
+                _g->currentMenu->menuitems[_g->itemOn].status == 2)
         {
             S_StartSound(NULL,sfx_stnmov);
-            currentMenu->menuitems[itemOn].routine(1);
+            _g->currentMenu->menuitems[_g->itemOn].routine(1);
         }
         return true;
     }
 
     if (ch == key_menu_enter)                            // phares 3/7/98
     {
-        if (currentMenu->menuitems[itemOn].routine &&
-                currentMenu->menuitems[itemOn].status)
+        if (_g->currentMenu->menuitems[_g->itemOn].routine &&
+                _g->currentMenu->menuitems[_g->itemOn].status)
         {
-            if (currentMenu->menuitems[itemOn].status == 2)
+            if (_g->currentMenu->menuitems[_g->itemOn].status == 2)
             {
-                currentMenu->menuitems[itemOn].routine(1);   // right arrow
+                _g->currentMenu->menuitems[_g->itemOn].routine(1);   // right arrow
                 S_StartSound(NULL,sfx_stnmov);
             }
             else
             {
-                currentMenu->menuitems[itemOn].routine(itemOn);
+                _g->currentMenu->menuitems[_g->itemOn].routine(_g->itemOn);
                 S_StartSound(NULL,sfx_pistol);
             }
         }
@@ -1206,7 +1008,7 @@ void M_StartControlPanel (void)
   // defaultskill, instead of -skill.
 
   _g->menuactive = 1;
-  currentMenu = &MainDef;         // JDC
+  _g->currentMenu = &MainDef;         // JDC
 }
 
 //
@@ -1246,19 +1048,19 @@ void M_Drawer (void)
       {
   int x,y,max,i;
 
-  if (currentMenu->routine)
-    currentMenu->routine();     // call Draw routine
+  if (_g->currentMenu->routine)
+    _g->currentMenu->routine();     // call Draw routine
 
   // DRAW MENU
 
-  x = currentMenu->x;
-  y = currentMenu->y;
-  max = currentMenu->numitems;
+  x = _g->currentMenu->x;
+  y = _g->currentMenu->y;
+  max = _g->currentMenu->numitems;
 
   for (i=0;i<max;i++)
     {
-      if (currentMenu->menuitems[i].name[0])
-        V_DrawNamePatch(x,y,0,currentMenu->menuitems[i].name,
+      if (_g->currentMenu->menuitems[i].name[0])
+        V_DrawNamePatch(x,y,0,_g->currentMenu->menuitems[i].name,
             CR_DEFAULT, VPT_STRETCH);
       y += LINEHEIGHT;
     }
@@ -1266,8 +1068,8 @@ void M_Drawer (void)
   // DRAW SKULL
 
   // CPhipps - patch drawing updated
-  V_DrawNamePatch(x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,0,
-      skullName[whichSkull], CR_DEFAULT, VPT_STRETCH);
+  V_DrawNamePatch(x + SKULLXOFF, _g->currentMenu->y - 5 + _g->itemOn*LINEHEIGHT,0,
+      skullName[_g->whichSkull], CR_DEFAULT, VPT_STRETCH);
       }
 }
 
@@ -1284,9 +1086,9 @@ void M_ClearMenus (void)
 //
 // M_SetupNextMenu
 //
-void M_SetupNextMenu(menu_t *menudef)
+void M_SetupNextMenu(const menu_t *menudef)
 {
-  currentMenu = menudef;
+  _g->currentMenu = menudef;
 }
 
 /////////////////////////////
@@ -1295,10 +1097,10 @@ void M_SetupNextMenu(menu_t *menudef)
 //
 void M_Ticker (void)
 {
-  if (--skullAnimCounter <= 0)
+  if (--_g->skullAnimCounter <= 0)
     {
-      whichSkull ^= 1;
-      skullAnimCounter = 8;
+      _g->whichSkull ^= 1;
+      _g->skullAnimCounter = 8;
     }
 }
 
@@ -1466,34 +1268,14 @@ void M_WriteText (int x,int y,const char* string)
 void M_Init(void)
 {
   M_InitDefaults();                // killough 11/98
-  currentMenu = &MainDef;
+  _g->currentMenu = &MainDef;
   _g->menuactive = 0;
-  whichSkull = 0;
-  skullAnimCounter = 10;
+  _g->whichSkull = 0;
+  _g->skullAnimCounter = 10;
   _g->screenSize = _g->screenblocks - 3;
   _g->messageToPrint = 0;
   _g->messageString = NULL;
   _g->messageLastMenuActive = _g->menuactive;
-
-  // Here we could catch other version dependencies,
-  //  like HELP1/2, and four episodes.
-
-  switch(_g->gamemode)
-    {
-    case commercial:
-
-      break;
-    case registered:
-
-    case shareware:
-      // We need to remove the fourth episode.
-      EpiDef.numitems--;
-      break;
-    case retail:
-      // We are fine.
-    default:
-      break;
-    }
 }
 
 //

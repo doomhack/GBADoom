@@ -295,12 +295,17 @@ int saveStringEnter;
 int saveSlot;        // which slot to save in
 int saveCharIndex;   // which char we're editing
 // old save description before edit
-char saveOldString[SAVESTRINGSIZE];
 
 boolean menuactive;    // The menus are up
 
-char savegamestrings[10][SAVESTRINGSIZE];
+short itemOn;           // menu item skull is on (for Big Font menus)
+short skullAnimCounter; // skull animation counter
+short whichSkull;       // which skull to draw (he blinks)
 
+const menu_t* currentMenu; // current menudef
+
+
+int epi;
 
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

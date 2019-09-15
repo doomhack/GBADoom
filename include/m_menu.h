@@ -119,7 +119,33 @@ void M_DrawCredits(void);    // killough 11/98
 #define S_HASDEFPTR (S_STRING|S_YESNO|S_NUM|S_WEAP|S_COLOR|S_CRITEM|S_CHOICE)
 
 
-#define SAVESTRINGSIZE  24
+#define SAVESTRINGSIZE  8
+
+//
+// MENU TYPEDEFS
+//
+
+typedef struct
+{
+  short status; // 0 = no cursor here, 1 = ok, 2 = arrows ok
+  char  name[10];
+
+  // choice = menu item #.
+  // if status = 2,
+  //   choice=0:leftarrow,1:rightarrow
+  void  (*routine)(int choice);
+} menuitem_t;
+
+typedef struct menu_s
+{
+  short           numitems;     // # of menu items
+  const menuitem_t* menuitems;    // menu items
+  void            (*routine)(); // draw routine
+  short           x;
+  short           y;            // x,y of menu
+} menu_t;
+
+
 
 
 #endif
