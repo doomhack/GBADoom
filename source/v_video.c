@@ -44,6 +44,8 @@
 #include "i_video.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 // Each screen is [SCREENWIDTH*SCREENHEIGHT];
 screeninfo_t screens[NUM_SCREENS];
 
@@ -124,7 +126,7 @@ static void FUNC_V_DrawBackground(const char* flatname, int scrn)
   byte *dest = screens[scrn].data;
 
   // killough 4/17/98:
-  src = W_CacheLumpNum(lump = firstflat + R_FlatNumForName(flatname));
+  src = W_CacheLumpNum(lump = _g->firstflat + R_FlatNumForName(flatname));
 
   /* V_DrawBlock(0, 0, scrn, 64, 64, src, 0); */
   width = height = 64;

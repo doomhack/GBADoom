@@ -365,7 +365,7 @@ static void R_DoDrawPlane(visplane_t *pl)
                 const side_t *s = *l->sidenum + _g->sides;
 				
 				// Texture comes from upper texture of reference sidedef
-				texture = texturetranslation[s->toptexture];
+                texture = _g->texturetranslation[s->toptexture];
 
 				// Horizontal offset is turned into an angle offset,
 				// to allow sky rotation as well as careful positioning.
@@ -423,7 +423,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 			int stop, light;
 			draw_span_vars_t dsvars;
 			
-			dsvars.source = W_CacheLumpNum(firstflat + flattranslation[pl->picnum]);
+            dsvars.source = W_CacheLumpNum(_g->firstflat + _g->flattranslation[pl->picnum]);
 			
 			xoffs = pl->xoffs;  // killough 2/28/98: Add offsets
 			yoffs = pl->yoffs;
@@ -446,7 +446,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 				R_MakeSpans(x,pl->top[x-1],pl->bottom[x-1], pl->top[x],pl->bottom[x], &dsvars);
 			}
 				
-			W_UnlockLumpNum(firstflat + flattranslation[pl->picnum]);
+            W_UnlockLumpNum(_g->firstflat + _g->flattranslation[pl->picnum]);
 		}
 	}
 }

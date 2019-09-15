@@ -49,21 +49,9 @@
 //  for rendering.
 //
 
-// needed for texture pegging
-extern fixed_t *textureheight;
 
 extern int scaledviewwidth;
 
-extern int firstflat, numflats;
-
-// for global animation
-extern int *flattranslation;
-extern int *texturetranslation;
-
-// Sprite....
-extern int firstspritelump;
-extern int lastspritelump;
-extern int numspritelumps;
 
 //
 // Lookup tables for map data.

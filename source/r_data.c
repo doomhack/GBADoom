@@ -87,13 +87,7 @@ typedef struct
 // A maptexturedef_t describes a rectangular texture, which is composed
 // of one or more mappatch_t structures that arrange graphic patches.
 
-int       firstflat, lastflat, numflats;
-int       firstspritelump, lastspritelump, numspritelumps;
-int       numtextures;
-texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
-fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
-int       *flattranslation;             // for global animation
-int       *texturetranslation;
+
 
 //
 // R_GetTextureColumn
@@ -183,17 +177,17 @@ static void R_InitTextures (void)
       numtextures2 = 0;
       maxoff2 = 0;
     }
-  numtextures = numtextures1 + numtextures2;
+  _g->numtextures = numtextures1 + numtextures2;
 
   // killough 4/9/98: make column offsets 32-bit;
   // clean up malloc-ing to use sizeof
 
-  textures = Z_Malloc(numtextures*sizeof*textures, PU_STATIC, 0);
-  textureheight = Z_Malloc(numtextures*sizeof*textureheight, PU_STATIC, 0);
+  _g->textures = Z_Malloc(_g->numtextures*sizeof*_g->textures, PU_STATIC, 0);
+  _g->textureheight = Z_Malloc(_g->numtextures*sizeof*_g->textureheight, PU_STATIC, 0);
 
   totalwidth = 0;
 
-  for (i=0 ; i<numtextures ; i++, directory++)
+  for (i=0 ; i<_g->numtextures ; i++, directory++)
     {
       if (i == numtextures1)
         {
@@ -210,7 +204,7 @@ static void R_InitTextures (void)
 
       mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
 
-      texture = textures[i] =
+      texture = _g->textures[i] =
         Z_Malloc(sizeof(texture_t) +
                  sizeof(texpatch_t)*(SHORT(mtexture->patchcount)-1),
                  PU_STATIC, 0);
@@ -219,36 +213,6 @@ static void R_InitTextures (void)
       texture->height = SHORT(mtexture->height);
       texture->patchcount = SHORT(mtexture->patchcount);
 
-        /* Mattias Engdegård emailed me of the following explenation of
-         * why memcpy doesnt work on some systems:
-         * "I suppose it is the mad unaligned allocation
-         * going on (and which gcc in some way manages to cope with
-         * through the __attribute__ ((packed))), and which it forgets
-         * when optimizing memcpy (to a single word move) since it appears
-         * to be aligned. Technically a gcc bug, but I can't blame it when
-         * it's stressed with that amount of
-         * non-standard nonsense."
-   * So in short the unaligned struct confuses gcc's optimizer so
-   * i took the memcpy out alltogether to avoid future problems-Jess
-         */
-      /* The above was #ifndef SPARC, but i got a mail from
-       * Putera Joseph F NPRI <PuteraJF@Npt.NUWC.Navy.Mil> containing:
-       *   I had to use the memcpy function on a sparc machine.  The
-       *   other one would give me a core dump.
-       * cph - I find it hard to believe that sparc memcpy is broken,
-       * but I don't believe the pointers to memcpy have to be aligned
-       * either. Use fast memcpy on other machines anyway.
-       */
-/*
-  proff - I took this out, because Oli Kraus (olikraus@yahoo.com) told
-  me the memcpy produced a buserror. Since this function isn't time-
-  critical I'm using the for loop now.
-*/
-/*
-#ifndef GCC
-      memcpy(texture->name, mtexture->name, sizeof(texture->name));
-#else
-*/
       {
         int j;
         for(j=0;j<sizeof(texture->name);j++)
@@ -276,7 +240,7 @@ static void R_InitTextures (void)
       for (j=1; j*2 <= texture->width; j<<=1)
         ;
       texture->widthmask = j-1;
-      textureheight[i] = texture->height<<FRACBITS;
+      _g->textureheight[i] = texture->height<<FRACBITS;
 
       totalwidth += texture->width;
     }
@@ -297,20 +261,20 @@ static void R_InitTextures (void)
   // killough 4/9/98: make column offsets 32-bit;
   // clean up malloc-ing to use sizeof
 
-  texturetranslation =
-    Z_Malloc((numtextures+1)*sizeof*texturetranslation, PU_STATIC, 0);
+  _g->texturetranslation =
+    Z_Malloc((_g->numtextures+1)*sizeof*_g->texturetranslation, PU_STATIC, 0);
 
-  for (i=0 ; i<numtextures ; i++)
-    texturetranslation[i] = i;
+  for (i=0 ; i<_g->numtextures ; i++)
+    _g->texturetranslation[i] = i;
 
   // killough 1/31/98: Initialize texture hash table
-  for (i = 0; i<numtextures; i++)
-    textures[i]->index = -1;
+  for (i = 0; i<_g->numtextures; i++)
+    _g->textures[i]->index = -1;
   while (--i >= 0)
     {
-      int j = W_LumpNameHash(textures[i]->name) % (unsigned) numtextures;
-      textures[i]->next = textures[j]->index;   // Prepend to chain
-      textures[j]->index = i;
+      int j = W_LumpNameHash(_g->textures[i]->name) % (unsigned) _g->numtextures;
+      _g->textures[i]->next = _g->textures[j]->index;   // Prepend to chain
+      _g->textures[j]->index = i;
     }
 }
 
@@ -321,19 +285,19 @@ static void R_InitFlats(void)
 {
   int i;
 
-  firstflat = W_GetNumForName("F_START") + 1;
-  lastflat  = W_GetNumForName("F_END") - 1;
-  numflats  = lastflat - firstflat + 1;
+  _g->firstflat = W_GetNumForName("F_START") + 1;
+  _g->lastflat  = W_GetNumForName("F_END") - 1;
+  _g->numflats  = _g->lastflat - _g->firstflat + 1;
 
   // Create translation table for global animation.
   // killough 4/9/98: make column offsets 32-bit;
   // clean up malloc-ing to use sizeof
 
-  flattranslation =
-    Z_Malloc((numflats+1)*sizeof(*flattranslation), PU_STATIC, 0);
+  _g->flattranslation =
+    Z_Malloc((_g->numflats+1)*sizeof(*_g->flattranslation), PU_STATIC, 0);
 
-  for (i=0 ; i<numflats ; i++)
-    flattranslation[i] = i;
+  for (i=0 ; i<_g->numflats ; i++)
+    _g->flattranslation[i] = i;
 }
 
 //
@@ -344,9 +308,9 @@ static void R_InitFlats(void)
 //
 static void R_InitSpriteLumps(void)
 {
-  firstspritelump = W_GetNumForName("S_START") + 1;
-  lastspritelump = W_GetNumForName("S_END") - 1;
-  numspritelumps = lastspritelump - firstspritelump + 1;
+  _g->firstspritelump = W_GetNumForName("S_START") + 1;
+  _g->lastspritelump = W_GetNumForName("S_END") - 1;
+  _g->numspritelumps = _g->lastspritelump - _g->firstspritelump + 1;
 }
 
 //
@@ -440,7 +404,7 @@ int R_FlatNumForName(const char *name)    // killough -- const added
   int i = (W_CheckNumForName)(name, ns_flats);
   if (i == -1)
     I_Error("R_FlatNumForName: %.8s not found", name);
-  return i - firstflat;
+  return i - _g->firstflat;
 }
 
 //
@@ -460,9 +424,9 @@ int PUREFUNC R_CheckTextureNumForName(const char *name)
   int i = NO_TEXTURE;
   if (*name != '-')     // "NoTexture" marker.
     {
-      i = textures[W_LumpNameHash(name) % (unsigned) numtextures]->index;
-      while (i >= 0 && strncasecmp(textures[i]->name,name,8))
-        i = textures[i]->next;
+      i = _g->textures[W_LumpNameHash(name) % (unsigned) _g->numtextures]->index;
+      while (i >= 0 && strncasecmp(_g->textures[i]->name,name,8))
+        i = _g->textures[i]->next;
     }
   return i;
 }
@@ -516,24 +480,24 @@ void R_PrecacheLevel(void)
     return;
 
   {
-    size_t size = numflats > numsprites  ? numflats : numsprites;
-    hitlist = malloc((size_t)numtextures > size ? numtextures : size);
+    size_t size = _g->numflats > numsprites  ? _g->numflats : numsprites;
+    hitlist = malloc((size_t)_g->numtextures > size ? _g->numtextures : size);
   }
 
   // Precache flats.
 
-  memset(hitlist, 0, numflats);
+  memset(hitlist, 0, _g->numflats);
 
   for (i = _g->numsectors; --i >= 0; )
     hitlist[_g->sectors[i].floorpic] = hitlist[_g->sectors[i].ceilingpic] = 1;
 
-  for (i = numflats; --i >= 0; )
+  for (i = _g->numflats; --i >= 0; )
     if (hitlist[i])
-      precache_lump(firstflat + i);
+      precache_lump(_g->firstflat + i);
 
   // Precache textures.
 
-  memset(hitlist, 0, numtextures);
+  memset(hitlist, 0, _g->numtextures);
 
   for (i = _g->numsides; --i >= 0;)
     hitlist[_g->sides[i].bottomtexture] =
@@ -549,10 +513,10 @@ void R_PrecacheLevel(void)
 
   hitlist[skytexture] = 1;
 
-  for (i = numtextures; --i >= 0; )
+  for (i = _g->numtextures; --i >= 0; )
     if (hitlist[i])
       {
-        texture_t *texture = textures[i];
+        texture_t *texture = _g->textures[i];
         int j = texture->patchcount;
         while (--j >= 0)
           precache_lump(texture->patches[j].patch);
@@ -577,7 +541,7 @@ void R_PrecacheLevel(void)
             short *sflump = sprites[i].spriteframes[j].lump;
             int k = 7;
             do
-              precache_lump(firstspritelump + sflump[k]);
+              precache_lump(_g->firstspritelump + sflump[k]);
             while (--k >= 0);
           }
       }

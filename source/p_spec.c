@@ -551,12 +551,12 @@ fixed_t P_FindShortestTextureAround(int secnum)
     {
       side = getSide(secnum,i,0);
       if (side->bottomtexture > 0)  //jff 8/14/98 texture 0 is a placeholder
-        if (textureheight[side->bottomtexture] < minsize)
-          minsize = textureheight[side->bottomtexture];
+        if (_g->textureheight[side->bottomtexture] < minsize)
+          minsize = _g->textureheight[side->bottomtexture];
       side = getSide(secnum,i,1);
       if (side->bottomtexture > 0)  //jff 8/14/98 texture 0 is a placeholder
-        if (textureheight[side->bottomtexture] < minsize)
-          minsize = textureheight[side->bottomtexture];
+        if (_g->textureheight[side->bottomtexture] < minsize)
+          minsize = _g->textureheight[side->bottomtexture];
     }
   }
   return minsize;
@@ -589,12 +589,12 @@ fixed_t P_FindShortestUpperAround(int secnum)
     {
       side = getSide(secnum,i,0);
       if (side->toptexture > 0)     //jff 8/14/98 texture 0 is a placeholder
-        if (textureheight[side->toptexture] < minsize)
-          minsize = textureheight[side->toptexture];
+        if (_g->textureheight[side->toptexture] < minsize)
+          minsize = _g->textureheight[side->toptexture];
       side = getSide(secnum,i,1);
       if (side->toptexture > 0)     //jff 8/14/98 texture 0 is a placeholder
-        if (textureheight[side->toptexture] < minsize)
-          minsize = textureheight[side->toptexture];
+        if (_g->textureheight[side->toptexture] < minsize)
+          minsize = _g->textureheight[side->toptexture];
     }
   }
   return minsize;
@@ -2267,9 +2267,9 @@ void P_UpdateSpecials (void)
     {
       pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
       if (anim->istexture)
-        texturetranslation[i] = pic;
+        _g->texturetranslation[i] = pic;
       else
-        flattranslation[i] = pic;
+        _g->flattranslation[i] = pic;
     }
   }
 

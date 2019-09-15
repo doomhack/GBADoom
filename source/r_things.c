@@ -107,7 +107,7 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
       for (r=0 ; r<8 ; r++)
         if (sprtemp[frame].lump[r]==-1)
           {
-            sprtemp[frame].lump[r] = lump - firstspritelump;
+            sprtemp[frame].lump[r] = lump - _g->firstspritelump;
             sprtemp[frame].flip[r] = (byte) flipped;
             sprtemp[frame].rotate = false; //jff 4/24/98 if any subbed, rotless
           }
@@ -118,7 +118,7 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
 
   if (sprtemp[frame].lump[--rotation] == -1)
     {
-      sprtemp[frame].lump[rotation] = lump - firstspritelump;
+      sprtemp[frame].lump[rotation] = lump - _g->firstspritelump;
       sprtemp[frame].flip[rotation] = (byte) flipped;
       sprtemp[frame].rotate = true; //jff 4/24/98 only change if rot used
     }
@@ -152,7 +152,7 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
 
 static void R_InitSpriteDefs(const char * const * namelist)
 {
-  size_t numentries = lastspritelump-firstspritelump+1;
+  size_t numentries = _g->lastspritelump-_g->firstspritelump+1;
   struct { int index, next; } *hash;
   int i;
 
@@ -177,7 +177,7 @@ static void R_InitSpriteDefs(const char * const * namelist)
 
   for (i=0; (size_t)i<numentries; i++)             // Prepend each sprite to hash chain
     {                                      // prepend so that later ones win
-      int j = R_SpriteNameHash(lumpinfo[i+firstspritelump].name) % numentries;
+      int j = R_SpriteNameHash(lumpinfo[i+_g->firstspritelump].name) % numentries;
       hash[i].next = hash[j].index;
       hash[j].index = i;
     }
@@ -196,7 +196,7 @@ static void R_InitSpriteDefs(const char * const * namelist)
           maxframe = -1;
           do
             {
-              register lumpinfo_t *lump = lumpinfo + j + firstspritelump;
+              register lumpinfo_t *lump = lumpinfo + j + _g->firstspritelump;
 
               // Fast portable comparison -- killough
               // (using int pointer cast is nonportable):
@@ -206,12 +206,12 @@ static void R_InitSpriteDefs(const char * const * namelist)
                     (lump->name[2] ^ spritename[2]) |
                     (lump->name[3] ^ spritename[3])))
                 {
-                  R_InstallSpriteLump(j+firstspritelump,
+                  R_InstallSpriteLump(j+_g->firstspritelump,
                                       lump->name[4] - 'A',
                                       lump->name[5] - '0',
                                       false);
                   if (lump->name[6])
-                    R_InstallSpriteLump(j+firstspritelump,
+                    R_InstallSpriteLump(j+_g->firstspritelump,
                                         lump->name[6] - 'A',
                                         lump->name[7] - '0',
                                         true);
@@ -374,7 +374,7 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
 {
   int      texturecolumn;
   fixed_t  frac;
-  const rpatch_t *patch = R_CachePatchNum(vis->patch+firstspritelump);
+  const rpatch_t *patch = R_CachePatchNum(vis->patch+_g->firstspritelump);
   R_DrawColumn_f colfunc;
   draw_column_vars_t dcvars;
 
@@ -417,7 +417,7 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
         R_GetPatchColumnClamped(patch, texturecolumn)
       );
     }
-  R_UnlockPatchNum(vis->patch+firstspritelump); // cph - release lump
+  R_UnlockPatchNum(vis->patch+_g->firstspritelump); // cph - release lump
 }
 
 //
@@ -510,7 +510,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     }
 
   {
-    const rpatch_t* patch = R_CachePatchNum(lump+firstspritelump);
+    const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
 
     /* calculate edges of the shape
      * cph 2003/08/1 - fraggle points out that this offset must be flipped
@@ -527,7 +527,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     gzt = fz + (patch->topoffset << FRACBITS);
     width = patch->width;
-    R_UnlockPatchNum(lump+firstspritelump);
+    R_UnlockPatchNum(lump+_g->firstspritelump);
   }
 
   // off the side?
@@ -673,7 +673,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   flip = (boolean) sprframe->flip[0];
 
   {
-    const rpatch_t* patch = R_CachePatchNum(lump+firstspritelump);
+    const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
     // calculate edges of the shape
     fixed_t       tx;
     tx = psp->sx-160*FRACUNIT;
@@ -686,7 +686,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
-    R_UnlockPatchNum(lump+firstspritelump);
+    R_UnlockPatchNum(lump+_g->firstspritelump);
   }
 
   // off the side
@@ -761,17 +761,10 @@ void R_DrawPlayerSprites(void)
 // linked lists, and to use faster sorting algorithm.
 //
 
-#ifdef DJGPP
 
-// killough 9/22/98: inlined memcpy of pointer arrays
-// CPhipps - added memory as modified
-#define bcopyp(d, s, n) asm(" cld; rep; movsl;" :: "D"(d), "S"(s), "c"(n) : "%cc", "%esi", "%edi", "%ecx", "memory")
-
-#else
 
 #define bcopyp(d, s, n) memcpy(d, s, (n) * sizeof(void *))
 
-#endif
 
 // killough 9/2/98: merge sort
 

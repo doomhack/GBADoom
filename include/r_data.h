@@ -70,9 +70,6 @@ typedef struct
   texpatch_t patches[1]; // back-to-front into the cached texture.
 } texture_t;
 
-extern int numtextures;
-extern texture_t **textures;
-
 
 const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col);
 

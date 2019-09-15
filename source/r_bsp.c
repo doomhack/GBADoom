@@ -152,18 +152,18 @@ static void R_RecalcLineFlags(void)
 
     /* Does top texture need tiling */
     if ((c = _g->frontsector->ceilingheight - _g->backsector->ceilingheight) > 0 &&
-   (textureheight[texturetranslation[_g->curline->sidedef->toptexture]] > c))
+   (_g->textureheight[_g->texturetranslation[_g->curline->sidedef->toptexture]] > c))
       _g->linedef->r_flags |= RF_TOP_TILE;
 
     /* Does bottom texture need tiling */
     if ((c = _g->frontsector->floorheight - _g->backsector->floorheight) > 0 &&
-   (textureheight[texturetranslation[_g->curline->sidedef->bottomtexture]] > c))
+   (_g->textureheight[_g->texturetranslation[_g->curline->sidedef->bottomtexture]] > c))
       _g->linedef->r_flags |= RF_BOT_TILE;
   } else {
     int c;
     /* Does middle texture need tiling */
     if ((c = _g->frontsector->ceilingheight - _g->frontsector->floorheight) > 0 &&
-   (textureheight[texturetranslation[_g->curline->sidedef->midtexture]] > c))
+   (_g->textureheight[_g->texturetranslation[_g->curline->sidedef->midtexture]] > c))
       _g->linedef->r_flags |= RF_MID_TILE;
   }
 }

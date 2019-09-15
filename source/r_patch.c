@@ -42,6 +42,8 @@
 #include "r_patch.h"
 #include <assert.h>
 
+#include "global_data.h"
+
 // posts are runs of non masked source pixels
 typedef struct
 {
@@ -85,9 +87,9 @@ void R_InitPatches(void) {
   }
   if (!texture_composites)
   {
-    texture_composites = (rpatch_t*)malloc(numtextures * sizeof(rpatch_t));
+    texture_composites = (rpatch_t*)malloc(_g->numtextures * sizeof(rpatch_t));
     // clear out new patches to signal they're uninitialized
-    memset(texture_composites, 0, sizeof(rpatch_t)*numtextures);
+    memset(texture_composites, 0, sizeof(rpatch_t)*_g->numtextures);
   }
 }
 
@@ -105,7 +107,7 @@ void R_FlushAllPatches(void) {
   }
   if (texture_composites)
   {
-    for (i=0; i<numtextures; i++)
+    for (i=0; i<_g->numtextures; i++)
       if (texture_composites[i].data)
         free(texture_composites[i].data);
     free(texture_composites);
@@ -382,7 +384,7 @@ static void createTextureCompositePatch(int id) {
 
   composite_patch = &texture_composites[id];
 
-  texture = textures[id];
+  texture = _g->textures[id];
 
   composite_patch->width = texture->width;
   composite_patch->height = texture->height;
@@ -699,7 +701,7 @@ const rpatch_t *R_CacheTextureCompositePatchNum(int id) {
 #ifdef SIMPLECHECKS
   if (!((texture_composites[id].locks+1) & 0xf))
     lprintf(LO_DEBUG, "R_CacheTextureCompositePatchNum: High lock on %8s (%d)\n", 
-	    textures[id]->name, texture_composites[id].locks);
+        _g->textures[id]->name, texture_composites[id].locks);
 #endif
 
   return &texture_composites[id];
@@ -712,7 +714,7 @@ void R_UnlockTextureCompositePatchNum(int id)
 #ifdef SIMPLECHECKS
   if ((signed short)texture_composites[id].locks < unlocks)
     lprintf(LO_DEBUG, "R_UnlockTextureCompositePatchNum: Excess unlocks on %8s (%d-%d)\n", 
-	    textures[id]->name, texture_composites[id].locks, unlocks);
+        _g->textures[id]->name, texture_composites[id].locks, unlocks);
 #endif
   texture_composites[id].locks -= unlocks;
   /* cph - Note: must only tell z_zone to make purgeable if currently locked, 

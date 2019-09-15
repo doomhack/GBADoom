@@ -556,7 +556,7 @@ void F_CastDrawer (void)
   flip = (boolean)sprframe->flip[0];
 
   // CPhipps - patch drawing updated
-  V_DrawNumPatch(160, 170, 0, lump+firstspritelump, CR_DEFAULT,
+  V_DrawNumPatch(160, 170, 0, lump+_g->firstspritelump, CR_DEFAULT,
      VPT_STRETCH | (flip ? VPT_FLIP : 0));
 }
 

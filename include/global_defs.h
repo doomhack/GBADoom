@@ -631,4 +631,17 @@ byte solidcol[MAX_SCREENWIDTH];
 
 
 //******************************************************************************
+//r_data.c
+//******************************************************************************
+
+int       firstflat, lastflat, numflats;
+int       firstspritelump, lastspritelump, numspritelumps;
+int       numtextures;
+texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
+fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
+int       *flattranslation;             // for global animation
+int       *texturetranslation;
+
+
+//******************************************************************************
 #endif // GLOBAL_DEFS_H
