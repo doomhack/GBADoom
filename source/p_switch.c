@@ -50,7 +50,7 @@ static int numswitches;                           // killough
 
 button_t  buttonlist[MAXBUTTONS];
 
-switchlist_t alphSwitchList[] =
+const switchlist_t alphSwitchList[] =
 {
     // Doom shareware episode 1 switches
     {"SW1BRCOM",	"SW2BRCOM",	1},
