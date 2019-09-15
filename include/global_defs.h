@@ -719,12 +719,50 @@ int     setblocks;
 //r_patch.c
 //******************************************************************************
 
-//---------------------------------------------------------------------------
-// Re-engineered patch support
-//---------------------------------------------------------------------------
 rpatch_t *patches;
 
 rpatch_t *texture_composites;
+
+//******************************************************************************
+//r_plane.c
+//******************************************************************************
+
+visplane_t *visplanes[MAXVISPLANES];   // killough
+visplane_t *freetail;                  // killough
+visplane_t **freehead;     // killough
+visplane_t *floorplane, *ceilingplane;
+
+size_t maxopenings;
+int *openings,*lastopening; // dropoff overflow
+
+// Clip values are the solid pixel bounding the range.
+//  floorclip starts out SCREENHEIGHT
+//  ceilingclip starts out -1
+
+int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
+
+// spanstart holds the start of a plane span; initialized to 0 at start
+
+int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
+
+//
+// texture mapping
+//
+
+const lighttable_t **planezlight;
+fixed_t planeheight;
+
+// killough 2/8/98: make variables static
+
+fixed_t basexscale, baseyscale;
+fixed_t cachedheight[MAX_SCREENHEIGHT];
+fixed_t cacheddistance[MAX_SCREENHEIGHT];
+fixed_t cachedxstep[MAX_SCREENHEIGHT];
+fixed_t cachedystep[MAX_SCREENHEIGHT];
+fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
+
+fixed_t yslope[MAX_SCREENHEIGHT], distscale[MAX_SCREENWIDTH];
+
 
 
 //******************************************************************************

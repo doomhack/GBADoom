@@ -41,14 +41,6 @@
 #pragma interface
 #endif
 
-
-//
-// Rendering stats
-//
-
-extern int rendered_visplanes, rendered_segs, rendered_vissprites;
-extern boolean rendering_stats;
-
 //
 // Lighting LUT.
 // Used for z-depth cuing per column/row,

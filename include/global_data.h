@@ -23,6 +23,8 @@
 #include "r_draw.h"
 #include "r_main.h"
 
+#include "r_plane.h"
+
 #include "mmus2mid.h"
 
 

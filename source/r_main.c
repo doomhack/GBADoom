@@ -354,13 +354,13 @@ void R_ExecuteSetViewSize (void)
     {   // killough 5/2/98: reformatted
       fixed_t dy = D_abs(((i-_g->viewheight/2)<<FRACBITS)+FRACUNIT/2);
 // proff 08/17/98: Changed for high-res
-      yslope[i] = FixedDiv(_g->projectiony, dy);
+      _g->yslope[i] = FixedDiv(_g->projectiony, dy);
     }
 
   for (i=0 ; i<_g->viewwidth ; i++)
     {
       fixed_t cosadj = D_abs(finecosine[_g->xtoviewangle[i]>>ANGLETOFINESHIFT]);
-      distscale[i] = FixedDiv(FRACUNIT,cosadj);
+      _g->distscale[i] = FixedDiv(FRACUNIT,cosadj);
     }
 
 }

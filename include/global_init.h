@@ -52,6 +52,11 @@ _g->rejectlump = -1;// cph - store reject lump num if cached
 
 _g->validcount = 1;         // increment every time a check is made
 
+//******************************************************************************
+//r_plane.c
+//******************************************************************************
+
+_g->freehead = &_g->freetail;     // killough
 
 
 

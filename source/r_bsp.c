@@ -477,7 +477,7 @@ static void R_Subsector(int num)
   // killough 3/16/98: add floorlightlevel
   // killough 10/98: add support for skies transferred from sidedefs
 
-  floorplane = _g->frontsector->floorheight < _g->viewz || // killough 3/7/98
+  _g->floorplane = _g->frontsector->floorheight < _g->viewz || // killough 3/7/98
     (_g->frontsector->heightsec != -1 &&
      _g->sectors[_g->frontsector->heightsec].ceilingpic == skyflatnum) ?
     R_FindPlane(_g->frontsector->floorheight,
@@ -489,7 +489,7 @@ static void R_Subsector(int num)
                 _g->frontsector->floor_yoffs
                 ) : NULL;
 
-  ceilingplane = _g->frontsector->ceilingheight > _g->viewz ||
+  _g->ceilingplane = _g->frontsector->ceilingheight > _g->viewz ||
     _g->frontsector->ceilingpic == skyflatnum ||
     (_g->frontsector->heightsec != -1 &&
      _g->sectors[_g->frontsector->heightsec].floorpic == skyflatnum) ?

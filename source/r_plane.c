@@ -62,49 +62,11 @@
 
 #include "global_data.h"
 
-#define MAXVISPLANES 128    /* must be a power of 2 */
-
-static visplane_t *visplanes[MAXVISPLANES];   // killough
-static visplane_t *freetail;                  // killough
-static visplane_t **freehead = &freetail;     // killough
-visplane_t *floorplane, *ceilingplane;
-
 // killough -- hash function for visplanes
 // Empirically verified to be fairly uniform:
 
 #define visplane_hash(picnum,lightlevel,height) \
   ((unsigned)((picnum)*3+(lightlevel)+(height)*7) & (MAXVISPLANES-1))
-
-size_t maxopenings;
-int *openings,*lastopening; // dropoff overflow
-
-// Clip values are the solid pixel bounding the range.
-//  floorclip starts out SCREENHEIGHT
-//  ceilingclip starts out -1
-
-int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
-
-// spanstart holds the start of a plane span; initialized to 0 at start
-
-static int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
-
-//
-// texture mapping
-//
-
-static const lighttable_t **planezlight;
-static fixed_t planeheight;
-
-// killough 2/8/98: make variables static
-
-static fixed_t basexscale, baseyscale;
-static fixed_t cachedheight[MAX_SCREENHEIGHT];
-static fixed_t cacheddistance[MAX_SCREENHEIGHT];
-static fixed_t cachedxstep[MAX_SCREENHEIGHT];
-static fixed_t cachedystep[MAX_SCREENHEIGHT];
-static fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
-
-fixed_t yslope[MAX_SCREENHEIGHT], distscale[MAX_SCREENWIDTH];
 
 //
 // R_InitPlanes
@@ -141,26 +103,26 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
     I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
 #endif
 
-  if (planeheight != cachedheight[y])
+  if (_g->planeheight != _g->cachedheight[y])
     {
-      cachedheight[y] = planeheight;
-      distance = cacheddistance[y] = FixedMul (planeheight, yslope[y]);
-      dsvars->xstep = cachedxstep[y] = FixedMul (distance,basexscale);
-      dsvars->ystep = cachedystep[y] = FixedMul (distance,baseyscale);
+      _g->cachedheight[y] = _g->planeheight;
+      distance = _g->cacheddistance[y] = FixedMul (_g->planeheight, _g->yslope[y]);
+      dsvars->xstep = _g->cachedxstep[y] = FixedMul (distance,_g->basexscale);
+      dsvars->ystep = _g->cachedystep[y] = FixedMul (distance,_g->baseyscale);
     }
   else
     {
-      distance = cacheddistance[y];
-      dsvars->xstep = cachedxstep[y];
-      dsvars->ystep = cachedystep[y];
+      distance = _g->cacheddistance[y];
+      dsvars->xstep = _g->cachedxstep[y];
+      dsvars->ystep = _g->cachedystep[y];
     }
 
-  length = FixedMul (distance,distscale[x1]);
+  length = FixedMul (distance,_g->distscale[x1]);
   angle = (_g->viewangle + _g->xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
   // killough 2/28/98: Add offsets
-  dsvars->xfrac =  _g->viewx + FixedMul(finecosine[angle], length) + xoffs;
-  dsvars->yfrac = -_g->viewy - FixedMul(finesine[angle],   length) + yoffs;
+  dsvars->xfrac =  _g->viewx + FixedMul(finecosine[angle], length) + _g->xoffs;
+  dsvars->yfrac = -_g->viewy - FixedMul(finesine[angle],   length) + _g->yoffs;
 
   if (!(dsvars->colormap = _g->fixedcolormap))
     {
@@ -168,7 +130,7 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
       index = distance >> LIGHTZSHIFT;
       if (index >= MAXLIGHTZ )
         index = MAXLIGHTZ-1;
-      dsvars->colormap = planezlight[index];
+      dsvars->colormap = _g->planezlight[index];
     }
   else
    {
@@ -193,34 +155,34 @@ void R_ClearPlanes(void)
 
   // opening / clipping determination
   for (i=0 ; i<_g->viewwidth ; i++)
-    floorclip[i] = _g->viewheight, ceilingclip[i] = -1;
+    _g->floorclip[i] = _g->viewheight, _g->ceilingclip[i] = -1;
 
   for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
-    for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
-      freehead = &(*freehead)->next;
+    for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
+      _g->freehead = &(*_g->freehead)->next;
 
-  lastopening = openings;
+  _g->lastopening = _g->openings;
 
   // texture calculation
-  memset (cachedheight, 0, sizeof(cachedheight));
+  memset (_g->cachedheight, 0, sizeof(_g->cachedheight));
 
   // scale will be unit scale at SCREENWIDTH/2 distance
-  basexscale = FixedDiv (_g->viewsin,_g->projection);
-  baseyscale = FixedDiv (_g->viewcos,_g->projection);
+  _g->basexscale = FixedDiv (_g->viewsin,_g->projection);
+  _g->baseyscale = FixedDiv (_g->viewcos,_g->projection);
 }
 
 // New function, by Lee Killough
 
 static visplane_t *new_visplane(unsigned hash)
 {
-  visplane_t *check = freetail;
+  visplane_t *check = _g->freetail;
   if (!check)
     check = calloc(1, sizeof *check);
   else
-    if (!(freetail = freetail->next))
-      freehead = &freetail;
-  check->next = visplanes[hash];
-  visplanes[hash] = check;
+    if (!(_g->freetail = _g->freetail->next))
+      _g->freehead = &_g->freetail;
+  check->next = _g->visplanes[hash];
+  _g->visplanes[hash] = check;
   return check;
 }
 
@@ -261,7 +223,7 @@ visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel,
   // New visplane algorithm uses hash table -- killough
   hash = visplane_hash(picnum,lightlevel,height);
 
-  for (check=visplanes[hash]; check; check=check->next)  // killough
+  for (check=_g->visplanes[hash]; check; check=check->next)  // killough
     if (height == check->height &&
         picnum == check->picnum &&
         lightlevel == check->lightlevel &&
@@ -320,16 +282,16 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
                         draw_span_vars_t *dsvars)
 {
 	for (; t1 < t2 && t1 <= b1; t1++)
-		R_MapPlane(t1, spanstart[t1], x-1, dsvars);
+        R_MapPlane(t1, _g->spanstart[t1], x-1, dsvars);
 	
 	for (; b1 > b2 && b1 >= t1; b1--)
-		R_MapPlane(b1, spanstart[b1] ,x-1, dsvars);
+        R_MapPlane(b1, _g->spanstart[b1] ,x-1, dsvars);
 	
 	while (t2 < t1 && t2 <= b2)
-		spanstart[t2++] = x;
+        _g->spanstart[t2++] = x;
 	
 	while (b2 > b1 && b2 >= t2)
-		spanstart[b2--] = x;
+        _g->spanstart[b2--] = x;
 }
 
 // New function, by Lee Killough
@@ -425,10 +387,10 @@ static void R_DoDrawPlane(visplane_t *pl)
 			
             dsvars.source = W_CacheLumpNum(_g->firstflat + _g->flattranslation[pl->picnum]);
 			
-			xoffs = pl->xoffs;  // killough 2/28/98: Add offsets
-			yoffs = pl->yoffs;
+            _g->xoffs = pl->xoffs;  // killough 2/28/98: Add offsets
+            _g->yoffs = pl->yoffs;
 			
-            planeheight = D_abs(pl->height-_g->viewz);
+            _g->planeheight = D_abs(pl->height-_g->viewz);
             light = (pl->lightlevel >> LIGHTSEGSHIFT) + _g->extralight;
 			
 			if (light >= LIGHTLEVELS)
@@ -438,7 +400,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 				light = 0;
 			
 			stop = pl->maxx + 1;
-            planezlight = _g->zlight[light];
+            _g->planezlight = _g->zlight[light];
 			pl->top[pl->minx-1] = pl->top[stop] = 0xffffffffu; // dropoff overflow
 			
 			for (x = pl->minx ; x <= stop ; x++)
@@ -461,6 +423,6 @@ void R_DrawPlanes (void)
   visplane_t *pl;
   int i;
   for (i=0;i<MAXVISPLANES;i++)
-    for (pl=visplanes[i]; pl; pl=pl->next)
+    for (pl=_g->visplanes[i]; pl; pl=pl->next)
       R_DoDrawPlane(pl);
 }

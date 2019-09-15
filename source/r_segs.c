@@ -265,7 +265,7 @@ static void R_RenderSegLoop (void)
       int yl = (topfrac+HEIGHTUNIT-1)>>HEIGHTBITS;
 
       // no space above wall?
-      int bottom,top = ceilingclip[rw_x]+1;
+      int bottom,top = _g->ceilingclip[rw_x]+1;
 
       if (yl < top)
         yl = top;
@@ -274,36 +274,36 @@ static void R_RenderSegLoop (void)
         {
           bottom = yl-1;
 
-          if (bottom >= floorclip[rw_x])
-            bottom = floorclip[rw_x]-1;
+          if (bottom >= _g->floorclip[rw_x])
+            bottom = _g->floorclip[rw_x]-1;
 
           if (top <= bottom)
             {
-              ceilingplane->top[rw_x] = top;
-              ceilingplane->bottom[rw_x] = bottom;
+              _g->ceilingplane->top[rw_x] = top;
+              _g->ceilingplane->bottom[rw_x] = bottom;
             }
           // SoM: this should be set here
-          ceilingclip[rw_x] = bottom;
+          _g->ceilingclip[rw_x] = bottom;
         }
 
 //      yh = bottomfrac>>HEIGHTBITS;
 
-      bottom = floorclip[rw_x]-1;
+      bottom = _g->floorclip[rw_x]-1;
       if (yh > bottom)
         yh = bottom;
 
       if (markfloor)
         {
 
-          top  = yh < ceilingclip[rw_x] ? ceilingclip[rw_x] : yh;
+          top  = yh < _g->ceilingclip[rw_x] ? _g->ceilingclip[rw_x] : yh;
 
           if (++top <= bottom)
             {
-              floorplane->top[rw_x] = top;
-              floorplane->bottom[rw_x] = bottom;
+              _g->floorplane->top[rw_x] = top;
+              _g->floorplane->bottom[rw_x] = bottom;
             }
           // SoM: This should be set here to prevent overdraw
-          floorclip[rw_x] = top;
+          _g->floorclip[rw_x] = top;
         }
 
       // texturecolumn and lighting are independent of wall tiers
@@ -335,8 +335,8 @@ static void R_RenderSegLoop (void)
           R_DrawColumn (&dcvars);
           R_UnlockTextureCompositePatchNum(midtexture);
           tex_patch = NULL;
-          ceilingclip[rw_x] = _g->viewheight;
-          floorclip[rw_x] = -1;
+          _g->ceilingclip[rw_x] = _g->viewheight;
+          _g->floorclip[rw_x] = -1;
         }
       else
         {
@@ -348,8 +348,8 @@ static void R_RenderSegLoop (void)
               int mid = pixhigh>>HEIGHTBITS;
               pixhigh += pixhighstep;
 
-              if (mid >= floorclip[rw_x])
-                mid = floorclip[rw_x]-1;
+              if (mid >= _g->floorclip[rw_x])
+                mid = _g->floorclip[rw_x]-1;
 
               if (mid >= yl)
                 {
@@ -361,16 +361,16 @@ static void R_RenderSegLoop (void)
                   R_DrawColumn (&dcvars);
                   R_UnlockTextureCompositePatchNum(toptexture);
                   tex_patch = NULL;
-                  ceilingclip[rw_x] = mid;
+                  _g->ceilingclip[rw_x] = mid;
                 }
               else
-                ceilingclip[rw_x] = yl-1;
+                _g->ceilingclip[rw_x] = yl-1;
             }
           else  // no top wall
             {
 
             if (markceiling)
-              ceilingclip[rw_x] = yl-1;
+              _g->ceilingclip[rw_x] = yl-1;
              }
 
           if (bottomtexture)          // bottom wall
@@ -379,8 +379,8 @@ static void R_RenderSegLoop (void)
               pixlow += pixlowstep;
 
               // no space above wall?
-              if (mid <= ceilingclip[rw_x])
-                mid = ceilingclip[rw_x]+1;
+              if (mid <= _g->ceilingclip[rw_x])
+                mid = _g->ceilingclip[rw_x]+1;
 
               if (mid <= yh)
                 {
@@ -392,21 +392,21 @@ static void R_RenderSegLoop (void)
                   R_DrawColumn  (&dcvars);
                   R_UnlockTextureCompositePatchNum(bottomtexture);
                   tex_patch = NULL;
-                  floorclip[rw_x] = mid;
+                  _g->floorclip[rw_x] = mid;
                 }
               else
-                floorclip[rw_x] = yh+1;
+                _g->floorclip[rw_x] = yh+1;
             }
           else        // no bottom wall
             {
             if (markfloor)
-              floorclip[rw_x] = yh+1;
+              _g->floorclip[rw_x] = yh+1;
             }
 
     // cph - if we completely blocked further sight through this column,
     // add this info to the solid columns array for r_bsp.c
     if ((markceiling || markfloor) &&
-        (floorclip[rw_x] <= ceilingclip[rw_x] + 1)) {
+        (_g->floorclip[rw_x] <= _g->ceilingclip[rw_x] + 1)) {
       _g->solidcol[rw_x] = 1; didsolidcol = 1;
     }
 
@@ -490,21 +490,19 @@ void R_StoreWallRange(const int start, const int stop)
   rw_stopx = stop+1;
 
   {     // killough 1/6/98, 2/1/98: remove limit on openings
-    extern int *openings; // dropoff overflow
-    extern size_t maxopenings;
-    size_t pos = lastopening - openings;
+    size_t pos = _g->lastopening - _g->openings;
     size_t need = (rw_stopx - start)*4 + pos;
-    if (need > maxopenings)
+    if (need > _g->maxopenings)
       {
         drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
-        int *oldopenings = openings; // dropoff overflow
-        int *oldlast = lastopening; // dropoff overflow
+        int *oldopenings = _g->openings; // dropoff overflow
+        int *oldlast = _g->lastopening; // dropoff overflow
 
         do
-          maxopenings = maxopenings ? maxopenings*2 : 16384;
-        while (need > maxopenings);
-        openings = realloc(openings, maxopenings * sizeof(*openings));
-        lastopening = openings + pos;
+          _g->maxopenings = _g->maxopenings ?_g-> maxopenings*2 : 16384;
+        while (need > _g->maxopenings);
+        _g->openings = realloc(_g->openings, _g->maxopenings * sizeof(*_g->openings));
+        _g->lastopening = _g->openings + pos;
 
       // jff 8/9/98 borrowed fix for openings from ZDOOM1.14
       // [RH] We also need to adjust the openings pointers that
@@ -512,7 +510,7 @@ void R_StoreWallRange(const int start, const int stop)
       for (ds = _g->drawsegs; ds < _g->ds_p; ds++)
         {
 #define ADJUST(p) if (ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast)\
-            ds->p = ds->p - oldopenings + openings;
+            ds->p = ds->p - oldopenings + _g->openings;
           ADJUST (maskedtexturecol);
           ADJUST (sprtopclip);
           ADJUST (sprbottomclip);
@@ -683,8 +681,8 @@ void R_StoreWallRange(const int start, const int stop)
       if (_g->sidedef->midtexture)    // masked midtexture
         {
           maskedtexture = true;
-          _g->ds_p->maskedtexturecol = maskedtexturecol = lastopening - rw_x;
-          lastopening += rw_stopx - rw_x;
+          _g->ds_p->maskedtexturecol = maskedtexturecol = _g->lastopening - rw_x;
+          _g->lastopening += rw_stopx - rw_x;
         }
     }
 
@@ -750,24 +748,24 @@ void R_StoreWallRange(const int start, const int stop)
 
   // render it
   if (markceiling) {
-    if (ceilingplane)   // killough 4/11/98: add NULL ptr checks
-      ceilingplane = R_CheckPlane (ceilingplane, rw_x, rw_stopx-1);
+    if (_g->ceilingplane)   // killough 4/11/98: add NULL ptr checks
+      _g->ceilingplane = R_CheckPlane (_g->ceilingplane, rw_x, rw_stopx-1);
     else
       markceiling = 0;
   }
 
   if (markfloor) {
-    if (floorplane)     // killough 4/11/98: add NULL ptr checks
+    if (_g->floorplane)     // killough 4/11/98: add NULL ptr checks
       /* cph 2003/04/18  - ceilingplane and floorplane might be the same
        * visplane (e.g. if both skies); R_CheckPlane doesn't know about
        * modifications to the plane that might happen in parallel with the check
        * being made, so we have to override it and split them anyway if that is
        * a possibility, otherwise the floor marking would overwrite the ceiling
        * marking, resulting in HOM. */
-      if (markceiling && ceilingplane == floorplane)
-	floorplane = R_DupPlane (floorplane, rw_x, rw_stopx-1);
+      if (markceiling && _g->ceilingplane == _g->floorplane)
+    _g->floorplane = R_DupPlane (_g->floorplane, rw_x, rw_stopx-1);
       else
-	floorplane = R_CheckPlane (floorplane, rw_x, rw_stopx-1);
+    _g->floorplane = R_CheckPlane (_g->floorplane, rw_x, rw_stopx-1);
     else
       markfloor = 0;
   }
@@ -790,15 +788,15 @@ void R_StoreWallRange(const int start, const int stop)
   // save sprite clipping info
   if ((_g->ds_p->silhouette & SIL_TOP || maskedtexture) && !_g->ds_p->sprtopclip)
     {
-      memcpy (lastopening, ceilingclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
-      _g->ds_p->sprtopclip = lastopening - start;
-      lastopening += rw_stopx - start;
+      memcpy (_g->lastopening, _g->ceilingclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
+      _g->ds_p->sprtopclip = _g->lastopening - start;
+      _g->lastopening += rw_stopx - start;
     }
   if ((_g->ds_p->silhouette & SIL_BOTTOM || maskedtexture) && !_g->ds_p->sprbottomclip)
     {
-      memcpy (lastopening, floorclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
-      _g->ds_p->sprbottomclip = lastopening - start;
-      lastopening += rw_stopx - start;
+      memcpy (_g->lastopening, _g->floorclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
+      _g->ds_p->sprbottomclip = _g->lastopening - start;
+      _g->lastopening += rw_stopx - start;
     }
   if (maskedtexture && !(_g->ds_p->silhouette & SIL_TOP))
     {
