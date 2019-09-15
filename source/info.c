@@ -100,7 +100,7 @@ const char *sprnames[NUMSPRITES+1] = {
 // parts where frame rewiring is done for more details and the
 // extended way a BEX file can handle this.
 
-state_t states[NUMSTATES] = {
+const state_t states[NUMSTATES] = {
   {SPR_TROO,0,-1,NULL,S_NULL,0,0},  // S_NULL
   {SPR_SHTG,4,0,A_Light0,S_NULL,0,0}, // S_LIGHTDONE
   {SPR_PUNG,0,1,A_WeaponReady,S_PUNCH,0,0}, // S_PUNCH
@@ -1078,36 +1078,6 @@ state_t states[NUMSTATES] = {
   {SPR_MISL,32770,6,A_Detonate,S_DETONATE3},  // S_DETONATE2
   {SPR_MISL,32771,10,NULL,S_NULL},            // S_DETONATE3
 
-#ifdef DOGS
-  // killough 7/19/98: Marine's best friend :)
-  {SPR_DOGS,0,10,A_Look,S_DOGS_STND2},  // S_DOGS_STND
-  {SPR_DOGS,1,10,A_Look,S_DOGS_STND}, // S_DOGS_STND2
-  {SPR_DOGS,0,2,A_Chase,S_DOGS_RUN2}, // S_DOGS_RUN1
-  {SPR_DOGS,0,2,A_Chase,S_DOGS_RUN3}, // S_DOGS_RUN2
-  {SPR_DOGS,1,2,A_Chase,S_DOGS_RUN4}, // S_DOGS_RUN3
-  {SPR_DOGS,1,2,A_Chase,S_DOGS_RUN5}, // S_DOGS_RUN4
-  {SPR_DOGS,2,2,A_Chase,S_DOGS_RUN6}, // S_DOGS_RUN5
-  {SPR_DOGS,2,2,A_Chase,S_DOGS_RUN7}, // S_DOGS_RUN6
-  {SPR_DOGS,3,2,A_Chase,S_DOGS_RUN8}, // S_DOGS_RUN7
-  {SPR_DOGS,3,2,A_Chase,S_DOGS_RUN1}, // S_DOGS_RUN8
-  {SPR_DOGS,4,8,A_FaceTarget,S_DOGS_ATK2},  // S_DOGS_ATK1
-  {SPR_DOGS,5,8,A_FaceTarget,S_DOGS_ATK3},  // S_DOGS_ATK2
-  {SPR_DOGS,6,8,A_SargAttack,S_DOGS_RUN1},  // S_DOGS_ATK3
-  {SPR_DOGS,7,2,NULL,S_DOGS_PAIN2}, // S_DOGS_PAIN
-  {SPR_DOGS,7,2,A_Pain,S_DOGS_RUN1},  // S_DOGS_PAIN2
-  {SPR_DOGS,8,8,NULL,S_DOGS_DIE2},  // S_DOGS_DIE1
-  {SPR_DOGS,9,8,A_Scream,S_DOGS_DIE3},  // S_DOGS_DIE2
-  {SPR_DOGS,10,4,NULL,S_DOGS_DIE4}, // S_DOGS_DIE3
-  {SPR_DOGS,11,4,A_Fall,S_DOGS_DIE5}, // S_DOGS_DIE4
-  {SPR_DOGS,12,4,NULL,S_DOGS_DIE6}, // S_DOGS_DIE5
-  {SPR_DOGS,13,-1,NULL,S_NULL}, // S_DOGS_DIE6
-  {SPR_DOGS,13,5,NULL,S_DOGS_RAISE2}, // S_DOGS_RAISE1
-  {SPR_DOGS,12,5,NULL,S_DOGS_RAISE3}, // S_DOGS_RAISE2
-  {SPR_DOGS,11,5,NULL,S_DOGS_RAISE4}, // S_DOGS_RAISE3
-  {SPR_DOGS,10,5,NULL,S_DOGS_RAISE5}, // S_DOGS_RAISE4
-  {SPR_DOGS,9,5,NULL,S_DOGS_RAISE6},  // S_DOGS_RAISE5
-  {SPR_DOGS,8,5,NULL,S_DOGS_RUN1},  // S_DOGS_RAISE6
-#else
   // if dogs are disabled, dummy states are required for dehacked compatibility
   {0,0,-1,NULL,S_NULL}, // S_DOGS_STND
   {0,0,-1,NULL,S_NULL}, // S_DOGS_STND2
@@ -1136,7 +1106,6 @@ state_t states[NUMSTATES] = {
   {0,0,-1,NULL,S_NULL}, // S_DOGS_RAISE4
   {0,0,-1,NULL,S_NULL}, // S_DOGS_RAISE5
   {0,0,-1,NULL,S_NULL}, // S_DOGS_RAISE6
-#endif
 
   // add dummy beta bfg / lost soul frames for dehacked compatibility
   // fixes bug #1576151 (part 2)
@@ -1249,7 +1218,7 @@ state_t states[NUMSTATES] = {
 //
 // This goes on for the next 3000+ lines...
 
-mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
+const mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
   {   // MT_PLAYER
     -1,   // doomednum
     S_PLAY,   // spawnstate
@@ -4865,32 +4834,4 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
     MF_NOBLOCKMAP,  // flags
     S_NULL          // raisestate
   },
-#ifdef DOGS
-  // Marine's best friend :)      // killough 7/19/98
-  {   // MT_DOGS
-    888,   // doomednum
-    S_DOGS_STND,    // spawnstate
-    500,    // spawnhealth
-    S_DOGS_RUN1,    // seestate
-    sfx_dgsit,   // seesound
-    8,    // reactiontime
-    sfx_dgatk,   // attacksound
-    S_DOGS_PAIN,    // painstate
-    180,    // painchance
-    sfx_dgpain,   // painsound
-    S_DOGS_ATK1,    // meleestate
-    0,    // missilestate
-    S_DOGS_DIE1,    // deathstate
-    S_NULL,   // xdeathstate
-    sfx_dgdth,   // deathsound
-    10,   // speed
-    12*FRACUNIT,    // radius
-    28*FRACUNIT,    // height
-    100,    // mass
-    0,    // damage
-    sfx_dgact,    // activesound
-    MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL, // flags
-    S_DOGS_RAISE1   // raisestate
-  },
-#endif
 };

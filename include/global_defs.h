@@ -271,4 +271,6 @@ unsigned char current_pallete[3*256];
 int newpal;
 
 
+
+
 #endif // GLOBAL_DEFS_H

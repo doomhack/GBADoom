@@ -1265,7 +1265,7 @@ typedef struct
 } state_t;
 
 /* these are in info.c */
-extern state_t  states[NUMSTATES];
+extern const state_t  states[NUMSTATES];
 extern const char *sprnames[]; /* 1/17/98 killough - CPhipps - const */
 
 /********************************************************************
@@ -1493,6 +1493,6 @@ typedef struct
 } mobjinfo_t;
 
 /* See p_mobj_h for addition more technical info */
-extern mobjinfo_t mobjinfo[NUMMOBJTYPES];
+extern const mobjinfo_t mobjinfo[NUMMOBJTYPES];
 
 #endif
