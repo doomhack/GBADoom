@@ -84,7 +84,7 @@ static void D_PageDrawer(void);
 
 //jff 1/22/98 parms for disabling music and sound
 const boolean nosfxparm = false;
-const boolean nomusicparm = false;
+const boolean nomusicparm = true;
 
 const skill_t startskill = sk_medium;
 const int startepisode = 1;

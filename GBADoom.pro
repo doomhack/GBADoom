@@ -20,7 +20,6 @@ INCLUDEPATH += "include\libtimidity"
 
 SOURCES += \
         source/am_map.c \
-        source/audio.cpp \
         source/d_client.c \
         source/d_items.c \
         source/d_main.c \
@@ -34,7 +33,7 @@ SOURCES += \
         source/global_data.c \
         source/hu_lib.c \
         source/hu_stuff.c \
-        source/i_audio.cpp \
+        source/i_audio.c \
         source/i_main.c \
         source/i_system.c \
         source/i_system_e32.cpp \
@@ -110,7 +109,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     include/am_map.h \
-    include/audio.h \
     include/config.h \
     include/d_englsh.h \
     include/d_event.h \
@@ -178,7 +176,6 @@ HEADERS += \
     include/p_spec.h \
     include/p_tick.h \
     include/p_user.h \
-    include/pcm_to_alaw.h \
     include/protocol.h \
     include/r_bsp.h \
     include/r_data.h \

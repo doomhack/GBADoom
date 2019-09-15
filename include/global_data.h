@@ -8,6 +8,9 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 #include "r_defs.h"
+#include "i_sound.h"
+#include "libtimidity/timidity.h"
+
 
 typedef struct globals_t
 {

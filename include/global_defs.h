@@ -235,6 +235,28 @@ char hud_keysstr[80];
 char hud_gkeysstr[80]; //jff 3/7/98 add support for graphic key display
 char hud_monsecstr[80];
 
+
+//******************************************************************************
+//i_audio.c
+//******************************************************************************
+
+boolean sound_inited;
+
+short music_buffer[MUSIC_BUFFER_SAMPLES * 2];
+unsigned int current_music_buffer;
+
+unsigned int music_looping;
+unsigned int music_volume;
+unsigned int music_init;
+
+unsigned int music_sample_counts[2];
+
+channel_info_t channelinfo[MAX_CHANNELS + 1];
+
+MidIStream* midiStream;
+MidSong* midiSong;
+
+
 //******************************************************************************
 
 #endif // GLOBAL_DEFS_H

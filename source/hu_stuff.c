@@ -327,55 +327,6 @@ const char *const mapnamest[] = // TNT WAD map names.
   THUSTR_32,
 };
 
-
-
-// key tables
-// jff 5/10/98 french support removed,
-// as it was not being used and couldn't be easily tested
-//
-const char* shiftxform;
-
-const char english_shiftxform[] =
-{
-  0,
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-  21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-  31,
-  ' ', '!', '"', '#', '$', '%', '&',
-  '"', // shift-'
-  '(', ')', '*', '+',
-  '<', // shift-,
-  '_', // shift--
-  '>', // shift-.
-  '?', // shift-/
-  ')', // shift-0
-  '!', // shift-1
-  '@', // shift-2
-  '#', // shift-3
-  '$', // shift-4
-  '%', // shift-5
-  '^', // shift-6
-  '&', // shift-7
-  '*', // shift-8
-  '(', // shift-9
-  ':',
-  ':', // shift-;
-  '<',
-  '+', // shift-=
-  '>', '?', '@',
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-  'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-  '[', // shift-[
-  '!', // shift-backslash - OH MY GOD DOES WATCOM SUCK
-  ']', // shift-]
-  '"', '_',
-  '\'', // shift-`
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-  'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-  '{', '|', '}', '~', 127
-};
-
 //
 // HU_Init()
 //
@@ -389,8 +340,6 @@ void HU_Init(void)
   int   i;
   int   j;
   char  buffer[9];
-
-  shiftxform = english_shiftxform;
 
   // load the heads-up font
   j = HU_FONTSTART;
@@ -476,7 +425,6 @@ void HU_Start(void)
 
   int   i;
   const char* s; /* cph - const */
-  player_t* plr = &_g->players[displayplayer];        // killough 3/7/98
 
   if (_g->headsupactive)                    // stop before starting
     HU_Stop();
@@ -729,6 +677,8 @@ void HU_Start(void)
 
   // now allow the heads-up display to run
   _g->headsupactive = true;
+
+  HU_MoveHud();
 }
 
 //
@@ -743,11 +693,6 @@ void HU_Start(void)
 //
 void HU_MoveHud(void)
 {
-  static int ohud_distributed=-1;
-
-  //jff 3/4/98 move displays around on F5 changing hud_distributed
-  if (hud_distributed!=ohud_distributed)
-  {
     _g->w_ammo.x =    hud_distributed? HU_AMMOX_D   : HU_AMMOX;
     _g->w_ammo.y =    hud_distributed? HU_AMMOY_D   : HU_AMMOY;
     _g->w_weapon.x =  hud_distributed? HU_WEAPX_D   : HU_WEAPX;
@@ -762,8 +707,6 @@ void HU_MoveHud(void)
     _g->w_health.y =  hud_distributed? HU_HEALTHY_D : HU_HEALTHY;
     _g->w_armor.x =   hud_distributed? HU_ARMORX_D  : HU_ARMORX;
     _g->w_armor.y =   hud_distributed? HU_ARMORY_D  : HU_ARMORY;
-  }
-  ohud_distributed = hud_distributed;
 }
 
 //
@@ -803,8 +746,6 @@ void HU_Drawer(void)
     doit = !(_g->gametic&1); //jff 3/4/98 speed update up for slow systems
     if (doit)            //jff 8/7/98 update every time, avoid lag in update
     {
-      HU_MoveHud();                  // insure HUD display coords are correct
-
       // do the hud ammo display
       // clear the widgets internal line
       HUlib_clearTextLine(&_g->w_ammo);
@@ -1148,8 +1089,6 @@ void HU_Erase(void)
 //
 // Passed nothing, returns nothing
 //
-static boolean bsdown; // Is backspace down?
-static int bscounter;
 
 void HU_Ticker(void)
 {
@@ -1190,12 +1129,6 @@ void HU_Ticker(void)
   }
 }
 
-#define QUEUESIZE   128
-
-static char chatchars[QUEUESIZE];
-static int  head = 0;
-static int  tail = 0;
-
 //
 // HU_dequeueChatChar()
 //
@@ -1205,18 +1138,7 @@ static int  tail = 0;
 //
 char HU_dequeueChatChar(void)
 {
-  char c;
-
-  if (head != tail)
-  {
-    c = chatchars[tail];
-    tail = (tail + 1) & (QUEUESIZE-1);
-  }
-  else
-  {
-    c = 0;
-  }
-  return c;
+    return 0;
 }
 
 //
@@ -1229,8 +1151,6 @@ char HU_dequeueChatChar(void)
 boolean HU_Responder(event_t *ev)
 {
     boolean   eatkey = false;
-    static boolean  shiftdown = false;
-    static boolean  altdown = false;
     int     i;
     int     numplayers;
 
@@ -1241,20 +1161,12 @@ boolean HU_Responder(event_t *ev)
 
     if (ev->data1 == key_shift)
     {
-        shiftdown = ev->type == ev_keydown;
         return false;
     }
     else if (ev->data1 == key_alt)
     {
-        altdown = ev->type == ev_keydown;
         return false;
     }
-    else if (ev->data1 == key_backspace)
-    {
-        bsdown = ev->type == ev_keydown;
-        bscounter = 0;
-    }
-
     if (ev->type != ev_keydown)
         return false;
 

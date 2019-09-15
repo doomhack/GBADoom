@@ -62,7 +62,7 @@ struct sfxinfo_struct {
   int volume;
 
   // sound data
-  void *data;
+  const void *data;
 
   // this is checked every second to see if sound
   // can be thrown out (if 0, then decrement, if -1,

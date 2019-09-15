@@ -37,13 +37,6 @@
 #include "sounds.h"
 #include "doomtype.h"
 
-#define SNDSERV
-#undef SNDINTR
-
-#ifndef SNDSERV
-#include "l_soundgen.h"
-#endif
-
 // Init at program start...
 void I_InitSound(void);
 
@@ -114,5 +107,18 @@ void I_UnRegisterSong(int handle);
 
 // CPhipps - put these in config file
 extern const int snd_samplerate;
+
+
+typedef struct
+{
+    const char* data;
+    const char* enddata;
+    int vol;
+
+} channel_info_t;
+
+#define MUSIC_BUFFER_SAMPLES 2048
+#define MAX_CHANNELS    8
+
 
 #endif
