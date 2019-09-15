@@ -61,9 +61,6 @@
 
 #include "global_data.h"
 
-extern patchnum_t hu_font[HU_FONTSIZE];
-extern boolean  message_dontfuckwithme;
-
 //
 // defaulted values
 //
@@ -844,7 +841,7 @@ void M_ChangeMessages(int choice)
   else
     _g->players[consoleplayer].message = MSGON ; // Ty 03/27/98 - externalized
 
-  message_dontfuckwithme = true;
+  _g->message_dontfuckwithme = true;
 }
 
 /////////////////////////////
@@ -862,7 +859,7 @@ void M_SizeDisplay(int choice)
     if (screenSize > 0) {
       screenblocks--;
       screenSize--;
-      hud_displayed = 0;
+      _g->hud_displayed = 0;
     }
     break;
   case 1:
@@ -871,7 +868,7 @@ void M_SizeDisplay(int choice)
       screenSize++;
     }
     else
-      hud_displayed = !hud_displayed;
+      _g->hud_displayed = !_g->hud_displayed;
     break;
   }
   R_SetViewSize (screenblocks /*, detailLevel obsolete -- killough */);
@@ -1267,7 +1264,7 @@ void M_Drawer (void)
           p++;
         *p = 0;
         M_WriteText(160 - M_StringWidth(string)/2, y, string);
-        y += hu_font[0].height;
+        y += _g->hu_font[0].height;
         if ((*p = c))
           p++;
       }
@@ -1429,7 +1426,7 @@ int M_StringWidth(const char* string)
   int i, c, w = 0;
   for (i = 0;(size_t)i < strlen(string);i++)
     w += (c = toupper(string[i]) - HU_FONTSTART) < 0 || c >= HU_FONTSIZE ?
-      4 : hu_font[c].width;
+      4 : _g->hu_font[c].width;
   return w;
 }
 
@@ -1439,7 +1436,7 @@ int M_StringWidth(const char* string)
 
 int M_StringHeight(const char* string)
 {
-  int i, h, height = h = hu_font[0].height;
+  int i, h, height = h = _g->hu_font[0].height;
   for (i = 0;string[i];i++)            // killough 1/31/98
     if (string[i] == '\n')
       h += height;
@@ -1477,12 +1474,12 @@ void M_WriteText (int x,int y,const char* string)
       continue;
     }
 
-    w = hu_font[c].width;
+    w = _g->hu_font[c].width;
     if (cx+w > SCREENWIDTH)
       break;
     // proff/nicolas 09/20/98 -- changed for hi-res
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(cx, cy, 0, hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNumPatch(cx, cy, 0, _g->hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
     cx+=w;
   }
 }

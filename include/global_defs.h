@@ -189,6 +189,52 @@ skill_t d_skill;
 int     d_episode;
 int     d_map;
 
+
+
+
+//******************************************************************************
+//hu_stuff.c
+//******************************************************************************
+
+int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
+
+// font sets
+patchnum_t hu_font[HU_FONTSIZE];
+patchnum_t hu_fontk[HU_FONTSIZE];//jff 3/7/98 added for graphic key indicators
+
+// widgets
+hu_textline_t  w_title;
+hu_stext_t     w_message;
+hu_itext_t     w_inputbuffer[MAXPLAYERS];
+hu_textline_t  w_coordx; //jff 2/16/98 new coord widget for automap
+hu_textline_t  w_coordy; //jff 3/3/98 split coord widgets automap
+hu_textline_t  w_coordz; //jff 3/3/98 split coord widgets automap
+hu_textline_t  w_ammo;   //jff 2/16/98 new ammo widget for hud
+hu_textline_t  w_health; //jff 2/16/98 new health widget for hud
+hu_textline_t  w_armor;  //jff 2/16/98 new armor widget for hud
+hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
+hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
+hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
+hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
+hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
+
+boolean    always_off;
+boolean    message_on;
+boolean    message_list; //2/26/98 enable showing list of messages
+boolean    message_dontfuckwithme;
+boolean    message_nottobefuckedwith;
+int        message_counter;
+boolean    headsupactive;
+
+//jff 2/16/98 initialization strings for ammo, health, armor widgets
+char hud_ammostr[80];
+char hud_healthstr[80];
+char hud_armorstr[80];
+char hud_weapstr[80];
+char hud_keysstr[80];
+char hud_gkeysstr[80]; //jff 3/7/98 add support for graphic key display
+char hud_monsecstr[80];
+
 //******************************************************************************
 
 #endif // GLOBAL_DEFS_H

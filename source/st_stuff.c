@@ -387,12 +387,12 @@ static void ST_refreshBackground(void)
 	
 	if (st_statusbaron)
 	{
-		V_DrawNumPatch(ST_X, y, BG, stbarbg.lumpnum, CR_DEFAULT, VPT_STRETCH);
+        V_DrawNumPatch(ST_X, y, ST_BG, stbarbg.lumpnum, CR_DEFAULT, VPT_STRETCH);
 		
 		if (st_armson)
-			V_DrawNumPatch(ST_ARMSBGX, y, BG, armsbg.lumpnum, CR_DEFAULT, VPT_STRETCH);
+            V_DrawNumPatch(ST_ARMSBGX, y, ST_BG, armsbg.lumpnum, CR_DEFAULT, VPT_STRETCH);
 		
-		V_CopyRect(ST_X, y, BG, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, ST_X, ST_SCALED_Y, FG, VPT_NONE);
+        V_CopyRect(ST_X, y, ST_BG, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, ST_X, ST_SCALED_Y, ST_FG, VPT_NONE);
 	}
 }
 

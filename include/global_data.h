@@ -5,7 +5,9 @@
 #include "m_fixed.h"
 #include "am_map.h"
 #include "g_game.h"
-
+#include "hu_lib.h"
+#include "hu_stuff.h"
+#include "r_defs.h"
 
 typedef struct globals_t
 {

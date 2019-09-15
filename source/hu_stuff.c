@@ -48,9 +48,7 @@
 
 // global heads up display controls
 
-int hud_displayed = 0;    //jff 2/23/98 turns heads-up display on/off
 const int hud_distributed = 0;  //jff 3/4/98 display HUD in different places on screen
-int hud_graph_keys=1; //jff 3/7/98 display HUD keys as graphics
 
 //
 // Locally used constants, shortcuts.
@@ -66,15 +64,15 @@ int hud_graph_keys=1; //jff 3/7/98 display HUD keys as graphics
 //jff 2/16/98 change 167 to ST_Y-1
 // CPhipps - changed to ST_TY
 // proff - changed to 200-ST_HEIGHT for stretching
-#define HU_TITLEY ((200-ST_HEIGHT) - 1 - hu_font[0].height)
+#define HU_TITLEY ((200-ST_HEIGHT) - 1 - _g->hu_font[0].height)
 
 //jff 2/16/98 add coord text widget coordinates
 // proff - changed to SCREENWIDTH to 320 for stretching
-#define HU_COORDX (320 - 13*hu_font['A'-HU_FONTSTART].width)
+#define HU_COORDX (320 - 13*_g->hu_font['A'-HU_FONTSTART].width)
 //jff 3/3/98 split coord widget into three lines in upper right of screen
-#define HU_COORDX_Y (1 + 0*hu_font['A'-HU_FONTSTART].height)
-#define HU_COORDY_Y (2 + 1*hu_font['A'-HU_FONTSTART].height)
-#define HU_COORDZ_Y (3 + 2*hu_font['A'-HU_FONTSTART].height)
+#define HU_COORDX_Y (1 + 0*_g->hu_font['A'-HU_FONTSTART].height)
+#define HU_COORDY_Y (2 + 1*_g->hu_font['A'-HU_FONTSTART].height)
+#define HU_COORDZ_Y (3 + 2*_g->hu_font['A'-HU_FONTSTART].height)
 
 //jff 2/16/98 add ammo, health, armor widgets, 2/22/98 less gap
 #define HU_GAPY 8
@@ -85,7 +83,7 @@ int hud_graph_keys=1; //jff 3/7/98 display HUD keys as graphics
 #define HU_MONSECY (HU_HUDY+0*HU_GAPY)
 #define HU_KEYSX   (HU_HUDX)
 //jff 3/7/98 add offset for graphic key widget
-#define HU_KEYSGX  (HU_HUDX+4*hu_font['A'-HU_FONTSTART].width)
+#define HU_KEYSGX  (HU_HUDX+4*_g->hu_font['A'-HU_FONTSTART].width)
 #define HU_KEYSY   (HU_HUDY+1*HU_GAPY)
 #define HU_WEAPX   (HU_HUDX)
 #define HU_WEAPY   (HU_HUDY+2*HU_GAPY)
@@ -108,7 +106,7 @@ int hud_graph_keys=1; //jff 3/7/98 display HUD keys as graphics
 #define HU_MONSECX_D (HU_HUDX_LL)
 #define HU_MONSECY_D (HU_HUDY_LL+0*HU_GAPY)
 #define HU_KEYSX_D   (HU_HUDX_LL)
-#define HU_KEYSGX_D  (HU_HUDX_LL+4*hu_font['A'-HU_FONTSTART].width)
+#define HU_KEYSGX_D  (HU_HUDX_LL+4*_g->hu_font['A'-HU_FONTSTART].width)
 #define HU_KEYSY_D   (HU_HUDY_LL+1*HU_GAPY)
 #define HU_WEAPX_D   (HU_HUDX_LR)
 #define HU_WEAPY_D   (HU_HUDY_LR+0*HU_GAPY)
@@ -140,35 +138,11 @@ const char* player_names[] =
   HUSTR_PLRRED
 };
 
-// font sets
-patchnum_t hu_font[HU_FONTSIZE];
-patchnum_t hu_fontk[HU_FONTSIZE];//jff 3/7/98 added for graphic key indicators
 
-// widgets
-static hu_textline_t  w_title;
-static hu_stext_t     w_message;
-static hu_itext_t     w_inputbuffer[MAXPLAYERS];
-static hu_textline_t  w_coordx; //jff 2/16/98 new coord widget for automap
-static hu_textline_t  w_coordy; //jff 3/3/98 split coord widgets automap
-static hu_textline_t  w_coordz; //jff 3/3/98 split coord widgets automap
-static hu_textline_t  w_ammo;   //jff 2/16/98 new ammo widget for hud
-static hu_textline_t  w_health; //jff 2/16/98 new health widget for hud
-static hu_textline_t  w_armor;  //jff 2/16/98 new armor widget for hud
-static hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
-static hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
-static hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
-static hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
-static hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
 
-static boolean    always_off = false;
-static boolean    message_on;
-static boolean    message_list; //2/26/98 enable showing list of messages
-boolean           message_dontfuckwithme;
-static boolean    message_nottobefuckedwith;
-static int        message_counter;
 extern int        showMessages;
 extern boolean    automapactive;
-static boolean    headsupactive = false;
+
 
 //jff 2/16/98 hud supported automap colors added
 const int hudcolor_titl = 5;  // color range of automap level title
@@ -182,14 +156,7 @@ const int hudcolor_list = 5;  // list of messages color
 
 const int hud_msg_lines = 1;  // number of message lines in window
 
-//jff 2/16/98 initialization strings for ammo, health, armor widgets
-static char hud_ammostr[80];
-static char hud_healthstr[80];
-static char hud_armorstr[80];
-static char hud_weapstr[80];
-static char hud_keysstr[80];
-static char hud_gkeysstr[80]; //jff 3/7/98 add support for graphic key display
-static char hud_monsecstr[80];
+
 
 //
 // Builtin map names.
@@ -432,52 +399,52 @@ void HU_Init(void)
     if ('0'<=j && j<='9')
     {
       sprintf(buffer, "STCFN%.3d",j);
-      R_SetPatchNum(&hu_font[i], buffer);
+      R_SetPatchNum(&_g->hu_font[i], buffer);
     }
     else if ('A'<=j && j<='Z')
     {
       sprintf(buffer, "STCFN%.3d",j);
-      R_SetPatchNum(&hu_font[i], buffer);
+      R_SetPatchNum(&_g->hu_font[i], buffer);
     }
     else if (j=='-')
     {
-      R_SetPatchNum(&hu_font[i], "STCFN045");
+      R_SetPatchNum(&_g->hu_font[i], "STCFN045");
     }
     else if (j=='/')
     {
-      R_SetPatchNum(&hu_font[i], "STCFN047");
+      R_SetPatchNum(&_g->hu_font[i], "STCFN047");
     }
     else if (j==':')
     {
-      R_SetPatchNum(&hu_font[i], "STCFN058");
+      R_SetPatchNum(&_g->hu_font[i], "STCFN058");
     }
     else if (j=='[')
     {
-      R_SetPatchNum(&hu_font[i], "STCFN091");
+      R_SetPatchNum(&_g->hu_font[i], "STCFN091");
     }
     else if (j==']')
     {
-      R_SetPatchNum(&hu_font[i], "STCFN093");
+      R_SetPatchNum(&_g->hu_font[i], "STCFN093");
     }
     else if (j<97)
     {
       sprintf(buffer, "STCFN%.3d",j);
-      R_SetPatchNum(&hu_font[i], buffer);
+      R_SetPatchNum(&_g->hu_font[i], buffer);
       //jff 2/23/98 make all font chars defined, useful or not
     }
     else if (j>122)
     {
       sprintf(buffer, "STBR%.3d",j);
-      R_SetPatchNum(&hu_font[i], buffer);
+      R_SetPatchNum(&_g->hu_font[i], buffer);
     }
     else
-      hu_font[i] = hu_font[0]; //jff 2/16/98 account for gap
+      _g->hu_font[i] = _g->hu_font[0]; //jff 2/16/98 account for gap
   }
 
   // CPhipps - load patches for keys and double keys
   for (i=0; i<6; i++) {
     sprintf(buffer, "STKEYS%d", i);
-    R_SetPatchNum(&hu_fontk[i], buffer);
+    R_SetPatchNum(&_g->hu_fontk[i], buffer);
   }
 }
 
@@ -490,7 +457,7 @@ void HU_Init(void)
 //
 static void HU_Stop(void)
 {
-  headsupactive = false;
+  _g->headsupactive = false;
 }
 
 //
@@ -511,36 +478,36 @@ void HU_Start(void)
   const char* s; /* cph - const */
   player_t* plr = &_g->players[displayplayer];        // killough 3/7/98
 
-  if (headsupactive)                    // stop before starting
+  if (_g->headsupactive)                    // stop before starting
     HU_Stop();
 
 
-  message_on = false;
-  message_dontfuckwithme = false;
-  message_nottobefuckedwith = false;
+  _g->message_on = false;
+  _g->message_dontfuckwithme = false;
+  _g->message_nottobefuckedwith = false;
 
   // create the message widget
   // messages to player in upper-left of screen
   HUlib_initSText
   (
-    &w_message,
+    &_g->w_message,
     HU_MSGX,
     HU_MSGY,
     HU_MSGHEIGHT,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     hudcolor_mesg,
-    &message_on
+    &_g->message_on
   );
 
   //jff 2/16/98 added some HUD widgets
   // create the map title widget - map title display in lower left of automap
   HUlib_initTextLine
   (
-    &w_title,
+    &_g->w_title,
     HU_TITLEX,
     HU_TITLEY,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     hudcolor_titl
   );
@@ -550,10 +517,10 @@ void HU_Start(void)
   // lower left or upper right of screen
   HUlib_initTextLine
   (
-    &w_health,
+    &_g->w_health,
     hud_distributed? HU_HEALTHX_D : HU_HEALTHX,  //3/4/98 distribute
     hud_distributed? HU_HEALTHY_D : HU_HEALTHY,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     CR_GREEN
   );
@@ -563,10 +530,10 @@ void HU_Start(void)
   // lower left or upper right of screen
   HUlib_initTextLine
   (
-    &w_armor,
+    &_g->w_armor,
     hud_distributed? HU_ARMORX_D : HU_ARMORX,    //3/4/98 distribute
     hud_distributed? HU_ARMORY_D : HU_ARMORY,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     CR_GREEN
   );
@@ -576,10 +543,10 @@ void HU_Start(void)
   // lower left or lower right of screen
   HUlib_initTextLine
   (
-    &w_ammo,
+    &_g->w_ammo,
     hud_distributed? HU_AMMOX_D : HU_AMMOX,      //3/4/98 distribute
     hud_distributed? HU_AMMOY_D : HU_AMMOY,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     CR_GOLD
   );
@@ -589,10 +556,10 @@ void HU_Start(void)
   // lower left or lower right of screen
   HUlib_initTextLine
   (
-    &w_weapon,
+    &_g->w_weapon,
     hud_distributed? HU_WEAPX_D : HU_WEAPX,      //3/4/98 distribute
     hud_distributed? HU_WEAPY_D : HU_WEAPY,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     CR_GRAY
   );
@@ -602,10 +569,10 @@ void HU_Start(void)
   // lower left of screen
   HUlib_initTextLine
   (
-    &w_keys,
+    &_g->w_keys,
     hud_distributed? HU_KEYSX_D : HU_KEYSX,      //3/4/98 distribute
     hud_distributed? HU_KEYSY_D : HU_KEYSY,
-    hu_font,
+    _g->hu_fontk,
     HU_FONTSTART,
     CR_GRAY
   );
@@ -615,10 +582,10 @@ void HU_Start(void)
   // lower left of screen
   HUlib_initTextLine
   (
-    &w_gkeys,
+    &_g->w_gkeys,
     hud_distributed? HU_KEYSGX_D : HU_KEYSGX,    //3/4/98 distribute
     hud_distributed? HU_KEYSY_D : HU_KEYSY,
-    hu_fontk,
+    _g->hu_fontk,
     HU_FONTSTART,
     CR_RED
   );
@@ -628,30 +595,30 @@ void HU_Start(void)
   // lower left of screen
   HUlib_initTextLine
   (
-    &w_monsec,
+    &_g->w_monsec,
     hud_distributed? HU_MONSECX_D : HU_MONSECX,  //3/4/98 distribute
     hud_distributed? HU_MONSECY_D : HU_MONSECY,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     CR_GRAY
   );
 
   //jff 4/21/98 if setup has disabled message list while active, turn it off
-  message_list = hud_msg_lines > 1; //jff 8/8/98 initialize both ways
+  _g->message_list = hud_msg_lines > 1; //jff 8/8/98 initialize both ways
   //jff 2/26/98 add the text refresh widget initialization
   HUlib_initMText
   (
-    &w_rtext,
+    &_g->w_rtext,
     0,
     0,
     320,
 //    SCREENWIDTH,
     (hud_msg_lines+2)*HU_REFRESHSPACING,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     hudcolor_list,
     NULL,
-    &message_list
+    &_g->message_list
   );
 
   // initialize the automap's level title widget
@@ -671,97 +638,97 @@ void HU_Start(void)
       break;
   } else s = "";
   while (*s)
-    HUlib_addCharToTextLine(&w_title, *(s++));
+    HUlib_addCharToTextLine(&_g->w_title, *(s++));
 
   // create the automaps coordinate widget
   // jff 3/3/98 split coord widget into three lines: x,y,z
   // jff 2/16/98 added
   HUlib_initTextLine
   (
-    &w_coordx,
+    &_g->w_coordx,
     HU_COORDX,
     HU_COORDX_Y,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     hudcolor_xyco
   );
   HUlib_initTextLine
   (
-    &w_coordy,
+    &_g->w_coordy,
     HU_COORDX,
     HU_COORDY_Y,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     hudcolor_xyco
   );
   HUlib_initTextLine
   (
-    &w_coordz,
+    &_g->w_coordz,
     HU_COORDX,
     HU_COORDZ_Y,
-    hu_font,
+    _g->hu_font,
     HU_FONTSTART,
     hudcolor_xyco
   );
 
   //jff 2/16/98 initialize ammo widget
-  strcpy(hud_ammostr,"AMM ");
-  s = hud_ammostr;
+  strcpy(_g->hud_ammostr,"AMM ");
+  s = _g->hud_ammostr;
   while (*s)
-    HUlib_addCharToTextLine(&w_ammo, *(s++));
+    HUlib_addCharToTextLine(&_g->w_ammo, *(s++));
 
   //jff 2/16/98 initialize health widget
-  strcpy(hud_healthstr,"HEL ");
-  s = hud_healthstr;
+  strcpy(_g->hud_healthstr,"HEL ");
+  s = _g->hud_healthstr;
   while (*s)
-    HUlib_addCharToTextLine(&w_health, *(s++));
+    HUlib_addCharToTextLine(&_g->w_health, *(s++));
 
   //jff 2/16/98 initialize armor widget
-  strcpy(hud_armorstr,"ARM ");
-  s = hud_armorstr;
+  strcpy(_g->hud_armorstr,"ARM ");
+  s = _g->hud_armorstr;
   while (*s)
-    HUlib_addCharToTextLine(&w_armor, *(s++));
+    HUlib_addCharToTextLine(&_g->w_armor, *(s++));
 
   //jff 2/17/98 initialize weapons widget
-  strcpy(hud_weapstr,"WEA ");
-  s = hud_weapstr;
+  strcpy(_g->hud_weapstr,"WEA ");
+  s = _g->hud_weapstr;
   while (*s)
-    HUlib_addCharToTextLine(&w_weapon, *(s++));
+    HUlib_addCharToTextLine(&_g->w_weapon, *(s++));
 
   //jff 2/17/98 initialize keys widget
-    strcpy(hud_keysstr,"KEY ");
+    strcpy(_g->hud_keysstr,"KEY ");
 
-  s = hud_keysstr;
+  s = _g->hud_keysstr;
   while (*s)
-    HUlib_addCharToTextLine(&w_keys, *(s++));
+    HUlib_addCharToTextLine(&_g->w_keys, *(s++));
 
   //jff 2/17/98 initialize graphic keys widget
-  strcpy(hud_gkeysstr," ");
-  s = hud_gkeysstr;
+  strcpy(_g->hud_gkeysstr," ");
+  s = _g->hud_gkeysstr;
   while (*s)
-    HUlib_addCharToTextLine(&w_gkeys, *(s++));
+    HUlib_addCharToTextLine(&_g->w_gkeys, *(s++));
 
   //jff 2/17/98 initialize kills/items/secret widget
-  strcpy(hud_monsecstr,"STS ");
-  s = hud_monsecstr;
+  strcpy(_g->hud_monsecstr,"STS ");
+  s = _g->hud_monsecstr;
   while (*s)
-    HUlib_addCharToTextLine(&w_monsec, *(s++));
+    HUlib_addCharToTextLine(&_g->w_monsec, *(s++));
 
   // create the inputbuffer widgets, one per player
   for (i=0 ; i<MAXPLAYERS ; i++)
     HUlib_initIText
     (
-      &w_inputbuffer[i],
+      &_g->w_inputbuffer[i],
       0,
       0,
       0,
       0,
       hudcolor_chat,
-      &always_off
+      &_g->always_off
     );
 
   // now allow the heads-up display to run
-  headsupactive = true;
+  _g->headsupactive = true;
 }
 
 //
@@ -781,20 +748,20 @@ void HU_MoveHud(void)
   //jff 3/4/98 move displays around on F5 changing hud_distributed
   if (hud_distributed!=ohud_distributed)
   {
-    w_ammo.x =    hud_distributed? HU_AMMOX_D   : HU_AMMOX;
-    w_ammo.y =    hud_distributed? HU_AMMOY_D   : HU_AMMOY;
-    w_weapon.x =  hud_distributed? HU_WEAPX_D   : HU_WEAPX;
-    w_weapon.y =  hud_distributed? HU_WEAPY_D   : HU_WEAPY;
-    w_keys.x =    hud_distributed? HU_KEYSX_D   : HU_KEYSX;
-    w_keys.y =    hud_distributed? HU_KEYSY_D   : HU_KEYSY;
-    w_gkeys.x =   hud_distributed? HU_KEYSGX_D  : HU_KEYSGX;
-    w_gkeys.y =   hud_distributed? HU_KEYSY_D   : HU_KEYSY;
-    w_monsec.x =  hud_distributed? HU_MONSECX_D : HU_MONSECX;
-    w_monsec.y =  hud_distributed? HU_MONSECY_D : HU_MONSECY;
-    w_health.x =  hud_distributed? HU_HEALTHX_D : HU_HEALTHX;
-    w_health.y =  hud_distributed? HU_HEALTHY_D : HU_HEALTHY;
-    w_armor.x =   hud_distributed? HU_ARMORX_D  : HU_ARMORX;
-    w_armor.y =   hud_distributed? HU_ARMORY_D  : HU_ARMORY;
+    _g->w_ammo.x =    hud_distributed? HU_AMMOX_D   : HU_AMMOX;
+    _g->w_ammo.y =    hud_distributed? HU_AMMOY_D   : HU_AMMOY;
+    _g->w_weapon.x =  hud_distributed? HU_WEAPX_D   : HU_WEAPX;
+    _g->w_weapon.y =  hud_distributed? HU_WEAPY_D   : HU_WEAPY;
+    _g->w_keys.x =    hud_distributed? HU_KEYSX_D   : HU_KEYSX;
+    _g->w_keys.y =    hud_distributed? HU_KEYSY_D   : HU_KEYSY;
+    _g->w_gkeys.x =   hud_distributed? HU_KEYSGX_D  : HU_KEYSGX;
+    _g->w_gkeys.y =   hud_distributed? HU_KEYSY_D   : HU_KEYSY;
+    _g->w_monsec.x =  hud_distributed? HU_MONSECX_D : HU_MONSECX;
+    _g->w_monsec.y =  hud_distributed? HU_MONSECY_D : HU_MONSECY;
+    _g->w_health.x =  hud_distributed? HU_HEALTHX_D : HU_HEALTHX;
+    _g->w_health.y =  hud_distributed? HU_HEALTHY_D : HU_HEALTHY;
+    _g->w_armor.x =   hud_distributed? HU_ARMORX_D  : HU_ARMORX;
+    _g->w_armor.y =   hud_distributed? HU_ARMORY_D  : HU_ARMORY;
   }
   ohud_distributed = hud_distributed;
 }
@@ -820,7 +787,7 @@ void HU_Drawer(void)
   if (_g->automapmode & am_active)
   {
     // map title
-    HUlib_drawTextLine(&w_title, false);
+    HUlib_drawTextLine(&_g->w_title, false);
   }
 
   // draw the weapon/health/ammo/armor/kills/keys displays if optioned
@@ -828,7 +795,7 @@ void HU_Drawer(void)
   // killough 2/21/98: really allow new hud stuff to be turned off COMPLETELY
   if
   (
-    hud_displayed &&                 // hud on from fullscreen key
+    _g->hud_displayed &&                 // hud on from fullscreen key
     viewheight==SCREENHEIGHT &&      // fullscreen mode is active
     !(_g->automapmode & am_active)       // automap is not active
   )
@@ -840,12 +807,12 @@ void HU_Drawer(void)
 
       // do the hud ammo display
       // clear the widgets internal line
-      HUlib_clearTextLine(&w_ammo);
-      strcpy(hud_ammostr,"AMM ");
+      HUlib_clearTextLine(&_g->w_ammo);
+      strcpy(_g->hud_ammostr,"AMM ");
       if (weaponinfo[plr->readyweapon].ammo == am_noammo)
       { // special case for weapon with no ammo selected - blank bargraph + N/A
-        strcat(hud_ammostr,"\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
-        w_ammo.cm = CR_GRAY;
+        strcat(_g->hud_ammostr,"\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
+        _g->w_ammo.cm = CR_GRAY;
       }
       else
       {
@@ -859,43 +826,43 @@ void HU_Drawer(void)
         // build the bargraph string
         // full bargraph chars
         for (i=4;i<4+ammobars/4;)
-          hud_ammostr[i++] = 123;
+          _g->hud_ammostr[i++] = 123;
         // plus one last character with 0,1,2,3 bars
         switch(ammobars%4)
         {
           case 0:
             break;
           case 1:
-            hud_ammostr[i++] = 126;
+            _g->hud_ammostr[i++] = 126;
             break;
           case 2:
-            hud_ammostr[i++] = 125;
+            _g->hud_ammostr[i++] = 125;
             break;
           case 3:
-            hud_ammostr[i++] = 124;
+            _g->hud_ammostr[i++] = 124;
             break;
         }
         // pad string with blank bar characters
         while(i<4+7)
-          hud_ammostr[i++] = 127;
-        hud_ammostr[i] = '\0';
-        strcat(hud_ammostr,ammostr);
+          _g->hud_ammostr[i++] = 127;
+        _g->hud_ammostr[i] = '\0';
+        strcat(_g->hud_ammostr,ammostr);
 
         // set the display color from the percentage of total ammo held
         if (ammopct<ammo_red)
-          w_ammo.cm = CR_RED;
+          _g->w_ammo.cm = CR_RED;
         else if (ammopct<ammo_yellow)
-          w_ammo.cm = CR_GOLD;
+          _g->w_ammo.cm = CR_GOLD;
         else
-          w_ammo.cm = CR_GREEN;
+          _g->w_ammo.cm = CR_GREEN;
       }
       // transfer the init string to the widget
-      s = hud_ammostr;
+      s = _g->hud_ammostr;
       while (*s)
-        HUlib_addCharToTextLine(&w_ammo, *(s++));
+        HUlib_addCharToTextLine(&_g->w_ammo, *(s++));
     }
     // display the ammo widget every frame
-    HUlib_drawTextLine(&w_ammo, false);
+    HUlib_drawTextLine(&_g->w_ammo, false);
 
     // do the hud health display
     if (doit)
@@ -904,52 +871,52 @@ void HU_Drawer(void)
       int healthbars = health>100? 25 : health/4;
 
       // clear the widgets internal line
-      HUlib_clearTextLine(&w_health);
+      HUlib_clearTextLine(&_g->w_health);
 
       // build the numeric amount init string
       sprintf(healthstr,"%3d",health);
       // build the bargraph string
       // full bargraph chars
       for (i=4;i<4+healthbars/4;)
-        hud_healthstr[i++] = 123;
+        _g->hud_healthstr[i++] = 123;
       // plus one last character with 0,1,2,3 bars
       switch(healthbars%4)
       {
         case 0:
           break;
         case 1:
-          hud_healthstr[i++] = 126;
+          _g->hud_healthstr[i++] = 126;
           break;
         case 2:
-          hud_healthstr[i++] = 125;
+          _g->hud_healthstr[i++] = 125;
           break;
         case 3:
-          hud_healthstr[i++] = 124;
+          _g->hud_healthstr[i++] = 124;
           break;
       }
       // pad string with blank bar characters
       while(i<4+7)
-        hud_healthstr[i++] = 127;
-      hud_healthstr[i] = '\0';
-      strcat(hud_healthstr,healthstr);
+        _g->hud_healthstr[i++] = 127;
+      _g->hud_healthstr[i] = '\0';
+      strcat(_g->hud_healthstr,healthstr);
 
       // set the display color from the amount of health posessed
       if (health<health_red)
-        w_health.cm = CR_RED;
+        _g->w_health.cm = CR_RED;
       else if (health<health_yellow)
-        w_health.cm = CR_GOLD;
+        _g->w_health.cm = CR_GOLD;
       else if (health<=health_green)
-        w_health.cm = CR_GREEN;
+        _g->w_health.cm = CR_GREEN;
       else
-        w_health.cm = CR_BLUE;
+        _g->w_health.cm = CR_BLUE;
 
       // transfer the init string to the widget
-      s = hud_healthstr;
+      s = _g->hud_healthstr;
       while (*s)
-        HUlib_addCharToTextLine(&w_health, *(s++));
+        HUlib_addCharToTextLine(&_g->w_health, *(s++));
     }
     // display the health widget every frame
-    HUlib_drawTextLine(&w_health, false);
+    HUlib_drawTextLine(&_g->w_health, false);
 
     // do the hud armor display
     if (doit)
@@ -958,51 +925,51 @@ void HU_Drawer(void)
       int armorbars = armor>100? 25 : armor/4;
 
       // clear the widgets internal line
-      HUlib_clearTextLine(&w_armor);
+      HUlib_clearTextLine(&_g->w_armor);
       // build the numeric amount init string
       sprintf(armorstr,"%3d",armor);
       // build the bargraph string
       // full bargraph chars
       for (i=4;i<4+armorbars/4;)
-        hud_armorstr[i++] = 123;
+        _g->hud_armorstr[i++] = 123;
       // plus one last character with 0,1,2,3 bars
       switch(armorbars%4)
       {
         case 0:
           break;
         case 1:
-          hud_armorstr[i++] = 126;
+          _g->hud_armorstr[i++] = 126;
           break;
         case 2:
-          hud_armorstr[i++] = 125;
+          _g->hud_armorstr[i++] = 125;
           break;
         case 3:
-          hud_armorstr[i++] = 124;
+          _g->hud_armorstr[i++] = 124;
           break;
       }
       // pad string with blank bar characters
       while(i<4+7)
-        hud_armorstr[i++] = 127;
-      hud_armorstr[i] = '\0';
-      strcat(hud_armorstr,armorstr);
+        _g->hud_armorstr[i++] = 127;
+      _g->hud_armorstr[i] = '\0';
+      strcat(_g->hud_armorstr,armorstr);
 
       // set the display color from the amount of armor posessed
       if (armor<armor_red)
-        w_armor.cm = CR_RED;
+        _g->w_armor.cm = CR_RED;
       else if (armor<armor_yellow)
-        w_armor.cm = CR_GOLD;
+        _g->w_armor.cm = CR_GOLD;
       else if (armor<=armor_green)
-        w_armor.cm = CR_GREEN;
+        _g->w_armor.cm = CR_GREEN;
       else
-        w_armor.cm = CR_BLUE;
+        _g->w_armor.cm = CR_BLUE;
 
       // transfer the init string to the widget
-      s = hud_armorstr;
+      s = _g->hud_armorstr;
       while (*s)
-        HUlib_addCharToTextLine(&w_armor, *(s++));
+        HUlib_addCharToTextLine(&_g->w_armor, *(s++));
     }
     // display the armor widget every frame
-    HUlib_drawTextLine(&w_armor, false);
+    HUlib_drawTextLine(&_g->w_armor, false);
 
     // do the hud weapon display
     if (doit)
@@ -1011,8 +978,8 @@ void HU_Drawer(void)
       int ammo,fullammo,ammopct;
 
       // clear the widgets internal line
-      HUlib_clearTextLine(&w_weapon);
-      i=4; hud_weapstr[i] = '\0';      //jff 3/7/98 make sure ammo goes away
+      HUlib_clearTextLine(&_g->w_weapon);
+      i=4; _g->hud_weapstr[i] = '\0';      //jff 3/7/98 make sure ammo goes away
 
       // do each weapon that exists in current gamemode
       for (w=0;w<=wp_supershotgun;w++) //jff 3/4/98 show fists too, why not?
@@ -1047,126 +1014,67 @@ void HU_Drawer(void)
         ammopct = fullammo? (100*ammo)/fullammo : 100;
 
         // display each weapon number in a color related to the ammo for it
-        hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
+        _g->hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
         if (weaponinfo[w].ammo==am_noammo) //jff 3/14/98 show berserk on HUD
-          hud_weapstr[i++] = plr->powers[pw_strength]? '0'+CR_GREEN : '0'+CR_GRAY;
+          _g->hud_weapstr[i++] = plr->powers[pw_strength]? '0'+CR_GREEN : '0'+CR_GRAY;
         else if (ammopct<ammo_red)
-          hud_weapstr[i++] = '0'+CR_RED;
+          _g->hud_weapstr[i++] = '0'+CR_RED;
         else if (ammopct<ammo_yellow)
-          hud_weapstr[i++] = '0'+CR_GOLD;
+          _g->hud_weapstr[i++] = '0'+CR_GOLD;
         else
-          hud_weapstr[i++] = '0'+CR_GREEN;
-        hud_weapstr[i++] = '0'+w+1;
-        hud_weapstr[i++] = ' ';
-        hud_weapstr[i] = '\0';
+          _g->hud_weapstr[i++] = '0'+CR_GREEN;
+        _g->hud_weapstr[i++] = '0'+w+1;
+        _g->hud_weapstr[i++] = ' ';
+        _g->hud_weapstr[i] = '\0';
       }
 
       // transfer the init string to the widget
-      s = hud_weapstr;
+      s = _g->hud_weapstr;
       while (*s)
-        HUlib_addCharToTextLine(&w_weapon, *(s++));
+        HUlib_addCharToTextLine(&_g->w_weapon, *(s++));
     }
     // display the weapon widget every frame
-    HUlib_drawTextLine(&w_weapon, false);
+    HUlib_drawTextLine(&_g->w_weapon, false);
 
     if (doit)
     {
-      int k;
+        int k;
 
-      hud_keysstr[4] = '\0';    //jff 3/7/98 make sure deleted keys go away
-      //jff add case for graphic key display
-      if (hud_graph_keys)
-      {
+        _g->hud_keysstr[4] = '\0';    //jff 3/7/98 make sure deleted keys go away
+        //jff add case for graphic key display
+
         i=0;
-        hud_gkeysstr[i] = '\0'; //jff 3/7/98 init graphic keys widget string
+        _g->hud_gkeysstr[i] = '\0'; //jff 3/7/98 init graphic keys widget string
         // build text string whose characters call out graphic keys from fontk
         for (k=0;k<6;k++)
         {
-          // skip keys not possessed
-          if (!plr->cards[k])
-            continue;
-
-          hud_gkeysstr[i++] = '!'+k;   // key number plus '!' is char for key
-          hud_gkeysstr[i++] = ' ';     // spacing
-          hud_gkeysstr[i++] = ' ';
-        }
-        hud_gkeysstr[i]='\0';
-      }
-      else // not possible in current code, unless deathmatching,
-      {
-        i=4;
-        hud_keysstr[i] = '\0';  //jff 3/7/98 make sure deleted keys go away
-        {
-          // scan the keys
-          for (k=0;k<6;k++)
-          {
-            // skip any not possessed by the displayed player's stats
+            // skip keys not possessed
             if (!plr->cards[k])
-              continue;
+                continue;
 
-            // use color escapes to make text in key's color
-            hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-            switch(k)
-            {
-              case 0:
-                hud_keysstr[i++] = '0'+CR_BLUE;
-                hud_keysstr[i++] = 'B';
-                hud_keysstr[i++] = 'C';
-                hud_keysstr[i++] = ' ';
-                break;
-              case 1:
-                hud_keysstr[i++] = '0'+CR_GOLD;
-                hud_keysstr[i++] = 'Y';
-                hud_keysstr[i++] = 'C';
-                hud_keysstr[i++] = ' ';
-                break;
-              case 2:
-                hud_keysstr[i++] = '0'+CR_RED;
-                hud_keysstr[i++] = 'R';
-                hud_keysstr[i++] = 'C';
-                hud_keysstr[i++] = ' ';
-                break;
-              case 3:
-                hud_keysstr[i++] = '0'+CR_BLUE;
-                hud_keysstr[i++] = 'B';
-                hud_keysstr[i++] = 'S';
-                hud_keysstr[i++] = ' ';
-                break;
-            case 4:
-                hud_keysstr[i++] = '0'+CR_GOLD;
-                hud_keysstr[i++] = 'Y';
-                hud_keysstr[i++] = 'S';
-                hud_keysstr[i++] = ' ';
-                break;
-              case 5:
-                hud_keysstr[i++] = '0'+CR_RED;
-                hud_keysstr[i++] = 'R';
-                hud_keysstr[i++] = 'S';
-                hud_keysstr[i++] = ' ';
-                break;
-            }
-            hud_keysstr[i]='\0';
-          }
+            _g->hud_gkeysstr[i++] = '!'+k;   // key number plus '!' is char for key
+            _g->hud_gkeysstr[i++] = ' ';     // spacing
+            _g->hud_gkeysstr[i++] = ' ';
         }
-      }
+        _g->hud_gkeysstr[i]='\0';
     }
     // display the keys/frags line each frame
     {
-      HUlib_clearTextLine(&w_keys);      // clear the widget strings
-      HUlib_clearTextLine(&w_gkeys);
+      HUlib_clearTextLine(&_g->w_keys);      // clear the widget strings
+      HUlib_clearTextLine(&_g->w_gkeys);
 
       // transfer the built string (frags or key title) to the widget
-      s = hud_keysstr; //jff 3/7/98 display key titles/key text or frags
+      s = _g->hud_keysstr; //jff 3/7/98 display key titles/key text or frags
       while (*s)
-        HUlib_addCharToTextLine(&w_keys, *(s++));
-      HUlib_drawTextLine(&w_keys, false);
+        HUlib_addCharToTextLine(&_g->w_keys, *(s++));
+      HUlib_drawTextLine(&_g->w_keys, false);
 
         // transfer the graphic key text to the widget
-        s = hud_gkeysstr;
+        s = _g->hud_gkeysstr;
         while (*s)
-          HUlib_addCharToTextLine(&w_gkeys, *(s++));
+          HUlib_addCharToTextLine(&_g->w_gkeys, *(s++));
         // display the widget
-        HUlib_drawTextLine(&w_gkeys, false);
+        HUlib_drawTextLine(&_g->w_gkeys, false);
 
     }
 
@@ -1175,25 +1083,25 @@ void HU_Drawer(void)
       if (doit)
       {
         // clear the internal widget text buffer
-        HUlib_clearTextLine(&w_monsec);
+        HUlib_clearTextLine(&_g->w_monsec);
         //jff 3/26/98 use ESC not '\' for paths
         // build the init string with fixed colors
         sprintf
         (
-          hud_monsecstr,
+          _g->hud_monsecstr,
           "STS \x1b\x36K \x1b\x33%d \x1b\x36M \x1b\x33%d \x1b\x37I \x1b\x33%d/%d \x1b\x35S \x1b\x33%d/%d",
           plr->killcount,_g->totallive,
           plr->itemcount,_g->totalitems,
           plr->secretcount,_g->totalsecret
         );
         // transfer the init string to the widget
-        s = hud_monsecstr;
+        s = _g->hud_monsecstr;
         while (*s)
-          HUlib_addCharToTextLine(&w_monsec, *(s++));
+          HUlib_addCharToTextLine(&_g->w_monsec, *(s++));
       }
       // display the kills/items/secrets each frame, if optioned
 
-        HUlib_drawTextLine(&w_monsec, false);
+        HUlib_drawTextLine(&_g->w_monsec, false);
     }
   }
 
@@ -1203,15 +1111,15 @@ void HU_Drawer(void)
 
   //jff 4/21/98 if setup has disabled message list while active, turn it off
   if (hud_msg_lines<=1)
-    message_list = false;
+    _g->message_list = false;
 
   // if the message review not enabled, show the standard message widget
-  if (!message_list)
-    HUlib_drawSText(&w_message);
+  if (!_g->message_list)
+    HUlib_drawSText(&_g->w_message);
 
   // if the message review is enabled show the scrolling message review
-  if (hud_msg_lines>1 && message_list)
-    HUlib_drawMText(&w_rtext);
+  if (hud_msg_lines>1 && _g->message_list)
+    HUlib_drawMText(&_g->w_rtext);
 }
 
 //
@@ -1224,13 +1132,13 @@ void HU_Drawer(void)
 void HU_Erase(void)
 {
   // erase the message display or the message review display
-  if (!message_list)
-    HUlib_eraseSText(&w_message);
+  if (!_g->message_list)
+    HUlib_eraseSText(&_g->w_message);
   else
-    HUlib_eraseMText(&w_rtext);
+    HUlib_eraseMText(&_g->w_rtext);
 
   // erase the automap title
-  HUlib_eraseTextLine(&w_title);
+  HUlib_eraseTextLine(&_g->w_title);
 }
 
 //
@@ -1248,36 +1156,36 @@ void HU_Ticker(void)
     player_t* plr = &_g->players[displayplayer];        // killough 3/7/98
 
   // tick down message counter if message is up
-  if (message_counter && !--message_counter)
+  if (_g->message_counter && !--_g->message_counter)
   {
-    message_on = false;
-    message_nottobefuckedwith = false;
+    _g->message_on = false;
+    _g->message_nottobefuckedwith = false;
   }
 
 
   // if messages on, or "Messages Off" is being displayed
   // this allows the notification of turning messages off to be seen
-  if (showMessages || message_dontfuckwithme)
+  if (showMessages || _g->message_dontfuckwithme)
   {
     // display message if necessary
-    if ((plr->message && !message_nottobefuckedwith)
-        || (plr->message && message_dontfuckwithme))
+    if ((plr->message && !_g->message_nottobefuckedwith)
+        || (plr->message && _g->message_dontfuckwithme))
     {
       //post the message to the message widget
-      HUlib_addMessageToSText(&w_message, 0, plr->message);
+      HUlib_addMessageToSText(&_g->w_message, 0, plr->message);
       //jff 2/26/98 add message to refresh text widget too
-      HUlib_addMessageToMText(&w_rtext, 0, plr->message);
+      HUlib_addMessageToMText(&_g->w_rtext, 0, plr->message);
 
       // clear the message to avoid posting multiple times
       plr->message = 0;
       // note a message is displayed
-      message_on = true;
+      _g->message_on = true;
       // start the message persistence counter
-      message_counter = HU_MSGTIMEOUT;
+      _g->message_counter = HU_MSGTIMEOUT;
       // transfer "Messages Off" exception to the "being displayed" variable
-      message_nottobefuckedwith = message_dontfuckwithme;
+      _g->message_nottobefuckedwith = _g->message_dontfuckwithme;
       // clear the flag that "Messages Off" is being posted
-      message_dontfuckwithme = 0;
+      _g->message_dontfuckwithme = 0;
     }
   }
 }
@@ -1356,14 +1264,14 @@ boolean HU_Responder(event_t *ev)
 #ifndef INSTRUMENTED  // never turn on message review if INSTRUMENTED defined
         if (hud_msg_lines>1)  // it posts multi-line messages that will trash
         {
-            if (message_list) HU_Erase(); //jff 4/28/98 erase behind messages
-            message_list = !message_list; //jff 2/26/98 toggle list of messages
+            if (_g->message_list) HU_Erase(); //jff 4/28/98 erase behind messages
+            _g->message_list = !_g->message_list; //jff 2/26/98 toggle list of messages
         }
 #endif
-        if (!message_list)              // if not message list, refresh message
+        if (!_g->message_list)              // if not message list, refresh message
         {
-            message_on = true;
-            message_counter = HU_MSGTIMEOUT;
+            _g->message_on = true;
+            _g->message_counter = HU_MSGTIMEOUT;
         }
         eatkey = true;
     }

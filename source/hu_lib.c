@@ -181,7 +181,7 @@ void HUlib_drawTextLine
         break;
       // killough 1/18/98 -- support multiple lines:
       // CPhipps - patch drawing updated
-      V_DrawNumPatch(x, y, FG, l->f[c - l->sc].lumpnum, l->cm, VPT_TRANS | VPT_STRETCH);
+      V_DrawNumPatch(x, y, HU_FG, l->f[c - l->sc].lumpnum, l->cm, VPT_TRANS | VPT_STRETCH);
       x += w;
     }
     else
@@ -198,7 +198,7 @@ void HUlib_drawTextLine
   {
     // killough 1/18/98 -- support multiple lines
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(x, y, FG, l->f['_' - l->sc].lumpnum, CR_DEFAULT, VPT_NONE | VPT_STRETCH);
+    V_DrawNumPatch(x, y, HU_FG, l->f['_' - l->sc].lumpnum, CR_DEFAULT, VPT_NONE | VPT_STRETCH);
   }
 }
 
@@ -489,25 +489,25 @@ void HUlib_drawMBg
 
   // CPhipps - patch drawing updated
   // top rows
-  V_DrawNumPatch(x, y, FG, bgp[0].lumpnum, CR_DEFAULT, VPT_STRETCH);    // ul
+  V_DrawNumPatch(x, y, HU_FG, bgp[0].lumpnum, CR_DEFAULT, VPT_STRETCH);    // ul
   for (j=x+xs;j<x+w-xs;j+=xs)           // uc
-    V_DrawNumPatch(j, y, FG, bgp[1].lumpnum, CR_DEFAULT, VPT_STRETCH);
-  V_DrawNumPatch(j, y, FG, bgp[2].lumpnum, CR_DEFAULT, VPT_STRETCH);    // ur
+    V_DrawNumPatch(j, y, HU_FG, bgp[1].lumpnum, CR_DEFAULT, VPT_STRETCH);
+  V_DrawNumPatch(j, y, HU_FG, bgp[2].lumpnum, CR_DEFAULT, VPT_STRETCH);    // ur
 
   // middle rows
   for (i=y+ys;i<y+h-ys;i+=ys)
   {
-    V_DrawNumPatch(x, i, FG, bgp[3].lumpnum, CR_DEFAULT, VPT_STRETCH);    // cl
+    V_DrawNumPatch(x, i, HU_FG, bgp[3].lumpnum, CR_DEFAULT, VPT_STRETCH);    // cl
     for (j=x+xs;j<x+w-xs;j+=xs)           // cc
-      V_DrawNumPatch(j, i, FG, bgp[4].lumpnum, CR_DEFAULT, VPT_STRETCH);
-    V_DrawNumPatch(j, i, FG, bgp[5].lumpnum, CR_DEFAULT, VPT_STRETCH);    // cr
+      V_DrawNumPatch(j, i, HU_FG, bgp[4].lumpnum, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNumPatch(j, i, HU_FG, bgp[5].lumpnum, CR_DEFAULT, VPT_STRETCH);    // cr
   }
 
   // bottom row
-  V_DrawNumPatch(x, i, FG, bgp[6].lumpnum, CR_DEFAULT, VPT_STRETCH);    // ll
+  V_DrawNumPatch(x, i, HU_FG, bgp[6].lumpnum, CR_DEFAULT, VPT_STRETCH);    // ll
   for (j=x+xs;j<x+w-xs;j+=xs)           // lc
-    V_DrawNumPatch(j, i, FG, bgp[7].lumpnum, CR_DEFAULT, VPT_STRETCH);
-  V_DrawNumPatch(j, i, FG, bgp[8].lumpnum, CR_DEFAULT, VPT_STRETCH);    // lr
+    V_DrawNumPatch(j, i, HU_FG, bgp[7].lumpnum, CR_DEFAULT, VPT_STRETCH);
+  V_DrawNumPatch(j, i, HU_FG, bgp[8].lumpnum, CR_DEFAULT, VPT_STRETCH);    // lr
 }
 
 //

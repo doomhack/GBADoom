@@ -74,7 +74,6 @@ void HU_MoveHud(void); // jff 3/9/98 avoid glitch in HUD display
 extern const int hud_msg_lines;   /* number of message lines in window up to 16      */
 extern const int hud_distributed; /* whether hud is all in lower left or distributed */
 /* jff 2/23/98 hud is currently displayed */
-extern int hud_displayed;   /* hud is displayed */
-/* jff 2/18/98 hud/status control */
+
 
 #endif

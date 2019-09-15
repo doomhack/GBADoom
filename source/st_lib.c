@@ -130,7 +130,7 @@ static void STlib_drawNum
     I_Error("STlib_drawNum: n->y - ST_Y < 0");
 #endif
 
-  V_CopyRect(x, n->y - ST_Y, BG, w*numdigits, h, x, n->y, FG, VPT_STRETCH);
+  V_CopyRect(x, n->y - ST_Y, ST_BG, w*numdigits, h, x, n->y, ST_FG, VPT_STRETCH);
 
   // if non-number, do not draw it
   if (num == 1994)
@@ -142,14 +142,14 @@ static void STlib_drawNum
   // in the special case of 0, you draw 0
   if (!num)
     // CPhipps - patch drawing updated, reformatted
-    V_DrawNumPatch(x - w, n->y, FG, n->p[0].lumpnum, cm, VPT_STRETCH);
+    V_DrawNumPatch(x - w, n->y, ST_FG, n->p[0].lumpnum, cm, VPT_STRETCH);
 
   // draw the new number
   //jff 2/16/98 add color translation to digit output
   while (num && numdigits--) {
     // CPhipps - patch drawing updated, reformatted
     x -= w;
-    V_DrawNumPatch(x, n->y, FG, n->p[num % 10].lumpnum, cm, VPT_STRETCH);
+    V_DrawNumPatch(x, n->y, ST_FG, n->p[num % 10].lumpnum, cm, VPT_STRETCH);
     num /= 10;
   }
 
@@ -157,7 +157,7 @@ static void STlib_drawNum
   //jff 2/16/98 add color translation to digit output
   // cph - patch drawing updated, load by name instead of acquiring pointer earlier
   if (neg)
-    V_DrawNamePatch(x - w, n->y, FG, "STTMINUS", cm, VPT_STRETCH);
+    V_DrawNamePatch(x - w, n->y, ST_FG, "STTMINUS", cm, VPT_STRETCH);
 }
 
 /*
@@ -224,7 +224,7 @@ void STlib_updatePercent
     // killough 2/21/98: fix percents not updated;
     /* CPhipps - make %'s only be updated if number changed */
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(per->n.x, per->n.y, FG, per->p->lumpnum, CR_GRAY, VPT_STRETCH);
+    V_DrawNumPatch(per->n.x, per->n.y, ST_FG, per->p->lumpnum, CR_GRAY, VPT_STRETCH);
   }
 
   STlib_updateNum(&per->n, cm, refresh);
@@ -292,10 +292,10 @@ void STlib_updateMultIcon
         I_Error("STlib_updateMultIcon: y - ST_Y < 0");
 #endif
 
-      V_CopyRect(x, y-ST_Y, BG, w, h, x, y, FG, VPT_STRETCH);
+      V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
     }
     if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-      V_DrawNumPatch(mi->x, mi->y, FG, mi->p[*mi->inum].lumpnum, CR_DEFAULT, VPT_STRETCH);
+      V_DrawNumPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum].lumpnum, CR_DEFAULT, VPT_STRETCH);
     mi->oldinum = *mi->inum;
   }
 }
@@ -361,9 +361,9 @@ void STlib_updateBinIcon
 #endif
 
     if (*bi->val)
-      V_DrawNumPatch(bi->x, bi->y, FG, bi->p->lumpnum, CR_DEFAULT, VPT_STRETCH);
+      V_DrawNumPatch(bi->x, bi->y, ST_FG, bi->p->lumpnum, CR_DEFAULT, VPT_STRETCH);
     else
-      V_CopyRect(x, y-ST_Y, BG, w, h, x, y, FG, VPT_STRETCH);
+      V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
 
     bi->oldval = *bi->val;
   }
