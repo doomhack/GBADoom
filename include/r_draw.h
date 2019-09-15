@@ -79,10 +79,8 @@ typedef struct {
   int   byte_pitch;
 } draw_vars_t;
 
-extern draw_vars_t drawvars;
 
 extern byte playernumtotrans[MAXPLAYERS]; // CPhipps - what translation table for what player
-extern byte       *translationtables;
 
 typedef void (*R_DrawColumn_f)(draw_column_vars_t *dcvars);
 
@@ -115,6 +113,8 @@ void R_FillBackScreen(void);
 
 // If the view size is not full screen, draws a border around it.
 void R_DrawViewBorder(void);
+
+#define FUZZTABLE 50
 
 
 

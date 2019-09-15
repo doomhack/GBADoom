@@ -50,9 +50,6 @@
 //
 
 
-extern int scaledviewwidth;
-
-
 //
 // Lookup tables for map data.
 //

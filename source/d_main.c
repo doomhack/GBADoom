@@ -206,7 +206,7 @@ void D_Display (void)
 
     // Work out if the player view is visible, and if there is a border
     viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
-    isborder = viewactive ? (viewheight != SCREENHEIGHT) : ((_g->automapmode & am_active));
+    isborder = viewactive ? (_g->viewheight != SCREENHEIGHT) : ((_g->automapmode & am_active));
 
     if (_g->oldgamestate != GS_LEVEL) {
       R_FillBackScreen ();    // draw the pattern into the back screen
@@ -218,7 +218,7 @@ void D_Display (void)
       redrawborderstuff = isborder && (!_g->isborderstate || _g->borderwillneedredraw);
       // The border may need redrawing next time if the border surrounds the screen,
       // and there is a menu being displayed
-      _g->borderwillneedredraw = _g->menuactive && isborder && viewactive && (viewwidth != SCREENWIDTH);
+      _g->borderwillneedredraw = _g->menuactive && isborder && viewactive && (_g->viewwidth != SCREENWIDTH);
     }
     if (redrawborderstuff)
       R_DrawViewBorder();
@@ -228,7 +228,7 @@ void D_Display (void)
       R_RenderPlayerView (&_g->players[displayplayer]);
     if (_g->automapmode & am_active)
       AM_Drawer();
-    ST_Drawer((viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), redrawborderstuff);
+    ST_Drawer((_g->viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), redrawborderstuff);
     R_DrawViewBorder();
     HU_Drawer();
   }

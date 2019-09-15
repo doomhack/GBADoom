@@ -54,32 +54,17 @@
 //  and the total size == width*height*depth/8.,
 //
 
-int  viewwidth;
-int  scaledviewwidth;
-int  viewheight;
-int  viewwindowx;
-int  viewwindowy;
+
 
 // Color tables for different players,
 //  translate a limited part to another
 //  (color ramps used for  suit colors).
 //
 
-byte *translationtables;
-
-
-draw_vars_t drawvars = { 
-  NULL, // byte_topleft
-  0, // byte_pitch
-};
-
-
-
 //
 // Spectre/Invisibility.
 //
 
-#define FUZZTABLE 50
 // proff 08/17/98: Changed for high-res
 //#define FUZZOFF (SCREENWIDTH)
 #define FUZZOFF 1
@@ -94,9 +79,7 @@ static const int fuzzoffset_org[FUZZTABLE] = {
   FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF
 };
 
-static int fuzzoffset[FUZZTABLE];
 
-static int fuzzpos = 0;
 
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
@@ -123,8 +106,8 @@ void R_InitTranslationTables (void)
 {
     int		i;
 
-    translationtables = Z_Malloc (256*3+255, PU_STATIC, 0);
-    translationtables = (byte *)(( (int)translationtables + 255 )& ~255);
+    _g->translationtables = Z_Malloc (256*3+255, PU_STATIC, 0);
+    _g->translationtables = (byte *)(( (int)_g->translationtables + 255 )& ~255);
 
     // translate just the 16 green colors
     for (i=0 ; i<256 ; i++)
@@ -132,15 +115,15 @@ void R_InitTranslationTables (void)
     if (i >= 0x70 && i<= 0x7f)
     {
         // map green ramp to gray, brown, red
-        translationtables[i] = 0x60 + (i&0xf);
-        translationtables [i+256] = 0x40 + (i&0xf);
-        translationtables [i+512] = 0x20 + (i&0xf);
+        _g->translationtables[i] = 0x60 + (i&0xf);
+        _g->translationtables [i+256] = 0x40 + (i&0xf);
+        _g->translationtables [i+512] = 0x20 + (i&0xf);
     }
     else
     {
         // Keep all other colors as is.
-        translationtables[i] = translationtables[i+256]
-        = translationtables[i+512] = i;
+        _g->translationtables[i] = _g->translationtables[i+256]
+        = _g->translationtables[i+512] = i;
     }
     }
 }
@@ -159,7 +142,7 @@ void R_DrawColumn (draw_column_vars_t *dcvars)
 	const byte *source = dcvars->source;
 	const byte *colormap = dcvars->colormap;
 
-	byte* dest = drawvars.byte_topleft + (dcvars->yl*drawvars.byte_pitch) + dcvars->x;
+    byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
 	fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
@@ -206,8 +189,8 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 		dc_yl = 1;
 
     // .. and high.
-    if (dc_yh == viewheight-1) 
-		dc_yh = viewheight - 2; 
+    if (dc_yh == _g->viewheight-1)
+        dc_yh = _g->viewheight - 2;
 	
 	 count = dc_yh - dc_yl;
 
@@ -215,7 +198,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
     if (dc_yl >= dc_yh)
 		return;
     
-	dest = drawvars.byte_topleft + (dcvars->yl*drawvars.byte_pitch) + dcvars->x;
+    dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
 
     // Looks familiar.
@@ -232,11 +215,11 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 		//  a pixel that is either one column
 		//  left or right of the current one.
 		// Add index from colormap to index.
-			*dest = fullcolormap[6*256+dest[fuzzoffset[fuzzpos]]]; 
+            *dest = fullcolormap[6*256+dest[_g->fuzzoffset[_g->fuzzpos]]];
 
 		// Clamp table lookup index.
-		if (++fuzzpos == FUZZTABLE) 
-			fuzzpos = 0;
+        if (++_g->fuzzpos == FUZZTABLE)
+            _g->fuzzpos = 0;
 	
 		dest += SCREENWIDTH;
 
@@ -264,7 +247,7 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 	const byte *colormap = dcvars->colormap;
 	const byte *translation = dcvars->translation;
 
-	byte* dest = drawvars.byte_topleft + (dcvars->yl*drawvars.byte_pitch) + dcvars->x;
+    byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
 	fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
@@ -312,7 +295,7 @@ void R_DrawSpan(draw_span_vars_t *dsvars)
 	const byte *source = dsvars->source;
 	const byte *colormap = dsvars->colormap;
 	
-	byte* dest = drawvars.byte_topleft + dsvars->y*drawvars.byte_pitch + dsvars->x1;
+    byte* dest = _g->drawvars.byte_topleft + dsvars->y*_g->drawvars.byte_pitch + dsvars->x1;
 	
 	const unsigned int step = ((dsvars->xstep << 10) & 0xffff0000) | ((dsvars->ystep >> 6)  & 0x0000ffff);
 
@@ -350,17 +333,17 @@ void R_InitBuffer(int width, int height)
 	//  e.g. smaller view windows
 	//  with border and/or status bar.
 
-	viewwindowx = (SCREENWIDTH-width) >> 1;
+    _g->viewwindowx = (SCREENWIDTH-width) >> 1;
 
 	// Same with base row offset.
 
-	viewwindowy = width==SCREENWIDTH ? 0 : (SCREENHEIGHT-(ST_SCALED_HEIGHT-1)-height)>>1;
+    _g->viewwindowy = width==SCREENWIDTH ? 0 : (SCREENHEIGHT-(ST_SCALED_HEIGHT-1)-height)>>1;
 
-	drawvars.byte_topleft = screens[0].data + viewwindowy*screens[0].byte_pitch + viewwindowx;
-	drawvars.byte_pitch = screens[0].byte_pitch;
+    _g->drawvars.byte_topleft = screens[0].data + _g->viewwindowy*screens[0].byte_pitch + _g->viewwindowx;
+    _g->drawvars.byte_pitch = screens[0].byte_pitch;
 
 	for (i=0; i<FUZZTABLE; i++)
-		fuzzoffset[i] = fuzzoffset_org[i]*screens[0].byte_pitch;
+        _g->fuzzoffset[i] = fuzzoffset_org[i]*screens[0].byte_pitch;
 }
 
 //
@@ -375,31 +358,31 @@ void R_FillBackScreen (void)
 {
 	int     x,y;
 
-	if (scaledviewwidth == SCREENWIDTH)
+    if (_g->scaledviewwidth == SCREENWIDTH)
 		return;
 
     V_DrawBackground(_g->gamemode == commercial ? "GRNROCK" : "FLOOR7_2", 0);
 
-	for (x=0; x<scaledviewwidth; x+=8)
-        V_DrawNamePatch(viewwindowx+x,viewwindowy-8,0,"brdr_t", CR_DEFAULT, VPT_NONE);
+    for (x=0; x<_g->scaledviewwidth; x+=8)
+        V_DrawNamePatch(_g->viewwindowx+x,_g->viewwindowy-8,0,"brdr_t", CR_DEFAULT, VPT_NONE);
 
-	for (x=0; x<scaledviewwidth; x+=8)
-        V_DrawNamePatch(viewwindowx+x,viewwindowy+viewheight,0,"brdr_b", CR_DEFAULT, VPT_NONE);
+    for (x=0; x<_g->scaledviewwidth; x+=8)
+        V_DrawNamePatch(_g->viewwindowx+x,_g->viewwindowy+_g->viewheight,0,"brdr_b", CR_DEFAULT, VPT_NONE);
 
-	for (y=0; y<viewheight; y+=8)
-        V_DrawNamePatch(viewwindowx-8,viewwindowy+y,0,"brdr_l", CR_DEFAULT, VPT_NONE);
+    for (y=0; y<_g->viewheight; y+=8)
+        V_DrawNamePatch(_g->viewwindowx-8,_g->viewwindowy+y,0,"brdr_l", CR_DEFAULT, VPT_NONE);
 
-	for (y=0; y<viewheight; y+=8)
-        V_DrawNamePatch(viewwindowx+scaledviewwidth,viewwindowy+y,0,"brdr_r", CR_DEFAULT, VPT_NONE);
+    for (y=0; y<_g->viewheight; y+=8)
+        V_DrawNamePatch(_g->viewwindowx+_g->scaledviewwidth,_g->viewwindowy+y,0,"brdr_r", CR_DEFAULT, VPT_NONE);
 
 	// Draw beveled edge.
-    V_DrawNamePatch(viewwindowx-8,viewwindowy-8,0,"brdr_tl", CR_DEFAULT, VPT_NONE);
+    V_DrawNamePatch(_g->viewwindowx-8,_g->viewwindowy-8,0,"brdr_tl", CR_DEFAULT, VPT_NONE);
 
-    V_DrawNamePatch(viewwindowx+scaledviewwidth,viewwindowy-8,0,"brdr_tr", CR_DEFAULT, VPT_NONE);
+    V_DrawNamePatch(_g->viewwindowx+_g->scaledviewwidth,_g->viewwindowy-8,0,"brdr_tr", CR_DEFAULT, VPT_NONE);
 
-    V_DrawNamePatch(viewwindowx-8,viewwindowy+viewheight,0,"brdr_bl", CR_DEFAULT, VPT_NONE);
+    V_DrawNamePatch(_g->viewwindowx-8,_g->viewwindowy+_g->viewheight,0,"brdr_bl", CR_DEFAULT, VPT_NONE);
 
-    V_DrawNamePatch(viewwindowx+scaledviewwidth,viewwindowy+viewheight,0,"brdr_br", CR_DEFAULT, VPT_NONE);
+    V_DrawNamePatch(_g->viewwindowx+_g->scaledviewwidth,_g->viewwindowy+_g->viewheight,0,"brdr_br", CR_DEFAULT, VPT_NONE);
 }
 
 //
@@ -423,7 +406,7 @@ void R_DrawViewBorder(void)
 {
 	int top, side, i;
 
-    if ((SCREENHEIGHT != viewheight) || ((_g->automapmode & am_active) && ! (_g->automapmode & am_overlay)))
+    if ((SCREENHEIGHT != _g->viewheight) || ((_g->automapmode & am_active) && ! (_g->automapmode & am_overlay)))
 	{
 		// erase left and right of statusbar
 		side= ( SCREENWIDTH - ST_SCALED_WIDTH ) / 2;
@@ -438,24 +421,24 @@ void R_DrawViewBorder(void)
 		}
 	}
 
-	if ( viewheight >= ( SCREENHEIGHT - ST_SCALED_HEIGHT ))
+    if ( _g->viewheight >= ( SCREENHEIGHT - ST_SCALED_HEIGHT ))
 		return; // if high-res, don´t go any further!
 
-	top = ((SCREENHEIGHT-ST_SCALED_HEIGHT)-viewheight)/2;
-	side = (SCREENWIDTH-scaledviewwidth)/2;
+    top = ((SCREENHEIGHT-ST_SCALED_HEIGHT)-_g->viewheight)/2;
+    side = (SCREENWIDTH-_g->scaledviewwidth)/2;
 
 	// copy top
 	for (i = 0; i < top; i++)
 		R_VideoErase (0, i, SCREENWIDTH);
 
 	// copy sides
-	for (i = top; i < (top+viewheight); i++)
+    for (i = top; i < (top+_g->viewheight); i++)
 	{
 		R_VideoErase (0, i, side);
-		R_VideoErase (viewwidth+side, i, side);
+        R_VideoErase (_g->viewwidth+side, i, side);
 	}
 
 	// copy bottom
-	for (i = top+viewheight; i < (SCREENHEIGHT - ST_SCALED_HEIGHT); i++)
+    for (i = top+_g->viewheight; i < (SCREENHEIGHT - ST_SCALED_HEIGHT); i++)
 		R_VideoErase (0, i, SCREENWIDTH);
 }

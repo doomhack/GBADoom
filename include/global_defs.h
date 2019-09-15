@@ -644,4 +644,21 @@ int       *texturetranslation;
 
 
 //******************************************************************************
+//r_draw.c
+//******************************************************************************
+
+int  viewwidth;
+int  scaledviewwidth;
+int  viewheight;
+int  viewwindowx;
+int  viewwindowy;
+
+byte *translationtables;
+
+draw_vars_t drawvars;
+
+int fuzzoffset[FUZZTABLE];
+int fuzzpos;
+
+//******************************************************************************
 #endif // GLOBAL_DEFS_H

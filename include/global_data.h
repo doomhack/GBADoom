@@ -20,6 +20,7 @@
 #include "p_mobj.h"
 #include "p_tick.h"
 
+#include "r_draw.h"
 
 #include "mmus2mid.h"
 

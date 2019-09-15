@@ -336,7 +336,7 @@ static void R_RenderSegLoop (void)
           R_DrawColumn (&dcvars);
           R_UnlockTextureCompositePatchNum(midtexture);
           tex_patch = NULL;
-          ceilingclip[rw_x] = viewheight;
+          ceilingclip[rw_x] = _g->viewheight;
           floorclip[rw_x] = -1;
         }
       else

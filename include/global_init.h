@@ -46,6 +46,4 @@ _g->screenblocks = 10;    // has default
 _g->rejectlump = -1;// cph - store reject lump num if cached
 
 
-
-
 #endif // GLOBAL_INIT_H

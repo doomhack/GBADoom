@@ -186,7 +186,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 	if (cm<CR_LIMIT)
 		trans=colrngs[cm];
 	else
-		trans=translationtables + 256*((cm-CR_LIMIT)-1);
+        trans=_g->translationtables + 256*((cm-CR_LIMIT)-1);
 	
 	y -= patch->topoffset;
 	x -= patch->leftoffset;
@@ -322,12 +322,12 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 
 			R_DrawColumn_f colfunc;
 			draw_column_vars_t dcvars;
-			draw_vars_t olddrawvars = drawvars;
+            draw_vars_t olddrawvars = _g->drawvars;
 
 			R_SetDefaultDrawColumnVars(&dcvars);
 			
-			drawvars.byte_topleft = screens[scrn].data;
-			drawvars.byte_pitch = screens[scrn].byte_pitch;
+            _g->drawvars.byte_topleft = screens[scrn].data;
+            _g->drawvars.byte_pitch = screens[scrn].byte_pitch;
 			
 			if (!(flags & VPT_STRETCH))
 			{
@@ -412,7 +412,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 			  }
 		}
 			
-		drawvars = olddrawvars;
+        _g->drawvars = olddrawvars;
 	}
 }
 

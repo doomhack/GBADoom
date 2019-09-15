@@ -192,8 +192,8 @@ void R_ClearPlanes(void)
   int i;
 
   // opening / clipping determination
-  for (i=0 ; i<viewwidth ; i++)
-    floorclip[i] = viewheight, ceilingclip[i] = -1;
+  for (i=0 ; i<_g->viewwidth ; i++)
+    floorclip[i] = _g->viewheight, ceilingclip[i] = -1;
 
   for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
     for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
@@ -274,7 +274,7 @@ visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel,
   check->height = height;
   check->picnum = picnum;
   check->lightlevel = lightlevel;
-  check->minx = viewwidth; // Was SCREENWIDTH -- killough 11/98
+  check->minx = _g->viewwidth; // Was SCREENWIDTH -- killough 11/98
   check->maxx = -1;
   check->xoffs = xoffs;               // killough 2/28/98: Save offsets
   check->yoffs = yoffs;
@@ -401,7 +401,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 				dcvars.colormap = fullcolormap;          // killough 3/20/98
 			
 			// proff 09/21/98: Changed for high-res
-			dcvars.iscale = FRACUNIT*200/viewheight;
+            dcvars.iscale = FRACUNIT*200/_g->viewheight;
 
 			tex_patch = R_CacheTextureCompositePatchNum(texture);
 			

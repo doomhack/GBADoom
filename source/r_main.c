@@ -253,7 +253,7 @@ static void R_InitTextureMapping (void)
         t = -1;
       else
         if (finetangent[i] < -FRACUNIT*2)
-          t = viewwidth+1;
+          t = _g->viewwidth+1;
       else
         {
           t = FixedMul(finetangent[i], focallength);
@@ -261,8 +261,8 @@ static void R_InitTextureMapping (void)
           if (t < -1)
             t = -1;
           else
-            if (t > viewwidth+1)
-              t = viewwidth+1;
+            if (t > _g->viewwidth+1)
+              t = _g->viewwidth+1;
         }
       viewangletox[i] = t;
     }
@@ -271,7 +271,7 @@ static void R_InitTextureMapping (void)
   //  xtoviewangle will give the smallest view angle
   //  that maps to x.
 
-  for (x=0; x<=viewwidth; x++)
+  for (x=0; x<=_g->viewwidth; x++)
     {
       for (i=0; viewangletox[i] > x; i++)
         ;
@@ -283,8 +283,8 @@ static void R_InitTextureMapping (void)
     if (viewangletox[i] == -1)
       viewangletox[i] = 0;
     else
-      if (viewangletox[i] == viewwidth+1)
-        viewangletox[i] = viewwidth;
+      if (viewangletox[i] == _g->viewwidth+1)
+        viewangletox[i] = _g->viewwidth;
 
   clipangle = xtoviewangle[0];
 }
@@ -356,58 +356,58 @@ void R_ExecuteSetViewSize (void)
 
   if (setblocks == 11)
     {
-      scaledviewwidth = SCREENWIDTH;
-      viewheight = SCREENHEIGHT;
+      _g->scaledviewwidth = SCREENWIDTH;
+      _g->viewheight = SCREENHEIGHT;
     }
 // proff 09/24/98: Added for high-res
   else if (setblocks == 10)
     {
-      scaledviewwidth = SCREENWIDTH;
-      viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
+      _g->scaledviewwidth = SCREENWIDTH;
+      _g->viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
     }
   else
     {
 // proff 08/17/98: Changed for high-res
-      scaledviewwidth = setblocks*SCREENWIDTH/10;
-      viewheight = (setblocks*(SCREENHEIGHT-ST_SCALED_HEIGHT)/10) & ~7;
+      _g->scaledviewwidth = setblocks*SCREENWIDTH/10;
+      _g->viewheight = (setblocks*(SCREENHEIGHT-ST_SCALED_HEIGHT)/10) & ~7;
     }
 
-  viewwidth = scaledviewwidth;
+  _g->viewwidth = _g->scaledviewwidth;
 
-  viewheightfrac = viewheight<<FRACBITS;//e6y
+  viewheightfrac = _g->viewheight<<FRACBITS;//e6y
 
-  centery = viewheight/2;
-  centerx = viewwidth/2;
+  centery = _g->viewheight/2;
+  centerx = _g->viewwidth/2;
   centerxfrac = centerx<<FRACBITS;
   centeryfrac = centery<<FRACBITS;
   projection = centerxfrac;
 // proff 11/06/98: Added for high-res
   projectiony = ((SCREENHEIGHT * centerx * 320) / 200) / SCREENWIDTH * FRACUNIT;
 
-  R_InitBuffer (scaledviewwidth, viewheight);
+  R_InitBuffer (_g->scaledviewwidth, _g->viewheight);
 
   R_InitTextureMapping();
 
   // psprite scales
 // proff 08/17/98: Changed for high-res
-  pspritescale = FRACUNIT*viewwidth/320;
-  pspriteiscale = FRACUNIT*320/viewwidth;
+  pspritescale = FRACUNIT*_g->viewwidth/320;
+  pspriteiscale = FRACUNIT*320/_g->viewwidth;
 // proff 11/06/98: Added for high-res
-  pspriteyscale = (((SCREENHEIGHT*viewwidth)/SCREENWIDTH) << FRACBITS) / 200;
+  pspriteyscale = (((SCREENHEIGHT*_g->viewwidth)/SCREENWIDTH) << FRACBITS) / 200;
 
   // thing clipping
-  for (i=0 ; i<viewwidth ; i++)
-    screenheightarray[i] = viewheight;
+  for (i=0 ; i<_g->viewwidth ; i++)
+    screenheightarray[i] = _g->viewheight;
 
   // planes
-  for (i=0 ; i<viewheight ; i++)
+  for (i=0 ; i<_g->viewheight ; i++)
     {   // killough 5/2/98: reformatted
-      fixed_t dy = D_abs(((i-viewheight/2)<<FRACBITS)+FRACUNIT/2);
+      fixed_t dy = D_abs(((i-_g->viewheight/2)<<FRACBITS)+FRACUNIT/2);
 // proff 08/17/98: Changed for high-res
       yslope[i] = FixedDiv(projectiony, dy);
     }
 
-  for (i=0 ; i<viewwidth ; i++)
+  for (i=0 ; i<_g->viewwidth ; i++)
     {
       fixed_t cosadj = D_abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
       distscale[i] = FixedDiv(FRACUNIT,cosadj);
@@ -511,8 +511,6 @@ static void R_SetupFrame (player_t *player)
   validcount++;
 }
 
-int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
-
 //
 // R_ShowStats
 //
@@ -551,13 +549,6 @@ void R_RenderPlayerView (player_t* player)
   R_ClearSprites ();
 
   rendered_segs = rendered_visplanes = 0;
-
-    if (autodetect_hom)
-    { // killough 2/10/98: add flashing red HOM indicators
-      unsigned char color=(_g->gametic % 20) < 9 ? 0xb0 : 0;
-      V_FillRect(0, viewwindowx, viewwindowy, viewwidth, viewheight, color);
-      R_DrawViewBorder();
-    }
 
   // The head node is the last node output.
   R_RenderBSPNode (_g->numnodes-1);

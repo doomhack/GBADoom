@@ -350,7 +350,7 @@ void R_DrawMaskedColumn(
         dcvars->yl = mceilingclip[dcvars->x]+1;
 
       // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
-      if (dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
+      if (dcvars->yl <= dcvars->yh && dcvars->yh < _g->viewheight)
         {
           dcvars->source = column->pixels + post->topdelta;
 
@@ -392,7 +392,7 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     if (vis->mobjflags & MF_TRANSLATION)
       {
         colfunc = R_DrawTranslatedColumn;
-        dcvars.translation = translationtables - 256 +
+        dcvars.translation = _g->translationtables - 256 +
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
     else
@@ -531,14 +531,14 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   }
 
   // off the side?
-  if (x1 > viewwidth || x2 < 0)
+  if (x1 > _g->viewwidth || x2 < 0)
     return;
 
   // killough 4/9/98: clip things which are out of view due to height
   // e6y: fix of hanging decoration disappearing in Batman Doom MAP02
   // centeryfrac -> viewheightfrac
   if (fz  > viewz + FixedDiv(viewheightfrac, xscale) ||
-      gzt < viewz - FixedDiv(viewheightfrac-viewheight, xscale))
+      gzt < viewz - FixedDiv(viewheightfrac-_g->viewheight, xscale))
     return;
 
     // killough 3/27/98: exclude things totally separated
@@ -576,7 +576,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   vis->gzt = gzt;                          // killough 3/27/98
   vis->texturemid = vis->gzt - viewz;
   vis->x1 = x1 < 0 ? 0 : x1;
-  vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
+  vis->x2 = x2 >= _g->viewwidth ? _g->viewwidth-1 : x2;
   iscale = FixedDiv (FRACUNIT, xscale);
 
   if (flip)
@@ -690,7 +690,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   }
 
   // off the side
-  if (x2 < 0 || x1 > viewwidth)
+  if (x2 < 0 || x1 > _g->viewwidth)
     return;
 
   // store information in a vissprite
@@ -700,7 +700,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* +  FRACUNIT/2 */ -
                     (psp->sy-topoffset);
   vis->x1 = x1 < 0 ? 0 : x1;
-  vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
+  vis->x2 = x2 >= _g->viewwidth ? _g->viewwidth-1 : x2;
 // proff 11/06/98: Added for high-res
   vis->scale = pspriteyscale;
 
@@ -912,7 +912,7 @@ static void R_DrawSprite (vissprite_t* spr)
       int phs = viewplayer->mo->subsector->sector->heightsec;
       if ((mh = _g->sectors[spr->heightsec].floorheight) > spr->gz &&
           (h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < viewheight) {
+          (h >>= FRACBITS) < _g->viewheight) {
         if (mh <= 0 || (phs != -1 && viewz > _g->sectors[phs].floorheight))
           {                          // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
@@ -928,7 +928,7 @@ static void R_DrawSprite (vissprite_t* spr)
 
       if ((mh = _g->sectors[spr->heightsec].ceilingheight) < spr->gzt &&
           (h = centeryfrac - FixedMul(mh-viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < viewheight) {
+          (h >>= FRACBITS) < _g->viewheight) {
         if (phs != -1 && viewz >= _g->sectors[phs].ceilingheight)
           {                         // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
@@ -948,7 +948,7 @@ static void R_DrawSprite (vissprite_t* spr)
 
   for (x = spr->x1 ; x<=spr->x2 ; x++) {
     if (clipbot[x] == -2)
-      clipbot[x] = viewheight;
+      clipbot[x] = _g->viewheight;
 
     if (cliptop[x] == -2)
       cliptop[x] = -1;
