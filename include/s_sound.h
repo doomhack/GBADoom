@@ -38,6 +38,8 @@
 #pragma interface
 #endif
 
+#include "sounds.h"
+
 //
 // Initializes sound stuff, including volume
 // Sets channels, SFX and music volume,
@@ -91,10 +93,16 @@ void S_SetMusicVolume(int volume);
 void S_SetSfxVolume(int volume);
 
 
+typedef struct
+{
+  sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
+  void *origin;        // origin of sound
+  int handle;          // handle of the sound being played
+  int is_pickup;       // killough 4/25/98: whether sound is a player's weapon
+} channel_t;
+
+
 // machine-independent sound params
 extern const unsigned int numChannels;
-
-//jff 3/17/98 holds last IDMUS number, or -1
-extern int idmusnum;
 
 #endif

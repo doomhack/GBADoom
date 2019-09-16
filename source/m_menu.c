@@ -671,9 +671,9 @@ void M_DrawSound(void)
   // CPhipps - patch drawing updated
   V_DrawNamePatch(60, 38, 0, "M_SVOL", CR_DEFAULT, VPT_STRETCH);
 
-  M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(sfx_vol+1),16,snd_SfxVolume);
+  M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(sfx_vol+1),16,_g->snd_SfxVolume);
 
-  M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(music_vol+1),16,snd_MusicVolume);
+  M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(music_vol+1),16,_g->snd_MusicVolume);
 }
 
 void M_Sound(int choice)
@@ -686,16 +686,16 @@ void M_SfxVol(int choice)
   switch(choice)
     {
     case 0:
-      if (snd_SfxVolume)
-        snd_SfxVolume--;
+      if (_g->snd_SfxVolume)
+        _g->snd_SfxVolume--;
       break;
     case 1:
-      if (snd_SfxVolume < 15)
-        snd_SfxVolume++;
+      if (_g->snd_SfxVolume < 15)
+        _g->snd_SfxVolume++;
       break;
     }
 
-  S_SetSfxVolume(snd_SfxVolume /* *8 */);
+  S_SetSfxVolume(_g->snd_SfxVolume /* *8 */);
 }
 
 void M_MusicVol(int choice)
@@ -703,16 +703,16 @@ void M_MusicVol(int choice)
   switch(choice)
     {
     case 0:
-      if (snd_MusicVolume)
-        snd_MusicVolume--;
+      if (_g->snd_MusicVolume)
+        _g->snd_MusicVolume--;
       break;
     case 1:
-      if (snd_MusicVolume < 15)
-        snd_MusicVolume++;
+      if (_g->snd_MusicVolume < 15)
+        _g->snd_MusicVolume++;
       break;
     }
 
-  S_SetMusicVolume(snd_MusicVolume /* *8 */);
+  S_SetMusicVolume(_g->snd_MusicVolume /* *8 */);
 }
 
 /////////////////////////////

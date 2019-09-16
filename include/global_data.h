@@ -25,6 +25,8 @@
 #include "r_plane.h"
 #include "r_things.h"
 
+#include "s_sound.h"
+
 #include "mmus2mid.h"
 
 

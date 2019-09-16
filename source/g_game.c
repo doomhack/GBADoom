@@ -1065,7 +1065,7 @@ void G_WorldDone (void)
 
 void G_DoWorldDone (void)
 {
-  idmusnum = -1;             //jff 3/17/98 allow new level's music to be loaded
+  _g->idmusnum = -1;             //jff 3/17/98 allow new level's music to be loaded
   _g->gamestate = GS_LEVEL;
   _g->gamemap = _g->wminfo.next+1;
   G_DoLoadLevel();
@@ -1167,8 +1167,8 @@ void G_DoLoadGame(void)
     _g->playeringame[i] = *_g->save_p++;
   _g->save_p += MIN_MAXPLAYERS-MAXPLAYERS;         // killough 2/28/98
 
-  idmusnum = *_g->save_p++;           // jff 3/17/98 restore idmus music
-  if (idmusnum==255) idmusnum=-1; // jff 3/18/98 account for unsigned byte
+  _g->idmusnum = *_g->save_p++;           // jff 3/17/98 restore idmus music
+  if (_g->idmusnum==255) _g->idmusnum=-1; // jff 3/18/98 account for unsigned byte
 
   /* killough 3/1/98: Read game options
    * killough 11/98: move down to here
@@ -1318,7 +1318,7 @@ static void G_DoSaveGame (boolean menu)
   for (;i<MIN_MAXPLAYERS;i++)         // killough 2/28/98
     *_g->save_p++ = 0;
 
-  *_g->save_p++ = idmusnum;               // jff 3/17/98 save idmus state
+  *_g->save_p++ = _g->idmusnum;               // jff 3/17/98 save idmus state
 
   _g->save_p = G_WriteOptions(_g->save_p);    // killough 3/1/98: save game options
 

@@ -854,4 +854,29 @@ fixed_t spryscale;
 fixed_t sprtopscreen;
 
 //******************************************************************************
+//r_things.c
+//******************************************************************************
+
+// the set of channels available
+channel_t *channels;
+
+// These are not used, but should be (menu).
+// Maximum volume of a sound effect.
+// Internal default is max out of 0-15.
+int snd_SfxVolume;
+
+// Maximum volume of music. Useless so far.
+int snd_MusicVolume;
+
+// whether songs are mus_paused
+boolean mus_paused;
+
+// music currently being played
+musicinfo_t *mus_playing;
+
+//jff 3/17/98 to keep track of last IDMUS specified music num
+int idmusnum;
+
+
+//******************************************************************************
 #endif // GLOBAL_DEFS_H

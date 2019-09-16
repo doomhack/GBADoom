@@ -52,12 +52,17 @@ _g->rejectlump = -1;// cph - store reject lump num if cached
 
 _g->validcount = 1;         // increment every time a check is made
 
-//******************************************************************************
-//r_plane.c
-//******************************************************************************
 
 _g->freehead = &_g->freetail;     // killough
 
 
+//******************************************************************************
+//s_sounds.c
+//******************************************************************************
+
+_g->snd_SfxVolume = 8;
+
+// Maximum volume of music. Useless so far.
+_g->snd_MusicVolume = 8;
 
 #endif // GLOBAL_INIT_H
