@@ -550,7 +550,7 @@ void F_CastDrawer (void)
   F_CastPrint ((castorder[_g->castnum].name));
 
   // draw the current frame in the middle of the screen
-  sprdef = &sprites[_g->caststate->sprite];
+  sprdef = &_g->sprites[_g->caststate->sprite];
   sprframe = &sprdef->spriteframes[ _g->caststate->frame & FF_FRAMEMASK];
   lump = sprframe->lump[0];
   flip = (boolean)sprframe->flip[0];

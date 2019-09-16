@@ -115,9 +115,9 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
   _g->maskedtexturecol = ds->maskedtexturecol;
 
   _g->rw_scalestep = ds->scalestep;
-  spryscale = ds->scale1 + (x1 - ds->x1)*_g->rw_scalestep;
-  mfloorclip = ds->sprbottomclip;
-  mceilingclip = ds->sprtopclip;
+  _g->spryscale = ds->scale1 + (x1 - ds->x1)*_g->rw_scalestep;
+  _g->mfloorclip = ds->sprbottomclip;
+  _g->mceilingclip = ds->sprtopclip;
 
   // find positioning
   if (_g->curline->linedef->flags & ML_DONTPEGBOTTOM)
@@ -142,13 +142,13 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
   patch = R_CacheTextureCompositePatchNum(texnum);
 
   // draw the columns
-  for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += _g->rw_scalestep)
+  for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, _g->spryscale += _g->rw_scalestep)
     if (_g->maskedtexturecol[dcvars.x] != INT_MAX) // dropoff overflow
       {
         
         if (!_g->fixedcolormap)
-          dcvars.z = spryscale; // for filtering -- POPE
-        dcvars.colormap = R_ColourMap(_g->rw_lightlevel,spryscale);
+          dcvars.z = _g->spryscale; // for filtering -- POPE
+        dcvars.colormap = R_ColourMap(_g->rw_lightlevel,_g->spryscale);
 
         // killough 3/2/98:
         //
@@ -162,14 +162,14 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
         {
           int_64_t t = ((int_64_t) _g->centeryfrac << FRACBITS) -
-            (int_64_t) dcvars.texturemid * spryscale;
-          if (t + (int_64_t) _g->textureheight[texnum] * spryscale < 0 ||
+            (int_64_t) dcvars.texturemid * _g->spryscale;
+          if (t + (int_64_t) _g->textureheight[texnum] * _g->spryscale < 0 ||
               t > (int_64_t) MAX_SCREENHEIGHT << FRACBITS*2)
             continue;        // skip if the texture is out of screen's range
-          sprtopscreen = (long)(t >> FRACBITS);
+          _g->sprtopscreen = (long)(t >> FRACBITS);
         }
 
-        dcvars.iscale = 0xffffffffu / (unsigned) spryscale;
+        dcvars.iscale = 0xffffffffu / (unsigned) _g->spryscale;
 
         // killough 1/25/98: here's where Medusa came in, because
         // it implicitly assumed that the column was all one patch.
@@ -519,8 +519,8 @@ void R_StoreWallRange(const int start, const int stop)
       _g->rw_midtexturemid += FixedMod(_g->sidedef->rowoffset, _g->textureheight[_g->midtexture]);
 
       _g->ds_p->silhouette = SIL_BOTH;
-      _g->ds_p->sprtopclip = screenheightarray;
-      _g->ds_p->sprbottomclip = negonearray;
+      _g->ds_p->sprtopclip = _g->screenheightarray;
+      _g->ds_p->sprbottomclip = _g->negonearray;
       _g->ds_p->bsilheight = INT_MAX;
       _g->ds_p->tsilheight = INT_MIN;
     }
@@ -539,9 +539,9 @@ void R_StoreWallRange(const int start, const int stop)
   // from being displayed on the automap.
 
   _g->ds_p->silhouette = SIL_BOTH;
-  _g->ds_p->sprbottomclip = negonearray;
+  _g->ds_p->sprbottomclip = _g->negonearray;
   _g->ds_p->bsilheight = INT_MAX;
-  _g->ds_p->sprtopclip = screenheightarray;
+  _g->ds_p->sprtopclip = _g->screenheightarray;
   _g->ds_p->tsilheight = INT_MIN;
 
       } else { /* not solid - old code */

@@ -367,7 +367,7 @@ const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
      */
     return _g->fullcolormap + between(0,NUMCOLORMAPS-1,
           ((256-lightlevel)*2*NUMCOLORMAPS/256) - 4
-          - (FixedMul(spryscale,pspriteiscale)/2 >> LIGHTSCALESHIFT)
+          - (FixedMul(spryscale,_g->pspriteiscale)/2 >> LIGHTSCALESHIFT)
           )*256;
   }
 }
@@ -480,7 +480,7 @@ void R_PrecacheLevel(void)
     return;
 
   {
-    size_t size = _g->numflats > numsprites  ? _g->numflats : numsprites;
+    size_t size = _g->numflats > _g->numsprites  ? _g->numflats : _g->numsprites;
     hitlist = malloc((size_t)_g->numtextures > size ? _g->numtextures : size);
   }
 
@@ -523,7 +523,7 @@ void R_PrecacheLevel(void)
       }
 
   // Precache sprites.
-  memset(hitlist, 0, numsprites);
+  memset(hitlist, 0, _g->numsprites);
 
   {
     thinker_t *th = NULL;
@@ -532,13 +532,13 @@ void R_PrecacheLevel(void)
         hitlist[((mobj_t *)th)->sprite] = 1;
   }
 
-  for (i=numsprites; --i >= 0;)
+  for (i=_g->numsprites; --i >= 0;)
     if (hitlist[i])
       {
-        int j = sprites[i].numframes;
+        int j = _g->sprites[i].numframes;
         while (--j >= 0)
           {
-            short *sflump = sprites[i].spriteframes[j].lump;
+            short *sflump = _g->sprites[i].spriteframes[j].lump;
             int k = 7;
             do
               precache_lump(_g->firstspritelump + sflump[k]);

@@ -822,4 +822,36 @@ int skytexture;
 
 
 //******************************************************************************
+//r_things.c
+//******************************************************************************
+
+fixed_t pspritescale;
+fixed_t pspriteiscale;
+// proff 11/06/98: Added for high-res
+fixed_t pspriteyscale;
+
+// constant arrays
+//  used for psprite clipping and initializing clipping
+
+int negonearray[MAX_SCREENWIDTH];        // killough 2/8/98: // dropoff overflow
+int screenheightarray[MAX_SCREENWIDTH];  // change to MAX_* // dropoff overflow
+
+// variables used to look up and range check thing_t sprites patches
+
+spritedef_t *sprites;
+int numsprites;
+
+
+spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
+int maxframe;
+
+vissprite_t *vissprites, **vissprite_ptrs;  // killough
+size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
+
+int   *mfloorclip;   // dropoff overflow
+int   *mceilingclip; // dropoff overflow
+fixed_t spryscale;
+fixed_t sprtopscreen;
+
+//******************************************************************************
 #endif // GLOBAL_DEFS_H

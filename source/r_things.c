@@ -62,30 +62,11 @@ typedef struct {
 // There was a lot of stuff grabbed wrong, so I changed it...
 //
 
-fixed_t pspritescale;
-fixed_t pspriteiscale;
-// proff 11/06/98: Added for high-res
-fixed_t pspriteyscale;
-
-// constant arrays
-//  used for psprite clipping and initializing clipping
-
-int negonearray[MAX_SCREENWIDTH];        // killough 2/8/98: // dropoff overflow
-int screenheightarray[MAX_SCREENWIDTH];  // change to MAX_* // dropoff overflow
 
 //
 // INITIALIZATION FUNCTIONS
 //
 
-// variables used to look up and range check thing_t sprites patches
-
-spritedef_t *sprites;
-int numsprites;
-
-#define MAX_SPRITE_FRAMES 29          /* Macroized -- killough 1/25/98 */
-
-static spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
-static int maxframe;
 
 //
 // R_InstallSpriteLump
@@ -98,29 +79,29 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
   if (frame >= MAX_SPRITE_FRAMES || rotation > 8)
     I_Error("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
 
-  if ((int) frame > maxframe)
-    maxframe = frame;
+  if ((int) frame > _g->maxframe)
+    _g->maxframe = frame;
 
   if (rotation == 0)
     {    // the lump should be used for all rotations
       int r;
       for (r=0 ; r<8 ; r++)
-        if (sprtemp[frame].lump[r]==-1)
+        if (_g->sprtemp[frame].lump[r]==-1)
           {
-            sprtemp[frame].lump[r] = lump - _g->firstspritelump;
-            sprtemp[frame].flip[r] = (byte) flipped;
-            sprtemp[frame].rotate = false; //jff 4/24/98 if any subbed, rotless
+            _g->sprtemp[frame].lump[r] = lump - _g->firstspritelump;
+            _g->sprtemp[frame].flip[r] = (byte) flipped;
+            _g->sprtemp[frame].rotate = false; //jff 4/24/98 if any subbed, rotless
           }
       return;
     }
 
   // the lump is only used for one rotation
 
-  if (sprtemp[frame].lump[--rotation] == -1)
+  if (_g->sprtemp[frame].lump[--rotation] == -1)
     {
-      sprtemp[frame].lump[rotation] = lump - _g->firstspritelump;
-      sprtemp[frame].flip[rotation] = (byte) flipped;
-      sprtemp[frame].rotate = true; //jff 4/24/98 only change if rot used
+      _g->sprtemp[frame].lump[rotation] = lump - _g->firstspritelump;
+      _g->sprtemp[frame].flip[rotation] = (byte) flipped;
+      _g->sprtemp[frame].rotate = true; //jff 4/24/98 only change if rot used
     }
 }
 
@@ -163,9 +144,9 @@ static void R_InitSpriteDefs(const char * const * namelist)
   for (i=0; namelist[i]; i++)
     ;
 
-  numsprites = i;
+  _g->numsprites = i;
 
-  sprites = Z_Malloc(numsprites *sizeof(*sprites), PU_STATIC, NULL);
+  _g->sprites = Z_Malloc(_g->numsprites *sizeof(*_g->sprites), PU_STATIC, NULL);
 
   // Create hash table based on just the first four letters of each sprite
   // killough 1/31/98
@@ -185,15 +166,15 @@ static void R_InitSpriteDefs(const char * const * namelist)
   // scan all the lump names for each of the names,
   //  noting the highest frame letter.
 
-  for (i=0 ; i<numsprites ; i++)
+  for (i=0 ; i<_g->numsprites ; i++)
     {
       const char *spritename = namelist[i];
       int j = hash[R_SpriteNameHash(spritename) % numentries].index;
 
       if (j >= 0)
         {
-          memset(sprtemp, -1, sizeof(sprtemp));
-          maxframe = -1;
+          memset(_g->sprtemp, -1, sizeof(_g->sprtemp));
+          _g->maxframe = -1;
           do
             {
               register lumpinfo_t *lump = lumpinfo + j + _g->firstspritelump;
@@ -220,11 +201,11 @@ static void R_InitSpriteDefs(const char * const * namelist)
           while ((j = hash[j].next) >= 0);
 
           // check the frames that were found for completeness
-          if ((sprites[i].numframes = ++maxframe))  // killough 1/31/98
+          if ((_g->sprites[i].numframes = ++_g->maxframe))  // killough 1/31/98
             {
               int frame;
-              for (frame = 0; frame < maxframe; frame++)
-                switch ((int) sprtemp[frame].rotate)
+              for (frame = 0; frame < _g->maxframe; frame++)
+                switch ((int) _g->sprtemp[frame].rotate)
                   {
                   case -1:
                     // no rotations were found for that frame at all
@@ -241,7 +222,7 @@ static void R_InitSpriteDefs(const char * const * namelist)
                     {
                       int rotation;
                       for (rotation=0 ; rotation<8 ; rotation++)
-                        if (sprtemp[frame].lump[rotation] == -1)
+                        if (_g->sprtemp[frame].lump[rotation] == -1)
                           I_Error ("R_InitSprites: Sprite %.8s frame %c "
                                    "is missing rotations",
                                    namelist[i], frame+'A');
@@ -249,10 +230,10 @@ static void R_InitSpriteDefs(const char * const * namelist)
                     }
                   }
               // allocate space for the frames present and copy sprtemp to it
-              sprites[i].spriteframes =
-                Z_Malloc (maxframe * sizeof(spriteframe_t), PU_STATIC, NULL);
-              memcpy (sprites[i].spriteframes, sprtemp,
-                      maxframe*sizeof(spriteframe_t));
+              _g->sprites[i].spriteframes =
+                Z_Malloc (_g->maxframe * sizeof(spriteframe_t), PU_STATIC, NULL);
+              memcpy (_g->sprites[i].spriteframes, _g->sprtemp,
+                      _g->maxframe*sizeof(spriteframe_t));
             }
         }
     }
@@ -263,8 +244,6 @@ static void R_InitSpriteDefs(const char * const * namelist)
 // GAME FUNCTIONS
 //
 
-static vissprite_t *vissprites, **vissprite_ptrs;  // killough
-static size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 
 //
 // R_InitSprites
@@ -275,7 +254,7 @@ void R_InitSprites(const char * const *namelist)
 {
   int i;
   for (i=0; i<MAX_SCREENWIDTH; i++)    // killough 2/8/98
-    negonearray[i] = -1;
+    _g->negonearray[i] = -1;
   R_InitSpriteDefs(namelist);
 }
 
@@ -286,7 +265,7 @@ void R_InitSprites(const char * const *namelist)
 
 void R_ClearSprites (void)
 {
-  num_vissprite = 0;            // killough
+  _g->num_vissprite = 0;            // killough
 }
 
 //
@@ -295,18 +274,18 @@ void R_ClearSprites (void)
 
 static vissprite_t *R_NewVisSprite(void)
 {
-  if (num_vissprite >= num_vissprite_alloc)             // killough
+  if (_g->num_vissprite >= _g->num_vissprite_alloc)             // killough
     {
-      size_t num_vissprite_alloc_prev = num_vissprite_alloc;
+      size_t num_vissprite_alloc_prev = _g->num_vissprite_alloc;
 
-      num_vissprite_alloc = num_vissprite_alloc ? num_vissprite_alloc*2 : 128;
-      vissprites = realloc(vissprites,num_vissprite_alloc*sizeof(*vissprites));
+      _g->num_vissprite_alloc = _g->num_vissprite_alloc ? _g->num_vissprite_alloc*2 : 128;
+      _g->vissprites = realloc(_g->vissprites,_g->num_vissprite_alloc*sizeof(*_g->vissprites));
       
       //e6y: set all fields to zero
-      memset(vissprites + num_vissprite_alloc_prev, 0,
-        (num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*vissprites));
+      memset(_g->vissprites + num_vissprite_alloc_prev, 0,
+        (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
     }
- return vissprites + num_vissprite++;
+ return _g->vissprites + _g->num_vissprite++;
 }
 
 //
@@ -316,10 +295,7 @@ static vissprite_t *R_NewVisSprite(void)
 //  in posts/runs of opaque pixels.
 //
 
-int   *mfloorclip;   // dropoff overflow
-int   *mceilingclip; // dropoff overflow
-fixed_t spryscale;
-fixed_t sprtopscreen;
+
 
 void R_DrawMaskedColumn(
   const rpatch_t *patch,
@@ -337,17 +313,17 @@ void R_DrawMaskedColumn(
       const rpost_t *post = &column->posts[i];
 
       // calculate unclipped screen coordinates for post
-      topscreen = sprtopscreen + spryscale*post->topdelta;
-      bottomscreen = topscreen + spryscale*post->length;
+      topscreen = _g->sprtopscreen + _g->spryscale*post->topdelta;
+      bottomscreen = topscreen + _g->spryscale*post->length;
 
       dcvars->yl = (topscreen+FRACUNIT-1)>>FRACBITS;
       dcvars->yh = (bottomscreen-1)>>FRACBITS;
 
-      if (dcvars->yh >= mfloorclip[dcvars->x])
-        dcvars->yh = mfloorclip[dcvars->x]-1;
+      if (dcvars->yh >= _g->mfloorclip[dcvars->x])
+        dcvars->yh = _g->mfloorclip[dcvars->x]-1;
 
-      if (dcvars->yl <= mceilingclip[dcvars->x])
-        dcvars->yl = mceilingclip[dcvars->x]+1;
+      if (dcvars->yl <= _g->mceilingclip[dcvars->x])
+        dcvars->yl = _g->mceilingclip[dcvars->x]+1;
 
       // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
       if (dcvars->yl <= dcvars->yh && dcvars->yh < _g->viewheight)
@@ -403,8 +379,8 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   dcvars.texturemid = vis->texturemid;
   frac = vis->startfrac;
 
-  spryscale = vis->scale;
-  sprtopscreen = _g->centeryfrac - FixedMul(dcvars.texturemid,spryscale);
+  _g->spryscale = vis->scale;
+  _g->sprtopscreen = _g->centeryfrac - FixedMul(dcvars.texturemid,_g->spryscale);
 
   for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
@@ -480,7 +456,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     I_Error ("R_ProjectSprite: Invalid sprite number %i", thing->sprite);
 #endif
 
-  sprdef = &sprites[thing->sprite];
+  sprdef = &_g->sprites[thing->sprite];
 
 #ifdef RANGECHECK
   if ((thing->frame&FF_FRAMEMASK) >= sprdef->numframes)
@@ -659,7 +635,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     I_Error ("R_ProjectSprite: Invalid sprite number %i", psp->state->sprite);
 #endif
 
-  sprdef = &sprites[psp->state->sprite];
+  sprdef = &_g->sprites[psp->state->sprite];
 
 #ifdef RANGECHECK
   if ( (psp->state->frame & FF_FRAMEMASK)  >= sprdef->numframes)
@@ -679,10 +655,10 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     tx = psp->sx-160*FRACUNIT;
 
     tx -= patch->leftoffset<<FRACBITS;
-    x1 = (_g->centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
+    x1 = (_g->centerxfrac + FixedMul (tx,_g->pspritescale))>>FRACBITS;
 
     tx += patch->width<<FRACBITS;
-    x2 = ((_g->centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
+    x2 = ((_g->centerxfrac + FixedMul (tx, _g->pspritescale) ) >>FRACBITS) - 1;
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
@@ -702,16 +678,16 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= _g->viewwidth ? _g->viewwidth-1 : x2;
 // proff 11/06/98: Added for high-res
-  vis->scale = pspriteyscale;
+  vis->scale = _g->pspriteyscale;
 
   if (flip)
     {
-      vis->xiscale = -pspriteiscale;
+      vis->xiscale = -_g->pspriteiscale;
       vis->startfrac = (width<<FRACBITS)-1;
     }
   else
     {
-      vis->xiscale = pspriteiscale;
+      vis->xiscale = _g->pspriteiscale;
       vis->startfrac = 0;
     }
 
@@ -730,7 +706,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   else
     // add a fudge factor to better match the original game
     vis->colormap = R_ColourMap(lightlevel,
-        FixedMul(pspritescale, 0x2b000));  // local light
+        FixedMul(_g->pspritescale, 0x2b000));  // local light
 
     R_DrawVisSprite(vis, vis->x1, vis->x2);
 }
@@ -745,8 +721,8 @@ void R_DrawPlayerSprites(void)
   pspdef_t *psp;
 
   // clip to screen bounds
-  mfloorclip = screenheightarray;
-  mceilingclip = negonearray;
+  _g->mfloorclip = _g->screenheightarray;
+  _g->mceilingclip = _g->negonearray;
 
   // add all active psprites
   for (i=0, psp=_g->viewplayer->psprites; i<NUMPSPRITES; i++,psp++)
@@ -806,28 +782,28 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
 
 void R_SortVisSprites (void)
 {
-  if (num_vissprite)
+  if (_g->num_vissprite)
     {
-      int i = num_vissprite;
+      int i = _g->num_vissprite;
 
       // If we need to allocate more pointers for the vissprites,
       // allocate as many as were allocated for sprites -- killough
       // killough 9/22/98: allocate twice as many
 
-      if (num_vissprite_ptrs < num_vissprite*2)
+      if (_g->num_vissprite_ptrs < _g->num_vissprite*2)
         {
-          free(vissprite_ptrs);  // better than realloc -- no preserving needed
-          vissprite_ptrs = malloc((num_vissprite_ptrs = num_vissprite_alloc*2)
-                                  * sizeof *vissprite_ptrs);
+          free(_g->vissprite_ptrs);  // better than realloc -- no preserving needed
+          _g->vissprite_ptrs = malloc((_g->num_vissprite_ptrs = _g->num_vissprite_alloc*2)
+                                  * sizeof *_g->vissprite_ptrs);
         }
 
       while (--i>=0)
-        vissprite_ptrs[i] = vissprites+i;
+        _g->vissprite_ptrs[i] = _g->vissprites+i;
 
       // killough 9/22/98: replace qsort with merge sort, since the keys
       // are roughly in order to begin with, due to BSP rendering.
 
-      msort(vissprite_ptrs, vissprite_ptrs + num_vissprite, num_vissprite);
+      msort(_g->vissprite_ptrs, _g->vissprite_ptrs + _g->num_vissprite, _g->num_vissprite);
     }
 }
 
@@ -954,8 +930,8 @@ static void R_DrawSprite (vissprite_t* spr)
       cliptop[x] = -1;
   }
 
-  mfloorclip = clipbot;
-  mceilingclip = cliptop;
+  _g->mfloorclip = clipbot;
+  _g->mceilingclip = cliptop;
   R_DrawVisSprite (spr, spr->x1, spr->x2);
 }
 
@@ -972,8 +948,8 @@ void R_DrawMasked(void)
 
   // draw all vissprites back to front
 
-  for (i = num_vissprite ;--i>=0; )
-    R_DrawSprite(vissprite_ptrs[i]);         // killough
+  for (i = _g->num_vissprite ;--i>=0; )
+    R_DrawSprite(_g->vissprite_ptrs[i]);         // killough
 
   // render any remaining masked mid textures
 
