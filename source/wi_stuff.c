@@ -258,7 +258,7 @@ static wi_anim_t epsd2animinfo[] =
   { ANIM_ALWAYS, TICRATE/4, 3, { 40, 0 } }
 };
 
-static int NUMANIMS[NUMEPISODES] =
+static const int NUMANIMS[NUMEPISODES] =
 {
   sizeof(epsd0animinfo)/sizeof(wi_anim_t),
   sizeof(epsd1animinfo)/sizeof(wi_anim_t),
