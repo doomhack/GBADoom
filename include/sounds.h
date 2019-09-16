@@ -76,10 +76,6 @@ typedef struct sfx_runtime
 typedef struct {
   // up to 6-character name
   const char *name; // CPhipps - const
-
-  // lump number of music
-  int lumpnum;
-
 } musicinfo_t;
 
 // the complete set of sound effects

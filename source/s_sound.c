@@ -422,17 +422,12 @@ void S_ChangeMusic(int musicnum, int looping)
   // shutdown old music
   S_StopMusic();
 
-  // get lumpnum if neccessary
-  if (!music->lumpnum)
-    {
-      char namebuf[9];
-      sprintf(namebuf, "d_%s", music->name);
-      music->lumpnum = W_GetNumForName(namebuf);
-    }
-
+  char namebuf[9];
+  sprintf(namebuf, "d_%s", music->name);
+  int lumpnum = W_GetNumForName(namebuf);
 
       // load & register it
-      I_RegisterSong(W_CacheLumpNum(music->lumpnum), W_LumpLength(music->lumpnum));
+      I_RegisterSong(W_CacheLumpNum(lumpnum), W_LumpLength(lumpnum));
 
 
   // play it
@@ -455,8 +450,6 @@ void S_StopMusic(void)
 
       I_StopSong(0);
       I_UnRegisterSong(0);
-      if (_g->mus_playing->lumpnum >= 0)
-  W_UnlockLumpNum(_g->mus_playing->lumpnum); // cph - release the music data
 
       _g->mus_playing = 0;
     }
