@@ -106,7 +106,7 @@ void S_Init(int sfxVolume, int musicVolume)
 
     // Note that sounds have not been cached (yet).
     for (i=1 ; i<NUMSFX ; i++)
-      S_sfx[i].lumpnum = S_sfx[i].usefulness = -1;
+      _g->sfx_data[i].lumpnum = -1;
   }
 
   // CPhipps - music init reformatted
@@ -241,12 +241,9 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
 
   // get lumpnum if necessary
   // killough 2/28/98: make missing sounds non-fatal
-  if (sfx->lumpnum < 0 && (sfx->lumpnum = I_GetSfxLumpNum(sfx)) < 0)
+  if (_g->sfx_data[sfx_id].lumpnum < 0 && (_g->sfx_data[sfx_id].lumpnum = I_GetSfxLumpNum(sfx)) < 0)
     return;
 
-  // increase the usefulness
-  if (sfx->usefulness++ < 0)
-    sfx->usefulness = 1;
 
   // Assigns the handle to one of the channels in the mix/output buffer.
   { // e6y: [Fix] Crash with zero-length sounds.
@@ -288,7 +285,7 @@ void S_PauseSound(void)
 
   if (_g->mus_playing && !_g->mus_paused)
     {
-      I_PauseSong(_g->mus_playing->handle);
+      I_PauseSong(0);
       _g->mus_paused = true;
     }
 }
@@ -301,7 +298,7 @@ void S_ResumeSound(void)
 
   if (_g->mus_playing && _g->mus_paused)
     {
-      I_ResumeSong(_g->mus_playing->handle);
+      I_ResumeSong(0);
       _g->mus_paused = false;
     }
 }
@@ -435,12 +432,11 @@ void S_ChangeMusic(int musicnum, int looping)
 
 
       // load & register it
-      music->data = W_CacheLumpNum(music->lumpnum);
-      music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
+      I_RegisterSong(W_CacheLumpNum(music->lumpnum), W_LumpLength(music->lumpnum));
 
 
   // play it
-  I_PlaySong(music->handle, looping);
+  I_PlaySong(0, looping);
 
   _g->mus_playing = music;
 }
@@ -455,14 +451,13 @@ void S_StopMusic(void)
   if (_g->mus_playing)
     {
       if (_g->mus_paused)
-        I_ResumeSong(_g->mus_playing->handle);
+        I_ResumeSong(0);
 
-      I_StopSong(_g->mus_playing->handle);
-      I_UnRegisterSong(_g->mus_playing->handle);
+      I_StopSong(0);
+      I_UnRegisterSong(0);
       if (_g->mus_playing->lumpnum >= 0)
   W_UnlockLumpNum(_g->mus_playing->lumpnum); // cph - release the music data
 
-      _g->mus_playing->data = 0;
       _g->mus_playing = 0;
     }
 }
@@ -491,7 +486,6 @@ void S_StopChannel(int cnum)
           break;
 
       // degrade usefulness of sound data
-      c->sfxinfo->usefulness--;
       c->sfxinfo = 0;
     }
 }

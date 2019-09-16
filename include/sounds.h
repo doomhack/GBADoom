@@ -56,22 +56,18 @@ struct sfxinfo_struct {
   // referenced sound if a link
   sfxinfo_t *link;
 
-  int pitch;
-
   // volume if a link
   int volume;
-
-  // sound data
-  const void *data;
-
-  // this is checked every second to see if sound
-  // can be thrown out (if 0, then decrement, if -1,
-  // then throw out, if > 0, then it is in use)
-  int usefulness;
-
-  // lump number of sfx
-  int lumpnum;
 };
+
+typedef struct sfx_runtime
+{
+    // sound data
+    const void *data;
+
+    // lump number of sfx
+    int lumpnum;
+} sfx_runtime;
 
 //
 // MusicInfo struct.
@@ -84,18 +80,13 @@ typedef struct {
   // lump number of music
   int lumpnum;
 
-  /* music data - cphipps 4/11 made const void* */
-  const void *data;
-
-  // music handle once registered
-  int handle;
 } musicinfo_t;
 
 // the complete set of sound effects
-extern sfxinfo_t    S_sfx[];
+extern const sfxinfo_t    S_sfx[];
 
 // the complete set of music
-extern musicinfo_t  S_music[];
+extern const musicinfo_t  S_music[];
 
 //
 // Identifiers for all music in game.

@@ -45,7 +45,7 @@
 // Information about all the music
 //
 
-musicinfo_t S_music[] = {
+const musicinfo_t S_music[] = {
   { 0 },
   { "e1m1", 0 },
   { "e1m2", 0 },
@@ -121,10 +121,9 @@ musicinfo_t S_music[] = {
 // Information about all the sfx
 //
 
-sfxinfo_t S_sfx[] = {
+const sfxinfo_t S_sfx[] = {
   // S_sfx[0] needs to be a dummy for odd reasons.
   { "none", false,  0, 0, -1, -1, 0 },
-
   { "pistol", false, 64, 0, -1, -1, 0 },
   { "shotgn", false, 64, 0, -1, -1, 0 },
   { "sgcock", false, 64, 0, -1, -1, 0 },

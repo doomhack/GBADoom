@@ -182,9 +182,9 @@ int I_StartSound(int id, int channel, int vol)
 		return -1;
 #endif
 
-	int lump = S_sfx[id].lumpnum;
+    int lump = _g->sfx_data[id].lumpnum;
 
-	if(!S_sfx[id].data)
+    if(!_g->sfx_data[id].data)
 	{
 		// We will handle the new SFX.
 		// Set pointer to raw data.
@@ -203,11 +203,11 @@ int I_StartSound(int id, int channel, int vol)
 		// not in a memory mapped one
 		const unsigned char* wadData = (const unsigned char*)W_CacheLumpNum(lump);
 
-        S_sfx[id].data = (const void*)wadData;
+        _g->sfx_data[id].data = (const void*)wadData;
 	}
 
 
-	const char* data = (const char*)S_sfx[id].data;
+    const char* data = (const char*)_g->sfx_data[id].data;
     const unsigned int len = ((const unsigned int*)data)[1]; //No of samples is here.
 
 	// Returns a handle (not used).
@@ -606,10 +606,6 @@ int I_RegisterMusic( const char* filename, musicinfo_t *song )
 	if (!song)
 		return 1;
 	
-	song->data = 0;
-	song->handle = 0;
-	song->lumpnum = 0;
-
 	return 0;
 
 }
