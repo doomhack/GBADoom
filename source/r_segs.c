@@ -575,8 +575,8 @@ void R_StoreWallRange(const int start, const int stop)
       _g->worldlow = _g->backsector->floorheight - _g->viewz;
 
       // hack to allow height changes in outdoor areas
-      if (_g->frontsector->ceilingpic == skyflatnum
-          && _g->backsector->ceilingpic == skyflatnum)
+      if (_g->frontsector->ceilingpic == _g->skyflatnum
+          && _g->backsector->ceilingpic == _g->skyflatnum)
         _g->worldtop = _g->worldhigh;
 
       _g->markfloor = _g->worldlow != _g->worldbottom
@@ -606,7 +606,7 @@ void R_StoreWallRange(const int start, const int stop)
         // killough 4/15/98: prevent 2s normals
         // from bleeding through fake ceilings
         || (_g->frontsector->heightsec != -1 &&
-            _g->frontsector->ceilingpic!=skyflatnum)
+            _g->frontsector->ceilingpic!=_g->skyflatnum)
 
         // killough 4/17/98: draw ceilings if different light levels
         || _g->backsector->ceilinglightsec != _g->frontsector->ceilinglightsec
@@ -670,7 +670,7 @@ void R_StoreWallRange(const int start, const int stop)
       if (_g->frontsector->floorheight >= _g->viewz)       // above view plane
         _g->markfloor = false;
       if (_g->frontsector->ceilingheight <= _g->viewz &&
-          _g->frontsector->ceilingpic != skyflatnum)   // below view plane
+          _g->frontsector->ceilingpic != _g->skyflatnum)   // below view plane
         _g->markceiling = false;
     }
 

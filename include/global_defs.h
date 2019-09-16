@@ -810,6 +810,16 @@ int      *maskedtexturecol; // dropoff overflow
 
 int didsolidcol; /* True if at least one column was marked solid */
 
+//******************************************************************************
+//r_sky.c
+//******************************************************************************
+
+//
+// sky mapping
+//
+int skyflatnum;
+int skytexture;
+
 
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

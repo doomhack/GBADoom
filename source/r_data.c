@@ -511,7 +511,7 @@ void R_PrecacheLevel(void)
   //  a wall texture, with an episode dependend
   //  name.
 
-  hitlist[skytexture] = 1;
+  hitlist[_g->skytexture] = 1;
 
   for (i = _g->numtextures; --i >= 0; )
     if (hitlist[i])

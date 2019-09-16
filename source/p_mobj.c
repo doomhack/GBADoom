@@ -254,7 +254,7 @@ static void P_XYMovement (mobj_t* mo)
 
                         if (_g->ceilingline &&
                                 _g->ceilingline->backsector &&
-                                _g->ceilingline->backsector->ceilingpic == skyflatnum)
+                                _g->ceilingline->backsector->ceilingpic == _g->skyflatnum)
                             if (mo->z > _g->ceilingline->backsector->ceilingheight)
                             {
                                 // Hack to prevent missiles exploding
@@ -402,7 +402,7 @@ static void P_ZMovement (mobj_t* mo)
       /* bounce off ceilings */
       mo->z = mo->ceilingz - mo->height;
       if (mo->momz > 0) {
-  if (mo->subsector->sector->ceilingpic != skyflatnum)
+  if (mo->subsector->sector->ceilingpic != _g->skyflatnum)
     mo->momz = -mo->momz;    /* always bounce off non-sky ceiling */
   else if (mo->flags & MF_MISSILE)
     P_RemoveMobj(mo);        /* missiles don't bounce off skies */
@@ -428,7 +428,7 @@ static void P_ZMovement (mobj_t* mo)
     if (mo->flags & MF_MISSILE) {
   if (_g->ceilingline &&
       _g->ceilingline->backsector &&
-      _g->ceilingline->backsector->ceilingpic == skyflatnum &&
+      _g->ceilingline->backsector->ceilingpic == _g->skyflatnum &&
       mo->z > _g->ceilingline->backsector->ceilingheight)
     P_RemoveMobj(mo);  /* don't explode on skies */
   else

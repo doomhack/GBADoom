@@ -1381,7 +1381,7 @@ boolean PTR_ShootTraverse (intercept_t* in)
     y = _g->trace.y + FixedMul (_g->trace.dy, frac);
     z = _g->shootz + FixedMul (_g->aimslope, FixedMul(frac, _g->attackrange));
 
-    if (li->frontsector->ceilingpic == skyflatnum)
+    if (li->frontsector->ceilingpic == _g->skyflatnum)
       {
       // don't shoot the sky!
 
@@ -1390,7 +1390,7 @@ boolean PTR_ShootTraverse (intercept_t* in)
 
       // it's a sky hack wall
 
-      if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
+      if  (li->backsector && li->backsector->ceilingpic == _g->skyflatnum)
 
         // fix bullet-eaters -- killough:
         // WARNING: Almost all demos will lose sync without this

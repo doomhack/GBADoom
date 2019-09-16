@@ -95,12 +95,6 @@ extern const int displayplayer;
 // Internal parameters, used for engine.
 //
 
-
-// Needed to store the number of the dummy sky flat.
-// Used for rendering, as well as tracking projectiles etc.
-
-extern int    skyflatnum;
-
 // Networking and tick handling related.
 #define BACKUPTICS              12
 

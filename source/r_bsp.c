@@ -117,8 +117,8 @@ static void R_RecalcLineFlags(void)
         _g->curline->sidedef->bottomtexture)
 
     // properly render skies (consider door "open" if both ceilings are sky):
-    && (_g->backsector->ceilingpic !=skyflatnum ||
-        _g->frontsector->ceilingpic!=skyflatnum)
+    && (_g->backsector->ceilingpic !=_g->skyflatnum ||
+        _g->frontsector->ceilingpic!=_g->skyflatnum)
     )
       )
     _g->linedef->r_flags = RF_CLOSED;
@@ -215,7 +215,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
           tempsec->floor_yoffs = s->floor_yoffs;
 
           if (underwater) {
-            if (s->ceilingpic == skyflatnum) {
+            if (s->ceilingpic == _g->skyflatnum) {
 		tempsec->floorheight   = tempsec->ceilingheight+1;
 		tempsec->ceilingpic    = tempsec->floorpic;
                 tempsec->ceiling_xoffs = tempsec->floor_xoffs;
@@ -248,7 +248,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
             tempsec->floor_xoffs = tempsec->ceiling_xoffs = s->ceiling_xoffs;
             tempsec->floor_yoffs = tempsec->ceiling_yoffs = s->ceiling_yoffs;
 
-            if (s->floorpic != skyflatnum)
+            if (s->floorpic != _g->skyflatnum)
               {
                 tempsec->ceilingheight = sec->ceilingheight;
                 tempsec->floorpic      = s->floorpic;
@@ -479,9 +479,9 @@ static void R_Subsector(int num)
 
   _g->floorplane = _g->frontsector->floorheight < _g->viewz || // killough 3/7/98
     (_g->frontsector->heightsec != -1 &&
-     _g->sectors[_g->frontsector->heightsec].ceilingpic == skyflatnum) ?
+     _g->sectors[_g->frontsector->heightsec].ceilingpic == _g->skyflatnum) ?
     R_FindPlane(_g->frontsector->floorheight,
-                _g->frontsector->floorpic == skyflatnum &&  // kilough 10/98
+                _g->frontsector->floorpic == _g->skyflatnum &&  // kilough 10/98
                 _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
                 _g->frontsector->floorpic,
                 floorlightlevel,                // killough 3/16/98
@@ -490,11 +490,11 @@ static void R_Subsector(int num)
                 ) : NULL;
 
   _g->ceilingplane = _g->frontsector->ceilingheight > _g->viewz ||
-    _g->frontsector->ceilingpic == skyflatnum ||
+    _g->frontsector->ceilingpic == _g->skyflatnum ||
     (_g->frontsector->heightsec != -1 &&
-     _g->sectors[_g->frontsector->heightsec].floorpic == skyflatnum) ?
+     _g->sectors[_g->frontsector->heightsec].floorpic == _g->skyflatnum) ?
     R_FindPlane(_g->frontsector->ceilingheight,     // killough 3/8/98
-                _g->frontsector->ceilingpic == skyflatnum &&  // kilough 10/98
+                _g->frontsector->ceilingpic == _g->skyflatnum &&  // kilough 10/98
                 _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
                 _g->frontsector->ceilingpic,
                 ceilinglightlevel,              // killough 4/11/98

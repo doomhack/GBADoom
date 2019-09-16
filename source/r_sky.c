@@ -39,12 +39,10 @@
 #endif
 #include "r_sky.h"
 
-//
-// sky mapping
-//
-int skyflatnum;
-int skytexture;
-int skytexturemid;
+#include "global_data.h"
+
+const int skytexturemid = 100*FRACUNIT;
+
 
 //
 // R_InitSkyMap
@@ -52,5 +50,5 @@ int skytexturemid;
 //
 void R_InitSkyMap (void)
 {
-  skytexturemid = 100*FRACUNIT;
+
 }
