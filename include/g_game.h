@@ -163,7 +163,7 @@ extern const int  bodyquesize;       // killough 2/8/98: adustable corpse limit
 extern const int pars[4][10];  // hardcoded array size
 extern const int cpars[32];    // hardcoded array size
 // CPhipps - Make savedesciption visible in wider scope
-#define SAVEDESCLEN 32
+#define SAVEDESCLEN 8
 
 #define NUMKEYS   512
 

@@ -586,37 +586,6 @@ void HU_Start(void)
   while (*s)
     HUlib_addCharToTextLine(&_g->w_title, *(s++));
 
-  // create the automaps coordinate widget
-  // jff 3/3/98 split coord widget into three lines: x,y,z
-  // jff 2/16/98 added
-  HUlib_initTextLine
-  (
-    &_g->w_coordx,
-    HU_COORDX,
-    HU_COORDX_Y,
-    _g->hu_font,
-    HU_FONTSTART,
-    hudcolor_xyco
-  );
-  HUlib_initTextLine
-  (
-    &_g->w_coordy,
-    HU_COORDX,
-    HU_COORDY_Y,
-    _g->hu_font,
-    HU_FONTSTART,
-    hudcolor_xyco
-  );
-  HUlib_initTextLine
-  (
-    &_g->w_coordz,
-    HU_COORDX,
-    HU_COORDZ_Y,
-    _g->hu_font,
-    HU_FONTSTART,
-    hudcolor_xyco
-  );
-
   //jff 2/16/98 initialize ammo widget
   strcpy(_g->hud_ammostr,"AMM ");
   s = _g->hud_ammostr;
@@ -659,19 +628,6 @@ void HU_Start(void)
   s = _g->hud_monsecstr;
   while (*s)
     HUlib_addCharToTextLine(&_g->w_monsec, *(s++));
-
-  // create the inputbuffer widgets, one per player
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    HUlib_initIText
-    (
-      &_g->w_inputbuffer[i],
-      0,
-      0,
-      0,
-      0,
-      hudcolor_chat,
-      &_g->always_off
-    );
 
   // now allow the heads-up display to run
   _g->headsupactive = true;

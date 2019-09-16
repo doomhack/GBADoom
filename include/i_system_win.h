@@ -40,7 +40,7 @@ class DoomWindow : public QWidget
     {
         QPainter p(this);
 
-        QImage i((uchar*)pb, 240, 160, QImage::Format_Indexed8);
+        QImage i((uchar*)pb, 120, 160, QImage::Format_Indexed8);
         i.setColorCount(256);
 
         for(int p = 0; p < 256; p++)

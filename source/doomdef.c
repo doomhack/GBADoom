@@ -43,6 +43,6 @@
 // None.
 
 // proff 08/17/98: Changed for high-res
-const int SCREENWIDTH=240;
+const int SCREENWIDTH=120;
 const int SCREENHEIGHT=160;
-const int SCREENPITCH=240;
+const int SCREENPITCH=120;

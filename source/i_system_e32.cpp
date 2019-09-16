@@ -35,7 +35,7 @@ unsigned char* pl = NULL;
 void I_InitScreen_e32()
 {
 	//Gives 480px on a 5(mx) and 320px on a Revo.
-    vid_width = 240;
+    vid_width = 120;
 
     vid_height = screen_height = 160;
 }
@@ -83,7 +83,7 @@ void I_CreateWindow_e32()
 
 
 
-    window->resize(vid_width * 4, vid_height * 4);
+    window->resize(vid_width * 8, vid_height * 4);
 
     window->show();
 }

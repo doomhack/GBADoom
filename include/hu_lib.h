@@ -47,8 +47,8 @@
  * #define HU_CHARERASE    KEYD_BACKSPACE / not used               / phares
  */
 
-#define HU_MAXLINES   4
-#define HU_MAXLINELENGTH  80
+#define HU_MAXLINES   1
+#define HU_MAXLINELENGTH  32
 #define HU_REFRESHSPACING 8 /*jff 2/26/98 space lines in text refresh widget*/
 /*jff 2/26/98 maximum number of messages allowed in refresh list */
 #define HU_MAXMESSAGES 16
@@ -72,7 +72,7 @@ typedef struct
   int   cm;                         //jff 2/16/52 output color range
 
   // killough 1/23/98: Support multiple lines:
-  #define MAXLINES 25
+  #define MAXLINES 1
 
   int   linelen;
   char  l[HU_MAXLINELENGTH*MAXLINES+1]; // line of text
