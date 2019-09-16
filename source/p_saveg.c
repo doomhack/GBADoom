@@ -97,8 +97,8 @@ void P_UnArchivePlayers (void)
 
         for (j=0 ; j<NUMPSPRITES ; j++)
           if (_g->players[i]. psprites[j].state)
-            _g->players[i]. psprites[j].state =
-              &states[ (int)_g->players[i].psprites[j].state ];
+            _g->players[i].psprites[j].state =
+              &states[(int)_g->players[i].psprites[j].state];
       }
 }
 

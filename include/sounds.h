@@ -54,7 +54,7 @@ struct sfxinfo_struct {
   int priority;
 
   // referenced sound if a link
-  sfxinfo_t *link;
+  const sfxinfo_t *link;
 
   // volume if a link
   int volume;

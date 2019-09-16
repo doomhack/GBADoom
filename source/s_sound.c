@@ -76,7 +76,7 @@ void S_StopChannel(int cnum);
 
 int S_AdjustSoundParams(mobj_t *listener, mobj_t *source, int *vol);
 
-static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup);
+static int S_getChannel(void *origin, const sfxinfo_t *sfxinfo, int is_pickup);
 
 // Initializes sound stuff, including volume
 // Sets channels, SFX and music volume,
@@ -181,7 +181,7 @@ void S_Start(void)
 void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
 {
   int priority, cnum, is_pickup;
-  sfxinfo_t *sfx;
+  const sfxinfo_t *sfx;
   mobj_t *origin = (mobj_t *) origin_p;
 
   //jff 1/22/98 return if sound is not enabled
@@ -320,7 +320,7 @@ void S_UpdateSounds(void* listener_p)
 	
 	for (cnum=0 ; cnum<numChannels ; cnum++)
 	{
-		sfxinfo_t *sfx;
+        const sfxinfo_t *sfx;
         channel_t *c = &_g->channels[cnum];
 		
 		if ((sfx = c->sfxinfo))
@@ -405,7 +405,7 @@ void S_StartMusic(int m_id)
 
 void S_ChangeMusic(int musicnum, int looping)
 {
-  musicinfo_t *music;
+  const musicinfo_t *music;
 
   //jff 1/22/98 return if music is not enabled
   if (nomusicparm)
@@ -549,7 +549,7 @@ int S_AdjustSoundParams(mobj_t *listener, mobj_t *source, int *vol)
 //
 // killough 4/25/98: made static, added is_pickup argument
 
-static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup)
+static int S_getChannel(void *origin, const sfxinfo_t *sfxinfo, int is_pickup)
 {
   // channel number to use
   int cnum;

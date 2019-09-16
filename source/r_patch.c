@@ -76,9 +76,9 @@ typedef struct
 void R_InitPatches(void) {
   if (!_g->patches)
   {
-    _g->patches = (rpatch_t*)malloc(numlumps * sizeof(rpatch_t));
+    _g->patches = (rpatch_t*)malloc(_g->numlumps * sizeof(rpatch_t));
     // clear out new patches to signal they're uninitialized
-    memset(_g->patches, 0, sizeof(rpatch_t)*numlumps);
+    memset(_g->patches, 0, sizeof(rpatch_t)*_g->numlumps);
   }
   if (!_g->texture_composites)
   {
@@ -94,7 +94,7 @@ void R_FlushAllPatches(void) {
 
   if (_g->patches)
   {
-    for (i=0; i < numlumps; i++)
+    for (i=0; i < _g->numlumps; i++)
       if (_g->patches[i].locks > 0)
         I_Error("R_FlushAllPatches: patch number %i still locked",i);
     free(_g->patches);
@@ -647,7 +647,7 @@ const rpatch_t *R_CachePatchNum(int id)
 #ifdef SIMPLECHECKS
   if (!((_g->patches[id].locks+1) & 0xf))
     lprintf(LO_DEBUG, "R_CachePatchNum: High lock on %8s (%d)\n", 
-        lumpinfo[id].name, _g->patches[id].locks);
+        _g->lumpinfo[id].name, _g->patches[id].locks);
 #endif
 
   return &_g->patches[id];
@@ -659,7 +659,7 @@ void R_UnlockPatchNum(int id)
 #ifdef SIMPLECHECKS
   if ((signed short)_g->patches[id].locks < unlocks)
     lprintf(LO_DEBUG, "R_UnlockPatchNum: Excess unlocks on %8s (%d-%d)\n", 
-        lumpinfo[id].name, _g->patches[id].locks, unlocks);
+        _g->lumpinfo[id].name, _g->patches[id].locks, unlocks);
 #endif
   _g->patches[id].locks -= unlocks;
   /* cph - Note: must only tell z_zone to make purgeable if currently locked, 

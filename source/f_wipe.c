@@ -48,35 +48,20 @@
 // SCREEN WIPE PACKAGE
 //
 
-static int wipe_initMelt(int ticks)
-{
-
-}
-
-static int wipe_doMelt(int ticks)
-{
-
-}
-
-// CPhipps - modified to allocate and deallocate screens[2 to 3] as needed, saving memory
-
-static int wipe_exitMelt(int ticks)
-{
-
-}
-
 int wipe_StartScreen(void)
 {
-
+    return 0;
 }
 
 int wipe_EndScreen(void)
 {
-
+    return 0;
 }
 
 // killough 3/5/98: reformatted and cleaned up
 int wipe_ScreenWipe(int ticks)
 {
+    (void)(ticks);
 
+    return 1;
 }

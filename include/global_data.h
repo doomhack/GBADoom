@@ -31,6 +31,12 @@
 #include "st_lib.h"
 #include "st_stuff.h"
 
+#include "v_video.h"
+
+#include "w_wad.h"
+
+#include "wi_stuff.h"
+
 #include "mmus2mid.h"
 
 

@@ -78,7 +78,6 @@
 #include "global_data.h"
 
 #define SAVEGAMESIZE  0x20000
-#define SAVESTRINGSIZE  24
 
 static const size_t savegamesize = SAVEGAMESIZE; // killough
 
@@ -1110,20 +1109,6 @@ void G_LoadGame(int slot, boolean command)
   _g->command_loadgame = command;
 }
 
-// killough 5/15/98:
-// Consistency Error when attempting to load savegame.
-
-static void G_LoadGameErr(const char *msg)
-{
-  Z_Free(_g->savebuffer);                // Free the savegame buffer
-  M_ForcedLoadGame(msg);             // Print message asking for 'Y' to force
-  if (_g->command_loadgame)              // If this was a command-line -loadgame
-    {
-      D_StartTitle();                // Start the title screen
-      _g->gamestate = GS_DEMOSCREEN;     // And set the game state accordingly
-    }
-}
-
 // CPhipps - size of version header
 #define VERSIONSIZE   16
 
@@ -1173,7 +1158,7 @@ void G_DoLoadGame(void)
   /* killough 3/1/98: Read game options
    * killough 11/98: move down to here
    */
-  _g->save_p = (char*)G_ReadOptions(_g->save_p);
+  _g->save_p = (const char*)G_ReadOptions(_g->save_p);
 
   // load a base level
   G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
@@ -1228,7 +1213,7 @@ void G_DoLoadGame(void)
 // Description is a 24 byte text string
 //
 
-void G_SaveGame(int slot, char *description)
+void G_SaveGame(int slot, const char *description)
 {
   strcpy(_g->savedescription, description);
   if (_g->demoplayback) {
@@ -1292,15 +1277,6 @@ static void G_DoSaveGame (boolean menu)
   // killough 3/16/98: store pwad filenames in savegame
   {
     // CPhipps - changed for new wadfiles handling
-    size_t i;
-    for (i = 0; i<numwadfiles; i++)
-      {
-        const char *const w = wadfiles[i].name;
-        CheckSaveGame(strlen(w)+2);
-        strcpy(_g->save_p, w);
-        _g->save_p += strlen(_g->save_p);
-        *_g->save_p++ = '\n';
-      }
     *_g->save_p++ = 0;
   }
 
@@ -1718,8 +1694,6 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
   // because demobuffer can be uninitialized
   const byte *header_p = demo_p;
 
-  const byte *option_p = NULL;      /* killough 11/98 */
-
   _g->basetic = _g->gametic;  // killough 9/29/98
 
   // killough 2/22/98, 2/28/98: autodetect old demos and act accordingly.
@@ -1834,8 +1808,6 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
       map = *demo_p++;
       demo_p++;
       demo_p++;
-
-	option_p = demo_p;
 
       //e6y: check for overrun
       if (CheckForOverrun(header_p, demo_p, size, GAME_OPTION_SIZE, failonerror))

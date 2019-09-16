@@ -113,7 +113,7 @@ const char*   finaleflat; // made static const
 
 int             castnum;
 int             casttics;
-state_t*        caststate;
+const state_t*  caststate;
 boolean         castdeath;
 int             castframes;
 int             castonmelee;
@@ -872,7 +872,7 @@ int snd_MusicVolume;
 boolean mus_paused;
 
 // music currently being played
-musicinfo_t *mus_playing;
+const musicinfo_t *mus_playing;
 
 //jff 3/17/98 to keep track of last IDMUS specified music num
 int idmusnum;
@@ -968,6 +968,60 @@ int      keyboxes[3];
 int      st_randomnumber;
 
 int st_palette;
+
+
+//******************************************************************************
+//v_video.c
+//******************************************************************************
+
+// Each screen is [SCREENWIDTH*SCREENHEIGHT];
+screeninfo_t screens[NUM_SCREENS];
+
+//******************************************************************************
+//v_video.c
+//******************************************************************************
+
+// Location of each lump on disk.
+lumpinfo_t *lumpinfo;
+int        numlumps;         // killough
+
+//******************************************************************************
+//wi_stuff.c
+//******************************************************************************
+
+// used to accelerate or skip a stage
+int   acceleratestage;           // killough 3/28/98: made global
+
+// wbs->pnum
+int    me;
+
+ // specifies current state
+stateenum_t  state;
+
+// contains information passed into intermission
+wbstartstruct_t* wbs;
+
+wbplayerstruct_t* plrs;  // wbs->plyr[]
+
+// used for general timing
+int    cnt;
+
+// used for timing of background animation
+int    bcnt;
+
+int    cnt_time;
+int    cnt_total_time;
+int    cnt_par;
+int    cnt_pause;
+
+// 0-9 graphic
+patchnum_t num[10];
+
+int  sp_state;
+
+int *cnt_kills;
+int *cnt_items;
+int *cnt_secret;
 
 
 //******************************************************************************

@@ -152,7 +152,7 @@ void I_SetChannels(void)
 // Retrieve the raw data lump index
 //  for a given SFX name.
 //
-int I_GetSfxLumpNum(sfxinfo_t* sfx)
+int I_GetSfxLumpNum(const sfxinfo_t *sfx)
 {
     char namebuf[9];
     sprintf(namebuf, "ds%s", sfx->name);

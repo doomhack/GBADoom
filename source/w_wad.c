@@ -56,14 +56,11 @@
 #include "w_wad.h"
 #include "lprintf.h"
 
+#include "global_data.h"
+
 //
 // GLOBALS
 //
-
-// Location of each lump on disk.
-lumpinfo_t *lumpinfo;
-int        numlumps;         // killough
-
 void ExtractFileBase (const char *path, char *dest)
 {
     const char *src = path + strlen(path) - 1;
@@ -108,7 +105,7 @@ void ExtractFileBase (const char *path, char *dest)
 // CPhipps - source is an enum
 //
 // proff - changed using pointer to wadfile_info_t
-static void W_AddFile(wadfile_info_t *wadfile)
+static void W_AddFile()
 {
     int         startlump;
     const wadinfo_t* header;
@@ -118,13 +115,9 @@ static void W_AddFile(wadfile_info_t *wadfile)
     unsigned    i;
 
 
-    wadfile->handle = 0;
-
     if(doom_iwad && (doom_iwad_len > 0))
     {
-        wadfile->handle = 1;
-
-        startlump = numlumps;
+        startlump = _g->numlumps;
 
         header = (wadinfo_t*)&doom_iwad[0];
 
@@ -135,21 +128,19 @@ static void W_AddFile(wadfile_info_t *wadfile)
         length = header->numlumps*sizeof(filelump_t);
 
         fileinfo = (filelump_t*)&doom_iwad[header->infotableofs];
-        numlumps += header->numlumps;
+        _g->numlumps += header->numlumps;
 
         // Fill in lumpinfo
-        lumpinfo = realloc(lumpinfo, numlumps*sizeof(lumpinfo_t));
+        _g->lumpinfo = realloc(_g->lumpinfo, _g->numlumps*sizeof(lumpinfo_t));
 
-        lump_p = &lumpinfo[startlump];
+        lump_p = &_g->lumpinfo[startlump];
 
-        for (i=startlump ; (int)i<numlumps ; i++,lump_p++, fileinfo++)
+        for (i=startlump ; (int)i<_g->numlumps ; i++,lump_p++, fileinfo++)
         {
-            lump_p->wadfile = wadfile;                    //  killough 4/25/98
             lump_p->position = LONG(fileinfo->filepos);
             lump_p->size = LONG(fileinfo->size);
             lump_p->li_namespace = ns_global;              // killough 4/17/98
             strncpy (lump_p->name, fileinfo->name, 8);
-            lump_p->source = wadfile->src;                    // Ty 08/29/98
         }
     }
 }
@@ -172,12 +163,12 @@ static int IsMarker(const char *marker, const char *name)
 static void W_CoalesceMarkedResource(const char *start_marker,
                                      const char *end_marker, int li_namespace)
 {
-    lumpinfo_t *marked = malloc(sizeof(*marked) * numlumps);
+    lumpinfo_t *marked = malloc(sizeof(*marked) * _g->numlumps);
     size_t i, num_marked = 0, num_unmarked = 0;
     int is_marked = 0, mark_end = 0;
-    lumpinfo_t *lump = lumpinfo;
+    lumpinfo_t *lump = _g->lumpinfo;
 
-    for (i=numlumps; i--; lump++)
+    for (i=_g->numlumps; i--; lump++)
         if (IsMarker(start_marker, lump->name))       // start marker found
         { // If this is the first start marker, add start marker to marked lumps
             if (!num_marked)
@@ -185,7 +176,6 @@ static void W_CoalesceMarkedResource(const char *start_marker,
                 strncpy(marked->name, start_marker, 8);
                 marked->size = 0;  // killough 3/20/98: force size to be 0
                 marked->li_namespace = ns_global;        // killough 4/17/98
-                marked->wadfile = NULL;
                 num_marked = 1;
             }
             is_marked = 1;                            // start marking lumps
@@ -203,21 +193,20 @@ static void W_CoalesceMarkedResource(const char *start_marker,
                     marked[num_marked++].li_namespace = li_namespace;  // killough 4/17/98
                 }
                 else
-                    lumpinfo[num_unmarked++] = *lump;       // else move down THIS list
+                    _g->lumpinfo[num_unmarked++] = *lump;       // else move down THIS list
 
     // Append marked list to end of unmarked list
-    memcpy(lumpinfo + num_unmarked, marked, num_marked * sizeof(*marked));
+    memcpy(_g->lumpinfo + num_unmarked, marked, num_marked * sizeof(*marked));
 
     free(marked);                                   // free marked list
 
-    numlumps = num_unmarked + num_marked;           // new total number of lumps
+    _g->numlumps = num_unmarked + num_marked;           // new total number of lumps
 
     if (mark_end)                                   // add end marker
     {
-        lumpinfo[numlumps].size = 0;  // killough 3/20/98: force size to be 0
-        lumpinfo[numlumps].wadfile = NULL;
-        lumpinfo[numlumps].li_namespace = ns_global;   // killough 4/17/98
-        strncpy(lumpinfo[numlumps++].name, end_marker, 8);
+        _g->lumpinfo[_g->numlumps].size = 0;  // killough 3/20/98: force size to be 0
+        _g->lumpinfo[_g->numlumps].li_namespace = ns_global;   // killough 4/17/98
+        strncpy(_g->lumpinfo[_g->numlumps++].name, end_marker, 8);
     }
 }
 
@@ -266,7 +255,7 @@ int (W_CheckNumForName)(register const char *name, register int li_namespace)
     // It has been tuned so that the average chain length never exceeds 2.
 
     // proff 2001/09/07 - check numlumps==0, this happens when called before WAD loaded
-    register int i = (numlumps==0)?(-1):(lumpinfo[W_LumpNameHash(name) % (unsigned) numlumps].index);
+    register int i = (_g->numlumps==0)?(-1):(_g->lumpinfo[W_LumpNameHash(name) % (unsigned) _g->numlumps].index);
 
     // We search along the chain until end, looking for case-insensitive
     // matches which also match a namespace tag. Separate hash tables are
@@ -274,9 +263,9 @@ int (W_CheckNumForName)(register const char *name, register int li_namespace)
     // worth the overhead, considering namespace collisions are rare in
     // Doom wads.
 
-    while (i >= 0 && (strncasecmp(lumpinfo[i].name, name, 8) ||
-                      lumpinfo[i].li_namespace != li_namespace))
-        i = lumpinfo[i].next;
+    while (i >= 0 && (strncasecmp(_g->lumpinfo[i].name, name, 8) ||
+                      _g->lumpinfo[i].li_namespace != li_namespace))
+        i = _g->lumpinfo[i].next;
 
     // Return the matching lump, or -1 if none found.
 
@@ -291,18 +280,18 @@ void W_HashLumps(void)
 {
     int i;
 
-    for (i=0; i<numlumps; i++)
-        lumpinfo[i].index = -1;                     // mark slots empty
+    for (i=0; i<_g->numlumps; i++)
+        _g->lumpinfo[i].index = -1;                     // mark slots empty
 
     // Insert nodes to the beginning of each chain, in first-to-last
     // lump order, so that the last lump of a given name appears first
     // in any chain, observing pwad ordering rules. killough
 
-    for (i=0; i<numlumps; i++)
+    for (i=0; i<_g->numlumps; i++)
     {                                           // hash function:
-        int j = W_LumpNameHash(lumpinfo[i].name) % (unsigned) numlumps;
-        lumpinfo[i].next = lumpinfo[j].index;     // Prepend to list
-        lumpinfo[j].index = i;
+        int j = W_LumpNameHash(_g->lumpinfo[i].name) % (unsigned) _g->numlumps;
+        _g->lumpinfo[i].next = _g->lumpinfo[j].index;     // Prepend to list
+        _g->lumpinfo[j].index = i;
     }
 }
 
@@ -337,23 +326,16 @@ int W_GetNumForName (const char* name)     // killough -- const added
 //
 // CPhipps - modified to use the new wadfiles array
 //
-wadfile_info_t wadfiles[1];
-const size_t numwadfiles = 1; // CPhipps - size of the wadfiles array (dynamic, no limit)
 
 void W_Init(void)
 {
     // CPhipps - start with nothing
 
-    numlumps = 0; lumpinfo = NULL;
+    _g->numlumps = 0; _g->lumpinfo = NULL;
 
-    { // CPhipps - new wadfiles array used
-        // open all the files, load headers, and count lumps
-        int i;
-        for (i=0; (size_t)i<numwadfiles; i++)
-            W_AddFile(&wadfiles[i]);
-    }
+    W_AddFile();
 
-    if (!numlumps)
+    if (!_g->numlumps)
         I_Error ("W_Init: No files found");
 
     //jff 1/23/98
@@ -377,9 +359,9 @@ void W_Init(void)
 void W_ReleaseAllWads(void)
 {
 	W_DoneCache();
-	numlumps = 0;
-	free(lumpinfo);
-	lumpinfo = NULL;
+    _g->numlumps = 0;
+    free(_g->lumpinfo);
+    _g->lumpinfo = NULL;
 }
 
 //
@@ -388,10 +370,10 @@ void W_ReleaseAllWads(void)
 //
 int W_LumpLength (int lump)
 {
-    if (lump >= numlumps)
+    if (lump >= _g->numlumps)
         I_Error ("W_LumpLength: %i >= numlumps",lump);
 
-    return lumpinfo[lump].size;
+    return _g->lumpinfo[lump].size;
 }
 
 //
@@ -402,14 +384,14 @@ int W_LumpLength (int lump)
 
 void W_ReadLump(int lump, void *dest)
 {
-    lumpinfo_t *l = lumpinfo + lump;
+    lumpinfo_t *l = _g->lumpinfo + lump;
 
     memcpy(dest, &doom_iwad[l->position], l->size);
 }
 
 const void* W_GetLumpPtr(int lump)
 {
-    lumpinfo_t *l = lumpinfo + lump;
+    lumpinfo_t *l = _g->lumpinfo + lump;
 
     return (const void*)&doom_iwad[l->position];
 }

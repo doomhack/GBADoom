@@ -339,11 +339,11 @@ void R_InitBuffer(int width, int height)
 
     _g->viewwindowy = width==SCREENWIDTH ? 0 : (SCREENHEIGHT-(ST_SCALED_HEIGHT-1)-height)>>1;
 
-    _g->drawvars.byte_topleft = screens[0].data + _g->viewwindowy*screens[0].byte_pitch + _g->viewwindowx;
-    _g->drawvars.byte_pitch = screens[0].byte_pitch;
+    _g->drawvars.byte_topleft = _g->screens[0].data + _g->viewwindowy*_g->screens[0].byte_pitch + _g->viewwindowx;
+    _g->drawvars.byte_pitch = _g->screens[0].byte_pitch;
 
 	for (i=0; i<FUZZTABLE; i++)
-        _g->fuzzoffset[i] = fuzzoffset_org[i]*screens[0].byte_pitch;
+        _g->fuzzoffset[i] = fuzzoffset_org[i]*_g->screens[0].byte_pitch;
 }
 
 //

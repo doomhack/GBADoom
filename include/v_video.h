@@ -48,11 +48,6 @@
 
 #define CENTERY     (SCREENHEIGHT/2)
 
-// Screen 0 is the screen updated by I_Update screen.
-// Screen 1 is an extra buffer.
-
-// array of pointers to color translation tables
-extern const byte *colrngs[];
 
 // symbolic indices into color translation table pointer array
 typedef enum
@@ -72,6 +67,8 @@ typedef enum
 } crange_idx_e;
 //jff 1/16/98 end palette color range additions
 
+
+
 #define CR_DEFAULT CR_RED   /* default value for out of range colors */
 
 typedef struct {
@@ -82,18 +79,6 @@ typedef struct {
 } screeninfo_t;
 
 #define NUM_SCREENS 6
-extern screeninfo_t screens[NUM_SCREENS];
-
-
-// Varying bit-depth support -POPE
-//
-// For bilinear filtering, each palette color is pre-weighted and put in a
-// table for fast blending operations. These macros decide how many weights
-// to create for each color. The lower the number, the lower the blend
-// accuracy, which can produce very bad artifacts in texture filtering.
-#define VID_NUMCOLORWEIGHTS 64
-#define VID_COLORWEIGHTMASK (VID_NUMCOLORWEIGHTS-1)
-#define VID_COLORWEIGHTBITS 6
 
 // The available bit-depth modes
 typedef enum {
@@ -116,25 +101,24 @@ void V_InitColorTranslation(void);
 void V_Init (void);
 
 // V_CopyRect
-typedef void (*V_CopyRect_f)(int srcx,  int srcy,  int srcscrn,
+void V_CopyRect(int srcx,  int srcy,  int srcscrn,
                              int width, int height,
                              int destx, int desty, int destscrn,
                              enum patch_translation_e flags);
-extern V_CopyRect_f V_CopyRect;
 
 // V_FillRect
-typedef void (*V_FillRect_f)(int scrn, int x, int y,
+void V_FillRect(int scrn, int x, int y,
                              int width, int height, byte colour);
-extern V_FillRect_f V_FillRect;
+
 
 // CPhipps - patch drawing
 // Consolidated into the 3 really useful functions:
 
 // V_DrawNumPatch - Draws the patch from lump num
-typedef void (*V_DrawNumPatch_f)(int x, int y, int scrn,
+void V_DrawNumPatch(int x, int y, int scrn,
                                  int lump, int cm,
                                  enum patch_translation_e flags);
-extern V_DrawNumPatch_f V_DrawNumPatch;
+
 
 // V_DrawNamePatch - Draws the patch from lump "name"
 #define V_DrawNamePatch(x,y,s,n,t,f) V_DrawNumPatch(x,y,s,W_GetNumForName(n),t,f)
@@ -148,9 +132,7 @@ extern V_DrawNumPatch_f V_DrawNumPatch;
 #define V_NamePatchHeight(name) R_NumPatchHeight(W_GetNumForName(name))
 
 /* cphipps 10/99: function to tile a flat over the screen */
-typedef void (*V_DrawBackground_f)(const char* flatname, int scrn);
-extern V_DrawBackground_f V_DrawBackground;
-
+void V_DrawBackground(const char* flatname, int scrn);
 
 // CPhipps - function to set the palette to palette number pal.
 void V_SetPalette(int pal);
@@ -158,8 +140,7 @@ void V_SetPalette(int pal);
 // CPhipps - function to plot a pixel
 
 // V_PlotPixel
-typedef void (*V_PlotPixel_f)(int,int,int,byte);
-extern V_PlotPixel_f V_PlotPixel;
+void V_PlotPixel(int,int,int,byte);
 
 typedef struct
 {
@@ -172,8 +153,7 @@ typedef struct
 } fline_t;
 
 // V_DrawLine
-typedef void (*V_DrawLine_f)(fline_t* fl, int color);
-extern V_DrawLine_f V_DrawLine;
+void V_DrawLine(fline_t* fl, int color);
 
 void V_AllocScreen(screeninfo_t *scrn);
 void V_AllocScreens();

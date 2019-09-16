@@ -63,7 +63,6 @@ boolean F_CastResponder (event_t *ev);
 void    F_CastDrawer (void);
 
 void WI_checkForAccelerate(void);    // killough 3/28/98: used to
-extern int acceleratestage;          // accelerate intermission screens
 
 //
 // F_StartFinale
@@ -75,7 +74,7 @@ void F_StartFinale (void)
   _g->automapmode &= ~am_active;
 
   // killough 3/28/98: clear accelerative text flags
-  acceleratestage = _g->midstage = 0;
+  _g->acceleratestage = _g->midstage = 0;
 
   // Okay - IWAD dependend stuff.
   // This has been changed severly, and
@@ -187,8 +186,8 @@ boolean F_Responder (event_t *event)
 
 static float Get_TextSpeed(void)
 {
-  return _g->midstage ? NEWTEXTSPEED : (_g->midstage=acceleratestage) ?
-    acceleratestage=0, NEWTEXTSPEED : TEXTSPEED;
+  return _g->midstage ? NEWTEXTSPEED : (_g->midstage=_g->acceleratestage) ?
+    _g->acceleratestage=0, NEWTEXTSPEED : TEXTSPEED;
 }
 
 
@@ -222,7 +221,7 @@ void F_Ticker(void)
       /* killough 2/28/98: changed to allow acceleration */
       if (_g->finalecount > strlen(_g->finaletext)*speed +
           (_g->midstage ? NEWTEXTWAIT : TEXTWAIT) ||
-          (_g->midstage && acceleratestage)) {
+          (_g->midstage && _g->acceleratestage)) {
         if (_g->gamemode != commercial)       // Doom 1 / Ultimate Doom episode end
           {                               // with enough time, it's automatic
             _g->finalecount = 0;

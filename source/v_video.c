@@ -46,11 +46,6 @@
 
 #include "global_data.h"
 
-// Each screen is [SCREENWIDTH*SCREENHEIGHT];
-screeninfo_t screens[NUM_SCREENS];
-
-/* jff 4/24/98 initialize this at runtime */
-const byte *colrngs[CR_LIMIT];
 
 // killough 5/2/98: tiny engine driven by table above
 void V_InitColorTranslation(void)
@@ -70,7 +65,7 @@ void V_InitColorTranslation(void)
 //
 // No return.
 //
-static void FUNC_V_CopyRect(int srcx, int srcy, int srcscrn, int width,
+void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
                 int height, int destx, int desty, int destscrn,
                 enum patch_translation_e flags)
 {
@@ -98,14 +93,14 @@ static void FUNC_V_CopyRect(int srcx, int srcy, int srcscrn, int width,
     I_Error ("V_CopyRect: Bad arguments");
 #endif
 
-  src = screens[srcscrn].data+screens[srcscrn].byte_pitch*srcy+srcx*V_GetPixelDepth();
-  dest = screens[destscrn].data+screens[destscrn].byte_pitch*desty+destx*V_GetPixelDepth();
+  src = _g->screens[srcscrn].data+_g->screens[srcscrn].byte_pitch*srcy+srcx;
+  dest = _g->screens[destscrn].data+_g->screens[destscrn].byte_pitch*desty+destx;
 
   for ( ; height>0 ; height--)
     {
-      memcpy (dest, src, width*V_GetPixelDepth());
-      src += screens[srcscrn].byte_pitch;
-      dest += screens[destscrn].byte_pitch;
+      memcpy (dest, src, width);
+      src += _g->screens[srcscrn].byte_pitch;
+      dest += _g->screens[destscrn].byte_pitch;
     }
 }
 
@@ -115,7 +110,7 @@ static void FUNC_V_CopyRect(int srcx, int srcy, int srcscrn, int width,
  * cphipps - used to have M_DrawBackground, but that was used the framebuffer
  * directly, so this is my code from the equivalent function in f_finale.c
  */
-static void FUNC_V_DrawBackground(const char* flatname, int scrn)
+void V_DrawBackground(const char* flatname, int scrn)
 {
   /* erase the entire screen to a tiled background */
   const byte *src;
@@ -123,7 +118,7 @@ static void FUNC_V_DrawBackground(const char* flatname, int scrn)
   int         width,height;
   int         lump;
 
-  byte *dest = screens[scrn].data;
+  byte *dest = _g->screens[scrn].data;
 
   // killough 4/17/98:
   src = W_CacheLumpNum(lump = _g->firstflat + R_FlatNumForName(flatname));
@@ -137,7 +132,7 @@ static void FUNC_V_DrawBackground(const char* flatname, int scrn)
   {
 	  memcpy (dest, src, width);
       src += width;
-      dest += screens[scrn].byte_pitch;
+      dest += _g->screens[scrn].byte_pitch;
   }
 
   for (y=0 ; y<SCREENHEIGHT ; y+=64)
@@ -156,15 +151,7 @@ static void FUNC_V_DrawBackground(const char* flatname, int scrn)
 
 void V_Init (void)
 {
-  int  i;
 
-  // reset the all
-  for (i = 0; i<NUM_SCREENS; i++) {
-    screens[i].data = NULL;
-    screens[i].width = 0;
-    screens[i].height = 0;
-    screens[i].byte_pitch = 0;
-  }
 }
 
 //
@@ -181,12 +168,7 @@ void V_Init (void)
 //
 static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm, enum patch_translation_e flags)
 {
-	const byte *trans;
-	
-	if (cm<CR_LIMIT)
-		trans=colrngs[cm];
-	else
-        trans=_g->translationtables + 256*((cm-CR_LIMIT)-1);
+    const byte *trans = NULL;
 	
 	y -= patch->topoffset;
 	x -= patch->leftoffset;
@@ -203,7 +185,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 		if (!(flags & VPT_STRETCH))
 		{
 			int             col;
-			byte           *desttop = screens[scrn].data+y*screens[scrn].byte_pitch+x*V_GetPixelDepth();
+            byte           *desttop = _g->screens[scrn].data+y*_g->screens[scrn].byte_pitch+x;
 			unsigned int    w = patch->width;
 			
 			if (y<0 || y+patch->height > ((flags & VPT_STRETCH) ? 200 :  SCREENHEIGHT))
@@ -235,7 +217,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 					// killough 2/21/98: Unrolled and performance-tuned
 					
 					const byte *source = column->pixels + post->topdelta;
-					byte *dest = desttop + post->topdelta*screens[scrn].byte_pitch;
+                    byte *dest = desttop + post->topdelta*_g->screens[scrn].byte_pitch;
 					int count = post->length;
 
 					if (!(flags & VPT_TRANS))
@@ -249,14 +231,14 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 								s1 = source[1];
 								
 								dest[0] = s0;
-								dest[screens[scrn].byte_pitch] = s1;
-								dest += screens[scrn].byte_pitch*2;
+                                dest[_g->screens[scrn].byte_pitch] = s1;
+                                dest += _g->screens[scrn].byte_pitch*2;
 								s0 = source[2];
 								s1 = source[3];
 								source += 4;
 								dest[0] = s0;
-								dest[screens[scrn].byte_pitch] = s1;
-								dest += screens[scrn].byte_pitch*2;
+                                dest[_g->screens[scrn].byte_pitch] = s1;
+                                dest += _g->screens[scrn].byte_pitch*2;
 							} while ((count-=4)>=0);
 						}
 							
@@ -265,7 +247,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 							do
 							{
 								*dest = *source++;
-								dest += screens[scrn].byte_pitch;
+                                dest += _g->screens[scrn].byte_pitch;
 							} while (--count);
 						}
 					}
@@ -282,16 +264,16 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 								s0 = trans[s0];
 								s1 = trans[s1];
 								dest[0] = s0;
-								dest[screens[scrn].byte_pitch] = s1;
-								dest += screens[scrn].byte_pitch*2;
+                                dest[_g->screens[scrn].byte_pitch] = s1;
+                                dest += _g->screens[scrn].byte_pitch*2;
 								s0 = source[2];
 								s1 = source[3];
 								s0 = trans[s0];
 								s1 = trans[s1];
 								source += 4;
 								dest[0] = s0;
-								dest[screens[scrn].byte_pitch] = s1;
-								dest += screens[scrn].byte_pitch*2;
+                                dest[_g->screens[scrn].byte_pitch] = s1;
+                                dest += _g->screens[scrn].byte_pitch*2;
 							} while ((count-=4)>=0);
 						}
 						
@@ -300,7 +282,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 							do
 							{
 								*dest = trans[*source++];
-								dest += screens[scrn].byte_pitch;
+                                dest += _g->screens[scrn].byte_pitch;
 							} while (--count);
 						}
 					}
@@ -326,8 +308,8 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 
 			R_SetDefaultDrawColumnVars(&dcvars);
 			
-            _g->drawvars.byte_topleft = screens[scrn].data;
-            _g->drawvars.byte_pitch = screens[scrn].byte_pitch;
+            _g->drawvars.byte_topleft = _g->screens[scrn].data;
+            _g->drawvars.byte_pitch = _g->screens[scrn].byte_pitch;
 			
 			if (!(flags & VPT_STRETCH))
 			{
@@ -422,7 +404,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 // static inline; other compilers have different behaviour.
 // This inline is _only_ for the function below
 
-static void FUNC_V_DrawNumPatch(int x, int y, int scrn, int lump,
+void V_DrawNumPatch(int x, int y, int scrn, int lump,
          int cm, enum patch_translation_e flags)
 {
   V_DrawMemPatch(x, y, scrn, R_CachePatchNum(lump), cm, flags);
@@ -447,63 +429,21 @@ void V_SetPalette(int pal)
 // V_FillRect
 //
 // CPhipps - New function to fill a rectangle with a given colour
-static void V_FillRect8(int scrn, int x, int y, int width, int height, byte colour)
+void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 {
-  byte* dest = screens[scrn].data + x + y*screens[scrn].byte_pitch;
+  byte* dest = _g->screens[scrn].data + x + y*_g->screens[scrn].byte_pitch;
   while (height--) {
     memset(dest, colour, width);
-    dest += screens[scrn].byte_pitch;
+    dest += _g->screens[scrn].byte_pitch;
   }
 }
-
-static void WRAP_V_DrawLine(fline_t* fl, int color);
-static void V_PlotPixel8(int scrn, int x, int y, byte color);
-
-static void NULL_FillRect(int scrn, int x, int y, int width, int height, byte colour) {}
-static void NULL_CopyRect(int srcx, int srcy, int srcscrn, int width, int height, int destx, int desty, int destscrn, enum patch_translation_e flags) {}
-static void NULL_DrawBackground(const char *flatname, int n) {}
-static void NULL_DrawNumPatch(int x, int y, int scrn, int lump, int cm, enum patch_translation_e flags) {}
-static void NULL_PlotPixel(int scrn, int x, int y, byte color) {}
-static void NULL_DrawLine(fline_t* fl, int color) {}
-
-static video_mode_t current_videomode = VID_MODE8;
-
-V_CopyRect_f V_CopyRect = NULL_CopyRect;
-V_FillRect_f V_FillRect = NULL_FillRect;
-V_DrawNumPatch_f V_DrawNumPatch = NULL_DrawNumPatch;
-V_DrawBackground_f V_DrawBackground = NULL_DrawBackground;
-V_PlotPixel_f V_PlotPixel = NULL_PlotPixel;
-V_DrawLine_f V_DrawLine = NULL_DrawLine;
 
 //
 // V_InitMode
 //
 void V_InitMode(video_mode_t mode)
 {
-
   lprintf(LO_INFO, "V_InitMode: using 8 bit video mode\n");
-  V_CopyRect = FUNC_V_CopyRect;
-  V_FillRect = V_FillRect8;
-  V_DrawNumPatch = FUNC_V_DrawNumPatch;
-  V_DrawBackground = FUNC_V_DrawBackground;
-  V_PlotPixel = V_PlotPixel8;
-  V_DrawLine = WRAP_V_DrawLine;
-  current_videomode = VID_MODE8;
-}
-
-//
-// V_GetMode
-//
-video_mode_t V_GetMode(void) {
-  return current_videomode;
-}
-
-//
-// V_GetModePixelDepth
-//
-int V_GetModePixelDepth(video_mode_t mode)
-{
-  return 1;
 }
 
 //
@@ -512,13 +452,6 @@ int V_GetModePixelDepth(video_mode_t mode)
 int V_GetNumPixelBits(void)
 {
   return 8;
-}
-
-//
-// V_GetPixelDepth
-//
-int V_GetPixelDepth(void) {
-  return V_GetModePixelDepth(current_videomode);
 }
 
 //
@@ -537,7 +470,7 @@ void V_AllocScreens(void) {
   int i;
 
   for (i=0; i<NUM_SCREENS; i++)
-    V_AllocScreen(&screens[i]);
+    V_AllocScreen(&_g->screens[i]);
 }
 
 //
@@ -556,11 +489,12 @@ void V_FreeScreens(void) {
   int i;
 
   for (i=0; i<NUM_SCREENS; i++)
-    V_FreeScreen(&screens[i]);
+    V_FreeScreen(&_g->screens[i]);
 }
 
-static void V_PlotPixel8(int scrn, int x, int y, byte color) {
-  screens[scrn].data[x+screens[scrn].byte_pitch*y] = color;
+void V_PlotPixel(int scrn, int x, int y, byte color)
+{
+  _g->screens[scrn].data[x+_g->screens[scrn].byte_pitch*y] = color;
 }
 
 //
@@ -572,7 +506,7 @@ static void V_PlotPixel8(int scrn, int x, int y, byte color) {
 // Passed the frame coordinates of line, and the color to be drawn
 // Returns nothing
 //
-static void WRAP_V_DrawLine(fline_t* fl, int color)
+void V_DrawLine(fline_t* fl, int color)
 {
   register int x;
   register int y;

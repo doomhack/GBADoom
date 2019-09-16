@@ -64,7 +64,7 @@ static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 
   do
     {
-      state_t *state;
+      const state_t *state;
 
       if (!stnum)
         {
@@ -131,7 +131,7 @@ WEAPONBOTTOM+FRACUNIT*2;
 
 const int weapon_preferences[NUMWEAPONS+1] =
 {
-    {6, 9, 4, 3, 2, 8, 5, 7, 1, 0},  // !compatibility preferences
+    {6, 9, 4, 3, 2, 8, 5, 7, 1},  // !compatibility preferences
 };
 
 // P_SwitchWeapon checks current ammo levels and gives you the
@@ -142,7 +142,7 @@ const int weapon_preferences[NUMWEAPONS+1] =
 
 int P_SwitchWeapon(player_t *player)
 {
-  int *prefer = &weapon_preferences[0]; // killough 3/22/98
+  const int *prefer = &weapon_preferences[0]; // killough 3/22/98
   int currentweapon = player->readyweapon;
   int newweapon = currentweapon;
   int i = NUMWEAPONS+1;   // killough 5/2/98

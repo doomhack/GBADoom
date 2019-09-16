@@ -166,7 +166,7 @@ void I_FinishUpdate (void)
         _g->newpal = NO_PALETTE_CHANGE;
 	}
 
-    I_FinishUpdate_e32(screens[0].data, _g->current_pallete, SCREENWIDTH, SCREENHEIGHT);
+    I_FinishUpdate_e32(_g->screens[0].data, _g->current_pallete, SCREENWIDTH, SCREENHEIGHT);
 }
 
 //
@@ -190,14 +190,14 @@ void I_SetRes(void)
 {
 
     //backbuffer
-    screens[0].width = SCREENWIDTH;
-    screens[0].height = SCREENHEIGHT;
-    screens[0].byte_pitch = SCREENPITCH;
+    _g->screens[0].width = SCREENWIDTH;
+    _g->screens[0].height = SCREENHEIGHT;
+    _g->screens[0].byte_pitch = SCREENPITCH;
 
     // statusbar
-    screens[4].width = SCREENWIDTH;
-    screens[4].height = (ST_SCALED_HEIGHT+1);
-    screens[4].byte_pitch = SCREENPITCH;
+    _g->screens[4].width = SCREENWIDTH;
+    _g->screens[4].height = (ST_SCALED_HEIGHT+1);
+    _g->screens[4].byte_pitch = SCREENPITCH;
 
     lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 }

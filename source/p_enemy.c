@@ -1020,24 +1020,6 @@ void A_Look(mobj_t *actor)
 }
 
 //
-// A_KeepChasing
-//
-// killough 10/98:
-// Allows monsters to continue movement while attacking
-//
-
-static void A_KeepChasing(mobj_t *actor)
-{
-  if (actor->movecount)
-    {
-      actor->movecount--;
-      if (actor->strafecount)
-        actor->strafecount--;
-      P_SmartMove(actor);
-    }
-}
-
-//
 // A_Chase
 // Actor has a melee attack,
 // so it tries to close as fast as possible
@@ -1573,7 +1555,7 @@ void A_VileChase(mobj_t* actor)
               // that canbe raised.
               if (!P_BlockThingsIterator(bx,by,PIT_VileCheck))
                 {
-      mobjinfo_t *info;
+                  const mobjinfo_t *info;
 
                   // got one!
                   mobj_t* temp = actor->target;

@@ -51,7 +51,7 @@ void I_ShutdownSound(void);
 void I_SetChannels(void);
 
 // Get raw data lump index for sound descriptor.
-int I_GetSfxLumpNum (sfxinfo_t *sfxinfo);
+int I_GetSfxLumpNum (const sfxinfo_t *sfxinfo);
 
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id, int channel, int vol);

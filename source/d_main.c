@@ -478,10 +478,9 @@ void D_StartTitle (void)
 // CPhipps - static, const char* parameter
 //         - source is an enum
 //         - modified to allocate & use new wadfiles array
-void D_AddFile (const char *file, wad_source_t source)
+void D_AddFile ()
 {  
-  wadfiles[0].name = file;
-  wadfiles[0].src = source; // Ty 08/29/98
+
 }
 
 //
@@ -619,7 +618,7 @@ static void IdentifyVersion()
             lprintf(LO_WARN,"Unknown Game Version, may not work\n");
         }
 
-        D_AddFile("doom.wad",source_iwad);
+        D_AddFile();
     }
 }
 
@@ -786,18 +785,8 @@ void GetFirstMap(int *ep, int *map)
                 ix = W_CheckNumForName(test);
                 if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
                 {
-                    if (lumpinfo[ix].source == source_pwad)
-                    {
-                        *map = i;
-                        strcpy(name,test);  // Ty 10/04/98
-                        done = true;  // Ty 09/13/98
-                        newlevel = true; // Ty 10/04/98
-                    }
-                    else
-                    {
                         if (!*name)  // found one, not pwad.  First default.
                             strcpy(name,test);
-                    }
                 }
             }
         }
@@ -812,19 +801,9 @@ void GetFirstMap(int *ep, int *map)
                     ix = W_CheckNumForName(test);
                     if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
                     {
-                        if (lumpinfo[ix].source == source_pwad)
-                        {
-                            *ep = i;
-                            *map = j;
-                            strcpy(name,test); // Ty 10/04/98
-                            done = true;  // Ty 09/13/98
-                            newlevel = true; // Ty 10/04/98
-                        }
-                        else
-                        {
+
                             if (!*name)  // found one, not pwad.  First default.
                                 strcpy(name,test);
-                        }
                     }
                 }
             }

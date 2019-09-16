@@ -40,7 +40,7 @@
 
 boolean I_StartDisplay(void);
 void I_EndDisplay(void);
-int I_GetTime_RealTime(void);     /* killough */
+int I_GetTime(void);     /* killough */
 
 unsigned long I_GetRandomTimeSeed(void); /* cphipps */
 
