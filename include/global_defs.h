@@ -883,5 +883,92 @@ int idmusnum;
 
 sfx_runtime sfx_data[128];
 
+
+//******************************************************************************
+//st_stuff.c
+//******************************************************************************
+
+// main player in game
+player_t *plyr;
+
+// ST_Start() has just been called
+boolean st_firsttime;
+
+// whether left-side main status bar is active
+boolean st_statusbaron;
+
+
+// 0-9, tall numbers
+patchnum_t tallnum[10];
+
+// tall % sign
+patchnum_t tallpercent;
+
+// 0-9, short, yellow (,different!) numbers
+patchnum_t shortnum[10];
+
+// face status patches
+patchnum_t faces[ST_NUMFACES];
+
+// face background
+patchnum_t faceback; // CPhipps - single background, translated for different players
+
+//e6y: status bar background
+patchnum_t stbarbg;
+
+// main bar right
+patchnum_t armsbg;
+
+// weapon ownership patches
+patchnum_t arms[6][2];
+
+// ready-weapon widget
+st_number_t w_ready;
+
+// health widget
+st_percent_t st_health;
+
+// arms background
+st_binicon_t  w_armsbg;
+
+// weapon ownership widgets
+st_multicon_t w_arms[6];
+
+// face status widget
+st_multicon_t w_faces;
+
+// keycard widgets
+st_multicon_t w_keyboxes[3];
+
+// armor widget
+st_percent_t  st_armor;
+
+// ammo widgets
+st_number_t   st_ammo[4];
+
+// max ammo widgets
+st_number_t   w_maxammo[4];
+
+// used to use appopriately pained face
+int      st_oldhealth;
+
+// used for evil grin
+boolean  oldweaponsowned[NUMWEAPONS];
+
+ // count until face changes
+int      st_facecount;
+
+// current face index, used by w_faces
+int      st_faceindex;
+
+// holds key-type for each key box on bar
+int      keyboxes[3];
+
+// a random number per tick
+int      st_randomnumber;
+
+int st_palette;
+
+
 //******************************************************************************
 #endif // GLOBAL_DEFS_H

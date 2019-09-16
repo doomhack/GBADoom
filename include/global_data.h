@@ -4,6 +4,7 @@
 #include "libtimidity/timidity.h"
 
 #include "doomstat.h"
+#include "doomdef.h"
 #include "m_fixed.h"
 #include "am_map.h"
 #include "g_game.h"
@@ -26,6 +27,9 @@
 #include "r_things.h"
 
 #include "s_sound.h"
+
+#include "st_lib.h"
+#include "st_stuff.h"
 
 #include "mmus2mid.h"
 

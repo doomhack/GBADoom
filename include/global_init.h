@@ -65,4 +65,15 @@ _g->snd_SfxVolume = 8;
 // Maximum volume of music. Useless so far.
 _g->snd_MusicVolume = 8;
 
+
+//******************************************************************************
+//st_stuff.c
+//******************************************************************************
+
+_g->st_oldhealth = -1;
+
+
+
+
+
 #endif // GLOBAL_INIT_H
