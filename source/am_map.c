@@ -58,9 +58,6 @@ static const int mapcolor_wall = 23;    // normal 1s wall color
 static const int mapcolor_fchg = 55;    // line at floor height change color
 static const int mapcolor_cchg = 215;    // line at ceiling height change color
 static const int mapcolor_clsd = 208;    // line at sector with floor=ceiling color
-static const int mapcolor_rkey = 175;    // red key color
-static const int mapcolor_bkey = 204;    // blue key color
-static const int mapcolor_ykey = 231;    // yellow key color
 static const int mapcolor_rdor = 175;    // red door color  (diff from keys to allow option)
 static const int mapcolor_bdor = 204;    // blue door color (of enabling one but not other )
 static const int mapcolor_ydor = 231;    // yellow door color
@@ -69,12 +66,8 @@ static const int mapcolor_secr = 252;    // secret sector boundary color
 static const int mapcolor_exit = 0;    // jff 4/23/98 add exit line color
 static const int mapcolor_unsn = 104;    // computer map unseen line color
 static const int mapcolor_flat = 88;    // line with no floor/ceiling changes
-static const int mapcolor_sprt = 112;    // general sprite color
-static const int mapcolor_item = 231;    // item sprite color
 static const int mapcolor_hair = 208;    // crosshair color
 static const int mapcolor_sngl = 208;    // single player arrow color
-static const int mapcolor_enemy = 177;   // enemy sprite color
-static const int mapcolor_frnd = 112;    // friendly sprite color
 static const int map_secret_after = 0;
 
 
@@ -131,48 +124,6 @@ static const mline_t player_arrow[] =
 };
 #undef R
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
-
-#define R ((8*PLAYERRADIUS)/7)
-static const mline_t cheat_player_arrow[] =
-{ // killough 3/22/98: He's alive, Jim :)
-  { { -R+R/8, 0 }, { R, 0 } }, // -----
-  { { R, 0 }, { R-R/2, R/4 } },  // ----->
-  { { R, 0 }, { R-R/2, -R/4 } },
-  { { -R+R/8, 0 }, { -R-R/8, R/4 } }, // >---->
-  { { -R+R/8, 0 }, { -R-R/8, -R/4 } },
-  { { -R+3*R/8, 0 }, { -R+R/8, R/4 } }, // >>--->
-  { { -R+3*R/8, 0 }, { -R+R/8, -R/4 } },
-  { { -R/10-R/6, R/4}, {-R/10-R/6, -R/4} },  // J
-  { { -R/10-R/6, -R/4}, {-R/10-R/6-R/8, -R/4} },
-  { { -R/10-R/6-R/8, -R/4}, {-R/10-R/6-R/8, -R/8} },
-  { { -R/10, R/4}, {-R/10, -R/4}},           // F
-  { { -R/10, R/4}, {-R/10+R/8, R/4}},
-  { { -R/10+R/4, R/4}, {-R/10+R/4, -R/4}},   // F
-  { { -R/10+R/4, R/4}, {-R/10+R/4+R/8, R/4}},
-};
-#undef R
-#define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
-
-//jff 1/5/98 new symbol for keys on automap
-#define R (FRACUNIT)
-static const mline_t cross_mark[] =
-{
-  { { -R, 0 }, { R, 0} },
-  { { 0, -R }, { 0, R } },
-};
-#undef R
-#define NUMCROSSMARKLINES (sizeof(cross_mark)/sizeof(mline_t))
-//jff 1/5/98 end of new symbol
-
-#define R (FRACUNIT)
-static const mline_t thintriangle_guy[] =
-{
-{ { (fixed_t)(-.5*R), (fixed_t)(-.7*R) }, { (fixed_t)(    R), (fixed_t)(    0) } },
-{ { (fixed_t)(    R), (fixed_t)(    0) }, { (fixed_t)(-.5*R), (fixed_t)( .7*R) } },
-{ { (fixed_t)(-.5*R), (fixed_t)( .7*R) }, { (fixed_t)(-.5*R), (fixed_t)(-.7*R) } }
-};
-#undef R
-#define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
 
 static const fixed_t mtof_zoommul = FRACUNIT; // how far the window zooms each tic (map coords)
 static const fixed_t ftom_zoommul = FRACUNIT; // how far the window zooms each tic (fb coords)
@@ -309,19 +260,6 @@ static void AM_initVariables(void)
 }
 
 //
-// AM_clearMarks()
-//
-// Sets the number of marks to 0, thereby clearing them from the display
-//
-// Affects the global variable markpointnum
-// Passed nothing, returns nothing
-//
-void AM_clearMarks(void)
-{
-  _g->markpointnum = 0;
-}
-
-//
 // AM_LevelInit()
 //
 // Initialize the automap at the start of a new level
@@ -376,6 +314,7 @@ void AM_Start(void)
 {
   if (!_g->stopped)
     AM_Stop();
+
   _g->stopped = false;
   if (_g->lastlevel != _g->gamemap || _g->lastepisode != _g->gameepisode)
   {
@@ -897,9 +836,9 @@ static void AM_drawWalls(void)
     }
 
     // if line has been seen or IDDT has been used
-    if (_g->ddt_cheating || (_g->lines[i].flags & ML_MAPPED))
+    if (_g->lines[i].flags & ML_MAPPED)
     {
-      if ((_g->lines[i].flags & ML_DONTDRAW) && !_g->ddt_cheating)
+      if (_g->lines[i].flags & ML_DONTDRAW)
         continue;
       {
         /* cph - show keyed doors and lines */
@@ -1032,10 +971,6 @@ static void AM_drawWalls(void)
         {
           AM_drawMline(&l, mapcolor_cchg); // ceiling level change
         }
-        else if (mapcolor_flat && _g->ddt_cheating)
-        {
-          AM_drawMline(&l, mapcolor_flat); //2S lines that appear only in IDDT
-        }
       }
     } // now draw the lines only visible because the player has computermap
     else if (_g->plr->powers[pw_allmap]) // computermap visible lines
@@ -1129,18 +1064,7 @@ static void AM_drawLineCharacter
 //
 static void AM_drawPlayers(void)
 {    
-    if (_g->ddt_cheating)
-        AM_drawLineCharacter
-                (
-                    cheat_player_arrow,
-                    NUMCHEATPLYRLINES,
-                    0,
-                    _g->plr->mo->angle,
-                    mapcolor_sngl,      //jff color
-                    _g->plr->mo->x >> FRACTOMAPBITS,//e6y
-                    _g->plr->mo->y >> FRACTOMAPBITS//e6y
-                    );
-    else
+
         AM_drawLineCharacter
                 (
                     player_arrow,
@@ -1151,142 +1075,6 @@ static void AM_drawPlayers(void)
                     _g->plr->mo->x >> FRACTOMAPBITS,//e6y
                     _g->plr->mo->y >> FRACTOMAPBITS);//e6y
 
-}
-
-//
-// AM_drawThings()
-//
-// Draws the things on the automap in double IDDT cheat mode
-//
-// Passed colors and colorrange, no longer used
-// Returns nothing
-//
-static void AM_drawThings(void)
-{
-  int   i;
-  mobj_t* t;
-
-  // for all sectors
-  for (i=0;i<_g->numsectors;i++)
-  {
-    t = _g->sectors[i].thinglist;
-    while (t) // for all things in that sector
-    {
-      fixed_t x = t->x >> FRACTOMAPBITS, y = t->y >> FRACTOMAPBITS;//e6y
-
-      if (_g->automapmode & am_rotate)
-  AM_rotate(&x, &y, ANG90-_g->plr->mo->angle, _g->plr->mo->x, _g->plr->mo->y);
-
-      //jff 1/5/98 case over doomednum of thing being drawn
-      if (mapcolor_rkey || mapcolor_ykey || mapcolor_bkey)
-      {
-        switch(t->info->doomednum)
-        {
-          //jff 1/5/98 treat keys special
-          case 38: case 13: //jff  red key
-            AM_drawLineCharacter
-            (
-              cross_mark,
-              NUMCROSSMARKLINES,
-              16<<MAPBITS,//e6y
-              t->angle,
-              mapcolor_rkey!=-1? mapcolor_rkey : mapcolor_sprt,
-              x, y
-            );
-            t = t->snext;
-            continue;
-          case 39: case 6: //jff yellow key
-            AM_drawLineCharacter
-            (
-              cross_mark,
-              NUMCROSSMARKLINES,
-              16<<MAPBITS,//e6y
-              t->angle,
-              mapcolor_ykey!=-1? mapcolor_ykey : mapcolor_sprt,
-              x, y
-            );
-            t = t->snext;
-            continue;
-          case 40: case 5: //jff blue key
-            AM_drawLineCharacter
-            (
-              cross_mark,
-              NUMCROSSMARKLINES,
-              16<<MAPBITS,//e6y
-              t->angle,
-              mapcolor_bkey!=-1? mapcolor_bkey : mapcolor_sprt,
-              x, y
-            );
-            t = t->snext;
-            continue;
-          default:
-            break;
-        }
-      }
-      //jff 1/5/98 end added code for keys
-      //jff previously entire code
-      AM_drawLineCharacter
-      (
-        thintriangle_guy,
-        NUMTHINTRIANGLEGUYLINES,
-        16<<MAPBITS,//e6y
-        t->angle,
-	t->flags & MF_FRIEND && !t->player ? mapcolor_frnd : 
-	/* cph 2006/07/30 - Show count-as-kills in red. */
-          ((t->flags & (MF_COUNTKILL | MF_CORPSE)) == MF_COUNTKILL) ? mapcolor_enemy :
-        /* bbm 2/28/03 Show countable items in yellow. */
-          t->flags & MF_COUNTITEM ? mapcolor_item : mapcolor_sprt,
-        x, y
-      );
-      t = t->snext;
-    }
-  }
-}
-
-//
-// AM_drawMarks()
-//
-// Draw the marked locations on the automap
-//
-// Passed nothing, returns nothing
-//
-// killough 2/22/98:
-// Rewrote AM_drawMarks(). Removed limit on marks.
-//
-static void AM_drawMarks(void)
-{
-  int i;
-  for (i=0;i<_g->markpointnum;i++) // killough 2/22/98: remove automap mark limit
-    if (_g->markpoints[i].x != -1)
-    {
-      int w = 5;
-      int h = 6;
-      int fx = _g->markpoints[i].x;
-      int fy = _g->markpoints[i].y;
-      int j = i;
-
-      if (_g->automapmode & am_rotate)
-        AM_rotate(&fx, &fy, ANG90-_g->plr->mo->angle, _g->plr->mo->x, _g->plr->mo->y);
-
-      fx = CXMTOF(fx); fy = CYMTOF(fy);
-
-      do
-      {
-        int d = j % 10;
-        if (d==1)           // killough 2/22/98: less spacing for '1'
-          fx++;
-
-        if (fx >= _g->f_x && fx < _g->f_w - w && fy >= _g->f_y && fy < _g->f_h - h) {
-    // cph - construct patch name and draw marker
-    char namebuf[] = { 'A', 'M', 'M', 'N', 'U', 'M', '0'+d, 0 };
-
-          V_DrawNamePatch(fx, fy, FB, namebuf, CR_DEFAULT, VPT_NONE);
-  }
-        fx -= w-1;          // killough 2/22/98: 1 space backwards
-        j /= 10;
-      }
-      while (j>0);
-    }
 }
 
 //
@@ -1334,9 +1122,5 @@ void AM_Drawer (void)
     AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
   AM_drawWalls();
   AM_drawPlayers();
-  if (_g->ddt_cheating==2)
-    AM_drawThings(); //jff 1/5/98 default double IDDT sprite
   AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
-
-  AM_drawMarks();
 }

@@ -281,7 +281,7 @@ static void D_DoomLoop(void)
         if (_g->singletics)
 		{
 			I_StartTic ();
-            G_BuildTiccmd (&_g->netcmds[consoleplayer][_g->maketic%BACKUPTICS]);
+            G_BuildTiccmd (&_g->netcmds[consoleplayer]);
 			
             if (_g->advancedemo)
 				D_DoAdvanceDemo ();

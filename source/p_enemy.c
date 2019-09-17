@@ -732,74 +732,55 @@ static boolean PIT_FindTarget(mobj_t *mo)
 
 static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 {
-  player_t *player;
-  int stop, stopc, c;
+    player_t *player;
+    int stop, stopc, c;
 
-  if (actor->flags & MF_FRIEND)
+    if (actor->flags & MF_FRIEND)
     {  // killough 9/9/98: friendly monsters go about players differently
-      int anyone;
+        int anyone;
 
-      // Go back to a player, no matter whether it's visible or not
-      for (anyone=0; anyone<=1; anyone++)
-  for (c=0; c<MAXPLAYERS; c++)
-    if (_g->playeringame[c] && _g->players[c].playerstate==PST_LIVE &&
-        (anyone || P_IsVisible(actor, _g->players[c].mo, allaround)))
-      {
-        P_SetTarget(&actor->target, _g->players[c].mo);
+        // Go back to a player, no matter whether it's visible or not
+        for (anyone=0; anyone<=1; anyone++)
+            for (c=0; c<MAXPLAYERS; c++)
+                if (_g->playeringame[c] && _g->players[c].playerstate==PST_LIVE &&
+                        (anyone || P_IsVisible(actor, _g->players[c].mo, allaround)))
+                {
+                    P_SetTarget(&actor->target, _g->players[c].mo);
 
-        // killough 12/98:
-        // get out of refiring loop, to avoid hitting player accidentally
+                    // killough 12/98:
+                    // get out of refiring loop, to avoid hitting player accidentally
 
-        if (actor->info->missilestate)
-    {
-      P_SetMobjState(actor, actor->info->seestate);
-      actor->flags &= ~MF_JUSTHIT;
-    }
+                    if (actor->info->missilestate)
+                    {
+                        P_SetMobjState(actor, actor->info->seestate);
+                        actor->flags &= ~MF_JUSTHIT;
+                    }
 
-        return true;
-      }
-
-      return false;
-    }
-
-  // Change mask of 3 to (MAXPLAYERS-1) -- killough 2/15/98:
-  stop = (actor->lastlook-1)&(MAXPLAYERS-1);
-
-  c = 0;
-
-  stopc = 2;       // killough 9/9/98
-
-  for (;; actor->lastlook = (actor->lastlook+1)&(MAXPLAYERS-1))
-    {
-      if (!_g->playeringame[actor->lastlook])
-  continue;
-
-      // killough 2/15/98, 9/9/98:
-      if (c++ == stopc || actor->lastlook == stop)  // done looking
-      {
-        // e6y
-        // Fixed Boom incompatibilities. The following code was missed.
-        // There are no more desyncs on Donce's demos on horror.wad
+                    return true;
+                }
 
         return false;
-      }
+    }
 
-      player = &_g->players[actor->lastlook];
 
-      if (player->health <= 0)
-  continue;               // dead
+    if(_g->playeringame[consoleplayer])
+    {
+        player = &_g->players[consoleplayer];
 
-      if (!P_IsVisible(actor, player->mo, allaround))
-  continue;
+        if (player->health <= 0)
+            return false;               // dead
 
-      P_SetTarget(&actor->target, player->mo);
+        if (!P_IsVisible(actor, player->mo, allaround))
+            return false;
 
-      /* killough 9/9/98: give monsters a threshold towards getting players
+        P_SetTarget(&actor->target, player->mo);
+
+        /* killough 9/9/98: give monsters a threshold towards getting players
        * (we don't want it to be too easy for a player with dogs :)
        */
-  actor->threshold = 60;
+        actor->threshold = 60;
 
-      return true;
+        return true;
     }
 }
 

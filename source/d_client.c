@@ -70,12 +70,9 @@ void D_InitNetGame (void)
 {
     int i;
 
-    _g->localcmds = _g->netcmds[consoleplayer];
+    _g->localcmds = &_g->netcmds[consoleplayer];
 
     _g->playeringame[0] = true;
-
-    for (i=1; i<MAXPLAYERS; i++)
-        _g->playeringame[i] = false;
 }
 
 void D_BuildNewTiccmds(void)
@@ -85,8 +82,10 @@ void D_BuildNewTiccmds(void)
     while (newtics--)
     {
         I_StartTic();
-        if (_g->maketic - _g->gametic > BACKUPTICS/2) break;
-        G_BuildTiccmd(&_g->localcmds[_g->maketic%BACKUPTICS]);
+        if (_g->maketic - _g->gametic > 0)
+            break;
+
+        G_BuildTiccmd(&_g->localcmds[0]);
         _g->maketic++;
     }
 }
@@ -103,7 +102,7 @@ void TryRunTics (void)
         D_BuildNewTiccmds();
 
         runtics = (_g->maketic) - _g->gametic;
-        if (!runtics)
+        if (runtics <= 0)
         {
             if (I_GetTime() - entertime > 10)
             {
@@ -115,7 +114,7 @@ void TryRunTics (void)
             break;
     }
 
-    while (runtics--)
+    while (runtics-- > 0)
     {
 
         if (_g->advancedemo)

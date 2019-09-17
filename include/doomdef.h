@@ -120,7 +120,7 @@ extern const int SCREENHEIGHT;
 extern const int SCREENPITCH;
 
 // The maximum number of players, multiplayer/networking.
-#define MAXPLAYERS       4
+#define MAXPLAYERS       1
 
 // phares 5/14/98:
 // DOOM Editor Numbers (aka doomednum in mobj_t)

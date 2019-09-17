@@ -49,9 +49,10 @@ typedef struct globals_t
 //am_map.c
 //******************************************************************************
 
-int ddt_cheating;         // killough 2/7/98: make global, rename to ddt_*
-int leveljuststarted;       // kluge until AM_LevelInit() is called
 enum automapmode_e automapmode; // Mode that the automap is in
+boolean leveljuststarted;       // kluge until AM_LevelInit() is called
+boolean stopped;
+
 
 // location of window on screen
 int  f_x;
@@ -94,15 +95,6 @@ fixed_t scale_ftom;
 
 player_t *plr;           // the player represented by an arrow
 
-// killough 2/22/98: Remove limit on automap marks,
-// and make variables external for use in savegames.
-
-mpoint_t *markpoints;    // where the points are
-int markpointnum; // next point to be assigned (also number of points now)
-int markpointnum_max;       // killough 2/22/98
-
-boolean stopped;
-
 int lastlevel, lastepisode;
 
 
@@ -110,7 +102,7 @@ int lastlevel, lastepisode;
 //d_client.c
 //******************************************************************************
 
-ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
+ticcmd_t         netcmds[MAXPLAYERS];
 ticcmd_t* localcmds;
 int maketic;
 int lastmadetic;
@@ -194,7 +186,6 @@ boolean         nodrawers;     // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
 boolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
-
 
 int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */

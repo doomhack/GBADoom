@@ -905,8 +905,6 @@ void P_RespawnSpecials (void)
 //  between levels.
 //
 
-extern byte playernumtotrans[MAXPLAYERS];
-
 void P_SpawnPlayer (int n, const mapthing_t* mthing)
   {
   player_t* p;
@@ -914,7 +912,6 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
   fixed_t   y;
   fixed_t   z;
   mobj_t*   mobj;
-  int       i;
 
   // not playing?
 
@@ -938,8 +935,6 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
   mobj = P_SpawnMobj (x,y,z, MT_PLAYER);
 
   // set color translations for player sprites
-
-  mobj->flags |= playernumtotrans[n]<<MF_TRANSSHIFT;
 
   mobj->angle      = ANG45 * (mthing->angle/45);
   mobj->player     = p;
@@ -1070,20 +1065,14 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 
   // check for players specially
 
-  if (mthing->type <= 4 && mthing->type > 0)  // killough 2/26/98 -- fix crashes
-    {
-    // save spots for respawning in coop games
-    _g->playerstarts[mthing->type-1] = *mthing;
-    /* cph 2006/07/24 - use the otherwise-unused options field to flag that
-     * this start is present (so we know which elements of the array are filled
-     * in, in effect). Also note that the call below to P_SpawnPlayer must use
-     * the playerstarts version with this field set */
-    _g->playerstarts[mthing->type-1].options = 1;
-
-    P_SpawnPlayer (mthing->type-1, &_g->playerstarts[mthing->type-1]);
-
-    return;
-    }
+  //Only care about start spot for player 1.
+  if(mthing->type == 1)
+  {
+      _g->playerstarts[consoleplayer] = *mthing;
+      _g->playerstarts[consoleplayer].options = 1;
+      P_SpawnPlayer (consoleplayer, &_g->playerstarts[consoleplayer]);
+      return;
+  }
 
   // check for apropriate skill level
 

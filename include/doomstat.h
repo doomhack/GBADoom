@@ -81,9 +81,6 @@ extern const int displayplayer;
 // Internal parameters, used for engine.
 //
 
-// Networking and tick handling related.
-#define BACKUPTICS              12
-
 //-----------------------------------------------------------------------------
 
 /* killough 8/8/98: distance friendly monsters tend to stay from player */

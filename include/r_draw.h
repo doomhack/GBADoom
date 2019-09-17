@@ -80,8 +80,6 @@ typedef struct {
 } draw_vars_t;
 
 
-extern byte playernumtotrans[MAXPLAYERS]; // CPhipps - what translation table for what player
-
 typedef void (*R_DrawColumn_f)(draw_column_vars_t *dcvars);
 
 

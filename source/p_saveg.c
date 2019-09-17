@@ -974,54 +974,11 @@ void P_UnArchiveRNG(void)
 // killough 2/22/98: Save/restore automap state
 void P_ArchiveMap(void)
 {
-  int zero = 0, one = 1;
-  CheckSaveGame(2 * sizeof zero + sizeof _g->markpointnum +
-                _g->markpointnum * sizeof *_g->markpoints +
-                sizeof _g->automapmode + sizeof one);
 
-  memcpy(_g->save_p, &_g->automapmode, sizeof _g->automapmode);
-  _g->save_p += sizeof _g->automapmode;
-  memcpy(_g->save_p, &one, sizeof one);   // CPhipps - used to be viewactive, now
-  _g->save_p += sizeof one;               // that's worked out locally by D_Display
-  memcpy(_g->save_p, &zero, sizeof zero); // CPhipps - used to be followplayer
-  _g->save_p += sizeof zero;              //  that is now part of automapmode
-  memcpy(_g->save_p, &zero, sizeof zero); // CPhipps - used to be automap_grid, ditto
-  _g->save_p += sizeof zero;
-  memcpy(_g->save_p, &_g->markpointnum, sizeof _g->markpointnum);
-  _g->save_p += sizeof _g->markpointnum;
-
-  if (_g->markpointnum)
-    {
-      memcpy(_g->save_p, _g->markpoints, sizeof *_g->markpoints * _g->markpointnum);
-      _g->save_p += _g->markpointnum * sizeof *_g->markpoints;
-    }
 }
 
 void P_UnArchiveMap(void)
 {
-  int unused;
-  memcpy(&_g->automapmode, _g->save_p, sizeof _g->automapmode);
-  _g->save_p += sizeof _g->automapmode;
-  memcpy(&unused, _g->save_p, sizeof unused);
-  _g->save_p += sizeof unused;
-  memcpy(&unused, _g->save_p, sizeof unused);
-  _g->save_p += sizeof unused;
-  memcpy(&unused, _g->save_p, sizeof unused);
-  _g->save_p += sizeof unused;
 
-  if (_g->automapmode & am_active)
-    AM_Start();
-
-  memcpy(&_g->markpointnum, _g->save_p, sizeof _g->markpointnum);
-  _g->save_p += sizeof _g->markpointnum;
-
-  if (_g->markpointnum)
-    {
-      while (_g->markpointnum >= _g->markpointnum_max)
-        _g->markpoints = realloc(_g->markpoints, sizeof *_g->markpoints *
-         (_g->markpointnum_max = _g->markpointnum_max ? _g->markpointnum_max*2 : 16));
-      memcpy(_g->markpoints, _g->save_p, _g->markpointnum * sizeof *_g->markpoints);
-      _g->save_p += _g->markpointnum * sizeof *_g->markpoints;
-    }
 }
 

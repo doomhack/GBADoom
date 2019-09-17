@@ -550,14 +550,14 @@ void G_Ticker (void)
     _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
   else {
     // get commands, check consistancy, and build new consistancy check
-    int buf = (_g->gametic)%BACKUPTICS;
+    int buf = (_g->gametic);
 
     for (i=0 ; i<MAXPLAYERS ; i++) {
       if (_g->playeringame[i])
         {
           ticcmd_t *cmd = &_g->players[i].cmd;
 
-          memcpy(cmd, &_g->netcmds[i][buf], sizeof *cmd);
+          memcpy(cmd, &_g->netcmds[i], sizeof *cmd);
 
           if (_g->demoplayback)
             G_ReadDemoTiccmd (cmd);
@@ -1069,7 +1069,6 @@ void G_DoWorldDone (void)
   _g->gamemap = _g->wminfo.next+1;
   G_DoLoadLevel();
   _g->gameaction = ga_nothing;
-  AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
 }
 
 // killough 2/28/98: A ridiculously large number
@@ -1371,9 +1370,6 @@ void G_ReloadDefaults(void)
 
   _g->demoplayback = false;
   _g->singledemo = false;            // killough 9/29/98: don't stop after 1 demo
-
-  // killough 2/21/98:
-  memset(_g->playeringame+1, 0, sizeof(*_g->playeringame)*(MAXPLAYERS-1));
 }
 
 void G_DoNewGame (void)
@@ -1454,9 +1450,6 @@ void G_InitNew(skill_t skill, int episode, int map)
   _g->gameskill = skill;
 
   _g->totalleveltimes = 0; // cph
-
-  //jff 4/16/98 force marks on automap cleared every new level start
-  AM_clearMarks();
 
   G_DoLoadLevel ();
 }

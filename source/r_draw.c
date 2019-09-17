@@ -99,9 +99,6 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 // Could be read from a lump instead.
 //
 
-byte playernumtotrans[MAXPLAYERS];
-extern lighttable_t *(*c_zlight)[LIGHTLEVELS][MAXLIGHTZ];
-
 void R_InitTranslationTables (void)
 {
     int		i;
