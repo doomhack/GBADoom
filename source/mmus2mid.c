@@ -323,6 +323,9 @@ int mmus2mid(const UBYTE *mus, MIDI *mididata, UWORD division, int nocomp)
   UBYTE MIDIchan2track[MIDI_TRACKS];  // killough 10/7/98: fix too small array
   int MUS2MIDchannel[MIDI_TRACKS];    // killough 10/7/98: fix too small array
 
+  if(_g->track == NULL)
+      _g->track = malloc(sizeof(TrackInfo)*MIDI_TRACKS);
+
   // copy the MUS header from the MUS buffer to the MUSh header structure
 
   memcpy(&MUSh,mus,sizeof(MUSheader));

@@ -415,11 +415,10 @@ void I_ShutdownMusic(void)
 
 void I_InitMusic(void)
 {
-#ifdef __WINS__
-	music_init  = (mid_init ("C:\\Doom\\dgguspat\\timidity.cfg") >= 0);
-#else
+
     _g->music_init = (mid_init ("D:\\Doom\\dgguspat\\timidity.cfg") >= 0);
-#endif
+
+    _g->music_buffer = (short*)malloc(MUSIC_BUFFER_SAMPLES * 2 * 2);
 
     if(!_g->music_init)
 		lprintf(LO_INFO,"I_InitMusic: mid_init failed.\n");

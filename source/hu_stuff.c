@@ -549,24 +549,6 @@ void HU_Start(void)
     CR_GRAY
   );
 
-  //jff 4/21/98 if setup has disabled message list while active, turn it off
-  _g->message_list = hud_msg_lines > 1; //jff 8/8/98 initialize both ways
-  //jff 2/26/98 add the text refresh widget initialization
-  HUlib_initMText
-  (
-    &_g->w_rtext,
-    0,
-    0,
-    320,
-//    SCREENWIDTH,
-    (hud_msg_lines+2)*HU_REFRESHSPACING,
-    _g->hu_font,
-    HU_FONTSTART,
-    hudcolor_list,
-    NULL,
-    &_g->message_list
-  );
-
   // initialize the automap's level title widget
   if (_g->gamestate == GS_LEVEL) /* cph - stop SEGV here when not in level */
   switch (_g->gamemode)
@@ -1011,10 +993,6 @@ void HU_Drawer(void)
   // if the message review not enabled, show the standard message widget
   if (!_g->message_list)
     HUlib_drawSText(&_g->w_message);
-
-  // if the message review is enabled show the scrolling message review
-  if (hud_msg_lines>1 && _g->message_list)
-    HUlib_drawMText(&_g->w_rtext);
 }
 
 //
@@ -1029,8 +1007,6 @@ void HU_Erase(void)
   // erase the message display or the message review display
   if (!_g->message_list)
     HUlib_eraseSText(&_g->w_message);
-  else
-    HUlib_eraseMText(&_g->w_rtext);
 
   // erase the automap title
   HUlib_eraseTextLine(&_g->w_title);
@@ -1066,8 +1042,6 @@ void HU_Ticker(void)
     {
       //post the message to the message widget
       HUlib_addMessageToSText(&_g->w_message, 0, plr->message);
-      //jff 2/26/98 add message to refresh text widget too
-      HUlib_addMessageToMText(&_g->w_rtext, 0, plr->message);
 
       // clear the message to avoid posting multiple times
       plr->message = 0;

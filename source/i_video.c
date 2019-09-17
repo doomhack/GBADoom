@@ -129,7 +129,7 @@ static void I_UploadNewPalette(int pal)
 
 	palette += (pal*256*3);
 
-    memcpy(_g->current_pallete, palette, 3*256);
+    _g->current_pallete = palette;
 
 	W_UnlockLumpNum(pplump);
 	

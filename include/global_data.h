@@ -255,7 +255,6 @@ hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
 hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
 hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
 hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
-hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
 
 boolean    always_off;
 boolean    message_on;
@@ -266,13 +265,13 @@ int        message_counter;
 boolean    headsupactive;
 
 //jff 2/16/98 initialization strings for ammo, health, armor widgets
-char hud_ammostr[80];
-char hud_healthstr[80];
-char hud_armorstr[80];
-char hud_weapstr[80];
-char hud_keysstr[80];
-char hud_gkeysstr[80]; //jff 3/7/98 add support for graphic key display
-char hud_monsecstr[80];
+char hud_ammostr[16];
+char hud_healthstr[16];
+char hud_armorstr[16];
+char hud_weapstr[16];
+char hud_keysstr[16];
+char hud_gkeysstr[16]; //jff 3/7/98 add support for graphic key display
+char hud_monsecstr[16];
 
 
 //******************************************************************************
@@ -281,7 +280,7 @@ char hud_monsecstr[80];
 
 boolean sound_inited;
 
-short music_buffer[MUSIC_BUFFER_SAMPLES * 2];
+short* music_buffer;
 unsigned int current_music_buffer;
 
 unsigned int music_looping;
@@ -307,7 +306,7 @@ unsigned long basetime;
 //i_video.c
 //******************************************************************************
 
-unsigned char current_pallete[3*256];
+const unsigned char* current_pallete;
 int newpal;
 
 //******************************************************************************
@@ -359,7 +358,7 @@ int	prndindex;
 //mmus2mis.c
 //******************************************************************************
 
-TrackInfo track[MIDI_TRACKS];
+TrackInfo* track;
 
 //******************************************************************************
 //p_ceiling.c
