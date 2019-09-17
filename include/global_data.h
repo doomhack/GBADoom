@@ -254,7 +254,6 @@ hu_textline_t  w_armor;  //jff 2/16/98 new armor widget for hud
 hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
 hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
 hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
-hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
 
 boolean    always_off;
 boolean    message_on;

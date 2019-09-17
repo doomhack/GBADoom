@@ -123,7 +123,6 @@ HEADERS += \
     include/f_wipe.h \
     include/g_game.h \
     include/global_data.h \
-    include/global_defs.h \
     include/global_init.h \
     include/hu_lib.h \
     include/hu_stuff.h \

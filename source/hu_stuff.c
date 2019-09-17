@@ -536,19 +536,6 @@ void HU_Start(void)
     CR_RED
   );
 
-  // create the hud monster/secret widget
-  // totals and current values for kills, items, secrets
-  // lower left of screen
-  HUlib_initTextLine
-  (
-    &_g->w_monsec,
-    hud_distributed? HU_MONSECX_D : HU_MONSECX,  //3/4/98 distribute
-    hud_distributed? HU_MONSECY_D : HU_MONSECY,
-    _g->hu_font,
-    HU_FONTSTART,
-    CR_GRAY
-  );
-
   // initialize the automap's level title widget
   if (_g->gamestate == GS_LEVEL) /* cph - stop SEGV here when not in level */
   switch (_g->gamemode)
@@ -605,12 +592,6 @@ void HU_Start(void)
   while (*s)
     HUlib_addCharToTextLine(&_g->w_gkeys, *(s++));
 
-  //jff 2/17/98 initialize kills/items/secret widget
-  strcpy(_g->hud_monsecstr,"STS ");
-  s = _g->hud_monsecstr;
-  while (*s)
-    HUlib_addCharToTextLine(&_g->w_monsec, *(s++));
-
   // now allow the heads-up display to run
   _g->headsupactive = true;
 
@@ -637,8 +618,6 @@ void HU_MoveHud(void)
     _g->w_keys.y =    hud_distributed? HU_KEYSY_D   : HU_KEYSY;
     _g->w_gkeys.x =   hud_distributed? HU_KEYSGX_D  : HU_KEYSGX;
     _g->w_gkeys.y =   hud_distributed? HU_KEYSY_D   : HU_KEYSY;
-    _g->w_monsec.x =  hud_distributed? HU_MONSECX_D : HU_MONSECX;
-    _g->w_monsec.y =  hud_distributed? HU_MONSECY_D : HU_MONSECY;
     _g->w_health.x =  hud_distributed? HU_HEALTHX_D : HU_HEALTHX;
     _g->w_health.y =  hud_distributed? HU_HEALTHY_D : HU_HEALTHY;
     _g->w_armor.x =   hud_distributed? HU_ARMORX_D  : HU_ARMORX;
@@ -953,32 +932,6 @@ void HU_Drawer(void)
         // display the widget
         HUlib_drawTextLine(&_g->w_gkeys, false);
 
-    }
-
-    // display the hud kills/items/secret display if optioned
-    {
-      if (doit)
-      {
-        // clear the internal widget text buffer
-        HUlib_clearTextLine(&_g->w_monsec);
-        //jff 3/26/98 use ESC not '\' for paths
-        // build the init string with fixed colors
-        sprintf
-        (
-          _g->hud_monsecstr,
-          "STS \x1b\x36K \x1b\x33%d \x1b\x36M \x1b\x33%d \x1b\x37I \x1b\x33%d/%d \x1b\x35S \x1b\x33%d/%d",
-          plr->killcount,_g->totallive,
-          plr->itemcount,_g->totalitems,
-          plr->secretcount,_g->totalsecret
-        );
-        // transfer the init string to the widget
-        s = _g->hud_monsecstr;
-        while (*s)
-          HUlib_addCharToTextLine(&_g->w_monsec, *(s++));
-      }
-      // display the kills/items/secrets each frame, if optioned
-
-        HUlib_drawTextLine(&_g->w_monsec, false);
     }
   }
 

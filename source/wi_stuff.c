@@ -330,26 +330,16 @@ static const char sp_secret[] = {"WISCRT2"};
 
 // "Kills", "Scrt", "Items", "Frags"
 static const char kills[] = {"WIOSTK"};
-static const char secret[] = {"WIOSTS"};
 static const char items[] = {"WIOSTI"};
-static const char frags[] = {"WIFRGS"};
 
 // Time sucks.
 static const char time1[] = {"WITIME"};
 static const char par[] = {"WIPAR"};
 static const char sucks[] = {"WISUCKS"};
 
-// "killers", "victims"
-static const char killers[] = {"WIKILRS"};
-static const char victims[] = {"WIVCTMS"};
-
 // "Total", your face, your dead face
 static const char total[] = {"WIMSTT"};
-static const char star[] = {"STFST01"};
-static const char bstar[] = {"STFDEAD0"};
 
-// "red P[1..MAXPLAYERS]"
-static const char facebackp[] = {"STPB0"};
 
 //
 // CODE
