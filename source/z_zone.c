@@ -58,10 +58,10 @@
 // Tunables
 
 // Alignment of zone memory (benefit may be negated by HEADER_SIZE, CHUNK_SIZE)
-#define CACHE_ALIGN 32
+#define CACHE_ALIGN 4
 
 // Minimum chunk size at which blocks are allocated
-#define CHUNK_SIZE 32
+#define CHUNK_SIZE 4
 
 // Minimum size a block must be to become part of a split
 #define MIN_BLOCK_SPLIT (1024)

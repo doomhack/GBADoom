@@ -50,9 +50,6 @@ typedef struct globals_t
 //******************************************************************************
 
 enum automapmode_e automapmode; // Mode that the automap is in
-boolean leveljuststarted;       // kluge until AM_LevelInit() is called
-boolean stopped;
-
 
 // location of window on screen
 int  f_x;
@@ -97,6 +94,9 @@ player_t *plr;           // the player represented by an arrow
 
 int lastlevel, lastepisode;
 
+boolean leveljuststarted;       // kluge until AM_LevelInit() is called
+boolean stopped;
+
 
 //******************************************************************************
 //d_client.c
@@ -114,11 +114,11 @@ int lastmadetic;
 boolean singletics; // debug flag to cancel adaptiveness
 boolean advancedemo;
 
-// wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t    wipegamestate;
 
 boolean isborderstate;
-boolean borderwillneedredraw;
+
+// wipegamestate can be set to -1 to force a wipe on the next draw
+gamestate_t    wipegamestate;
 gamestate_t oldgamestate;
 
 int  demosequence;         // killough 5/2/98: made static
@@ -150,15 +150,15 @@ const char*   finaleflat; // made static const
 int             castnum;
 int             casttics;
 const state_t*  caststate;
-boolean         castdeath;
 int             castframes;
 int             castonmelee;
-boolean         castattacking;
+
 
 int midstage;                 // whether we're in "mid-stage"
 int  laststage;
 
-
+boolean         castattacking;
+boolean         castdeath;
 
 //******************************************************************************
 //g_game.c
@@ -217,12 +217,11 @@ int bodyquecount;
 
 gamestate_t prevgamestate;
 
-boolean secretexit;
-
 skill_t d_skill;
 int     d_episode;
 int     d_map;
 
+boolean secretexit;
 
 
 
@@ -230,39 +229,17 @@ int     d_map;
 //hu_stuff.c
 //******************************************************************************
 
-int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
-
 // font sets
 patchnum_t hu_font[HU_FONTSIZE];
-patchnum_t hu_fontk[HU_FONTSIZE];//jff 3/7/98 added for graphic key indicators
 
 // widgets
 hu_textline_t  w_title;
 hu_stext_t     w_message;
-hu_textline_t  w_ammo;   //jff 2/16/98 new ammo widget for hud
-hu_textline_t  w_health; //jff 2/16/98 new health widget for hud
-hu_textline_t  w_armor;  //jff 2/16/98 new armor widget for hud
-hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
-hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
-hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
-
-boolean    always_off;
-boolean    message_on;
-boolean    message_list; //2/26/98 enable showing list of messages
-boolean    message_dontfuckwithme;
-boolean    message_nottobefuckedwith;
 int        message_counter;
+
+boolean    message_on;
+boolean    message_dontfuckwithme;
 boolean    headsupactive;
-
-//jff 2/16/98 initialization strings for ammo, health, armor widgets
-char hud_ammostr[16];
-char hud_healthstr[16];
-char hud_armorstr[16];
-char hud_weapstr[16];
-char hud_keysstr[16];
-char hud_gkeysstr[16]; //jff 3/7/98 add support for graphic key display
-char hud_monsecstr[16];
-
 
 //******************************************************************************
 //i_audio.c
@@ -750,10 +727,6 @@ fixed_t planeheight;
 // killough 2/8/98: make variables static
 
 fixed_t basexscale, baseyscale;
-fixed_t cachedheight[MAX_SCREENHEIGHT];
-fixed_t cacheddistance[MAX_SCREENHEIGHT];
-fixed_t cachedxstep[MAX_SCREENHEIGHT];
-fixed_t cachedystep[MAX_SCREENHEIGHT];
 fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
 
 //******************************************************************************

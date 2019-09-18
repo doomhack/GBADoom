@@ -103,19 +103,9 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
     I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
 #endif
 
-  if (_g->planeheight != _g->cachedheight[y])
-    {
-      _g->cachedheight[y] = _g->planeheight;
-      distance = _g->cacheddistance[y] = FixedMul (_g->planeheight, yslope[y]);
-      dsvars->xstep = _g->cachedxstep[y] = FixedMul (distance,_g->basexscale);
-      dsvars->ystep = _g->cachedystep[y] = FixedMul (distance,_g->baseyscale);
-    }
-  else
-    {
-      distance = _g->cacheddistance[y];
-      dsvars->xstep = _g->cachedxstep[y];
-      dsvars->ystep = _g->cachedystep[y];
-    }
+  distance = FixedMul(_g->planeheight, yslope[y]);
+  dsvars->xstep = FixedMul(distance,_g->basexscale);
+  dsvars->ystep = FixedMul(distance,_g->baseyscale);
 
   length = FixedMul (distance, distscale[x1]);
   angle = (_g->viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
@@ -162,9 +152,6 @@ void R_ClearPlanes(void)
       _g->freehead = &(*_g->freehead)->next;
 
   _g->lastopening = _g->openings;
-
-  // texture calculation
-  memset (_g->cachedheight, 0, sizeof(_g->cachedheight));
 
   // scale will be unit scale at SCREENWIDTH/2 distance
   _g->basexscale = FixedDiv (_g->viewsin,projection);

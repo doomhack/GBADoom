@@ -210,9 +210,6 @@ void HUlib_drawTextLine
 //
 void HUlib_eraseTextLine(hu_textline_t* l)
 {
-  int lh;
-  int y;
-
   if (l->needsupdate)
       l->needsupdate--;
 }

@@ -561,17 +561,6 @@ void G_Ticker (void)
 
           if (_g->demoplayback)
             G_ReadDemoTiccmd (cmd);
-
-          // check for turbo cheats
-          // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
-
-          if ((_g->demoplayback) && cmd->forwardmove > TURBOTHRESHOLD &&
-              !(_g->gametic&31) && ((_g->gametic>>5)&3) == i )
-            {
-        extern char *player_names[];
-        /* cph - don't use sprintf, use doom_printf */
-              doom_printf ("%s is turbo!", player_names[i]);
-            }
         }
     }
 

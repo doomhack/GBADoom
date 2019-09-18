@@ -48,7 +48,7 @@
  */
 
 #define HU_MAXLINES   1
-#define HU_MAXLINELENGTH  32
+#define HU_MAXLINELENGTH  31
 #define HU_REFRESHSPACING 8 /*jff 2/26/98 space lines in text refresh widget*/
 /*jff 2/26/98 maximum number of messages allowed in refresh list */
 #define HU_MAXMESSAGES 1

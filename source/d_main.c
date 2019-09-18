@@ -158,7 +158,7 @@ void D_Display (void)
 {
 
   boolean wipe;
-  boolean viewactive = false, isborder = false;
+  boolean viewactive = false;
 
   if (_g->nodrawers)                    // for comparative timing / profiling
     return;
@@ -204,34 +204,16 @@ void D_Display (void)
 
     // Work out if the player view is visible, and if there is a border
     viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
-    isborder = viewactive ? (viewheight != SCREENHEIGHT) : ((_g->automapmode & am_active));
-
-    if (_g->oldgamestate != GS_LEVEL) {
-      R_FillBackScreen ();    // draw the pattern into the back screen
-      redrawborderstuff = isborder;
-    } else {
-      // CPhipps -
-      // If there is a border, and either there was no border last time,
-      // or the border might need refreshing, then redraw it.
-      redrawborderstuff = isborder && (!_g->isborderstate || _g->borderwillneedredraw);
-      // The border may need redrawing next time if the border surrounds the screen,
-      // and there is a menu being displayed
-      _g->borderwillneedredraw = false;
-    }
-    if (redrawborderstuff)
-      R_DrawViewBorder();
 
     // Now do the drawing
     if (viewactive)
       R_RenderPlayerView (&_g->players[displayplayer]);
     if (_g->automapmode & am_active)
       AM_Drawer();
-    ST_Drawer((viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), redrawborderstuff);
-    R_DrawViewBorder();
+    ST_Drawer((viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), false);
     HU_Drawer();
   }
 
-  _g->isborderstate      = isborder;
   _g->oldgamestate = _g->wipegamestate = _g->gamestate;
 
   // draw pause pic
