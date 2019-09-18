@@ -78,7 +78,7 @@ typedef struct {
   int byte_pitch;      // tha actual width of one line, used when mallocing
 } screeninfo_t;
 
-#define NUM_SCREENS 6
+#define NUM_SCREENS 2
 
 // The available bit-depth modes
 typedef enum {

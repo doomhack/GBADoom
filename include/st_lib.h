@@ -41,7 +41,7 @@
 //
 // Background and foreground screen numbers
 //
-#define ST_BG 4
+#define ST_BG 1
 #define ST_FG 0
 
 //

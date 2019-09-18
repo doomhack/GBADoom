@@ -708,7 +708,7 @@ static void D_DoomMainSetup(void)
     M_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"R_Init: Init DOOM refresh daemon - ");
+    lprintf(LO_INFO,"R_Init: Init DOOM refresh daemon - \n");
     R_Init();
 
     //jff 9/3/98 use logical output routine

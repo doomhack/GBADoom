@@ -62,10 +62,6 @@
 
 static void (*messageRoutine)(int response);
 
-
-/* cphipps - M_DrawBackground renamed and moved to v_video.c */
-#define M_DrawBackground V_DrawBackground
-
 // we are going to be entering a savegame string
 
 #define SKULLXOFF  -32

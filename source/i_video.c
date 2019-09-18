@@ -195,9 +195,9 @@ void I_SetRes(void)
     _g->screens[0].byte_pitch = SCREENPITCH;
 
     // statusbar
-    _g->screens[4].width = SCREENWIDTH;
-    _g->screens[4].height = (ST_SCALED_HEIGHT+1);
-    _g->screens[4].byte_pitch = SCREENPITCH;
+    _g->screens[1].width = SCREENWIDTH;
+    _g->screens[1].height = (ST_SCALED_HEIGHT+1);
+    _g->screens[1].byte_pitch = SCREENPITCH;
 
     lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 }
