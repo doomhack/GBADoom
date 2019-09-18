@@ -60,6 +60,12 @@
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
 
+const int viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
+const int viewheightfrac = (SCREENHEIGHT-ST_SCALED_HEIGHT)<<FRACBITS;
+const int centery = (SCREENHEIGHT-ST_SCALED_HEIGHT)/2;
+const int centerx = SCREENWIDTH/2;
+
+
 //
 // R_PointOnSide
 // Traverse BSP (sub) tree,
@@ -303,19 +309,13 @@ void R_ExecuteSetViewSize (void)
 
   _g->setsizeneeded = false;
 
-  _g->viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
-
-  _g->viewheightfrac = _g->viewheight<<FRACBITS;//e6y
-
-  _g->centery = _g->viewheight/2;
-  _g->centerx = SCREENWIDTH/2;
-  _g->centerxfrac = _g->centerx<<FRACBITS;
-  _g->centeryfrac = _g->centery<<FRACBITS;
+  _g->centerxfrac = centerx<<FRACBITS;
+  _g->centeryfrac = centery<<FRACBITS;
   _g->projection = _g->centerxfrac;
 // proff 11/06/98: Added for high-res
-  _g->projectiony = ((SCREENHEIGHT * _g->centerx * 320) / 200) / SCREENWIDTH * FRACUNIT;
+  _g->projectiony = ((SCREENHEIGHT * centerx * 320) / 200) / SCREENWIDTH * FRACUNIT;
 
-  R_InitBuffer (SCREENWIDTH, _g->viewheight);
+  R_InitBuffer (SCREENWIDTH, viewheight);
 
   R_InitTextureMapping();
 
@@ -328,12 +328,12 @@ void R_ExecuteSetViewSize (void)
 
   // thing clipping
   for (i=0 ; i<SCREENWIDTH ; i++)
-    _g->screenheightarray[i] = _g->viewheight;
+    _g->screenheightarray[i] = viewheight;
 
   // planes
-  for (i=0 ; i<_g->viewheight ; i++)
+  for (i=0 ; i<viewheight ; i++)
     {   // killough 5/2/98: reformatted
-      fixed_t dy = D_abs(((i-_g->viewheight/2)<<FRACBITS)+FRACUNIT/2);
+      fixed_t dy = D_abs(((i-viewheight/2)<<FRACBITS)+FRACUNIT/2);
 // proff 08/17/98: Changed for high-res
       _g->yslope[i] = FixedDiv(_g->projectiony, dy);
     }

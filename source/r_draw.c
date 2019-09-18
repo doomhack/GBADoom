@@ -142,7 +142,7 @@ void R_DrawColumn (draw_column_vars_t *dcvars)
     byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
-    fixed_t frac = dcvars->texturemid + (dcvars->yl - _g->centery)*fracstep;
+    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
  
     // Zero length, column does not exceed a pixel.
     if (dcvars->yl >= dcvars->yh)
@@ -186,8 +186,8 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 		dc_yl = 1;
 
     // .. and high.
-    if (dc_yh == _g->viewheight-1)
-        dc_yh = _g->viewheight - 2;
+    if (dc_yh == viewheight-1)
+        dc_yh = viewheight - 2;
 	
 	 count = dc_yh - dc_yl;
 
@@ -201,7 +201,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
     // Looks familiar.
     fracstep = dcvars->iscale;
 	
-    frac = dcvars->texturemid + (dc_yl-_g->centery)*fracstep;
+    frac = dcvars->texturemid + (dc_yl-centery)*fracstep;
 
     // Looks like an attempt at dithering,
     //  using the colormap #6 (of 0-31, a bit
@@ -247,7 +247,7 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
     byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
-    fixed_t frac = dcvars->texturemid + (dcvars->yl - _g->centery)*fracstep;
+    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
  
 	const unsigned int sw = SCREENWIDTH;
 
@@ -377,7 +377,7 @@ void R_DrawViewBorder(void)
 {
 	int top, side, i;
 
-    if ((SCREENHEIGHT != _g->viewheight) || ((_g->automapmode & am_active) && ! (_g->automapmode & am_overlay)))
+    if ((SCREENHEIGHT != viewheight) || ((_g->automapmode & am_active) && ! (_g->automapmode & am_overlay)))
 	{
 		// erase left and right of statusbar
 		side= ( SCREENWIDTH - ST_SCALED_WIDTH ) / 2;
@@ -392,7 +392,7 @@ void R_DrawViewBorder(void)
 		}
 	}
 
-    if ( _g->viewheight >= ( SCREENHEIGHT - ST_SCALED_HEIGHT ))
+    if ( viewheight >= ( SCREENHEIGHT - ST_SCALED_HEIGHT ))
 		return; // if high-res, don´t go any further!
 
     top = 0;
@@ -403,13 +403,13 @@ void R_DrawViewBorder(void)
 		R_VideoErase (0, i, SCREENWIDTH);
 
 	// copy sides
-    for (i = top; i < (top+_g->viewheight); i++)
+    for (i = top; i < (top+viewheight); i++)
 	{
 		R_VideoErase (0, i, side);
         R_VideoErase (SCREENWIDTH+side, i, side);
 	}
 
 	// copy bottom
-    for (i = top+_g->viewheight; i < (SCREENHEIGHT - ST_SCALED_HEIGHT); i++)
+    for (i = top+viewheight; i < (SCREENHEIGHT - ST_SCALED_HEIGHT); i++)
 		R_VideoErase (0, i, SCREENWIDTH);
 }

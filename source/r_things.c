@@ -326,7 +326,7 @@ void R_DrawMaskedColumn(
         dcvars->yl = _g->mceilingclip[dcvars->x]+1;
 
       // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
-      if (dcvars->yl <= dcvars->yh && dcvars->yh < _g->viewheight)
+      if (dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
         {
           dcvars->source = column->pixels + post->topdelta;
 
@@ -513,8 +513,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   // killough 4/9/98: clip things which are out of view due to height
   // e6y: fix of hanging decoration disappearing in Batman Doom MAP02
   // centeryfrac -> viewheightfrac
-  if (fz  > _g->viewz + FixedDiv(_g->viewheightfrac, xscale) ||
-      gzt < _g->viewz - FixedDiv(_g->viewheightfrac-_g->viewheight, xscale))
+  if (fz  > _g->viewz + FixedDiv(viewheightfrac, xscale) ||
+      gzt < _g->viewz - FixedDiv(viewheightfrac-viewheight, xscale))
     return;
 
     // killough 3/27/98: exclude things totally separated
@@ -888,7 +888,8 @@ static void R_DrawSprite (vissprite_t* spr)
       int phs = _g->viewplayer->mo->subsector->sector->heightsec;
       if ((mh = _g->sectors[spr->heightsec].floorheight) > spr->gz &&
           (h = _g->centeryfrac - FixedMul(mh-=_g->viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < _g->viewheight) {
+          (h >>= FRACBITS) < viewheight)
+      {
         if (mh <= 0 || (phs != -1 && _g->viewz > _g->sectors[phs].floorheight))
           {                          // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
@@ -904,7 +905,7 @@ static void R_DrawSprite (vissprite_t* spr)
 
       if ((mh = _g->sectors[spr->heightsec].ceilingheight) < spr->gzt &&
           (h = _g->centeryfrac - FixedMul(mh-_g->viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < _g->viewheight) {
+          (h >>= FRACBITS) < viewheight) {
         if (phs != -1 && _g->viewz >= _g->sectors[phs].ceilingheight)
           {                         // clip bottom
             for (x=spr->x1 ; x<=spr->x2 ; x++)
@@ -924,7 +925,7 @@ static void R_DrawSprite (vissprite_t* spr)
 
   for (x = spr->x1 ; x<=spr->x2 ; x++) {
     if (clipbot[x] == -2)
-      clipbot[x] = _g->viewheight;
+      clipbot[x] = viewheight;
 
     if (cliptop[x] == -2)
       cliptop[x] = -1;

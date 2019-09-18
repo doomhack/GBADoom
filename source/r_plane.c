@@ -155,7 +155,7 @@ void R_ClearPlanes(void)
 
   // opening / clipping determination
   for (i=0 ; i<SCREENWIDTH ; i++)
-    _g->floorclip[i] = _g->viewheight, _g->ceilingclip[i] = -1;
+    _g->floorclip[i] = viewheight, _g->ceilingclip[i] = -1;
 
   for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
     for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
@@ -363,7 +363,7 @@ static void R_DoDrawPlane(visplane_t *pl)
                 dcvars.colormap = _g->fullcolormap;          // killough 3/20/98
 			
 			// proff 09/21/98: Changed for high-res
-            dcvars.iscale = FRACUNIT*200/_g->viewheight;
+            dcvars.iscale = FRACUNIT*200/viewheight;
 
 			tex_patch = R_CacheTextureCompositePatchNum(texture);
 			

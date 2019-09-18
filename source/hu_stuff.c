@@ -654,7 +654,7 @@ void HU_Drawer(void)
   if
   (
     _g->hud_displayed &&                 // hud on from fullscreen key
-    _g->viewheight==SCREENHEIGHT &&      // fullscreen mode is active
+    viewheight==SCREENHEIGHT &&      // fullscreen mode is active
     !(_g->automapmode & am_active)       // automap is not active
   )
   {

@@ -676,7 +676,6 @@ int       *texturetranslation;
 //r_draw.c
 //******************************************************************************
 
-int  viewheight;
 int  viewwindowx;
 int  viewwindowy;
 
@@ -693,9 +692,7 @@ int fuzzpos;
 
 int validcount;         // increment every time a check is made
 const lighttable_t* fixedcolormap;
-int centerx, centery;
 fixed_t  centerxfrac, centeryfrac;
-fixed_t  viewheightfrac; //e6y: for correct clipping of things
 fixed_t  projection;
 // proff 11/06/98: Added for high-res
 fixed_t  projectiony;
