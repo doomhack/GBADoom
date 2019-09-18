@@ -61,11 +61,18 @@
 
 #define NUMCOLORMAPS 32
 
-const extern int viewheight;
-const extern int viewheightfrac;
+extern const int viewheight;
+extern const int viewheightfrac;
 
-const extern int centery;
-const extern int centerx;
+extern const int centery;
+extern const int centerx;
+
+extern const int centerxfrac;
+extern const int centeryfrac;
+
+extern const fixed_t projection;
+extern const fixed_t projectiony;
+
 //
 // Utility functions.
 //

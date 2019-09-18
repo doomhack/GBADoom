@@ -64,8 +64,11 @@ const int viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
 const int viewheightfrac = (SCREENHEIGHT-ST_SCALED_HEIGHT)<<FRACBITS;
 const int centery = (SCREENHEIGHT-ST_SCALED_HEIGHT)/2;
 const int centerx = SCREENWIDTH/2;
+const int centerxfrac = (SCREENWIDTH/2) << FRACBITS;
+const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
 
-
+const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
+const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
 //
 // R_PointOnSide
 // Traverse BSP (sub) tree,
@@ -202,7 +205,7 @@ static void R_InitTextureMapping (void)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
-  focallength = FixedDiv(_g->centerxfrac, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
+  focallength = FixedDiv(centerxfrac, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
 
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
@@ -215,7 +218,7 @@ static void R_InitTextureMapping (void)
       else
         {
           t = FixedMul(finetangent[i], focallength);
-          t = (_g->centerxfrac - t + FRACUNIT-1) >> FRACBITS;
+          t = (centerxfrac - t + FRACUNIT-1) >> FRACBITS;
           if (t < -1)
             t = -1;
           else
@@ -309,12 +312,6 @@ void R_ExecuteSetViewSize (void)
 
   _g->setsizeneeded = false;
 
-  _g->centerxfrac = centerx<<FRACBITS;
-  _g->centeryfrac = centery<<FRACBITS;
-  _g->projection = _g->centerxfrac;
-// proff 11/06/98: Added for high-res
-  _g->projectiony = ((SCREENHEIGHT * centerx * 320) / 200) / SCREENWIDTH * FRACUNIT;
-
   R_InitBuffer (SCREENWIDTH, viewheight);
 
   R_InitTextureMapping();
@@ -332,11 +329,11 @@ void R_ExecuteSetViewSize (void)
 
   // planes
   for (i=0 ; i<viewheight ; i++)
-    {   // killough 5/2/98: reformatted
+  {   // killough 5/2/98: reformatted
       fixed_t dy = D_abs(((i-viewheight/2)<<FRACBITS)+FRACUNIT/2);
-// proff 08/17/98: Changed for high-res
-      _g->yslope[i] = FixedDiv(_g->projectiony, dy);
-    }
+      // proff 08/17/98: Changed for high-res
+      _g->yslope[i] = FixedDiv(projectiony, dy);
+  }
 
   for (i=0 ; i<SCREENWIDTH ; i++)
     {

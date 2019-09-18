@@ -380,7 +380,7 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   frac = vis->startfrac;
 
   _g->spryscale = vis->scale;
-  _g->sprtopscreen = _g->centeryfrac - FixedMul(dcvars.texturemid,_g->spryscale);
+  _g->sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid,_g->spryscale);
 
   for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
@@ -440,7 +440,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   if (tz < MINZ)
     return;
 
-  xscale = FixedDiv(_g->projection, tz);
+  xscale = FixedDiv(projection, tz);
 
   gxt = -FixedMul(tr_x,_g->viewsin);
   gyt = FixedMul(tr_y,_g->viewcos);
@@ -496,10 +496,10 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     } else {
       tx -= patch->leftoffset << FRACBITS;
     }
-    x1 = (_g->centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
+    x1 = (centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
 
     tx += patch->width<<FRACBITS;
-    x2 = ((_g->centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
+    x2 = ((centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
 
     gzt = fz + (patch->topoffset << FRACBITS);
     width = patch->width;
@@ -545,7 +545,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
   vis->mobjflags = thing->flags;
 // proff 11/06/98: Changed for high-res
-  vis->scale = FixedDiv(_g->projectiony, tz);
+  vis->scale = FixedDiv(projectiony, tz);
   vis->gx = fx;
   vis->gy = fy;
   vis->gz = fz;
@@ -655,10 +655,10 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     tx = psp->sx-160*FRACUNIT;
 
     tx -= patch->leftoffset<<FRACBITS;
-    x1 = (_g->centerxfrac + FixedMul (tx,_g->pspritescale))>>FRACBITS;
+    x1 = (centerxfrac + FixedMul (tx,_g->pspritescale))>>FRACBITS;
 
     tx += patch->width<<FRACBITS;
-    x2 = ((_g->centerxfrac + FixedMul (tx, _g->pspritescale) ) >>FRACBITS) - 1;
+    x2 = ((centerxfrac + FixedMul (tx, _g->pspritescale) ) >>FRACBITS) - 1;
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
@@ -887,7 +887,7 @@ static void R_DrawSprite (vissprite_t* spr)
       fixed_t h,mh;
       int phs = _g->viewplayer->mo->subsector->sector->heightsec;
       if ((mh = _g->sectors[spr->heightsec].floorheight) > spr->gz &&
-          (h = _g->centeryfrac - FixedMul(mh-=_g->viewz, spr->scale)) >= 0 &&
+          (h = centeryfrac - FixedMul(mh-=_g->viewz, spr->scale)) >= 0 &&
           (h >>= FRACBITS) < viewheight)
       {
         if (mh <= 0 || (phs != -1 && _g->viewz > _g->sectors[phs].floorheight))
@@ -904,7 +904,7 @@ static void R_DrawSprite (vissprite_t* spr)
       }
 
       if ((mh = _g->sectors[spr->heightsec].ceilingheight) < spr->gzt &&
-          (h = _g->centeryfrac - FixedMul(mh-_g->viewz, spr->scale)) >= 0 &&
+          (h = centeryfrac - FixedMul(mh-_g->viewz, spr->scale)) >= 0 &&
           (h >>= FRACBITS) < viewheight) {
         if (phs != -1 && _g->viewz >= _g->sectors[phs].ceilingheight)
           {                         // clip bottom

@@ -167,8 +167,8 @@ void R_ClearPlanes(void)
   memset (_g->cachedheight, 0, sizeof(_g->cachedheight));
 
   // scale will be unit scale at SCREENWIDTH/2 distance
-  _g->basexscale = FixedDiv (_g->viewsin,_g->projection);
-  _g->baseyscale = FixedDiv (_g->viewcos,_g->projection);
+  _g->basexscale = FixedDiv (_g->viewsin,projection);
+  _g->baseyscale = FixedDiv (_g->viewcos,projection);
 }
 
 // New function, by Lee Killough

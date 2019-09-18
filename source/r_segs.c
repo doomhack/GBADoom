@@ -69,7 +69,7 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
   int     den = FixedMul(_g->rw_distance, finesine[anglea>>ANGLETOFINESHIFT]);
 
 // proff 11/06/98: Changed for high-res
-  fixed_t num = FixedMul(_g->projectiony, finesine[angleb>>ANGLETOFINESHIFT]);
+  fixed_t num = FixedMul(projectiony, finesine[angleb>>ANGLETOFINESHIFT]);
 
   return den > num>>16 ? (num = FixedDiv(num, den)) > 64*FRACUNIT ?
     64*FRACUNIT : num < 256 ? 256 : num : 64*FRACUNIT;
@@ -161,7 +161,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         // mapping to screen coordinates is totally out of range:
 
         {
-          int_64_t t = ((int_64_t) _g->centeryfrac << FRACBITS) -
+          int_64_t t = ((int_64_t) centeryfrac << FRACBITS) -
             (int_64_t) dcvars.texturemid * _g->spryscale;
           if (t + (int_64_t) _g->textureheight[texnum] * _g->spryscale < 0 ||
               t > (int_64_t) MAX_SCREENHEIGHT << FRACBITS*2)
@@ -679,10 +679,10 @@ void R_StoreWallRange(const int start, const int stop)
   _g->worldbottom >>= 4;
 
   _g->topstep = -FixedMul (_g->rw_scalestep, _g->worldtop);
-  _g->topfrac = (_g->centeryfrac>>4) - FixedMul (_g->worldtop, _g->rw_scale);
+  _g->topfrac = (centeryfrac>>4) - FixedMul (_g->worldtop, _g->rw_scale);
 
   _g->bottomstep = -FixedMul (_g->rw_scalestep,_g->worldbottom);
-  _g->bottomfrac = (_g->centeryfrac>>4) - FixedMul (_g->worldbottom, _g->rw_scale);
+  _g->bottomfrac = (centeryfrac>>4) - FixedMul (_g->worldbottom, _g->rw_scale);
 
   if (_g->backsector)
     {
@@ -691,12 +691,12 @@ void R_StoreWallRange(const int start, const int stop)
 
       if (_g->worldhigh < _g->worldtop)
         {
-          _g->pixhigh = (_g->centeryfrac>>4) - FixedMul (_g->worldhigh, _g->rw_scale);
+          _g->pixhigh = (centeryfrac>>4) - FixedMul (_g->worldhigh, _g->rw_scale);
           _g->pixhighstep = -FixedMul (_g->rw_scalestep,_g->worldhigh);
         }
       if (_g->worldlow > _g->worldbottom)
         {
-          _g->pixlow = (_g->centeryfrac>>4) - FixedMul (_g->worldlow, _g->rw_scale);
+          _g->pixlow = (centeryfrac>>4) - FixedMul (_g->worldlow, _g->rw_scale);
           _g->pixlowstep = -FixedMul (_g->rw_scalestep,_g->worldlow);
         }
     }

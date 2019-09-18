@@ -692,10 +692,7 @@ int fuzzpos;
 
 int validcount;         // increment every time a check is made
 const lighttable_t* fixedcolormap;
-fixed_t  centerxfrac, centeryfrac;
-fixed_t  projection;
 // proff 11/06/98: Added for high-res
-fixed_t  projectiony;
 fixed_t  viewx, viewy, viewz;
 angle_t  viewangle;
 fixed_t  viewcos, viewsin;
