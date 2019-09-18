@@ -216,7 +216,7 @@ void D_Display (void)
       redrawborderstuff = isborder && (!_g->isborderstate || _g->borderwillneedredraw);
       // The border may need redrawing next time if the border surrounds the screen,
       // and there is a menu being displayed
-      _g->borderwillneedredraw = _g->menuactive && isborder && viewactive && (_g->viewwidth != SCREENWIDTH);
+      _g->borderwillneedredraw = false;
     }
     if (redrawborderstuff)
       R_DrawViewBorder();

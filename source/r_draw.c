@@ -353,33 +353,7 @@ void R_InitBuffer(int width, int height)
 
 void R_FillBackScreen (void)
 {
-	int     x,y;
 
-    if (_g->scaledviewwidth == SCREENWIDTH)
-		return;
-
-    V_DrawBackground(_g->gamemode == commercial ? "GRNROCK" : "FLOOR7_2", 0);
-
-    for (x=0; x<_g->scaledviewwidth; x+=8)
-        V_DrawNamePatch(_g->viewwindowx+x,_g->viewwindowy-8,0,"brdr_t", CR_DEFAULT, VPT_NONE);
-
-    for (x=0; x<_g->scaledviewwidth; x+=8)
-        V_DrawNamePatch(_g->viewwindowx+x,_g->viewwindowy+_g->viewheight,0,"brdr_b", CR_DEFAULT, VPT_NONE);
-
-    for (y=0; y<_g->viewheight; y+=8)
-        V_DrawNamePatch(_g->viewwindowx-8,_g->viewwindowy+y,0,"brdr_l", CR_DEFAULT, VPT_NONE);
-
-    for (y=0; y<_g->viewheight; y+=8)
-        V_DrawNamePatch(_g->viewwindowx+_g->scaledviewwidth,_g->viewwindowy+y,0,"brdr_r", CR_DEFAULT, VPT_NONE);
-
-	// Draw beveled edge.
-    V_DrawNamePatch(_g->viewwindowx-8,_g->viewwindowy-8,0,"brdr_tl", CR_DEFAULT, VPT_NONE);
-
-    V_DrawNamePatch(_g->viewwindowx+_g->scaledviewwidth,_g->viewwindowy-8,0,"brdr_tr", CR_DEFAULT, VPT_NONE);
-
-    V_DrawNamePatch(_g->viewwindowx-8,_g->viewwindowy+_g->viewheight,0,"brdr_bl", CR_DEFAULT, VPT_NONE);
-
-    V_DrawNamePatch(_g->viewwindowx+_g->scaledviewwidth,_g->viewwindowy+_g->viewheight,0,"brdr_br", CR_DEFAULT, VPT_NONE);
 }
 
 //
@@ -421,8 +395,8 @@ void R_DrawViewBorder(void)
     if ( _g->viewheight >= ( SCREENHEIGHT - ST_SCALED_HEIGHT ))
 		return; // if high-res, don´t go any further!
 
-    top = ((SCREENHEIGHT-ST_SCALED_HEIGHT)-_g->viewheight)/2;
-    side = (SCREENWIDTH-_g->scaledviewwidth)/2;
+    top = 0;
+    side = 0;
 
 	// copy top
 	for (i = 0; i < top; i++)
@@ -432,7 +406,7 @@ void R_DrawViewBorder(void)
     for (i = top; i < (top+_g->viewheight); i++)
 	{
 		R_VideoErase (0, i, side);
-        R_VideoErase (_g->viewwidth+side, i, side);
+        R_VideoErase (SCREENWIDTH+side, i, side);
 	}
 
 	// copy bottom

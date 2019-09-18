@@ -507,7 +507,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   }
 
   // off the side?
-  if (x1 > _g->viewwidth || x2 < 0)
+  if (x1 > SCREENWIDTH || x2 < 0)
     return;
 
   // killough 4/9/98: clip things which are out of view due to height
@@ -552,7 +552,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   vis->gzt = gzt;                          // killough 3/27/98
   vis->texturemid = vis->gzt - _g->viewz;
   vis->x1 = x1 < 0 ? 0 : x1;
-  vis->x2 = x2 >= _g->viewwidth ? _g->viewwidth-1 : x2;
+  vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
   iscale = FixedDiv (FRACUNIT, xscale);
 
   if (flip)
@@ -666,7 +666,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   }
 
   // off the side
-  if (x2 < 0 || x1 > _g->viewwidth)
+  if (x2 < 0 || x1 > SCREENWIDTH)
     return;
 
   // store information in a vissprite
@@ -676,7 +676,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* +  FRACUNIT/2 */ -
                     (psp->sy-topoffset);
   vis->x1 = x1 < 0 ? 0 : x1;
-  vis->x2 = x2 >= _g->viewwidth ? _g->viewwidth-1 : x2;
+  vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
 // proff 11/06/98: Added for high-res
   vis->scale = _g->pspriteyscale;
 

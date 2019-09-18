@@ -205,7 +205,7 @@ static void R_InitTextureMapping (void)
         t = -1;
       else
         if (finetangent[i] < -FRACUNIT*2)
-          t = _g->viewwidth+1;
+          t = SCREENWIDTH+1;
       else
         {
           t = FixedMul(finetangent[i], focallength);
@@ -213,8 +213,8 @@ static void R_InitTextureMapping (void)
           if (t < -1)
             t = -1;
           else
-            if (t > _g->viewwidth+1)
-              t = _g->viewwidth+1;
+            if (t > SCREENWIDTH+1)
+              t = SCREENWIDTH+1;
         }
       _g->viewangletox[i] = t;
     }
@@ -223,7 +223,7 @@ static void R_InitTextureMapping (void)
   //  xtoviewangle will give the smallest view angle
   //  that maps to x.
 
-  for (x=0; x<=_g->viewwidth; x++)
+  for (x=0; x<=SCREENWIDTH; x++)
     {
       for (i=0; _g->viewangletox[i] > x; i++)
         ;
@@ -235,8 +235,8 @@ static void R_InitTextureMapping (void)
     if (_g->viewangletox[i] == -1)
       _g->viewangletox[i] = 0;
     else
-      if (_g->viewangletox[i] == _g->viewwidth+1)
-        _g->viewangletox[i] = _g->viewwidth;
+      if (_g->viewangletox[i] == SCREENWIDTH+1)
+        _g->viewangletox[i] = SCREENWIDTH;
 
   _g->clipangle = _g->xtoviewangle[0];
 }
@@ -291,7 +291,6 @@ static void R_InitLightTables (void)
 void R_SetViewSize(int blocks)
 {
   _g->setsizeneeded = true;
-  _g->setblocks = blocks;
 }
 
 //
@@ -304,49 +303,31 @@ void R_ExecuteSetViewSize (void)
 
   _g->setsizeneeded = false;
 
-  if (_g->setblocks == 11)
-    {
-      _g->scaledviewwidth = SCREENWIDTH;
-      _g->viewheight = SCREENHEIGHT;
-    }
-// proff 09/24/98: Added for high-res
-  else if (_g->setblocks == 10)
-    {
-      _g->scaledviewwidth = SCREENWIDTH;
-      _g->viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
-    }
-  else
-    {
-// proff 08/17/98: Changed for high-res
-      _g->scaledviewwidth = _g->setblocks*SCREENWIDTH/10;
-      _g->viewheight = (_g->setblocks*(SCREENHEIGHT-ST_SCALED_HEIGHT)/10) & ~7;
-    }
-
-  _g->viewwidth = _g->scaledviewwidth;
+  _g->viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
 
   _g->viewheightfrac = _g->viewheight<<FRACBITS;//e6y
 
   _g->centery = _g->viewheight/2;
-  _g->centerx = _g->viewwidth/2;
+  _g->centerx = SCREENWIDTH/2;
   _g->centerxfrac = _g->centerx<<FRACBITS;
   _g->centeryfrac = _g->centery<<FRACBITS;
   _g->projection = _g->centerxfrac;
 // proff 11/06/98: Added for high-res
   _g->projectiony = ((SCREENHEIGHT * _g->centerx * 320) / 200) / SCREENWIDTH * FRACUNIT;
 
-  R_InitBuffer (_g->scaledviewwidth, _g->viewheight);
+  R_InitBuffer (SCREENWIDTH, _g->viewheight);
 
   R_InitTextureMapping();
 
   // psprite scales
 // proff 08/17/98: Changed for high-res
-  _g->pspritescale = FRACUNIT*_g->viewwidth/320;
-  _g->pspriteiscale = FRACUNIT*320/_g->viewwidth;
+  _g->pspritescale = FRACUNIT*SCREENWIDTH/320;
+  _g->pspriteiscale = FRACUNIT*320/SCREENWIDTH;
 // proff 11/06/98: Added for high-res
-  _g->pspriteyscale = (((SCREENHEIGHT*_g->viewwidth)/SCREENWIDTH) << FRACBITS) / 200;
+  _g->pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
 
   // thing clipping
-  for (i=0 ; i<_g->viewwidth ; i++)
+  for (i=0 ; i<SCREENWIDTH ; i++)
     _g->screenheightarray[i] = _g->viewheight;
 
   // planes
@@ -357,7 +338,7 @@ void R_ExecuteSetViewSize (void)
       _g->yslope[i] = FixedDiv(_g->projectiony, dy);
     }
 
-  for (i=0 ; i<_g->viewwidth ; i++)
+  for (i=0 ; i<SCREENWIDTH ; i++)
     {
       fixed_t cosadj = D_abs(finecosine[_g->xtoviewangle[i]>>ANGLETOFINESHIFT]);
       _g->distscale[i] = FixedDiv(FRACUNIT,cosadj);
@@ -378,7 +359,7 @@ void R_Init (void)
   R_LoadTrigTables();
   lprintf(LO_INFO, "R_InitData\n");
   R_InitData();
-  R_SetViewSize(_g->screenblocks);
+  R_SetViewSize(10);
   lprintf(LO_INFO, "R_Init: R_InitPlanes\n");
   R_InitPlanes();
   lprintf(LO_INFO, "R_InitLightTables\n");

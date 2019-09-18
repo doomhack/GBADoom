@@ -105,7 +105,6 @@ void M_EndGame(int choice);
 void M_ChangeMessages(int choice);
 void M_SfxVol(int choice);
 void M_MusicVol(int choice);
-void M_SizeDisplay(int choice);
 void M_StartGame(int choice);
 void M_Sound(int choice);
 
@@ -573,8 +572,6 @@ enum
 {                                                   // phares 3/21/98
   endgame,
   messages,
-  scrnsize,
-  option_empty1,
   soundvol,
   opt_end
 };
@@ -586,8 +583,6 @@ static const menuitem_t OptionsMenu[]=
   // killough 4/6/98: move setup to be a sub-menu of OPTIONs
   {1,"M_ENDGAM", M_EndGame},
   {1,"M_MESSG",  M_ChangeMessages},
-  {2,"M_SCRNSZ", M_SizeDisplay},
-  {-1,"",0},
   {1,"M_SVOL",   M_Sound}
 };
 
@@ -613,9 +608,6 @@ void M_DrawOptions(void)
 
   V_DrawNamePatch(OptionsDef.x + 120, OptionsDef.y+LINEHEIGHT*messages, 0,
       msgNames[_g->showMessages], CR_DEFAULT, VPT_STRETCH);
-
-  M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
-   9,_g->screenSize);
 }
 
 void M_Options(int choice)
@@ -751,36 +743,6 @@ void M_ChangeMessages(int choice)
     _g->players[consoleplayer].message = MSGON ; // Ty 03/27/98 - externalized
 
   _g->message_dontfuckwithme = true;
-}
-
-/////////////////////////////
-//
-// CHANGE DISPLAY SIZE
-//
-// jff 2/23/98 restored to pre-HUD state
-// hud_displayed is toggled by + or = in fullscreen
-// hud_displayed is cleared by -
-
-void M_SizeDisplay(int choice)
-{
-  switch(choice) {
-  case 0:
-    if (_g->screenSize > 0) {
-      _g->screenblocks--;
-      _g->screenSize--;
-      _g->hud_displayed = 0;
-    }
-    break;
-  case 1:
-    if (_g->screenSize < 8) {
-      _g->screenblocks++;
-      _g->screenSize++;
-    }
-    else
-      _g->hud_displayed = !_g->hud_displayed;
-    break;
-  }
-  R_SetViewSize (_g->screenblocks /*, detailLevel obsolete -- killough */);
 }
 
 //
@@ -1267,7 +1229,6 @@ void M_Init(void)
   _g->menuactive = 0;
   _g->whichSkull = 0;
   _g->skullAnimCounter = 10;
-  _g->screenSize = _g->screenblocks - 3;
   _g->messageToPrint = 0;
   _g->messageString = NULL;
   _g->messageLastMenuActive = _g->menuactive;

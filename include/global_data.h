@@ -307,9 +307,6 @@ int newpal;
 // defaulted values
 //
 int showMessages;    // Show messages has default, 0 = off, 1 = on
-int screenblocks;    // has default
-
-int screenSize;      // temp for screenblocks (0-9)
 
 int messageToPrint;  // 1 = message to be printed
 
@@ -679,8 +676,6 @@ int       *texturetranslation;
 //r_draw.c
 //******************************************************************************
 
-int  viewwidth;
-int  scaledviewwidth;
 int  viewheight;
 int  viewwindowx;
 int  viewwindowy;
@@ -741,8 +736,6 @@ const lighttable_t *colormaps;
 int extralight;                           // bumped light from gun blasts
 
 boolean setsizeneeded;
-int     setblocks;
-
 
 //******************************************************************************
 //r_patch.c

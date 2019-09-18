@@ -154,7 +154,7 @@ void R_ClearPlanes(void)
   int i;
 
   // opening / clipping determination
-  for (i=0 ; i<_g->viewwidth ; i++)
+  for (i=0 ; i<SCREENWIDTH ; i++)
     _g->floorclip[i] = _g->viewheight, _g->ceilingclip[i] = -1;
 
   for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
@@ -236,7 +236,7 @@ visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel,
   check->height = height;
   check->picnum = picnum;
   check->lightlevel = lightlevel;
-  check->minx = _g->viewwidth; // Was SCREENWIDTH -- killough 11/98
+  check->minx = SCREENWIDTH; // Was SCREENWIDTH -- killough 11/98
   check->maxx = -1;
   check->xoffs = xoffs;               // killough 2/28/98: Save offsets
   check->yoffs = yoffs;

@@ -232,7 +232,7 @@ void HUlib_eraseTextLine(hu_textline_t* l)
         // erase left border
         R_VideoErase(0, y, _g->viewwindowx);
         // erase right border
-        R_VideoErase(_g->viewwindowx + _g->viewwidth, y, _g->viewwindowx);
+        R_VideoErase(_g->viewwindowx + SCREENWIDTH, y, _g->viewwindowx);
       }
     }
   }
