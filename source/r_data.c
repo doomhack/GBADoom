@@ -367,7 +367,7 @@ const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
      */
     return _g->fullcolormap + between(0,NUMCOLORMAPS-1,
           ((256-lightlevel)*2*NUMCOLORMAPS/256) - 4
-          - (FixedMul(spryscale,_g->pspriteiscale)/2 >> LIGHTSCALESHIFT)
+          - (FixedMul(spryscale,pspriteiscale)/2 >> LIGHTSCALESHIFT)
           )*256;
   }
 }

@@ -326,17 +326,9 @@ void R_DrawSpan(draw_span_vars_t *dsvars)
 void R_InitBuffer(int width, int height)
 {
 	int i=0;
-	// Handle resize,
-	//  e.g. smaller view windows
-	//  with border and/or status bar.
-
-    _g->viewwindowx = (SCREENWIDTH-width) >> 1;
 
 	// Same with base row offset.
-
-    _g->viewwindowy = width==SCREENWIDTH ? 0 : (SCREENHEIGHT-(ST_SCALED_HEIGHT-1)-height)>>1;
-
-    _g->drawvars.byte_topleft = _g->screens[0].data + _g->viewwindowy*_g->screens[0].byte_pitch + _g->viewwindowx;
+    _g->drawvars.byte_topleft = _g->screens[0].data;
     _g->drawvars.byte_pitch = _g->screens[0].byte_pitch;
 
 	for (i=0; i<FUZZTABLE; i++)

@@ -42,9 +42,6 @@
 
 #include "global_data.h"
 
-// boolean : whether the screen is always erased
-#define noterased viewwindowx
-
 extern const int  key_backspace;                                          // phares
 extern const int  key_enter;                                              // phares
 
@@ -216,28 +213,8 @@ void HUlib_eraseTextLine(hu_textline_t* l)
   int lh;
   int y;
 
-  // Only erases when NOT in automap and the screen is reduced,
-  // and the text must either need updating or refreshing
-  // (because of a recent change back from the automap)
-
-  if (!(_g->automapmode & am_active) && _g->viewwindowx && l->needsupdate)
-  {
-    lh = l->f[0].height + 1;
-    for (y=l->y; y<l->y+lh ; y++)
-      {
-      if (y < _g->viewwindowy || y >= _g->viewwindowy + viewheight)
-        R_VideoErase(0, y, SCREENWIDTH); // erase entire line
-      else
-      {
-        // erase left border
-        R_VideoErase(0, y, _g->viewwindowx);
-        // erase right border
-        R_VideoErase(_g->viewwindowx + SCREENWIDTH, y, _g->viewwindowx);
-      }
-    }
-  }
-
-  if (l->needsupdate) l->needsupdate--;
+  if (l->needsupdate)
+      l->needsupdate--;
 }
 
 ////////////////////////////////////////////////////////

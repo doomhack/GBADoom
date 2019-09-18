@@ -69,6 +69,15 @@ const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
 
 const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
 const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
+
+const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
+const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
+
+const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
+
+const angle_t clipangle = 537395200; //xtoviewangle[0];
+
+
 //
 // R_PointOnSide
 // Traverse BSP (sub) tree,
@@ -195,59 +204,7 @@ angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 
 static void R_InitTextureMapping (void)
 {
-  register int i,x;
-  fixed_t focallength;
 
-  // Use tangent table to generate viewangletox:
-  //  viewangletox will give the next greatest x
-  //  after the view angle.
-  //
-  // Calc focallength
-  //  so FIELDOFVIEW angles covers SCREENWIDTH.
-
-  focallength = FixedDiv(centerxfrac, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
-
-  for (i=0 ; i<FINEANGLES/2 ; i++)
-    {
-      int t;
-      if (finetangent[i] > FRACUNIT*2)
-        t = -1;
-      else
-        if (finetangent[i] < -FRACUNIT*2)
-          t = SCREENWIDTH+1;
-      else
-        {
-          t = FixedMul(finetangent[i], focallength);
-          t = (centerxfrac - t + FRACUNIT-1) >> FRACBITS;
-          if (t < -1)
-            t = -1;
-          else
-            if (t > SCREENWIDTH+1)
-              t = SCREENWIDTH+1;
-        }
-      _g->viewangletox[i] = t;
-    }
-
-  // Scan viewangletox[] to generate xtoviewangle[]:
-  //  xtoviewangle will give the smallest view angle
-  //  that maps to x.
-
-  for (x=0; x<=SCREENWIDTH; x++)
-    {
-      for (i=0; _g->viewangletox[i] > x; i++)
-        ;
-      _g->xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
-    }
-
-  // Take out the fencepost cases from viewangletox.
-  for (i=0; i<FINEANGLES/2; i++)
-    if (_g->viewangletox[i] == -1)
-      _g->viewangletox[i] = 0;
-    else
-      if (_g->viewangletox[i] == SCREENWIDTH+1)
-        _g->viewangletox[i] = SCREENWIDTH;
-
-  _g->clipangle = _g->xtoviewangle[0];
 }
 
 //
@@ -308,39 +265,11 @@ void R_SetViewSize(int blocks)
 
 void R_ExecuteSetViewSize (void)
 {
-  int i;
-
   _g->setsizeneeded = false;
 
   R_InitBuffer (SCREENWIDTH, viewheight);
 
   R_InitTextureMapping();
-
-  // psprite scales
-// proff 08/17/98: Changed for high-res
-  _g->pspritescale = FRACUNIT*SCREENWIDTH/320;
-  _g->pspriteiscale = FRACUNIT*320/SCREENWIDTH;
-// proff 11/06/98: Added for high-res
-  _g->pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
-
-  // thing clipping
-  for (i=0 ; i<SCREENWIDTH ; i++)
-    _g->screenheightarray[i] = viewheight;
-
-  // planes
-  for (i=0 ; i<viewheight ; i++)
-  {   // killough 5/2/98: reformatted
-      fixed_t dy = D_abs(((i-viewheight/2)<<FRACBITS)+FRACUNIT/2);
-      // proff 08/17/98: Changed for high-res
-      _g->yslope[i] = FixedDiv(projectiony, dy);
-  }
-
-  for (i=0 ; i<SCREENWIDTH ; i++)
-    {
-      fixed_t cosadj = D_abs(finecosine[_g->xtoviewangle[i]>>ANGLETOFINESHIFT]);
-      _g->distscale[i] = FixedDiv(FRACUNIT,cosadj);
-    }
-
 }
 
 //

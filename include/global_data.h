@@ -676,9 +676,6 @@ int       *texturetranslation;
 //r_draw.c
 //******************************************************************************
 
-int  viewwindowx;
-int  viewwindowy;
-
 byte *translationtables;
 
 draw_vars_t drawvars;
@@ -698,24 +695,6 @@ angle_t  viewangle;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 
-//
-// precalculated math tables
-//
-
-angle_t clipangle;
-
-// The viewangletox[viewangle + FINEANGLES/4] lookup
-// maps the visible view angles to screen X coordinates,
-// flattening the arc to a flat projection plane.
-// There will be many angles mapped to the same X.
-
-int viewangletox[FINEANGLES/2];
-
-// The xtoviewangleangle[] table maps a screen pixel
-// to the lowest viewangle that maps back to x ranges
-// from clipangle to -clipangle.
-
-angle_t xtoviewangle[MAX_SCREENWIDTH+1];   // killough 2/8/98
 
 // killough 3/20/98: Support dynamic colormaps, e.g. deep water
 // killough 4/4/98: support dynamic number of them as well
@@ -776,8 +755,6 @@ fixed_t cacheddistance[MAX_SCREENHEIGHT];
 fixed_t cachedxstep[MAX_SCREENHEIGHT];
 fixed_t cachedystep[MAX_SCREENHEIGHT];
 fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
-
-fixed_t yslope[MAX_SCREENHEIGHT], distscale[MAX_SCREENWIDTH];
 
 //******************************************************************************
 //r_segs.c
@@ -840,17 +817,6 @@ int skytexture;
 //******************************************************************************
 //r_things.c
 //******************************************************************************
-
-fixed_t pspritescale;
-fixed_t pspriteiscale;
-// proff 11/06/98: Added for high-res
-fixed_t pspriteyscale;
-
-// constant arrays
-//  used for psprite clipping and initializing clipping
-
-int negonearray[MAX_SCREENWIDTH];        // killough 2/8/98: // dropoff overflow
-int screenheightarray[MAX_SCREENWIDTH];  // change to MAX_* // dropoff overflow
 
 // variables used to look up and range check thing_t sprites patches
 

@@ -268,7 +268,7 @@ static void R_RenderSegLoop (void)
       if (_g->segtextured)
         {
           // calculate texture offset
-          angle_t angle =(_g->rw_centerangle+_g->xtoviewangle[_g->rw_x])>>ANGLETOFINESHIFT;
+          angle_t angle =(_g->rw_centerangle+xtoviewangle[_g->rw_x])>>ANGLETOFINESHIFT;
 
           texturecolumn = _g->rw_offset-FixedMul(finetangent[angle],_g->rw_distance);
 
@@ -480,11 +480,11 @@ void R_StoreWallRange(const int start, const int stop)
   // calculate scale at both ends and step
 
   _g->ds_p->scale1 = _g->rw_scale =
-    R_ScaleFromGlobalAngle (_g->viewangle + _g->xtoviewangle[start]);
+    R_ScaleFromGlobalAngle (_g->viewangle + xtoviewangle[start]);
 
   if (stop > start)
     {
-      _g->ds_p->scale2 = R_ScaleFromGlobalAngle (_g->viewangle + _g->xtoviewangle[stop]);
+      _g->ds_p->scale2 = R_ScaleFromGlobalAngle (_g->viewangle + xtoviewangle[stop]);
       _g->ds_p->scalestep = _g->rw_scalestep = (_g->ds_p->scale2-_g->rw_scale) / (stop-start);
     }
   else
@@ -519,8 +519,8 @@ void R_StoreWallRange(const int start, const int stop)
       _g->rw_midtexturemid += FixedMod(_g->sidedef->rowoffset, _g->textureheight[_g->midtexture]);
 
       _g->ds_p->silhouette = SIL_BOTH;
-      _g->ds_p->sprtopclip = _g->screenheightarray;
-      _g->ds_p->sprbottomclip = _g->negonearray;
+      _g->ds_p->sprtopclip = screenheightarray;
+      _g->ds_p->sprbottomclip = negonearray;
       _g->ds_p->bsilheight = INT_MAX;
       _g->ds_p->tsilheight = INT_MIN;
     }
@@ -539,9 +539,9 @@ void R_StoreWallRange(const int start, const int stop)
   // from being displayed on the automap.
 
   _g->ds_p->silhouette = SIL_BOTH;
-  _g->ds_p->sprbottomclip = _g->negonearray;
+  _g->ds_p->sprbottomclip = negonearray;
   _g->ds_p->bsilheight = INT_MAX;
-  _g->ds_p->sprtopclip = _g->screenheightarray;
+  _g->ds_p->sprtopclip = screenheightarray;
   _g->ds_p->tsilheight = INT_MIN;
 
       } else { /* not solid - old code */

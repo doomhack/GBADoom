@@ -252,9 +252,6 @@ static void R_InitSpriteDefs(const char * const * namelist)
 
 void R_InitSprites(const char * const *namelist)
 {
-  int i;
-  for (i=0; i<MAX_SCREENWIDTH; i++)    // killough 2/8/98
-    _g->negonearray[i] = -1;
   R_InitSpriteDefs(namelist);
 }
 
@@ -655,10 +652,10 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     tx = psp->sx-160*FRACUNIT;
 
     tx -= patch->leftoffset<<FRACBITS;
-    x1 = (centerxfrac + FixedMul (tx,_g->pspritescale))>>FRACBITS;
+    x1 = (centerxfrac + FixedMul (tx, pspritescale))>>FRACBITS;
 
     tx += patch->width<<FRACBITS;
-    x2 = ((centerxfrac + FixedMul (tx, _g->pspritescale) ) >>FRACBITS) - 1;
+    x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
@@ -678,16 +675,16 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
 // proff 11/06/98: Added for high-res
-  vis->scale = _g->pspriteyscale;
+  vis->scale = pspriteyscale;
 
   if (flip)
     {
-      vis->xiscale = -_g->pspriteiscale;
+      vis->xiscale = - pspriteiscale;
       vis->startfrac = (width<<FRACBITS)-1;
     }
   else
     {
-      vis->xiscale = _g->pspriteiscale;
+      vis->xiscale = pspriteiscale;
       vis->startfrac = 0;
     }
 
@@ -706,7 +703,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   else
     // add a fudge factor to better match the original game
     vis->colormap = R_ColourMap(lightlevel,
-        FixedMul(_g->pspritescale, 0x2b000));  // local light
+        FixedMul(pspritescale, 0x2b000));  // local light
 
     R_DrawVisSprite(vis, vis->x1, vis->x2);
 }
@@ -721,8 +718,8 @@ void R_DrawPlayerSprites(void)
   pspdef_t *psp;
 
   // clip to screen bounds
-  _g->mfloorclip = _g->screenheightarray;
-  _g->mceilingclip = _g->negonearray;
+  _g->mfloorclip = screenheightarray;
+  _g->mceilingclip = negonearray;
 
   // add all active psprites
   for (i=0, psp=_g->viewplayer->psprites; i<NUMPSPRITES; i++,psp++)

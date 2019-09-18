@@ -73,6 +73,13 @@ extern const int centeryfrac;
 extern const fixed_t projection;
 extern const fixed_t projectiony;
 
+extern const fixed_t pspritescale;
+extern const fixed_t pspriteiscale;
+
+extern const fixed_t pspriteyscale;
+
+extern const angle_t clipangle;
+
 //
 // Utility functions.
 //

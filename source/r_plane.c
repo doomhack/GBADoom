@@ -106,7 +106,7 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
   if (_g->planeheight != _g->cachedheight[y])
     {
       _g->cachedheight[y] = _g->planeheight;
-      distance = _g->cacheddistance[y] = FixedMul (_g->planeheight, _g->yslope[y]);
+      distance = _g->cacheddistance[y] = FixedMul (_g->planeheight, yslope[y]);
       dsvars->xstep = _g->cachedxstep[y] = FixedMul (distance,_g->basexscale);
       dsvars->ystep = _g->cachedystep[y] = FixedMul (distance,_g->baseyscale);
     }
@@ -117,8 +117,8 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
       dsvars->ystep = _g->cachedystep[y];
     }
 
-  length = FixedMul (distance,_g->distscale[x1]);
-  angle = (_g->viewangle + _g->xtoviewangle[x1])>>ANGLETOFINESHIFT;
+  length = FixedMul (distance, distscale[x1]);
+  angle = (_g->viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
   // killough 2/28/98: Add offsets
   dsvars->xfrac =  _g->viewx + FixedMul(finecosine[angle], length) + _g->xoffs;
@@ -372,7 +372,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 			{
 				if ((dcvars.yl = pl->top[x]) != -1 && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
 				{
-                    dcvars.source = R_GetTextureColumn(tex_patch, ((an + _g->xtoviewangle[x])^flip) >> ANGLETOSKYSHIFT);
+                    dcvars.source = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x])^flip) >> ANGLETOSKYSHIFT);
 					R_DrawColumn(&dcvars);
 				}
 			}

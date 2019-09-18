@@ -304,27 +304,27 @@ static void R_AddLine (seg_t *line)
   angle1 -= _g->viewangle;
   angle2 -= _g->viewangle;
 
-  tspan = angle1 + _g->clipangle;
-  if (tspan > 2*_g->clipangle)
+  tspan = angle1 + clipangle;
+  if (tspan > 2*clipangle)
     {
-      tspan -= 2*_g->clipangle;
+      tspan -= 2*clipangle;
 
       // Totally off the left edge?
       if (tspan >= span)
         return;
 
-      angle1 = _g->clipangle;
+      angle1 = clipangle;
     }
 
-  tspan = _g->clipangle - angle2;
-  if (tspan > 2*_g->clipangle)
+  tspan = clipangle - angle2;
+  if (tspan > 2*clipangle)
     {
-      tspan -= 2*_g->clipangle;
+      tspan -= 2*clipangle;
 
       // Totally off the left edge?
       if (tspan >= span)
         return;
-      angle2 = 0-_g->clipangle;
+      angle2 = 0-clipangle;
     }
 
   // The seg is in the view range,
@@ -334,8 +334,8 @@ static void R_AddLine (seg_t *line)
   angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
 
   // killough 1/31/98: Here is where "slime trails" can SOMETIMES occur:
-  x1 = _g->viewangletox[angle1];
-  x2 = _g->viewangletox[angle2];
+  x1 = viewangletox[angle1];
+  x2 = viewangletox[angle2];
 
   // Does not cross a pixel?
   if (x1 >= x2)       // killough 1/31/98 -- change == to >= for robustness
@@ -416,10 +416,10 @@ static boolean R_CheckBBox(const fixed_t *bspcoord)
       angle2 = INT_MIN;
   }
 
-  if ((signed)angle2 >= (signed)_g->clipangle) return false; // Both off left edge
-  if ((signed)angle1 <= -(signed)_g->clipangle) return false; // Both off right edge
-  if ((signed)angle1 >= (signed)_g->clipangle) angle1 = _g->clipangle; // Clip at left edge
-  if ((signed)angle2 <= -(signed)_g->clipangle) angle2 = 0-_g->clipangle; // Clip at right edge
+  if ((signed)angle2 >= (signed)clipangle) return false; // Both off left edge
+  if ((signed)angle1 <= -(signed)clipangle) return false; // Both off right edge
+  if ((signed)angle1 >= (signed)clipangle) angle1 = clipangle; // Clip at left edge
+  if ((signed)angle2 <= -(signed)clipangle) angle2 = 0-clipangle; // Clip at right edge
 
   // Find the first clippost
   //  that touches the source post
@@ -427,8 +427,8 @@ static boolean R_CheckBBox(const fixed_t *bspcoord)
   angle1 = (angle1+ANG90)>>ANGLETOFINESHIFT;
   angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
   {
-    int sx1 = _g->viewangletox[angle1];
-    int sx2 = _g->viewangletox[angle2];
+    int sx1 = viewangletox[angle1];
+    int sx2 = viewangletox[angle2];
     //    const cliprange_t *start;
 
     // Does not cross a pixel.

@@ -87,6 +87,21 @@ extern const fixed_t finetangent[4096];
 
 extern const angle_t tantoangle[2049];
 
+extern const int viewangletox[4096];
+
+extern const angle_t xtoviewangle[121];
+
+extern const fixed_t yslope[160];
+
+extern const fixed_t distscale[120];
+
+extern const fixed_t screenheightarray[120];
+
+extern const fixed_t negonearray[120];
+
+
+
+
 // Utility function, called by R_PointToAngle.
 int SlopeDiv(unsigned num, unsigned den);
 
