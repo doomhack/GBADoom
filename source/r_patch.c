@@ -644,23 +644,13 @@ const rpatch_t *R_CachePatchNum(int id)
   }
   _g->patches[id].locks += locks;
 
-#ifdef SIMPLECHECKS
-  if (!((_g->patches[id].locks+1) & 0xf))
-    lprintf(LO_DEBUG, "R_CachePatchNum: High lock on %8s (%d)\n", 
-        _g->lumpinfo[id].name, _g->patches[id].locks);
-#endif
-
   return &_g->patches[id];
 }
 
 void R_UnlockPatchNum(int id)
 {
   const int unlocks = 1;
-#ifdef SIMPLECHECKS
-  if ((signed short)_g->patches[id].locks < unlocks)
-    lprintf(LO_DEBUG, "R_UnlockPatchNum: Excess unlocks on %8s (%d-%d)\n", 
-        _g->lumpinfo[id].name, _g->patches[id].locks, unlocks);
-#endif
+
   _g->patches[id].locks -= unlocks;
   /* cph - Note: must only tell z_zone to make purgeable if currently locked, 
    * else it might already have been purged

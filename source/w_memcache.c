@@ -66,7 +66,7 @@ void W_DoneCache(void)
  */
 
 const void *W_CacheLumpNum(int lump)
-{
+{    
     return W_GetLumpPtr(lump);
 }
 

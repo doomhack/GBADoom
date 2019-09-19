@@ -148,6 +148,8 @@ static void R_InitSpriteDefs(const char * const * namelist)
 
   _g->sprites = Z_Malloc(_g->numsprites *sizeof(*_g->sprites), PU_STATIC, NULL);
 
+  memset(_g->sprites, 0, _g->numsprites *sizeof(*_g->sprites));
+
   // Create hash table based on just the first four letters of each sprite
   // killough 1/31/98
 
@@ -158,7 +160,9 @@ static void R_InitSpriteDefs(const char * const * namelist)
 
   for (i=0; (size_t)i<numentries; i++)             // Prepend each sprite to hash chain
     {                                      // prepend so that later ones win
-      int j = R_SpriteNameHash(_g->lumpinfo[i+_g->firstspritelump].name) % numentries;
+      const char* sn = W_GetNameForNum(i+_g->firstspritelump);
+
+      int j = R_SpriteNameHash(sn) % numentries;
       hash[i].next = hash[j].index;
       hash[j].index = i;
     }
@@ -177,24 +181,26 @@ static void R_InitSpriteDefs(const char * const * namelist)
           _g->maxframe = -1;
           do
             {
-              register lumpinfo_t *lump = _g->lumpinfo + j + _g->firstspritelump;
+              const char* sn = W_GetNameForNum(j + _g->firstspritelump);
+
+              //register lumpinfo_t *lump = _g->lumpinfo + j + _g->firstspritelump;
 
               // Fast portable comparison -- killough
               // (using int pointer cast is nonportable):
 
-              if (!((lump->name[0] ^ spritename[0]) |
-                    (lump->name[1] ^ spritename[1]) |
-                    (lump->name[2] ^ spritename[2]) |
-                    (lump->name[3] ^ spritename[3])))
+              if (!((sn[0] ^ spritename[0]) |
+                    (sn[1] ^ spritename[1]) |
+                    (sn[2] ^ spritename[2]) |
+                    (sn[3] ^ spritename[3])))
                 {
                   R_InstallSpriteLump(j+_g->firstspritelump,
-                                      lump->name[4] - 'A',
-                                      lump->name[5] - '0',
+                                      sn[4] - 'A',
+                                      sn[5] - '0',
                                       false);
-                  if (lump->name[6])
+                  if (sn[6])
                     R_InstallSpriteLump(j+_g->firstspritelump,
-                                        lump->name[6] - 'A',
-                                        lump->name[7] - '0',
+                                        sn[6] - 'A',
+                                        sn[7] - '0',
                                         true);
                 }
             }
@@ -462,8 +468,11 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 #endif
 
   if (!sprdef->spriteframes)
-    I_Error ("R_ProjectSprite: Missing spriteframes %i : %i", thing->sprite,
-             thing->frame);
+  {
+      I_Error ("R_ProjectSprite: Missing spriteframes %i : %i", thing->sprite,
+               thing->frame);
+  }
+
 
   sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
 

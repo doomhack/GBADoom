@@ -58,7 +58,6 @@ typedef struct
 } filelump_t;
 
 void W_Init(void); // CPhipps - uses the above array
-void W_ReleaseAllWads(void); // Proff - Added for iwad switching
 void W_InitCache(void);
 void W_DoneCache(void);
 
@@ -90,6 +89,9 @@ typedef struct
 #define W_CheckNumForName(name) (W_CheckNumForName)(name, 0)
 int     (W_CheckNumForName)(const char* name, int);   // killough 4/17/98
 int     W_GetNumForName (const char* name);
+const char* W_GetNameForNum(int lump);
+
+
 int     W_LumpLength (int lump);
 void    W_ReadLump (int lump, void *dest);
 const void* W_GetLumpPtr(int lump);

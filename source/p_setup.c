@@ -1128,11 +1128,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // killough 4/4/98: split load of sidedefs into two parts,
   // to allow texture names to be used in special linedefs
 
-  // refuse to load Hexen-format maps, avoid segfaults
-  if ((i = lumpnum + ML_BLOCKMAP + 1) < _g->numlumps
-      && !strncasecmp(_g->lumpinfo[i].name, "BEHAVIOR", 8))
-    I_Error("P_SetupLevel: %s: Hexen format not supported", lumpname);
-
   // figgi 10/19/00 -- check for gl lumps and load them
   P_GetNodesVersion(lumpnum,0);
 
