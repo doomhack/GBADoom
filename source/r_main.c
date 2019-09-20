@@ -215,33 +215,29 @@ static void R_InitTextureMapping (void)
 
 static void R_InitLightTables (void)
 {
-  int i;
+    int i;
 
-  // killough 4/4/98: dynamic colormaps
-  _g->c_zlight = malloc(sizeof(*_g->c_zlight) * NUMCOLORMAPS);
 
-  // Calculate the light levels to use
-  //  for each level / distance combination.
-  for (i=0; i< LIGHTLEVELS; i++)
+    // Calculate the light levels to use
+    //  for each level / distance combination.
+    // Calculate the light levels to use
+    //  for each level / distance combination.
+    for (i=0 ; i< LIGHTLEVELS ; i++)
     {
-      int j, startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
-      for (j=0; j<MAXLIGHTZ; j++)
+        int startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
+        for (int j=0 ; j<MAXLIGHTZ ; j++)
         {
-    // CPhipps - use 320 here instead of SCREENWIDTH, otherwise hires is
-    //           brighter than normal res
-          int scale = FixedDiv ((320/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
-          int t, level = startmap - (scale >>= LIGHTSCALESHIFT)/DISTMAP;
+            int scale = FixedDiv ((SCREENWIDTH/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
+            scale >>= LIGHTSCALESHIFT;
+            int level = startmap - scale/DISTMAP;
 
-          if (level < 0)
-            level = 0;
-          else
+            if (level < 0)
+                level = 0;
+
             if (level >= NUMCOLORMAPS)
-              level = NUMCOLORMAPS-1;
+                level = NUMCOLORMAPS-1;
 
-          // killough 3/20/98: Initialize multiple colormaps
-          level *= 256;
-          for (t=0; t<NUMCOLORMAPS; t++)         // killough 4/4/98
-            _g->c_zlight[t][i][j] = (&_g->colormaps[t*256]) + level;
+            _g->zlight[i][j] = _g->colormaps + level*256;
         }
     }
 }
@@ -322,8 +318,6 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 
 static void R_SetupFrame (player_t *player)
 {
-  int cm;
-
   _g->viewplayer = player;
 
   _g->viewx = player->mo->x;
@@ -336,21 +330,7 @@ static void R_SetupFrame (player_t *player)
   _g->viewsin = finesine[_g->viewangle>>ANGLETOFINESHIFT];
   _g->viewcos = finecosine[_g->viewangle>>ANGLETOFINESHIFT];
 
-  // killough 3/20/98, 4/4/98: select colormap based on player status
-
-  if (player->mo->subsector->sector->heightsec != -1)
-    {
-      const sector_t *s = player->mo->subsector->sector->heightsec + _g->sectors;
-      cm = _g->viewz < s->floorheight ? s->bottommap : _g->viewz > s->ceilingheight ?
-        s->topmap : s->midmap;
-      if (cm < 0 || cm > NUMCOLORMAPS)
-        cm = 0;
-    }
-  else
-    cm = 0;
-
   _g->fullcolormap = &_g->colormaps[0];
-  _g->zlight = _g->c_zlight[cm];
 
   if (player->fixedcolormap)
     {

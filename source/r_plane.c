@@ -114,7 +114,7 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
   dsvars->xfrac =  _g->viewx + FixedMul(finecosine[angle], length) + _g->xoffs;
   dsvars->yfrac = -_g->viewy - FixedMul(finesine[angle],   length) + _g->yoffs;
 
-  if (!(dsvars->colormap = _g->fixedcolormap))
+  if (!(dsvars->colormap == _g->fixedcolormap))
     {
       dsvars->z = distance;
       index = distance >> LIGHTZSHIFT;

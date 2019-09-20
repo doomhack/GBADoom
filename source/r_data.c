@@ -141,18 +141,6 @@ static void R_InitTextures (void)
     {
       strncpy (name,name_p+i*8, 8);
       patchlookup[i] = W_CheckNumForName(name);
-      if (patchlookup[i] == -1)
-        {
-          // killough 4/17/98:
-          // Some wads use sprites as wall patches, so repeat check and
-          // look for sprites this time, but only if there were no wall
-          // patches found. This is the same as allowing for both, except
-          // that wall patches always win over sprites, even when they
-          // appear first in a wad. This is a kludgy solution to the wad
-          // lump namespace problem.
-
-          patchlookup[i] = (W_CheckNumForName)(name, ns_sprites);
-        }
     }
   W_UnlockLumpNum(names_lump); // cph - release the lump
 
@@ -343,14 +331,18 @@ static inline int between(int l,int u,int x)
 
 const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
 {
-  if (_g->fixedcolormap) return _g->fixedcolormap;
-  else {
+  if (_g->fixedcolormap)
+      return _g->fixedcolormap;
+  else
+  {
     if (_g->curline)
-      if (_g->curline->v1->y == _g->curline->v2->y)
-        lightlevel -= 1 << LIGHTSEGSHIFT;
-      else
-        if (_g->curline->v1->x == _g->curline->v2->x)
-          lightlevel += 1 << LIGHTSEGSHIFT;
+    {
+        if (_g->curline->v1->y == _g->curline->v2->y)
+          lightlevel -= 1 << LIGHTSEGSHIFT;
+        else
+          if (_g->curline->v1->x == _g->curline->v2->x)
+            lightlevel += 1 << LIGHTSEGSHIFT;
+    }
 
     lightlevel += _g->extralight << LIGHTSEGSHIFT;
 
@@ -365,10 +357,7 @@ const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
      * precision until the final step, so slight scale differences can count
      * against slight light level variations.
      */
-    return _g->fullcolormap + between(0,NUMCOLORMAPS-1,
-          ((256-lightlevel)*2*NUMCOLORMAPS/256) - 4
-          - (FixedMul(spryscale,pspriteiscale)/2 >> LIGHTSCALESHIFT)
-          )*256;
+    return _g->fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 4 - (FixedMul(spryscale,pspriteiscale)/2 >> LIGHTSCALESHIFT))*256;
   }
 }
 

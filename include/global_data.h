@@ -676,8 +676,8 @@ player_t *viewplayer;
 // killough 3/20/98: Support dynamic colormaps, e.g. deep water
 // killough 4/4/98: support dynamic number of them as well
 
-const lighttable_t *(*c_zlight)[LIGHTLEVELS][MAXLIGHTZ];
-const lighttable_t *(*zlight)[MAXLIGHTZ];
+const lighttable_t* zlight[LIGHTLEVELS][MAXLIGHTZ];
+
 const lighttable_t *fullcolormap;
 const lighttable_t *colormaps;
 
