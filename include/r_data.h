@@ -61,9 +61,9 @@ typedef struct
 typedef struct
 {
   char  name[8];         // Keep name for switch changing, etc.
-  int   next, index;     // killough 1/31/98: used in hashing algorithm
+  //int   next, index;     // killough 1/31/98: used in hashing algorithm
   // CPhipps - moved arrays with per-texture entries to elements here
-  unsigned  widthmask;
+  unsigned short  widthmask;
   // CPhipps - end of additions
   short width, height;
   short patchcount;      // All the patches[patchcount] are drawn
