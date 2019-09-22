@@ -54,7 +54,8 @@ typedef struct {
   unsigned char *pixels;
 } rcolumn_t;
 
-typedef struct {
+typedef struct
+{
   int width;
   int height;
   unsigned  widthmask;
@@ -73,9 +74,6 @@ typedef struct {
   rcolumn_t *columns;
   rpost_t *posts;
 
-#ifdef TIMEDIAG
-  int locktic;
-#endif
   unsigned int locks;
 } rpatch_t;
 

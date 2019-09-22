@@ -31,7 +31,7 @@ unsigned char* pb = NULL;
 unsigned char* pl = NULL;
 
 
-int* thearray = NULL;
+unsigned char* thearray = NULL;
 int thesize;
 
 //**************************************************************************************
@@ -111,7 +111,7 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
     app->processEvents();
 
 
-    int arrayCount = thesize / 4;
+    int arrayCount = thesize;
 
     if(arrayCount == 0)
         return;

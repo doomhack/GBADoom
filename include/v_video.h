@@ -120,6 +120,8 @@ void V_DrawNumPatch(int x, int y, int scrn,
                                  enum patch_translation_e flags);
 
 
+void V_DrawPatch(int x, int y, int scrn, const patch_t* patch);
+
 // V_DrawNamePatch - Draws the patch from lump "name"
 #define V_DrawNamePatch(x,y,s,n,t,f) V_DrawNumPatch(x,y,s,W_GetNumForName(n),t,f)
 

@@ -48,7 +48,7 @@
 // a rectangular area within the texture rectangle.
 typedef struct
 {
-  int originx, originy;  // Block origin, which has already accounted
+  short originx, originy;  // Block origin, which has already accounted
   int patch;             // for the internal origin of the patch.
 } texpatch_t;
 
@@ -60,7 +60,7 @@ typedef struct
 
 typedef struct
 {
-  char  name[8];         // Keep name for switch changing, etc.
+  const char*  name;         // Keep name for switch changing, etc.
   //int   next, index;     // killough 1/31/98: used in hashing algorithm
   // CPhipps - moved arrays with per-texture entries to elements here
   unsigned short  widthmask;

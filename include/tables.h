@@ -99,6 +99,7 @@ extern const fixed_t screenheightarray[120];
 
 extern const fixed_t negonearray[120];
 
+extern const unsigned char translationtables[1023];
 
 
 

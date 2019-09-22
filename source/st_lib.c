@@ -58,10 +58,10 @@ void STlib_init(void)
 // Returns nothing
 //
 void STlib_initNum
-( st_number_t* n,
+(st_number_t* n,
   int x,
   int y,
-  const patchnum_t* pl,
+  const patch_t **pl,
   int* num,
   boolean* on,
   int     width )
@@ -97,8 +97,8 @@ static void STlib_drawNum
   int   numdigits = n->width;
   int   num = *n->num;
 
-  int   w = n->p[0].width;
-  int   h = n->p[0].height;
+  int   w = n->p[0]->width;
+  int   h = n->p[0]->height;
   int   x = n->x;
 
   int   neg;
@@ -142,14 +142,14 @@ static void STlib_drawNum
   // in the special case of 0, you draw 0
   if (!num)
     // CPhipps - patch drawing updated, reformatted
-    V_DrawNumPatch(x - w, n->y, ST_FG, n->p[0].lumpnum, cm, VPT_STRETCH);
+    V_DrawPatch(x - w, n->y, ST_FG, n->p[0]);
 
   // draw the new number
   //jff 2/16/98 add color translation to digit output
   while (num && numdigits--) {
     // CPhipps - patch drawing updated, reformatted
     x -= w;
-    V_DrawNumPatch(x, n->y, ST_FG, n->p[num % 10].lumpnum, cm, VPT_STRETCH);
+    V_DrawPatch(x, n->y, ST_FG, n->p[num % 10]);
     num /= 10;
   }
 
@@ -190,13 +190,13 @@ void STlib_updateNum
 // Returns nothing.
 //
 void STlib_initPercent
-( st_percent_t* p,
+(st_percent_t* p,
   int x,
   int y,
-  const patchnum_t* pl,
+  const patch_t** pl,
   int* num,
   boolean* on,
-  const patchnum_t* percent )
+  const patch_t *percent )
 {
   STlib_initNum(&p->n, x, y, pl, num, on, 3);
   p->p = percent;
@@ -224,7 +224,7 @@ void STlib_updatePercent
     // killough 2/21/98: fix percents not updated;
     /* CPhipps - make %'s only be updated if number changed */
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(per->n.x, per->n.y, ST_FG, per->p->lumpnum, CR_GRAY, VPT_STRETCH);
+    V_DrawPatch(per->n.x, per->n.y, ST_FG, per->p);
   }
 
   STlib_updateNum(&per->n, cm, refresh);
@@ -241,10 +241,10 @@ void STlib_updatePercent
 // Returns nothing.
 //
 void STlib_initMultIcon
-( st_multicon_t* i,
+(st_multicon_t* i,
   int x,
   int y,
-  const patchnum_t* il,
+  const patch_t **il,
   int* inum,
   boolean* on )
 {
@@ -282,10 +282,10 @@ void STlib_updateMultIcon
   {
     if (mi->oldinum != -1)
     {
-      x = mi->x - mi->p[mi->oldinum].leftoffset;
-      y = mi->y - mi->p[mi->oldinum].topoffset;
-      w = mi->p[mi->oldinum].width;
-      h = mi->p[mi->oldinum].height;
+      x = mi->x - mi->p[mi->oldinum]->leftoffset;
+      y = mi->y - mi->p[mi->oldinum]->topoffset;
+      w = mi->p[mi->oldinum]->width;
+      h = mi->p[mi->oldinum]->height;
 
 #ifdef RANGECHECK
       if (y - ST_Y < 0)
@@ -295,7 +295,7 @@ void STlib_updateMultIcon
       V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
     }
     if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-      V_DrawNumPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum].lumpnum, CR_DEFAULT, VPT_STRETCH);
+      V_DrawPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum]);
     mi->oldinum = *mi->inum;
   }
 }
@@ -314,7 +314,7 @@ void STlib_initBinIcon
 ( st_binicon_t* b,
   int x,
   int y,
-  const patchnum_t* i,
+  const patch_t* i,
   boolean* val,
   boolean* on )
 {
@@ -361,7 +361,7 @@ void STlib_updateBinIcon
 #endif
 
     if (*bi->val)
-      V_DrawNumPatch(bi->x, bi->y, ST_FG, bi->p->lumpnum, CR_DEFAULT, VPT_STRETCH);
+      V_DrawPatch(bi->x, bi->y, ST_FG, bi->p);
     else
       V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
 

@@ -202,9 +202,7 @@ static void R_InitTextures (void)
         texture->patchcount = SHORT(mtexture->patchcount);
 
         {
-            int j;
-            for(j=0;j<sizeof(texture->name);j++)
-                texture->name[j]=mtexture->name[j];
+            texture->name = mtexture->name;
         }
         /* #endif */
 

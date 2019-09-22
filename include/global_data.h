@@ -230,7 +230,7 @@ boolean secretexit;
 //******************************************************************************
 
 // font sets
-patchnum_t hu_font[HU_FONTSIZE];
+const patch_t* hu_font[HU_FONTSIZE];
 
 // widgets
 hu_textline_t  w_title;
@@ -653,8 +653,6 @@ int       *texturetranslation;
 //r_draw.c
 //******************************************************************************
 
-byte *translationtables;
-
 draw_vars_t drawvars;
 
 int fuzzoffset[FUZZTABLE];
@@ -854,28 +852,30 @@ boolean st_statusbaron;
 
 
 // 0-9, tall numbers
-patchnum_t tallnum[10];
-
-// tall % sign
-patchnum_t tallpercent;
+const patch_t* tallnum[10];
 
 // 0-9, short, yellow (,different!) numbers
-patchnum_t shortnum[10];
+const patch_t* shortnum[10];
+
+// tall % sign
+const patch_t* tallpercent;
+
+const patch_t* keys[NUMCARDS];
 
 // face status patches
-patchnum_t faces[ST_NUMFACES];
+const patch_t* faces[ST_NUMFACES];
 
 // face background
-patchnum_t faceback; // CPhipps - single background, translated for different players
+const patch_t* faceback; // CPhipps - single background, translated for different players
 
 //e6y: status bar background
-patchnum_t stbarbg;
+const patch_t* stbarbg;
 
 // main bar right
-patchnum_t armsbg;
+const patch_t* armsbg;
 
 // weapon ownership patches
-patchnum_t arms[6][2];
+const patch_t* arms[6][2];
 
 // ready-weapon widget
 st_number_t w_ready;

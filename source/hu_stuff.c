@@ -62,7 +62,7 @@
 //jff 2/16/98 change 167 to ST_Y-1
 // CPhipps - changed to ST_TY
 // proff - changed to 200-ST_HEIGHT for stretching
-#define HU_TITLEY ((200-ST_HEIGHT) - 1 - _g->hu_font[0].height)
+#define HU_TITLEY ((200-ST_HEIGHT) - 1 - _g->hu_font[0]->height)
 
 //jff 2/16/98 add coord text widget coordinates
 // proff - changed to SCREENWIDTH to 320 for stretching
@@ -313,59 +313,17 @@ const char *const mapnamest[] = // TNT WAD map names.
 //
 void HU_Init(void)
 {
+    int		i;
+    int		j;
+    char	buffer[9];
 
-  int   i;
-  int   j;
-  char  buffer[9];
-
-  // load the heads-up font
-  j = HU_FONTSTART;
-  for (i=0;i<HU_FONTSIZE;i++,j++)
-  {
-    if ('0'<=j && j<='9')
+    // load the heads-up font
+    j = HU_FONTSTART;
+    for (i=0;i<HU_FONTSIZE;i++)
     {
-      sprintf(buffer, "STCFN%.3d",j);
-      R_SetPatchNum(&_g->hu_font[i], buffer);
+        sprintf(buffer, "STCFN%.3d", j++);
+        _g->hu_font[i] = (patch_t *) W_CacheLumpName(buffer);
     }
-    else if ('A'<=j && j<='Z')
-    {
-      sprintf(buffer, "STCFN%.3d",j);
-      R_SetPatchNum(&_g->hu_font[i], buffer);
-    }
-    else if (j=='-')
-    {
-      R_SetPatchNum(&_g->hu_font[i], "STCFN045");
-    }
-    else if (j=='/')
-    {
-      R_SetPatchNum(&_g->hu_font[i], "STCFN047");
-    }
-    else if (j==':')
-    {
-      R_SetPatchNum(&_g->hu_font[i], "STCFN058");
-    }
-    else if (j=='[')
-    {
-      R_SetPatchNum(&_g->hu_font[i], "STCFN091");
-    }
-    else if (j==']')
-    {
-      R_SetPatchNum(&_g->hu_font[i], "STCFN093");
-    }
-    else if (j<97)
-    {
-      sprintf(buffer, "STCFN%.3d",j);
-      R_SetPatchNum(&_g->hu_font[i], buffer);
-      //jff 2/23/98 make all font chars defined, useful or not
-    }
-    else if (j>122)
-    {
-      sprintf(buffer, "STBR%.3d",j);
-      R_SetPatchNum(&_g->hu_font[i], buffer);
-    }
-    else
-      _g->hu_font[i] = _g->hu_font[0]; //jff 2/16/98 account for gap
-  }
 }
 
 //

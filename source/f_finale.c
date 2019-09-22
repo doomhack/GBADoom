@@ -286,11 +286,11 @@ static void F_TextWrite (void)
   continue;
       }
 
-      w = _g->hu_font[c].width;
+      w = _g->hu_font[c]->width;
       if (cx+w > SCREENWIDTH)
-  break;
-      // CPhipps - patch drawing updated
-      V_DrawNumPatch(cx, cy, 0, _g->hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
+            break;
+      // CPhipps - patch drawing updated      
+      V_DrawPatch(cx, cy, 0, _g->hu_font[c]);
       cx+=w;
     }
   }
@@ -504,7 +504,7 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
       continue;
     }
 
-    w = _g->hu_font[c].width;
+    w = _g->hu_font[c]->width;
     width += w;
   }
 
@@ -523,9 +523,9 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
       continue;
     }
 
-    w = _g->hu_font[c].width;
+    w = _g->hu_font[c]->width;
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(cx, 180, 0, _g->hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
+    V_DrawPatch(cx, 180, 0, _g->hu_font[c]);
     cx+=w;
   }
 }

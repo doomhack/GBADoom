@@ -994,7 +994,7 @@ void M_Drawer (void)
           p++;
         *p = 0;
         M_WriteText(160 - M_StringWidth(string)/2, y, string);
-        y += _g->hu_font[0].height;
+        y += _g->hu_font[0]->height;
         if ((*p = c))
           p++;
       }
@@ -1156,7 +1156,7 @@ int M_StringWidth(const char* string)
   int i, c, w = 0;
   for (i = 0;(size_t)i < strlen(string);i++)
     w += (c = toupper(string[i]) - HU_FONTSTART) < 0 || c >= HU_FONTSIZE ?
-      4 : _g->hu_font[c].width;
+      4 : _g->hu_font[c]->width;
   return w;
 }
 
@@ -1166,7 +1166,7 @@ int M_StringWidth(const char* string)
 
 int M_StringHeight(const char* string)
 {
-  int i, h, height = h = _g->hu_font[0].height;
+  int i, h, height = h = _g->hu_font[0]->height;
   for (i = 0;string[i];i++)            // killough 1/31/98
     if (string[i] == '\n')
       h += height;
@@ -1204,12 +1204,12 @@ void M_WriteText (int x,int y,const char* string)
       continue;
     }
 
-    w = _g->hu_font[c].width;
+    w = _g->hu_font[c]->width;
     if (cx+w > SCREENWIDTH)
       break;
     // proff/nicolas 09/20/98 -- changed for hi-res
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(cx, cy, 0, _g->hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
+    V_DrawPatch(cx, cy, 0, _g->hu_font[c]);
     cx+=w;
   }
 }

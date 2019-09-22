@@ -76,10 +76,9 @@ static void ST_refreshBackground(void)
 	
     if (_g->st_statusbaron)
 	{
-        V_DrawNumPatch(ST_X, y, ST_BG, _g->stbarbg.lumpnum, CR_DEFAULT, VPT_STRETCH);
+        V_DrawPatch(ST_X, y, ST_BG, _g->stbarbg);
 		
-
-        V_DrawNumPatch(ST_ARMSBGX, y, ST_BG, _g->armsbg.lumpnum, CR_DEFAULT, VPT_STRETCH);
+        V_DrawPatch(ST_ARMSBGX, y, ST_BG, _g->armsbg);
 		
         V_CopyRect(ST_X, y, ST_BG, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, ST_X, ST_SCALED_Y, ST_FG, VPT_NONE);
 	}
@@ -499,69 +498,77 @@ void ST_Drawer(boolean statusbaron, boolean refresh)
 //
 static void ST_loadGraphics(boolean doload)
 {
-  int  i, facenum;
-  char namebuf[9];
-  // cph - macro that either acquires a pointer and lock for a lump, or
-  // unlocks it. var is referenced exactly once in either case, so ++ in arg works
+    int  i, facenum;
+    char namebuf[9];
+    // cph - macro that either acquires a pointer and lock for a lump, or
+    // unlocks it. var is referenced exactly once in either case, so ++ in arg works
 
-  // Load the numbers, tall and short
-  for (i=0;i<10;i++)
+    // Load the numbers, tall and short
+    for (i=0;i<10;i++)
     {
-      sprintf(namebuf, "STTNUM%d", i);
-      R_SetPatchNum(&_g->tallnum[i],namebuf);
-      sprintf(namebuf, "STYSNUM%d", i);
-      R_SetPatchNum(&_g->shortnum[i],namebuf);
+        sprintf(namebuf, "STTNUM%d", i);
+        _g->tallnum[i] = (const patch_t *) W_CacheLumpName(namebuf);
+
+        sprintf(namebuf, "STYSNUM%d", i);
+        _g->shortnum[i] = (const patch_t *) W_CacheLumpName(namebuf);
     }
 
-  // Load percent key.
-  R_SetPatchNum(&_g->tallpercent,"STTPRCNT");
+    // Load percent key.
+    //Note: why not load STMINUS here, too?
+    _g->tallpercent = (const patch_t*) W_CacheLumpName("STTPRCNT");
 
-  //e6y: status bar background
-  R_SetPatchNum(&_g->stbarbg, "STBAR");
-
-  // arms background
-  R_SetPatchNum(&_g->armsbg, "STARMS");
-
-  // arms ownership widgets
-  for (i=0;i<6;i++)
+    // key cards
+    for (i=0;i<NUMCARDS;i++)
     {
-      sprintf(namebuf, "STGNUM%d", i+2);
-
-      // gray #
-      R_SetPatchNum(&_g->arms[i][0], namebuf);
-
-      // yellow #
-      _g->arms[i][1] = _g->shortnum[i+2];
+        sprintf(namebuf, "STKEYS%d", i);
+        _g->keys[i] = (const patch_t *) W_CacheLumpName(namebuf);
     }
 
-  // face backgrounds for different color players
-  // killough 3/7/98: add better support for spy mode by loading all
-  // player face backgrounds and using displayplayer to choose them:
-  R_SetPatchNum(&_g->faceback, "STFB0");
+    // arms background
+    _g->armsbg = (const patch_t *) W_CacheLumpName("STARMS");
 
-  // face states
-  facenum = 0;
-  for (i=0;i<ST_NUMPAINFACES;i++)
+    // arms ownership widgets
+    for (i=0;i<6;i++)
     {
-      int j;
-      for (j=0;j<ST_NUMSTRAIGHTFACES;j++)
+        sprintf(namebuf, "STGNUM%d", i+2);
+
+        // gray #
+        _g->arms[i][0] = (const patch_t *) W_CacheLumpName(namebuf);
+
+        // yellow #
+        _g->arms[i][1] = _g->shortnum[i+2];
+    }
+
+    // face backgrounds for different color players
+    sprintf(namebuf, "STFB%d", consoleplayer);
+    _g->faceback = (const patch_t *) W_CacheLumpName(namebuf);
+
+    // status bar background bits
+    _g->stbarbg = (const patch_t *) W_CacheLumpName("STBAR");
+
+    // face states
+    facenum = 0;
+
+    for (i=0;i<ST_NUMPAINFACES;i++)
+    {
+        for (int j=0;j<ST_NUMSTRAIGHTFACES;j++)
         {
-          sprintf(namebuf, "STFST%d%d", i, j);
-          R_SetPatchNum(&_g->faces[facenum++], namebuf);
+            sprintf(namebuf, "STFST%d%d", i, j);
+            _g->faces[facenum++] = W_CacheLumpName(namebuf);
         }
-      sprintf(namebuf, "STFTR%d0", i);        // turn right
-      R_SetPatchNum(&_g->faces[facenum++], namebuf);
-      sprintf(namebuf, "STFTL%d0", i);        // turn left
-      R_SetPatchNum(&_g->faces[facenum++], namebuf);
-      sprintf(namebuf, "STFOUCH%d", i);       // ouch!
-      R_SetPatchNum(&_g->faces[facenum++], namebuf);
-      sprintf(namebuf, "STFEVL%d", i);        // evil grin ;)
-      R_SetPatchNum(&_g->faces[facenum++], namebuf);
-      sprintf(namebuf, "STFKILL%d", i);       // pissed off
-      R_SetPatchNum(&_g->faces[facenum++], namebuf);
+        sprintf(namebuf, "STFTR%d0", i);	// turn right
+        _g->faces[facenum++] = W_CacheLumpName(namebuf);
+        sprintf(namebuf, "STFTL%d0", i);	// turn left
+        _g->faces[facenum++] = W_CacheLumpName(namebuf);
+        sprintf(namebuf, "STFOUCH%d", i);	// ouch!
+        _g->faces[facenum++] = W_CacheLumpName(namebuf);
+        sprintf(namebuf, "STFEVL%d", i);	// evil grin ;)
+        _g->faces[facenum++] = W_CacheLumpName(namebuf);
+        sprintf(namebuf, "STFKILL%d", i);	// pissed off
+        _g->faces[facenum++] = W_CacheLumpName(namebuf);
     }
-  R_SetPatchNum(&_g->faces[facenum++], "STFGOD0");
-  R_SetPatchNum(&_g->faces[facenum++], "STFDEAD0");
+    _g->faces[facenum++] = W_CacheLumpName("STFGOD0");
+    _g->faces[facenum++] = W_CacheLumpName("STFDEAD0");
 }
 
 static void ST_loadData(void)
@@ -615,13 +622,13 @@ static void ST_createWidgets(void)
                     _g->tallnum,
                     &_g->plyr->health,
                     &_g->st_statusbaron,
-                    &_g->tallpercent);
+                    _g->tallpercent);
 
   // arms background
   STlib_initBinIcon(&_g->w_armsbg,
                     ST_ARMSBGX,
                     ST_ARMSBGY,
-                    &_g->armsbg,
+                    _g->armsbg,
                     &_g->st_statusbaron,
                     &_g->st_statusbaron);
 
@@ -649,7 +656,7 @@ static void ST_createWidgets(void)
                     ST_ARMORY,
                     _g->tallnum,
                     &_g->plyr->armorpoints,
-                    &_g->st_statusbaron, &_g->tallpercent);
+                    &_g->st_statusbaron, _g->tallpercent);
 
   // keyboxes 0-2
   STlib_initMultIcon(&_g->w_keyboxes[0],

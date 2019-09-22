@@ -44,36 +44,10 @@
 
 #include "global_data.h"
 
-// posts are runs of non masked source pixels
-typedef struct
-{
-  byte topdelta; // -1 is the last post in a column
-  byte length;   // length data bytes follows
-} post_t;
-
-// column_t is a list of 0 or more post_t, (byte)-1 terminated
-typedef post_t column_t;
-
-//
-// Patches.
-// A patch holds one or more columns.
-// Patches are used for sprites and all masked pictures,
-// and we compose textures from the TEXTURE1/2 lists
-// of patches.
-//
-
-typedef struct
-{
-  short width, height;  // bounding box size
-  short leftoffset;     // pixels to the left of origin
-  short topoffset;      // pixels below the origin
-  int columnofs[8];     // only [width] used
-} patch_t;
-
-
-
 //---------------------------------------------------------------------------
-void R_InitPatches(void) {
+void R_InitPatches(void)
+{
+
   if (!_g->patches)
   {
     _g->patches = (rpatch_t*)malloc(_g->numlumps * sizeof(rpatch_t));
@@ -86,6 +60,7 @@ void R_InitPatches(void) {
     // clear out new patches to signal they're uninitialized
     memset(_g->texture_composites, 0, sizeof(rpatch_t)*_g->numtextures);
   }
+
 }
 
 //---------------------------------------------------------------------------

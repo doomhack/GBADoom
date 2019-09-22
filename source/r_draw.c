@@ -101,28 +101,7 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 
 void R_InitTranslationTables (void)
 {
-    int		i;
 
-    _g->translationtables = Z_Malloc (256*3+255, PU_STATIC, 0);
-    _g->translationtables = (byte *)(( (int)_g->translationtables + 255 )& ~255);
-
-    // translate just the 16 green colors
-    for (i=0 ; i<256 ; i++)
-    {
-    if (i >= 0x70 && i<= 0x7f)
-    {
-        // map green ramp to gray, brown, red
-        _g->translationtables[i] = 0x60 + (i&0xf);
-        _g->translationtables [i+256] = 0x40 + (i&0xf);
-        _g->translationtables [i+512] = 0x20 + (i&0xf);
-    }
-    else
-    {
-        // Keep all other colors as is.
-        _g->translationtables[i] = _g->translationtables[i+256]
-        = _g->translationtables[i+512] = i;
-    }
-    }
 }
 
 //
