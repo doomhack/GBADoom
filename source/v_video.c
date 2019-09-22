@@ -156,6 +156,9 @@ void V_Init (void)
 
 void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 {
+    y -= patch->topoffset;
+    x -= patch->leftoffset;
+
     int   col;
     int   left, right, top, bottom;
     int   DX  = (SCREENWIDTH<<16)  / 320;
@@ -195,13 +198,12 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
         while (column->topdelta != 0xff )
         {
             const byte* source = (const byte*)column + 3;
-            const unsigned char topdelta = column->topdelta;
+            const int topdelta = column->topdelta;
 
             int yoffset = 0;
 
             dcvars.yl = (((y + topdelta) * DY)>>FRACBITS);
             dcvars.yh = (((y + topdelta + column->length) * DY - (FRACUNIT>>1))>>FRACBITS);
-
 
             column = (const column_t *)((const byte *)column + column->length + 4 );
 
@@ -210,9 +212,9 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
                 continue;
 
-            if (dcvars.yh >= bottom)
+            if (dcvars.yh > bottom)
             {
-                dcvars.yh = bottom-1;
+                dcvars.yh = bottom;
             }
 
             if (dcvars.yh >= SCREENHEIGHT)
@@ -232,7 +234,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
                 dcvars.yl = top;
             }
 
-            dcvars.source = source + topdelta + yoffset;
+            dcvars.source = source;
 
             dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
 
