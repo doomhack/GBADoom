@@ -69,8 +69,8 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
                 int height, int destx, int desty, int destscrn,
                 enum patch_translation_e flags)
 {
-  byte *src;
-  byte *dest;
+  unsigned short *src;
+  unsigned short *dest;
 
   if (flags & VPT_STRETCH)
   {
@@ -98,7 +98,7 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
 
   for ( ; height>0 ; height--)
     {
-      memcpy (dest, src, width);
+      memcpy (dest, src, width*2);
       src += _g->screens[srcscrn].byte_pitch;
       dest += _g->screens[destscrn].byte_pitch;
     }
@@ -118,7 +118,7 @@ void V_DrawBackground(const char* flatname, int scrn)
   int         width,height;
   int         lump;
 
-  byte *dest = _g->screens[scrn].data;
+  unsigned short *dest = _g->screens[scrn].data;
 
   // killough 4/17/98:
   src = W_CacheLumpNum(lump = _g->firstflat + R_FlatNumForName(flatname));
@@ -130,7 +130,7 @@ void V_DrawBackground(const char* flatname, int scrn)
   
   while (height--)
   {
-	  memcpy (dest, src, width);
+      memcpy (dest, src, width * 2);
       src += width;
       dest += _g->screens[scrn].byte_pitch;
   }
@@ -243,45 +243,6 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     _g->drawvars = olddrawvars;
 }
 
-void V_DrawPatch2(int x, int y, int scrn, const patch_t *patch)
-{
-    int		count;
-    const column_t*	column;
-    byte*	desttop;
-    byte*	dest;
-    const byte*	source;
-    int		w;
-
-    y -= patch->topoffset;
-    x -= patch->leftoffset;
-
-    desttop = _g->screens[scrn].data+y*SCREENWIDTH+x;
-
-    w = patch->width;
-
-    for (int col = 0; col<w ; x++, col++, desttop++)
-    {
-        column = (const column_t *)((const byte*)patch + patch->columnofs[col]);
-
-        // step through the posts in a column
-        while (column->topdelta != 0xff )
-        {
-            source = (const byte*)column + 3;
-            dest = desttop + column->topdelta*SCREENWIDTH;
-            count = column->length;
-
-            while (count--)
-            {
-                *dest = *source++;
-                dest += SCREENWIDTH;
-            }
-            column = (column_t *)(  (byte *)column + column->length + 4 );
-        }
-    }
-}
-
-
-
 //
 // V_DrawMemPatch
 //
@@ -301,201 +262,91 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
     y -= patch->topoffset;
     x -= patch->leftoffset;
 
-    if (!(flags & VPT_STRETCH))
+    // CPhipps - move stretched patch drawing code here
+    //         - reformat initialisers, move variables into inner blocks
+
+    int   col;
+    int   w = (patch->width << 16) - 1; // CPhipps - -1 for faster flipping
+    int   left, right, top, bottom;
+    int   DX  = (SCREENWIDTH<<16)  / 320;
+    int   DXI = (320<<16)          / SCREENWIDTH;
+    int   DY  = (SCREENHEIGHT<<16) / 200;
+    int   DYI = (200<<16)          / SCREENHEIGHT;
+
+    draw_column_vars_t dcvars;
+    draw_vars_t olddrawvars = _g->drawvars;
+
+    R_SetDefaultDrawColumnVars(&dcvars);
+
+    _g->drawvars.byte_topleft = _g->screens[scrn].data;
+    _g->drawvars.byte_pitch = _g->screens[scrn].byte_pitch;
+
+    left = ( x * DX ) >> FRACBITS;
+    top = ( y * DY ) >> FRACBITS;
+    right = ( (x + patch->width) * DX ) >> FRACBITS;
+    bottom = ( (y + patch->height) * DY ) >> FRACBITS;
+
+    dcvars.iscale = DYI;
+
+    col = 0;
+
+    for (dcvars.x=left; dcvars.x<right; dcvars.x++, col+=DXI)
     {
-        int             col;
-        byte           *desttop = _g->screens[scrn].data+y*_g->screens[scrn].byte_pitch+x;
-        unsigned int    w = patch->width;
+        int i;
+        const int colindex = (flags & VPT_FLIP) ? ((w - col)>>16): (col>>16);
+        const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
 
-        if (y<0 || y+patch->height > ((flags & VPT_STRETCH) ? 200 :  SCREENHEIGHT))
+        // ignore this column if it's to the left of our clampRect
+        if (dcvars.x < 0)
+            continue;
+        if (dcvars.x >= SCREENWIDTH)
+            break;
+
+        // step through the posts in a column
+        for (i=0; i<column->numPosts; i++)
         {
-            // killough 1/19/98: improved error message:
-            lprintf(LO_WARN, "V_DrawMemPatch8: Patch (%d,%d)-(%d,%d) exceeds LFB in vertical direction (horizontal is clipped)\n"
-                             "Bad V_DrawMemPatch8 (flags=%u)", x, y, x+patch->width, y+patch->height, flags);
-            return;
-        }
+            const rpost_t *post = &column->posts[i];
+            int yoffset = 0;
 
-        w--; // CPhipps - note: w = width-1 now, speeds up flipping
+            dcvars.yl = (((y + post->topdelta) * DY)>>FRACBITS);
+            dcvars.yh = (((y + post->topdelta + post->length) * DY - (FRACUNIT>>1))>>FRACBITS);
 
-        for (col=0 ; (unsigned int)col<=w ; desttop++, col++, x++)
-        {
-            int i;
-            const int colindex = (flags & VPT_FLIP) ? (w - col) : (col);
-            const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
-
-            if (x < 0)
+            if ((dcvars.yh < 0) || (dcvars.yh < top))
+                continue;
+            if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
                 continue;
 
-            if (x >= SCREENWIDTH)
-                break;
-
-            // step through the posts in a column
-            for (i=0; i<column->numPosts; i++)
+            if (dcvars.yh >= bottom)
             {
-                const rpost_t *post = &column->posts[i];
-                // killough 2/21/98: Unrolled and performance-tuned
-
-                const byte *source = column->pixels + post->topdelta;
-                byte *dest = desttop + post->topdelta*_g->screens[scrn].byte_pitch;
-                int count = post->length;
-
-                if (!(flags & VPT_TRANS))
-                {
-                    if ((count-=4)>=0)
-                    {
-                        do
-                        {
-                            register byte s0,s1;
-                            s0 = source[0];
-                            s1 = source[1];
-
-                            dest[0] = s0;
-                            dest[_g->screens[scrn].byte_pitch] = s1;
-                            dest += _g->screens[scrn].byte_pitch*2;
-                            s0 = source[2];
-                            s1 = source[3];
-                            source += 4;
-                            dest[0] = s0;
-                            dest[_g->screens[scrn].byte_pitch] = s1;
-                            dest += _g->screens[scrn].byte_pitch*2;
-                        } while ((count-=4)>=0);
-                    }
-
-                    if (count+=4)
-                    {
-                        do
-                        {
-                            *dest = *source++;
-                            dest += _g->screens[scrn].byte_pitch;
-                        } while (--count);
-                    }
-                }
-                else
-                {
-                    // CPhipps - merged translation code here
-                    if ((count-=4)>=0)
-                    {
-                        do
-                        {
-                            register byte s0,s1;
-                            s0 = source[0];
-                            s1 = source[1];
-                            s0 = trans[s0];
-                            s1 = trans[s1];
-                            dest[0] = s0;
-                            dest[_g->screens[scrn].byte_pitch] = s1;
-                            dest += _g->screens[scrn].byte_pitch*2;
-                            s0 = source[2];
-                            s1 = source[3];
-                            s0 = trans[s0];
-                            s1 = trans[s1];
-                            source += 4;
-                            dest[0] = s0;
-                            dest[_g->screens[scrn].byte_pitch] = s1;
-                            dest += _g->screens[scrn].byte_pitch*2;
-                        } while ((count-=4)>=0);
-                    }
-
-                    if (count+=4)
-                    {
-                        do
-                        {
-                            *dest = trans[*source++];
-                            dest += _g->screens[scrn].byte_pitch;
-                        } while (--count);
-                    }
-                }
+                dcvars.yh = bottom-1;
             }
+
+            if (dcvars.yh >= SCREENHEIGHT)
+            {
+                dcvars.yh = SCREENHEIGHT-1;
+            }
+
+            if (dcvars.yl < 0)
+            {
+                yoffset = 0-dcvars.yl;
+                dcvars.yl = 0;
+            }
+
+            if (dcvars.yl < top)
+            {
+                yoffset = top-dcvars.yl;
+                dcvars.yl = top;
+            }
+
+            dcvars.source = column->pixels + post->topdelta + yoffset;
+
+            dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
+
+            R_DrawColumn(&dcvars);
         }
     }
-    else
-    {
-        // CPhipps - move stretched patch drawing code here
-        //         - reformat initialisers, move variables into inner blocks
 
-        int   col;
-        int   w = (patch->width << 16) - 1; // CPhipps - -1 for faster flipping
-        int   left, right, top, bottom;
-        int   DX  = (SCREENWIDTH<<16)  / 320;
-        int   DXI = (320<<16)          / SCREENWIDTH;
-        int   DY  = (SCREENHEIGHT<<16) / 200;
-        int   DYI = (200<<16)          / SCREENHEIGHT;
-
-        draw_column_vars_t dcvars;
-        draw_vars_t olddrawvars = _g->drawvars;
-
-        R_SetDefaultDrawColumnVars(&dcvars);
-
-        _g->drawvars.byte_topleft = _g->screens[scrn].data;
-        _g->drawvars.byte_pitch = _g->screens[scrn].byte_pitch;
-
-        left = ( x * DX ) >> FRACBITS;
-        top = ( y * DY ) >> FRACBITS;
-        right = ( (x + patch->width) * DX ) >> FRACBITS;
-        bottom = ( (y + patch->height) * DY ) >> FRACBITS;
-
-        dcvars.iscale = DYI;
-
-        col = 0;
-
-        for (dcvars.x=left; dcvars.x<right; dcvars.x++, col+=DXI)
-        {
-            int i;
-            const int colindex = (flags & VPT_FLIP) ? ((w - col)>>16): (col>>16);
-            const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
-
-            // ignore this column if it's to the left of our clampRect
-            if (dcvars.x < 0)
-                continue;
-            if (dcvars.x >= SCREENWIDTH)
-                break;
-
-            // step through the posts in a column
-            for (i=0; i<column->numPosts; i++)
-            {
-                const rpost_t *post = &column->posts[i];
-                int yoffset = 0;
-
-                dcvars.yl = (((y + post->topdelta) * DY)>>FRACBITS);
-                dcvars.yh = (((y + post->topdelta + post->length) * DY - (FRACUNIT>>1))>>FRACBITS);
-
-                if ((dcvars.yh < 0) || (dcvars.yh < top))
-                    continue;
-                if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
-                    continue;
-
-                if (dcvars.yh >= bottom)
-                {
-                    dcvars.yh = bottom-1;
-                }
-
-                if (dcvars.yh >= SCREENHEIGHT)
-                {
-                    dcvars.yh = SCREENHEIGHT-1;
-                }
-
-                if (dcvars.yl < 0)
-                {
-                    yoffset = 0-dcvars.yl;
-                    dcvars.yl = 0;
-                }
-
-                if (dcvars.yl < top)
-                {
-                    yoffset = top-dcvars.yl;
-                    dcvars.yl = top;
-                }
-
-                dcvars.source = column->pixels + post->topdelta + yoffset;
-
-                dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
-
-                R_DrawColumn(&dcvars);
-            }
-        }
-
-        _g->drawvars = olddrawvars;
-    }
+    _g->drawvars = olddrawvars;
 }
 
 // CPhipps - some simple, useful wrappers for that function, for drawing patches from wads
@@ -531,11 +382,12 @@ void V_SetPalette(int pal)
 // CPhipps - New function to fill a rectangle with a given colour
 void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 {
-  byte* dest = _g->screens[scrn].data + x + y*_g->screens[scrn].byte_pitch;
-  while (height--) {
-    memset(dest, colour, width);
-    dest += _g->screens[scrn].byte_pitch;
-  }
+    unsigned short* dest = _g->screens[scrn].data + x + y*_g->screens[scrn].byte_pitch;
+    while (height--)
+    {
+        memset(dest, colour, width * 2);
+        dest += _g->screens[scrn].byte_pitch;
+    }
 }
 
 //
@@ -543,7 +395,7 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 //
 void V_InitMode(video_mode_t mode)
 {
-  lprintf(LO_INFO, "V_InitMode: using 8 bit video mode\n");
+    lprintf(LO_INFO, "V_InitMode: using 8 bit video mode\n");
 }
 
 //
@@ -551,7 +403,7 @@ void V_InitMode(video_mode_t mode)
 //
 int V_GetNumPixelBits(void)
 {
-  return 8;
+    return 8;
 }
 
 //
@@ -560,17 +412,15 @@ int V_GetNumPixelBits(void)
 void V_AllocScreen(screeninfo_t *scrn)
 {
     if ((scrn->byte_pitch * scrn->height) > 0)
-      scrn->data = malloc(scrn->byte_pitch*scrn->height);
+      scrn->data = malloc( (scrn->byte_pitch*scrn->height) * 2);
 }
 
 //
 // V_AllocScreens
 //
-void V_AllocScreens(void) {
-  int i;
-
-  for (i=0; i<NUM_SCREENS; i++)
-    V_AllocScreen(&_g->screens[i]);
+void V_AllocScreens(void)
+{
+  V_AllocScreen(&_g->screens[1]);
 }
 
 //
@@ -578,23 +428,20 @@ void V_AllocScreens(void) {
 //
 void V_FreeScreen(screeninfo_t *scrn)
 {
-    free(scrn->data);
-    scrn->data = NULL;
+
 }
 
 //
 // V_FreeScreens
 //
-void V_FreeScreens(void) {
-  int i;
+void V_FreeScreens(void)
+{
 
-  for (i=0; i<NUM_SCREENS; i++)
-    V_FreeScreen(&_g->screens[i]);
 }
 
 void V_PlotPixel(int scrn, int x, int y, byte color)
 {
-  _g->screens[scrn].data[x+_g->screens[scrn].byte_pitch*y] = color;
+    _g->screens[scrn].data[x+_g->screens[scrn].byte_pitch*y] = (color | (color << 8));
 }
 
 //

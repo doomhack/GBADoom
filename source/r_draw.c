@@ -118,7 +118,7 @@ void R_DrawColumn (draw_column_vars_t *dcvars)
 	const byte *source = dcvars->source;
 	const byte *colormap = dcvars->colormap;
 
-    byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
+    unsigned short* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
     fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
@@ -134,7 +134,9 @@ void R_DrawColumn (draw_column_vars_t *dcvars)
     {
 		// Re-map color indices from wall texture column
 		//  using a lighting/special effects LUT.
-		*dest = colormap[source[(frac>>FRACBITS)&127]];
+        unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
+
+        *dest = (color | (color << 8));
 	
 		dest += SCREENWIDTH;
 		frac += fracstep;
@@ -153,7 +155,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 { 
     unsigned int count;
 
-    byte*		dest;
+    unsigned short* dest;
     fixed_t		frac;
     fixed_t		fracstep;
 
@@ -191,7 +193,9 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 		//  a pixel that is either one column
 		//  left or right of the current one.
 		// Add index from colormap to index.
-            *dest = _g->fullcolormap[6*256+dest[_g->fuzzoffset[_g->fuzzpos]]];
+        unsigned short color = _g->fullcolormap[6*256+dest[_g->fuzzoffset[_g->fuzzpos]]];
+
+        *dest = (color | (color << 8));
 
 		// Clamp table lookup index.
         if (++_g->fuzzpos == FUZZTABLE)
@@ -223,7 +227,7 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 	const byte *colormap = dcvars->colormap;
 	const byte *translation = dcvars->translation;
 
-    byte* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
+    unsigned short* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
     fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
@@ -242,7 +246,9 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 		//  used with PLAY sprites.
 		// Thus the "green" ramp of the player 0 sprite
 		//  is mapped to gray, red, black/indigo. 
-		*dest = colormap[translation[source[frac>>FRACBITS]]];
+        unsigned short color = colormap[translation[source[frac>>FRACBITS]]];
+
+        *dest = (color | (color << 8));
 		dest += sw;
 	
 		frac += fracstep;
@@ -271,7 +277,7 @@ void R_DrawSpan(draw_span_vars_t *dsvars)
 	const byte *source = dsvars->source;
 	const byte *colormap = dsvars->colormap;
 	
-    byte* dest = _g->drawvars.byte_topleft + dsvars->y*_g->drawvars.byte_pitch + dsvars->x1;
+    unsigned short* dest = _g->drawvars.byte_topleft + dsvars->y*_g->drawvars.byte_pitch + dsvars->x1;
 	
 	const unsigned int step = ((dsvars->xstep << 10) & 0xffff0000) | ((dsvars->ystep >> 6)  & 0x0000ffff);
 
@@ -288,7 +294,9 @@ void R_DrawSpan(draw_span_vars_t *dsvars)
 
 		// Lookup pixel from flat texture tile,
 		//  re-index using light/colormap.
-		*dest++ = colormap[source[spot]];
+        unsigned short color = colormap[source[spot]];
+
+        *dest++ = (color | (color << 8));
         position += step;
 
 	} while (count--);

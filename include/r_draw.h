@@ -74,8 +74,9 @@ typedef struct {
   const lighttable_t  *colormap;
 } draw_span_vars_t;
 
-typedef struct {
-  byte           *byte_topleft;
+typedef struct
+{
+  unsigned short *byte_topleft;
   int   byte_pitch;
 } draw_vars_t;
 

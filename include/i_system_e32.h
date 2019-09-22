@@ -28,6 +28,8 @@ void I_Error (const char *error, ...);
 
 void I_Quit_e32();
 
+unsigned short* I_GetBackBuffer();
+
 #ifdef __cplusplus
 }
 #endif

@@ -34,6 +34,8 @@ unsigned char* pl = NULL;
 unsigned char* thearray = NULL;
 int thesize;
 
+unsigned short backbuffer[240*160];
+
 //**************************************************************************************
 
 void I_InitScreen_e32()
@@ -72,6 +74,10 @@ void I_ClearWindow_e32()
 
 }
 
+unsigned short* I_GetBackBuffer()
+{
+    return &backbuffer[0];
+}
 
 //**************************************************************************************
 

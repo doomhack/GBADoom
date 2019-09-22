@@ -71,8 +71,9 @@ typedef enum
 
 #define CR_DEFAULT CR_RED   /* default value for out of range colors */
 
-typedef struct {
-  byte *data;          // pointer to the screen content
+typedef struct
+{
+  unsigned short *data;// pointer to the screen content
   int width;           // the width of the surface
   int height;          // the height of the surface, used when mallocing
   int byte_pitch;      // tha actual width of one line, used when mallocing
