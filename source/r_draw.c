@@ -193,7 +193,10 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 		//  a pixel that is either one column
 		//  left or right of the current one.
 		// Add index from colormap to index.
-        unsigned short color = _g->fullcolormap[6*256+dest[_g->fuzzoffset[_g->fuzzpos]]];
+        unsigned char srcpxl = dest[_g->fuzzoffset[_g->fuzzpos]] & 0xff;
+
+
+        unsigned short color = _g->fullcolormap[6*256+srcpxl];
 
         *dest = (color | (color << 8));
 

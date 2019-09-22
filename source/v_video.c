@@ -358,11 +358,11 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm
 void V_DrawNumPatch(int x, int y, int scrn, int lump,
          int cm, enum patch_translation_e flags)
 {
-  V_DrawMemPatch(x, y, scrn, R_CachePatchNum(lump), cm, flags);
-  R_UnlockPatchNum(lump);
-}
+    V_DrawPatch(x, y, scrn, W_CacheLumpNum(lump));
 
-static int currentPaletteIndex = 0;
+  //V_DrawMemPatch(x, y, scrn, R_CachePatchNum(lump), cm, flags);
+  //R_UnlockPatchNum(lump);
+}
 
 //
 // V_SetPalette
@@ -372,7 +372,6 @@ static int currentPaletteIndex = 0;
 
 void V_SetPalette(int pal)
 {
-	currentPaletteIndex = pal;
 	I_SetPalette(pal);
 }
 
