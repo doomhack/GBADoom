@@ -300,48 +300,48 @@ static vissprite_t *R_NewVisSprite(void)
 
 
 
-void R_DrawMaskedColumn(
-  const rpatch_t *patch,
+void R_DrawMaskedColumn(const patch_t *patch,
   R_DrawColumn_f colfunc,
   draw_column_vars_t *dcvars,
-  const rcolumn_t *column
+  const column_t *column
 )
 {
-  int     i;
-  int     topscreen;
-  int     bottomscreen;
-  fixed_t basetexturemid = dcvars->texturemid;
+    int     i;
+    int     topscreen;
+    int     bottomscreen;
+    fixed_t basetexturemid = dcvars->texturemid;
 
-  for (i=0; i<column->numPosts; i++) {
-      const rpost_t *post = &column->posts[i];
+    for ( ; column->topdelta != 0xff ; )
+    {
+        // calculate unclipped screen coordinates for post
+        topscreen = _g->sprtopscreen + _g->spryscale*column->topdelta;
+        bottomscreen = topscreen + _g->spryscale*column->length;
 
-      // calculate unclipped screen coordinates for post
-      topscreen = _g->sprtopscreen + _g->spryscale*post->topdelta;
-      bottomscreen = topscreen + _g->spryscale*post->length;
+        dcvars->yl = (topscreen+FRACUNIT-1)>>FRACBITS;
+        dcvars->yh = (bottomscreen-1)>>FRACBITS;
 
-      dcvars->yl = (topscreen+FRACUNIT-1)>>FRACBITS;
-      dcvars->yh = (bottomscreen-1)>>FRACBITS;
+        if (dcvars->yh >= _g->mfloorclip[dcvars->x])
+            dcvars->yh = _g->mfloorclip[dcvars->x]-1;
 
-      if (dcvars->yh >= _g->mfloorclip[dcvars->x])
-        dcvars->yh = _g->mfloorclip[dcvars->x]-1;
+        if (dcvars->yl <= _g->mceilingclip[dcvars->x])
+            dcvars->yl = _g->mceilingclip[dcvars->x]+1;
 
-      if (dcvars->yl <= _g->mceilingclip[dcvars->x])
-        dcvars->yl = _g->mceilingclip[dcvars->x]+1;
-
-      // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
-      if (dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
+        // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
+        if (dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
         {
-          dcvars->source = column->pixels + post->topdelta;
+            dcvars->source =  (const byte*)column + 3;
 
-          dcvars->texturemid = basetexturemid - (post->topdelta<<FRACBITS);
+            dcvars->texturemid = basetexturemid - (column->topdelta<<FRACBITS);
 
-          // Drawn by either R_DrawColumn
-          //  or (SHADOW) R_DrawFuzzColumn.
-          colfunc (dcvars);
+            // Drawn by either R_DrawColumn
+            //  or (SHADOW) R_DrawFuzzColumn.
+            colfunc (dcvars);
 
         }
+
+        column = (const column_t *)((const byte *)column + column->length + 4);
     }
-  dcvars->texturemid = basetexturemid;
+    dcvars->texturemid = basetexturemid;
 }
 
 //
@@ -353,7 +353,9 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
 {
   int      texturecolumn;
   fixed_t  frac;
-  const rpatch_t *patch = R_CachePatchNum(vis->patch+_g->firstspritelump);
+  //const rpatch_t *patch = R_CachePatchNum(vis->patch+_g->firstspritelump);
+  const patch_t *patch = W_CacheLumpNum(vis->patch+_g->firstspritelump);
+
   R_DrawColumn_f colfunc;
   draw_column_vars_t dcvars;
 
@@ -389,14 +391,16 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     {
       texturecolumn = frac>>FRACBITS;
 
+      const column_t* column = (column_t *) ((byte *)patch + patch->columnofs[texturecolumn]);
+
       R_DrawMaskedColumn(
         patch,
         colfunc,
         &dcvars,
-        R_GetPatchColumnClamped(patch, texturecolumn)
+        column
       );
     }
-  R_UnlockPatchNum(vis->patch+_g->firstspritelump); // cph - release lump
+  //R_UnlockPatchNum(vis->patch+_g->firstspritelump); // cph - release lump
 }
 
 //
@@ -492,7 +496,9 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     }
 
   {
-    const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
+    //const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
+
+    const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);
 
     /* calculate edges of the shape
      * cph 2003/08/1 - fraggle points out that this offset must be flipped
@@ -509,7 +515,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     gzt = fz + (patch->topoffset << FRACBITS);
     width = patch->width;
-    R_UnlockPatchNum(lump+_g->firstspritelump);
+    //R_UnlockPatchNum(lump+_g->firstspritelump);
   }
 
   // off the side?
@@ -655,7 +661,8 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   flip = (boolean) sprframe->flip[0];
 
   {
-    const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
+    //const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
+    const patch_t* patch = W_CacheLumpNum(lump+_g->firstspritelump);
     // calculate edges of the shape
     fixed_t       tx;
     tx = psp->sx-160*FRACUNIT;
@@ -668,7 +675,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
-    R_UnlockPatchNum(lump+_g->firstspritelump);
+    //R_UnlockPatchNum(lump+_g->firstspritelump);
   }
 
   // off the side

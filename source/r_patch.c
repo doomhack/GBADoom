@@ -133,7 +133,8 @@ static int getPatchIsNotTileable(const patch_t *patch) {
 }
 
 //---------------------------------------------------------------------------
-static void createPatch(int id) {
+static void createPatch(int id)
+{
   rpatch_t *patch;
   const int patchNum = id;
   const patch_t *oldPatch = (const patch_t*)W_CacheLumpNum(patchNum);

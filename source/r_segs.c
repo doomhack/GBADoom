@@ -83,7 +83,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 {
   int      texnum;
   sector_t tempsec;      // killough 4/13/98
-  const rpatch_t *patch;
+  //const rpatch_t *patch;
   R_DrawColumn_f colfunc;
   draw_column_vars_t dcvars;
 
@@ -139,7 +139,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     dcvars.colormap = _g->fixedcolormap;
   }
 
-  patch = R_CacheTextureCompositePatchNum(texnum);
+  //patch = R_CacheTextureCompositePatchNum(texnum);
 
   // draw the columns
   for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, _g->spryscale += _g->rw_scalestep)
@@ -180,17 +180,20 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         // when forming multipatched textures (see r_data.c).
 
         // draw the texture
+
+        /*
         R_DrawMaskedColumn(
           patch,
           colfunc,
           &dcvars,
           R_GetPatchColumnWrapped(patch, _g->maskedtexturecol[dcvars.x])
         );
+        */
 
         _g->maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
       }
 
-  R_UnlockTextureCompositePatchNum(texnum);
+  //R_UnlockTextureCompositePatchNum(texnum);
 
   _g->curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
 }
