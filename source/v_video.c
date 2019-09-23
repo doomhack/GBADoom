@@ -174,8 +174,6 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     int byte_pitch = (_g->screens[scrn].byte_pitch * 2);
     int dc_iscale = DYI;
 
-    int dc_x;
-
     left = ( x * DX ) >> FRACBITS;
     top = ( y * DY ) >> FRACBITS;
     right = ( (x + patch->width) * DX ) >> FRACBITS;
@@ -183,7 +181,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
     col = 0;
 
-    for (dc_x=left; dc_x<right; dc_x++, col+=DXI)
+    for (int dc_x=left; dc_x<right; dc_x++, col+=DXI)
     {
         const int colindex = (col>>16);
         const column_t* column = (const column_t *)((const byte*)patch + patch->columnofs[colindex]);
@@ -191,6 +189,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
         // ignore this column if it's to the left of our clampRect
         if (dc_x < 0)
             continue;
+
         if (dc_x >= 240)
             break;
 
@@ -209,6 +208,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
             if ((dc_yh < 0) || (dc_yh < top))
                 continue;
+
             if ((dc_yl >= SCREENHEIGHT) || (dc_yl >= bottom))
                 continue;
 
@@ -248,7 +248,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
                 // Zero length, column does not exceed a pixel.
                 if (dc_yl >= dc_yh)
-                    return;
+                    continue;
 
                 // Inner loop that does the actual texture mapping,
                 //  e.g. a DDA-lile scaling.
