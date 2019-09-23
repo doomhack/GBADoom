@@ -154,6 +154,10 @@ void V_Init (void)
 
 }
 
+/*
+ * This function draws at GBA resoulution (ie. not pixel doubled)
+ * so the st bar and menus don't look like garbage.
+ */
 void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 {
     y -= patch->topoffset;
@@ -161,37 +165,33 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
     int   col;
     int   left, right, top, bottom;
-    int   DX  = (SCREENWIDTH<<16)  / 320;
-    int   DXI = (320<<16)          / SCREENWIDTH;
+    int   DX  = (240<<16)  / 320;
+    int   DXI = (320<<16)          / 240;
     int   DY  = (SCREENHEIGHT<<16) / 200;
     int   DYI = (200<<16)          / SCREENHEIGHT;
 
-    draw_column_vars_t dcvars;
-    draw_vars_t olddrawvars = _g->drawvars;
+    byte* byte_topleft = (byte*)_g->screens[scrn].data;
+    int byte_pitch = (_g->screens[scrn].byte_pitch * 2);
+    int dc_iscale = DYI;
 
-    R_SetDefaultDrawColumnVars(&dcvars);
-
-    _g->drawvars.byte_topleft = _g->screens[scrn].data;
-    _g->drawvars.byte_pitch = _g->screens[scrn].byte_pitch;
+    int dc_x;
 
     left = ( x * DX ) >> FRACBITS;
     top = ( y * DY ) >> FRACBITS;
     right = ( (x + patch->width) * DX ) >> FRACBITS;
     bottom = ( (y + patch->height) * DY ) >> FRACBITS;
 
-    dcvars.iscale = DYI;
-
     col = 0;
 
-    for (dcvars.x=left; dcvars.x<right; dcvars.x++, col+=DXI)
+    for (dc_x=left; dc_x<right; dc_x++, col+=DXI)
     {
         const int colindex = (col>>16);
         const column_t* column = (const column_t *)((const byte*)patch + patch->columnofs[colindex]);
 
         // ignore this column if it's to the left of our clampRect
-        if (dcvars.x < 0)
+        if (dc_x < 0)
             continue;
-        if (dcvars.x >= SCREENWIDTH)
+        if (dc_x >= 240)
             break;
 
         // step through the posts in a column
@@ -202,47 +202,88 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
             int yoffset = 0;
 
-            dcvars.yl = (((y + topdelta) * DY)>>FRACBITS);
-            dcvars.yh = (((y + topdelta + column->length) * DY - (FRACUNIT>>1))>>FRACBITS);
+            int dc_yl = (((y + topdelta) * DY)>>FRACBITS);
+            int dc_yh = (((y + topdelta + column->length) * DY - (FRACUNIT>>1))>>FRACBITS);
 
             column = (const column_t *)((const byte *)column + column->length + 4 );
 
-            if ((dcvars.yh < 0) || (dcvars.yh < top))
+            if ((dc_yh < 0) || (dc_yh < top))
                 continue;
-            if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
+            if ((dc_yl >= SCREENHEIGHT) || (dc_yl >= bottom))
                 continue;
 
-            if (dcvars.yh > bottom)
+            if (dc_yh > bottom)
             {
-                dcvars.yh = bottom;
+                dc_yh = bottom;
             }
 
-            if (dcvars.yh >= SCREENHEIGHT)
+            if (dc_yh >= SCREENHEIGHT)
             {
-                dcvars.yh = SCREENHEIGHT-1;
+                dc_yh = SCREENHEIGHT-1;
             }
 
-            if (dcvars.yl < 0)
+            if (dc_yl < 0)
             {
-                yoffset = 0-dcvars.yl;
-                dcvars.yl = 0;
+                yoffset = 0-dc_yl;
+                dc_yl = 0;
             }
 
-            if (dcvars.yl < top)
+            if (dc_yl < top)
             {
-                yoffset = top-dcvars.yl;
-                dcvars.yl = top;
+                yoffset = top-dc_yl;
+                dc_yl = top;
             }
 
-            dcvars.source = source;
+            int dc_texturemid = -((dc_yl-centery)*dc_iscale);
 
-            dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
+            {
+                unsigned int count = dc_yh - dc_yl;
 
-            R_DrawColumn(&dcvars);
+                const byte *colormap = _g->colormaps;
+
+                byte* dest = byte_topleft + (dc_yl*byte_pitch) + dc_x;
+
+                const fixed_t		fracstep = dc_iscale;
+                fixed_t frac = dc_texturemid + (dc_yl - centery)*fracstep;
+
+                // Zero length, column does not exceed a pixel.
+                if (dc_yl >= dc_yh)
+                    return;
+
+                // Inner loop that does the actual texture mapping,
+                //  e.g. a DDA-lile scaling.
+                // This is as fast as it gets.
+                do
+                {
+                    // Re-map color indices from wall texture column
+                    //  using a lighting/special effects LUT.
+                    unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
+
+                    //The GBA must write in 16bits.
+                    if((unsigned int)dest & 1)
+                    {
+                        //Odd addreses, we combine existing pixel with new one.
+                        unsigned short* dest16 = (unsigned short*)(dest - 1);
+
+
+                        unsigned short old = *dest16;
+
+                        *dest16 = (old & 0xff) | (color << 8);
+                    }
+                    else
+                    {
+                        //So even addreses we just write the first color twice.
+                        unsigned short* dest16 = (unsigned short*)dest;
+
+                        *dest16 = (color | (color << 8));
+                    }
+
+                    dest += byte_pitch;
+                    frac += fracstep;
+                } while (count--);
+            }
         }
     }
-
-    _g->drawvars = olddrawvars;
 }
 
 //
