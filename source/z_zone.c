@@ -96,7 +96,7 @@ static memblock_t *blockbytag[PU_MAX];
 
 // 0 means unlimited, any other value is a hard limit
 //static int memory_size = 8192*1024;
-static int memory_size = 8162*1024;
+static int memory_size = 8192*1024;
 static int free_memory = 0;
 
 static int running_count = 0;
