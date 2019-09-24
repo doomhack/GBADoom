@@ -261,7 +261,7 @@ static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t*
 
         byte colcache[128];
 
-        const unsigned int xc = texcolumn & tex->widthmask;
+        const int xc = texcolumn & tex->widthmask;
 
         for(int i=0; i<tex->patchcount; i++)
         {
