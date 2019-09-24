@@ -636,7 +636,8 @@ void R_UnlockPatchNum(int id)
 }
 
 //---------------------------------------------------------------------------
-const rpatch_t *R_CacheTextureCompositePatchNum(int id) {
+const rpatch_t *R_CacheTextureCompositePatchNum(int id)
+{
   const int locks = 1;
 
   if (!_g->texture_composites)

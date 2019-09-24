@@ -81,121 +81,120 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 
 void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 {
-  int      texnum;
-  sector_t tempsec;      // killough 4/13/98
-  //const rpatch_t *patch;
-  R_DrawColumn_f colfunc;
-  draw_column_vars_t dcvars;
+    int      texnum;
+    sector_t tempsec;      // killough 4/13/98
+    //const rpatch_t *patch;
+    R_DrawColumn_f colfunc;
+    draw_column_vars_t dcvars;
 
-  R_SetDefaultDrawColumnVars(&dcvars);
+    R_SetDefaultDrawColumnVars(&dcvars);
 
-  // Calculate light table.
-  // Use different light tables
-  //   for horizontal / vertical / diagonal. Diagonal?
+    // Calculate light table.
+    // Use different light tables
+    //   for horizontal / vertical / diagonal. Diagonal?
 
-  _g->curline = ds->curline;  // OPTIMIZE: get rid of LIGHTSEGSHIFT globally
+    _g->curline = ds->curline;  // OPTIMIZE: get rid of LIGHTSEGSHIFT globally
 
-  // killough 4/11/98: draw translucent 2s normal textures
+    // killough 4/11/98: draw translucent 2s normal textures
 
-  colfunc = R_DrawColumn;
+    colfunc = R_DrawColumn;
 
-  // killough 4/11/98: end translucent 2s normal code
+    // killough 4/11/98: end translucent 2s normal code
 
-  _g->frontsector = _g->curline->frontsector;
-  _g->backsector = _g->curline->backsector;
-
-  // cph 2001/11/25 - middle textures did not animate in v1.2
-  texnum = _g->curline->sidedef->midtexture;
+    _g->frontsector = _g->curline->frontsector;
+    _g->backsector = _g->curline->backsector;
 
     texnum = _g->texturetranslation[texnum];
 
-  // killough 4/13/98: get correct lightlevel for 2s normal textures
-  _g->rw_lightlevel = R_FakeFlat(_g->frontsector, &tempsec, NULL, NULL, false) ->lightlevel;
+    // killough 4/13/98: get correct lightlevel for 2s normal textures
+    _g->rw_lightlevel = R_FakeFlat(_g->frontsector, &tempsec, NULL, NULL, false) ->lightlevel;
 
-  _g->maskedtexturecol = ds->maskedtexturecol;
+    _g->maskedtexturecol = ds->maskedtexturecol;
 
-  _g->rw_scalestep = ds->scalestep;
-  _g->spryscale = ds->scale1 + (x1 - ds->x1)*_g->rw_scalestep;
-  _g->mfloorclip = ds->sprbottomclip;
-  _g->mceilingclip = ds->sprtopclip;
+    _g->rw_scalestep = ds->scalestep;
+    _g->spryscale = ds->scale1 + (x1 - ds->x1)*_g->rw_scalestep;
+    _g->mfloorclip = ds->sprbottomclip;
+    _g->mceilingclip = ds->sprtopclip;
 
-  // find positioning
-  if (_g->curline->linedef->flags & ML_DONTPEGBOTTOM)
+    // find positioning
+    if (_g->curline->linedef->flags & ML_DONTPEGBOTTOM)
     {
-      dcvars.texturemid = _g->frontsector->floorheight > _g->backsector->floorheight
-        ? _g->frontsector->floorheight : _g->backsector->floorheight;
-      dcvars.texturemid = dcvars.texturemid + _g->textureheight[texnum] - _g->viewz;
+        dcvars.texturemid = _g->frontsector->floorheight > _g->backsector->floorheight
+                ? _g->frontsector->floorheight : _g->backsector->floorheight;
+        dcvars.texturemid = dcvars.texturemid + _g->textureheight[texnum] - _g->viewz;
     }
-  else
+    else
     {
-      dcvars.texturemid =_g->frontsector->ceilingheight<_g->backsector->ceilingheight
-        ? _g->frontsector->ceilingheight : _g->backsector->ceilingheight;
-      dcvars.texturemid = dcvars.texturemid - _g->viewz;
+        dcvars.texturemid =_g->frontsector->ceilingheight<_g->backsector->ceilingheight
+                ? _g->frontsector->ceilingheight : _g->backsector->ceilingheight;
+        dcvars.texturemid = dcvars.texturemid - _g->viewz;
     }
 
-  dcvars.texturemid += _g->curline->sidedef->rowoffset;
+    dcvars.texturemid += _g->curline->sidedef->rowoffset;
 
-  if (_g->fixedcolormap) {
-    dcvars.colormap = _g->fixedcolormap;
-  }
+    if (_g->fixedcolormap) {
+        dcvars.colormap = _g->fixedcolormap;
+    }
 
-  //patch = R_CacheTextureCompositePatchNum(texnum);
+    const int patchnum = _g->textures[texnum]->patches[0].patch;
+    const unsigned int widthmask = _g->textures[texnum]->widthmask;
+    const patch_t* patch = W_CacheLumpNum(patchnum);
 
-  // draw the columns
-  for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, _g->spryscale += _g->rw_scalestep)
-    if (_g->maskedtexturecol[dcvars.x] != INT_MAX) // dropoff overflow
-      {
-        
-        if (!_g->fixedcolormap)
-          dcvars.z = _g->spryscale; // for filtering -- POPE
-        dcvars.colormap = R_ColourMap(_g->rw_lightlevel,_g->spryscale);
 
-        // killough 3/2/98:
-        //
-        // This calculation used to overflow and cause crashes in Doom:
-        //
-        // sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
-        //
-        // This code fixes it, by using double-precision intermediate
-        // arithmetic and by skipping the drawing of 2s normals whose
-        // mapping to screen coordinates is totally out of range:
-
+    // draw the columns
+    for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, _g->spryscale += _g->rw_scalestep)
+    {
+        if (_g->maskedtexturecol[dcvars.x] != INT_MAX) // dropoff overflow
         {
-          int_64_t t = ((int_64_t) centeryfrac << FRACBITS) -
-            (int_64_t) dcvars.texturemid * _g->spryscale;
-          if (t + (int_64_t) _g->textureheight[texnum] * _g->spryscale < 0 ||
-              t > (int_64_t) MAX_SCREENHEIGHT << FRACBITS*2)
-            continue;        // skip if the texture is out of screen's range
-          _g->sprtopscreen = (long)(t >> FRACBITS);
+
+            if (!_g->fixedcolormap)
+                dcvars.z = _g->spryscale; // for filtering -- POPE
+            dcvars.colormap = R_ColourMap(_g->rw_lightlevel,_g->spryscale);
+
+            // killough 3/2/98:
+            //
+            // This calculation used to overflow and cause crashes in Doom:
+            //
+            // sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
+            //
+            // This code fixes it, by using double-precision intermediate
+            // arithmetic and by skipping the drawing of 2s normals whose
+            // mapping to screen coordinates is totally out of range:
+
+            {
+                int_64_t t = ((int_64_t) centeryfrac << FRACBITS) -
+                        (int_64_t) dcvars.texturemid * _g->spryscale;
+                if (t + (int_64_t) _g->textureheight[texnum] * _g->spryscale < 0 ||
+                        t > (int_64_t) MAX_SCREENHEIGHT << FRACBITS*2)
+                    continue;        // skip if the texture is out of screen's range
+                _g->sprtopscreen = (long)(t >> FRACBITS);
+            }
+
+            dcvars.iscale = 0xffffffffu / (unsigned) _g->spryscale;
+
+            // killough 1/25/98: here's where Medusa came in, because
+            // it implicitly assumed that the column was all one patch.
+            // Originally, Doom did not construct complete columns for
+            // multipatched textures, so there were no header or trailer
+            // bytes in the column referred to below, which explains
+            // the Medusa effect. The fix is to construct true columns
+            // when forming multipatched textures (see r_data.c).
+
+            // draw the texture
+            int xc = _g->maskedtexturecol[dcvars.x];
+            while (xc < 0) xc += patch->width;
+
+            xc &= widthmask;
+
+            const column_t* column = (column_t *) ((byte *)patch + patch->columnofs[xc]);
+
+            R_DrawMaskedColumn(patch, colfunc, &dcvars, column);
+
+            _g->maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
         }
+    }
 
-        dcvars.iscale = 0xffffffffu / (unsigned) _g->spryscale;
-
-        // killough 1/25/98: here's where Medusa came in, because
-        // it implicitly assumed that the column was all one patch.
-        // Originally, Doom did not construct complete columns for
-        // multipatched textures, so there were no header or trailer
-        // bytes in the column referred to below, which explains
-        // the Medusa effect. The fix is to construct true columns
-        // when forming multipatched textures (see r_data.c).
-
-        // draw the texture
-
-        /*
-        R_DrawMaskedColumn(
-          patch,
-          colfunc,
-          &dcvars,
-          R_GetPatchColumnWrapped(patch, _g->maskedtexturecol[dcvars.x])
-        );
-        */
-
-        _g->maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
-      }
-
-  //R_UnlockTextureCompositePatchNum(texnum);
-
-  _g->curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
+    _g->curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
 }
 
 //
@@ -291,10 +290,17 @@ static void R_RenderSegLoop (void)
           dcvars.yl = yl;     // single sided line
           dcvars.yh = yh;
           dcvars.texturemid = _g->rw_midtexturemid;
+          //
+
           tex_patch = R_CacheTextureCompositePatchNum(_g->midtexture);
+
           dcvars.source = R_GetTextureColumn(tex_patch, texturecolumn);
+
           R_DrawColumn (&dcvars);
           R_UnlockTextureCompositePatchNum(_g->midtexture);
+
+          //
+
           tex_patch = NULL;
           _g->ceilingclip[_g->rw_x] = viewheight;
           _g->floorclip[_g->rw_x] = -1;
