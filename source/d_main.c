@@ -193,7 +193,6 @@ void D_Display (void)
       break;
     }
   } else if (_g->gametic != _g->basetic) { // In a level
-    boolean redrawborderstuff;
 
     HU_Erase();
 

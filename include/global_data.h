@@ -689,9 +689,6 @@ boolean setsizeneeded;
 //r_patch.c
 //******************************************************************************
 
-rpatch_t *patches;
-
-rpatch_t *texture_composites;
 
 //******************************************************************************
 //r_plane.c
@@ -968,7 +965,7 @@ int    cnt_par;
 int    cnt_pause;
 
 // 0-9 graphic
-patchnum_t num[10];
+const patch_t* num[10];
 
 int  sp_state;
 

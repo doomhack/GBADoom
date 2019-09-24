@@ -353,7 +353,6 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
 {
   int      texturecolumn;
   fixed_t  frac;
-  //const rpatch_t *patch = R_CachePatchNum(vis->patch+_g->firstspritelump);
   const patch_t *patch = W_CacheLumpNum(vis->patch+_g->firstspritelump);
 
   R_DrawColumn_f colfunc;
@@ -496,7 +495,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     }
 
   {
-    //const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
 
     const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);
 
@@ -661,7 +659,6 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   flip = (boolean) sprframe->flip[0];
 
   {
-    //const rpatch_t* patch = R_CachePatchNum(lump+_g->firstspritelump);
     const patch_t* patch = W_CacheLumpNum(lump+_g->firstspritelump);
     // calculate edges of the shape
     fixed_t       tx;

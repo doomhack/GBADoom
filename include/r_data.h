@@ -71,8 +71,6 @@ typedef struct
 } texture_t;
 
 
-const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col);
-
 
 // I/O, setting up the stuff.
 void R_InitData (void);
@@ -98,7 +96,5 @@ int R_ColormapNumForName(const char *name);      // killough 4/4/98
 /* cph 2001/11/17 - new func to do lighting calcs and get suitable colour map */
 const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale);
 
-/* Proff - Added for OpenGL - cph - const char* param */
-void R_SetPatchNum(patchnum_t *patchnum, const char *name);
 
 #endif

@@ -286,112 +286,6 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     }
 }
 
-//
-// V_DrawMemPatch
-//
-// CPhipps - unifying patch drawing routine, handles all cases and combinations
-//  of stretching, flipping and translating
-//
-// This function is big, hopefully not too big that gcc can't optimise it well.
-// In fact it packs pretty well, there is no big performance lose for all this merging;
-// the inner loops themselves are just the same as they always were
-// (indeed, laziness of the people who wrote the 'clones' of the original V_DrawPatch
-//  means that their inner loops weren't so well optimised, so merging code may even speed them).
-//
-static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch, int cm, enum patch_translation_e flags)
-{
-    const byte *trans = NULL;
-
-    y -= patch->topoffset;
-    x -= patch->leftoffset;
-
-    // CPhipps - move stretched patch drawing code here
-    //         - reformat initialisers, move variables into inner blocks
-
-    int   col;
-    int   w = (patch->width << 16) - 1; // CPhipps - -1 for faster flipping
-    int   left, right, top, bottom;
-    int   DX  = (SCREENWIDTH<<16)  / 320;
-    int   DXI = (320<<16)          / SCREENWIDTH;
-    int   DY  = (SCREENHEIGHT<<16) / 200;
-    int   DYI = (200<<16)          / SCREENHEIGHT;
-
-    draw_column_vars_t dcvars;
-    draw_vars_t olddrawvars = _g->drawvars;
-
-    R_SetDefaultDrawColumnVars(&dcvars);
-
-    _g->drawvars.byte_topleft = _g->screens[scrn].data;
-    _g->drawvars.byte_pitch = _g->screens[scrn].byte_pitch;
-
-    left = ( x * DX ) >> FRACBITS;
-    top = ( y * DY ) >> FRACBITS;
-    right = ( (x + patch->width) * DX ) >> FRACBITS;
-    bottom = ( (y + patch->height) * DY ) >> FRACBITS;
-
-    dcvars.iscale = DYI;
-
-    col = 0;
-
-    for (dcvars.x=left; dcvars.x<right; dcvars.x++, col+=DXI)
-    {
-        int i;
-        const int colindex = (flags & VPT_FLIP) ? ((w - col)>>16): (col>>16);
-        const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
-
-        // ignore this column if it's to the left of our clampRect
-        if (dcvars.x < 0)
-            continue;
-        if (dcvars.x >= SCREENWIDTH)
-            break;
-
-        // step through the posts in a column
-        for (i=0; i<column->numPosts; i++)
-        {
-            const rpost_t *post = &column->posts[i];
-            int yoffset = 0;
-
-            dcvars.yl = (((y + post->topdelta) * DY)>>FRACBITS);
-            dcvars.yh = (((y + post->topdelta + post->length) * DY - (FRACUNIT>>1))>>FRACBITS);
-
-            if ((dcvars.yh < 0) || (dcvars.yh < top))
-                continue;
-            if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
-                continue;
-
-            if (dcvars.yh >= bottom)
-            {
-                dcvars.yh = bottom-1;
-            }
-
-            if (dcvars.yh >= SCREENHEIGHT)
-            {
-                dcvars.yh = SCREENHEIGHT-1;
-            }
-
-            if (dcvars.yl < 0)
-            {
-                yoffset = 0-dcvars.yl;
-                dcvars.yl = 0;
-            }
-
-            if (dcvars.yl < top)
-            {
-                yoffset = top-dcvars.yl;
-                dcvars.yl = top;
-            }
-
-            dcvars.source = column->pixels + post->topdelta + yoffset;
-
-            dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
-
-            R_DrawColumn(&dcvars);
-        }
-    }
-
-    _g->drawvars = olddrawvars;
-}
-
 // CPhipps - some simple, useful wrappers for that function, for drawing patches from wads
 
 // CPhipps - GNU C only suppresses generating a copy of a function if it is
@@ -402,9 +296,6 @@ void V_DrawNumPatch(int x, int y, int scrn, int lump,
          int cm, enum patch_translation_e flags)
 {
     V_DrawPatch(x, y, scrn, W_CacheLumpNum(lump));
-
-  //V_DrawMemPatch(x, y, scrn, R_CachePatchNum(lump), cm, flags);
-  //R_UnlockPatchNum(lump);
 }
 
 //

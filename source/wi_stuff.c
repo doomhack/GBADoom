@@ -155,7 +155,7 @@ typedef struct
   /* actual graphics for frames of animations
    * cphipps - const
    */
-  patchnum_t p[3];
+  const patch_t* p[3];
 
   // following must be initialized to zero before use!
 
@@ -490,13 +490,12 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
     int            top;
     int            right;
     int            bottom;
-    const rpatch_t* patch = R_CachePatchName(c[i]);
+    const patch_t* patch = W_CacheLumpName(c[i]);
 
     left = lnodes[_g->wbs->epsd][n].x - patch->leftoffset;
     top = lnodes[_g->wbs->epsd][n].y - patch->topoffset;
     right = left + patch->width;
     bottom = top + patch->height;
-    R_UnlockPatchName(c[i]);
 
     if (left >= 0
        && right < 320
@@ -643,7 +642,7 @@ void WI_drawAnimatedBack(void)
 
     if (a->ctr >= 0)
       // CPhipps - patch drawing updated
-      V_DrawNumPatch(a->loc.x, a->loc.y, FB, a->p[a->ctr].lumpnum, CR_DEFAULT, VPT_STRETCH);
+      V_DrawPatch(a->loc.x, a->loc.y, FB, a->p[a->ctr]);
   }
 }
 
@@ -659,7 +658,7 @@ void WI_drawAnimatedBack(void)
 // CPhipps - static
 static int WI_drawNum (int x, int y, int n, int digits)
 {
-  int   fontwidth = _g->num[0].width;
+  int   fontwidth = _g->num[0]->width;
   int   neg;
   int   temp;
 
@@ -697,7 +696,7 @@ static int WI_drawNum (int x, int y, int n, int digits)
   {
     x -= fontwidth;
     // CPhipps - patch drawing updated
-    V_DrawNumPatch(x, y, FB, _g->num[ n % 10 ].lumpnum, CR_DEFAULT, VPT_STRETCH);
+    V_DrawPatch(x, y, FB, _g->num[ n % 10 ]);
     n /= 10;
   }
 
@@ -1133,7 +1132,7 @@ void WI_drawStats(void)
   // line height
   int lh;
 
-  lh = (3*_g->num[0].height)/2;
+  lh = (3*_g->num[0]->height)/2;
 
   WI_slamBackground();
 
@@ -1252,7 +1251,7 @@ void WI_loadData(void)
   int   i;
   int   j;
   char  name[9];  // limited to 8 characters
-  const wi_anim_t* a;
+  wi_anim_t* a;
 
   if (_g->gamemode != commercial)
   {
@@ -1268,7 +1267,7 @@ void WI_loadData(void)
           {
             // animations
             sprintf(name, "WIA%d%.2d%.2d", _g->wbs->epsd, j, i);
-            R_SetPatchNum(&a->p[i], name);
+            a->p[i] = W_CacheLumpName(name);
           }
           else
           {
@@ -1284,7 +1283,8 @@ void WI_loadData(void)
   {
     // numbers 0-9
     sprintf(name, "WINUM%d", i);
-    R_SetPatchNum(&_g->num[i], name);
+
+    _g->num[i] = W_CacheLumpName(name);
   }
 }
 

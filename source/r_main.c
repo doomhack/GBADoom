@@ -290,8 +290,6 @@ void R_Init (void)
   R_InitSkyMap();
   lprintf(LO_INFO, "R_InitTranslationsTables\n");
   R_InitTranslationTables();
-  lprintf(LO_INFO, "R_InitPatches\n");
-  R_InitPatches();
 }
 
 //

@@ -83,7 +83,6 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 {
     int      texnum;
     sector_t tempsec;      // killough 4/13/98
-    //const rpatch_t *patch;
     R_DrawColumn_f colfunc;
     draw_column_vars_t dcvars;
 
@@ -198,6 +197,103 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     _g->curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
 }
 
+
+
+void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int cacheheight)
+{
+    int		count;
+    int		position;
+    const byte*	source;
+    byte*	dest;
+
+    dest = (byte *)cache + 3;
+
+    while (patch->topdelta != 0xff)
+    {
+        source = (const byte *)patch + 3;
+        count = patch->length;
+        position = originy + patch->topdelta;
+
+        if (position < 0)
+        {
+            count += position;
+            position = 0;
+        }
+
+        if (position + count > cacheheight)
+            count = cacheheight - position;
+
+        if (count > 0)
+            memcpy (cache + position, source, count);
+
+        patch = (const column_t *)(  (const byte *)patch + patch->length + 4);
+    }
+}
+
+
+/*
+ * Draw a column of pixels of the specified texture.
+ * If the texture is simple (1 patch, full height) then just draw
+ * straight from const patch_t*.
+*/
+static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t* dcvars)
+{
+    texture_t* tex = _g->textures[texture];
+
+    if(tex->height == 128 && tex->patchcount == 1)
+    {
+        //simple texture.
+
+        const unsigned int widthmask = tex->widthmask;
+        const patch_t* patch = W_CacheLumpNum(tex->patches[0].patch);
+
+        const unsigned int xc = texcolumn & widthmask;
+
+        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+
+        dcvars->source = (const byte*)column + 3;
+
+        R_DrawColumn (dcvars);
+    }
+    else
+    {
+        const patch_t* realpatch;
+
+        byte colcache[128];
+
+        const unsigned int xc = texcolumn & tex->widthmask;
+
+        for(int i=0; i<tex->patchcount; i++)
+        {
+            texpatch_t* patch = &tex->patches[i];
+
+            realpatch = W_CacheLumpNum(patch->patch);
+
+            int x1 = patch->originx;
+            int x2 = x1 + realpatch->width;
+
+            if (x2 > tex->width)
+                x2 = tex->width;
+
+            if(xc >= x1 && xc < x2)
+            {
+                const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
+
+                R_DrawColumnInCache (patchcol,
+                                     colcache,
+                                     patch->originy,
+                                     tex->height);
+
+            }
+        }
+
+        dcvars->source = colcache;
+
+        R_DrawColumn (dcvars);
+    }
+}
+
+
 //
 // R_RenderSegLoop
 // Draws zero, one, or two textures (and possibly a masked texture) for walls.
@@ -210,8 +306,6 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
 static void R_RenderSegLoop (void)
 {
-  const rpatch_t *tex_patch;
-
   draw_column_vars_t dcvars;
   fixed_t  texturecolumn = 0;   // shut up compiler warning
 
@@ -293,16 +387,8 @@ static void R_RenderSegLoop (void)
           dcvars.texturemid = _g->rw_midtexturemid;
           //
 
-          tex_patch = R_CacheTextureCompositePatchNum(_g->midtexture);
+          DrawSegTextureColumn(_g->midtexture, texturecolumn, &dcvars);
 
-          dcvars.source = R_GetTextureColumn(tex_patch, texturecolumn);
-
-          R_DrawColumn (&dcvars);
-          R_UnlockTextureCompositePatchNum(_g->midtexture);
-
-          //
-
-          tex_patch = NULL;
           _g->ceilingclip[_g->rw_x] = viewheight;
           _g->floorclip[_g->rw_x] = -1;
         }
@@ -324,11 +410,9 @@ static void R_RenderSegLoop (void)
                   dcvars.yl = yl;
                   dcvars.yh = mid;
                   dcvars.texturemid = _g->rw_toptexturemid;
-                  tex_patch = R_CacheTextureCompositePatchNum(_g->toptexture);
-                  dcvars.source = R_GetTextureColumn(tex_patch,texturecolumn);
-                  R_DrawColumn (&dcvars);
-                  R_UnlockTextureCompositePatchNum(_g->toptexture);
-                  tex_patch = NULL;
+
+                  DrawSegTextureColumn(_g->toptexture, texturecolumn, &dcvars);
+
                   _g->ceilingclip[_g->rw_x] = mid;
                 }
               else
@@ -355,11 +439,9 @@ static void R_RenderSegLoop (void)
                   dcvars.yl = mid;
                   dcvars.yh = yh;
                   dcvars.texturemid = _g->rw_bottomtexturemid;
-                  tex_patch = R_CacheTextureCompositePatchNum(_g->bottomtexture);
-                  dcvars.source = R_GetTextureColumn(tex_patch, texturecolumn);
-                  R_DrawColumn  (&dcvars);
-                  R_UnlockTextureCompositePatchNum(_g->bottomtexture);
-                  tex_patch = NULL;
+
+                  DrawSegTextureColumn(_g->bottomtexture, texturecolumn, &dcvars);
+
                   _g->floorclip[_g->rw_x] = mid;
                 }
               else

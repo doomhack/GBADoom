@@ -295,7 +295,6 @@ static void R_DoDrawPlane(visplane_t *pl)
         if (pl->picnum == _g->skyflatnum || pl->picnum & PL_SKYFLAT)
 		{ // sky flat
 			int texture;
-            //const rpatch_t *tex_patch;
 			angle_t an, flip;
 
 			// killough 10/98: allow skies to come from sidedefs.
@@ -352,7 +351,6 @@ static void R_DoDrawPlane(visplane_t *pl)
 			// proff 09/21/98: Changed for high-res
             dcvars.iscale = FRACUNIT*200/viewheight;
 
-            //tex_patch = R_CacheTextureCompositePatchNum(texture);
             const int patchnum = _g->textures[texture]->patches[0].patch;
             const unsigned int widthmask = _g->textures[texture]->widthmask;
             const patch_t* patch = W_CacheLumpNum(patchnum);
@@ -370,8 +368,6 @@ static void R_DoDrawPlane(visplane_t *pl)
 					R_DrawColumn(&dcvars);
 				}
 			}
-			
-            //R_UnlockTextureCompositePatchNum(texture);
 		}
 		else
 		{     // regular flat

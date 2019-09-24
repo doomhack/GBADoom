@@ -88,22 +88,6 @@ typedef struct
 // of one or more mappatch_t structures that arrange graphic patches.
 
 
-
-//
-// R_GetTextureColumn
-//
-
-const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col)
-{
-  while (col < 0)
-    col += texpatch->width;
-  col &= texpatch->widthmask;
-  
-  return texpatch->columns[col].pixels;
-}
-
-
-
 //
 // R_InitTextures
 // Initializes the texture list
@@ -529,16 +513,4 @@ void R_PrecacheLevel(void)
           }
       }
   free(hitlist);
-}
-
-// Proff - Added for OpenGL
-void R_SetPatchNum(patchnum_t *patchnum, const char *name)
-{
-  const rpatch_t *patch = R_CachePatchName(name);
-  patchnum->width = patch->width;
-  patchnum->height = patch->height;
-  patchnum->leftoffset = patch->leftoffset;
-  patchnum->topoffset = patch->topoffset;
-  patchnum->lumpnum = W_GetNumForName(name);
-  R_UnlockPatchName(name);
 }
