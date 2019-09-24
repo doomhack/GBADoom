@@ -104,6 +104,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     _g->frontsector = _g->curline->frontsector;
     _g->backsector = _g->curline->backsector;
 
+    texnum = _g->curline->sidedef->midtexture;
     texnum = _g->texturetranslation[texnum];
 
     // killough 4/13/98: get correct lightlevel for 2s normal textures
@@ -186,7 +187,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
             xc &= widthmask;
 
-            const column_t* column = (column_t *) ((byte *)patch + patch->columnofs[xc]);
+            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
 
             R_DrawMaskedColumn(patch, colfunc, &dcvars, column);
 
