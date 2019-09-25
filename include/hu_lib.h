@@ -65,7 +65,7 @@ typedef struct
   int   x;
   int   y;
 
-  const patchnum_t* f;                    // font
+  const patch_t** f;                    // font
   int   sc;                             // start character
   //const char *cr;                       //jff 2/16/52 output color range
   // Proff - Made this an int again. Needed for OpenGL

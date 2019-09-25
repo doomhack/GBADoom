@@ -436,8 +436,6 @@ void HU_MoveHud(void)
 //
 void HU_Drawer(void)
 {
-    return;
-
   // draw the automap widgets if automap is displayed
   if (_g->automapmode & am_active)
   {
