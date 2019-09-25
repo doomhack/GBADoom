@@ -549,9 +549,10 @@ void R_StoreWallRange(const int start, const int stop)
         int *oldlast = _g->lastopening; // dropoff overflow
 
         do
-          _g->maxopenings = _g->maxopenings ?_g-> maxopenings*2 : 16384;
+          _g->maxopenings = _g->maxopenings ?_g-> maxopenings*2 : 256;
         while (need > _g->maxopenings);
         _g->openings = realloc(_g->openings, _g->maxopenings * sizeof(*_g->openings));
+
         _g->lastopening = _g->openings + pos;
 
       // jff 8/9/98 borrowed fix for openings from ZDOOM1.14
