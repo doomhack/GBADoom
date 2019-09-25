@@ -111,12 +111,6 @@ int lastmadetic;
 //d_main.c
 //******************************************************************************
 
-boolean singletics; // debug flag to cancel adaptiveness
-boolean advancedemo;
-
-
-boolean isborderstate;
-
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate;
 gamestate_t oldgamestate;
@@ -125,6 +119,8 @@ int  demosequence;         // killough 5/2/98: made static
 int  pagetic;
 const char *pagename; // CPhipps - const
 
+boolean singletics; // debug flag to cancel adaptiveness
+boolean advancedemo;
 
 //******************************************************************************
 //doomstat.c
@@ -172,29 +168,19 @@ const byte *demo_p;
 gameaction_t    gameaction;
 gamestate_t     gamestate;
 skill_t         gameskill;
-boolean         respawnmonsters;
+
 int             gameepisode;
 int             gamemap;
-boolean         paused;
 
-// CPhipps - moved *_loadgame vars here
-boolean command_loadgame;
-
-boolean         usergame;      // ok to save / end game
-boolean         timingdemo;    // if true, exit with report on completion
-boolean         nodrawers;     // for comparative timing purposes
-int             starttime;     // for comparative timing purposes
-boolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
+
+int             starttime;     // for comparative timing purposes
 
 int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
-boolean         demoplayback;
 int             demover;
-boolean         singledemo;           // quit after playing a demo from cmdline
 wbstartstruct_t wminfo;               // parms for world map / intermission
-boolean         haswolflevels;// jff 4/18/98 wolf levels present
 byte            *savebuffer;          // CPhipps - static
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int             longtics;
@@ -206,14 +192,7 @@ int     turnheld;       // for accelerative turning
 
 // Game events info
 buttoncode_t special_event; // Event triggered by local player, to send
-byte  savegameslot;         // Slot to load if gameaction == ga_loadgame
 char         savedescription[SAVEDESCLEN];  // Description to save in savegame if gameaction == ga_savegame
-
-// killough 2/8/98: make corpse queue variable in size
-int    bodyqueslot;
-mobj_t **bodyque;
-int bodyquecount;
-
 
 gamestate_t prevgamestate;
 
@@ -221,8 +200,22 @@ skill_t d_skill;
 int     d_episode;
 int     d_map;
 
+byte  savegameslot;         // Slot to load if gameaction == ga_loadgame
+
+
 boolean secretexit;
 
+boolean         respawnmonsters;
+boolean         paused;
+// CPhipps - moved *_loadgame vars here
+boolean command_loadgame;
+
+boolean         usergame;      // ok to save / end game
+boolean         timingdemo;    // if true, exit with report on completion
+boolean         playeringame[MAXPLAYERS];
+boolean         demoplayback;
+boolean         singledemo;           // quit after playing a demo from cmdline
+boolean         haswolflevels;// jff 4/18/98 wolf levels present
 
 
 //******************************************************************************
@@ -292,23 +285,21 @@ const char* messageString; // ...and here is the message string!
 
 int messageLastMenuActive;
 
-boolean messageNeedsInput; // timed message = no input from user
-
 int saveStringEnter;
 int saveSlot;        // which slot to save in
 int saveCharIndex;   // which char we're editing
 // old save description before edit
 
-boolean menuactive;    // The menus are up
+const menu_t* currentMenu; // current menudef
+
+int epi;
 
 short itemOn;           // menu item skull is on (for Big Font menus)
 short skullAnimCounter; // skull animation counter
 short whichSkull;       // which skull to draw (he blinks)
 
-const menu_t* currentMenu; // current menudef
-
-
-int epi;
+boolean menuactive;    // The menus are up
+boolean messageNeedsInput; // timed message = no input from user
 
 //******************************************************************************
 //m_random.c
@@ -356,20 +347,17 @@ brain_t brain;   // killough 3/26/98: global state of boss brain
 //p_map.c
 //******************************************************************************
 
+/* killough 8/2/98: for more intelligent autoaiming */
+uint_64_t aim_flags_mask;
+
 mobj_t    *tmthing;
 fixed_t   tmx;
 fixed_t   tmy;
+
 int pe_x; // Pain Elemental position for Lost Soul checks // phares
 int pe_y; // Pain Elemental position for Lost Soul checks // phares
 int ls_x; // Lost Soul position for Lost Soul checks      // phares
 int ls_y; // Lost Soul position for Lost Soul checks      // phares
-
-// If "floatok" true, move would be ok
-// if within "tmfloorz - tmceilingz".
-boolean   floatok;
-
-/* killough 11/98: if "felldown" true, object was pushed down ledge */
-boolean   felldown;
 
 // The tm* items are used to hold information globally, usually for
 // line or object intersection checking
@@ -399,10 +387,6 @@ int numspechit;
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list;                             // phares 3/16/98
 
-boolean telefrag;   /* killough 8/9/98: whether to telefrag at exit */
-
-
-
 /* killough 8/2/98: make variables static */
 fixed_t   bestslidefrac;
 line_t*   bestslideline;
@@ -410,13 +394,8 @@ mobj_t*   slidemo;
 fixed_t   tmxmove;
 fixed_t   tmymove;
 
-
-
 mobj_t*   linetarget; // who got hit (or NULL)
 mobj_t*   shootthing;
-
-/* killough 8/2/98: for more intelligent autoaiming */
-uint_64_t aim_flags_mask;
 
 // Height if not aiming up or down
 fixed_t   shootz;
@@ -432,13 +411,22 @@ fixed_t   aimslope;
 fixed_t  topslope;
 fixed_t  bottomslope;
 
-
 mobj_t *bombsource, *bombspot;
 int bombdamage;
 
+mobj_t*   usething;
+
+// If "floatok" true, move would be ok
+// if within "tmfloorz - tmceilingz".
+boolean   floatok;
+
+/* killough 11/98: if "felldown" true, object was pushed down ledge */
+boolean   felldown;
+
 boolean crushchange, nofit;
 
-mobj_t*   usething;
+boolean telefrag;   /* killough 8/9/98: whether to telefrag at exit */
+
 
 
 //******************************************************************************
@@ -556,12 +544,6 @@ int rejectlump;// cph - store reject lump num if cached
 const byte *rejectmatrix; // cph - const*
 
 // Maintain single and multi player starting spots.
-
-// 1/11/98 killough: Remove limit on deathmatch starts
-mapthing_t *deathmatchstarts;      // killough
-size_t     num_deathmatchstarts;   // killough
-
-mapthing_t *deathmatch_p;
 mapthing_t playerstarts[MAXPLAYERS];
 
 
@@ -818,14 +800,14 @@ int snd_SfxVolume;
 // Maximum volume of music. Useless so far.
 int snd_MusicVolume;
 
-// whether songs are mus_paused
-boolean mus_paused;
-
 // music currently being played
 const musicinfo_t *mus_playing;
 
 //jff 3/17/98 to keep track of last IDMUS specified music num
 int idmusnum;
+
+// whether songs are mus_paused
+boolean mus_paused;
 
 //******************************************************************************
 //sounds.c
@@ -841,11 +823,7 @@ sfx_runtime sfx_data[128];
 // main player in game
 player_t *plyr;
 
-// ST_Start() has just been called
-boolean st_firsttime;
 
-// whether left-side main status bar is active
-boolean st_statusbaron;
 
 
 // 0-9, tall numbers
@@ -921,6 +899,11 @@ int      st_randomnumber;
 
 int st_palette;
 
+// ST_Start() has just been called
+boolean st_firsttime;
+
+// whether left-side main status bar is active
+boolean st_statusbaron;
 
 //******************************************************************************
 //v_video.c

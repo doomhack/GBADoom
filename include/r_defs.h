@@ -91,9 +91,6 @@ typedef struct
 
 typedef struct
 {
-  int iSectorID; // proff 04/05/2000: needed for OpenGL and used in debugmode by the HUD to draw sectornum
-  boolean no_toptextures;
-  boolean no_bottomtextures;
   fixed_t floorheight;
   fixed_t ceilingheight;
   int nexttag,firsttag;  // killough 1/30/98: improves searches for tags.
@@ -113,7 +110,6 @@ typedef struct
   // thinker_t for reversable actions
   void *floordata;    // jff 2/22/98 make thinkers on
   void *ceilingdata;  // floors, ceilings, lighting,
-  void *lightingdata; // independent of one another
 
   // jff 2/26/98 lockout machinery for stairbuilding
   int stairlock;   // -2 on first locked -1 after thinker done 0 normally
@@ -122,8 +118,6 @@ typedef struct
 
   // killough 3/7/98: support flat heights drawn at another sector's heights
   int heightsec;    // other sector, or -1 if no other sector
-
-  int bottommap, midmap, topmap; // killough 4/4/98: dynamic colormaps
 
   // list of mobjs that are at least partially in the sector
   // thinglist is a subset of touching_thinglist
@@ -190,7 +184,6 @@ typedef enum
 
 typedef struct line_s
 {
-  int iLineID;           // proff 04/05/2000: needed for OpenGL
   vertex_t *v1, *v2;     // Vertices, from v1 to v2.
   fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
   unsigned short flags;           // Animation related.
@@ -202,8 +195,6 @@ typedef struct line_s
   sector_t *frontsector; // Front and back sector.
   sector_t *backsector;
   int validcount;        // if == validcount, already checked
-  void *specialdata;     // thinker_t for reversable actions
-  int tranlump;          // killough 4/11/98: translucency filter, -1 == none
   int firsttag,nexttag;  // killough 4/17/98: improves searches for tags.
   int r_validcount;      // cph: if == gametic, r_flags already done
   enum {                 // cph:
@@ -390,7 +381,6 @@ typedef struct vissprite_s
   // killough 3/27/98: height sector for underwater/fake ceiling support
   int heightsec;
 
-  boolean isplayersprite;
 } vissprite_t;
 
 //

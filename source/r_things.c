@@ -281,7 +281,7 @@ static vissprite_t *R_NewVisSprite(void)
     {
       size_t num_vissprite_alloc_prev = _g->num_vissprite_alloc;
 
-      _g->num_vissprite_alloc = _g->num_vissprite_alloc ? _g->num_vissprite_alloc*2 : 128;
+      _g->num_vissprite_alloc = _g->num_vissprite_alloc ? _g->num_vissprite_alloc*2 : 32;
       _g->vissprites = realloc(_g->vissprites,_g->num_vissprite_alloc*sizeof(*_g->vissprites));
       
       //e6y: set all fields to zero
@@ -635,8 +635,6 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
   vissprite_t   avis;
   int           width;
   fixed_t       topoffset;
-
-  avis.isplayersprite = true;
 
   // decide which patch to use
 

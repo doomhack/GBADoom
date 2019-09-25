@@ -759,8 +759,6 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   if (_g->gameskill != sk_nightmare)
     mobj->reactiontime = info->reactiontime;
 
-  mobj->lastlook = P_Random () % MAXPLAYERS;
-
   // do not set the state with P_SetMobjState,
   // because action routines can not be called yet
 
@@ -1035,33 +1033,6 @@ void P_SpawnMapThing (const mapthing_t* mthing)
         options, mthing->type);
     options &= MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE;
   }
-
-  // count deathmatch start positions
-
-  // doom2.exe has at most 10 deathmatch starts
-  if (mthing->type == 11)
-    {
-    if (!(_g->deathmatch_p-_g->deathmatchstarts < 10)) {
-		return;
-	} else {
-    // 1/11/98 killough -- new code removes limit on deathmatch starts:
-
-    size_t offset = _g->deathmatch_p - _g->deathmatchstarts;
-
-    if (offset >= _g->num_deathmatchstarts)
-      {
-      _g->num_deathmatchstarts = _g->num_deathmatchstarts ?
-                 _g->num_deathmatchstarts*2 : 16;
-      _g->deathmatchstarts = realloc(_g->deathmatchstarts,
-                   _g->num_deathmatchstarts *
-                   sizeof(*_g->deathmatchstarts));
-      _g->deathmatch_p = _g->deathmatchstarts + offset;
-      }
-    memcpy(_g->deathmatch_p++, mthing, sizeof(*mthing));
-    (_g->deathmatch_p-1)->options = 1;
-    return;
-	}
-    }
 
   // check for players specially
 

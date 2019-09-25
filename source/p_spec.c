@@ -939,7 +939,7 @@ boolean PUREFUNC P_SectorActive(special_e t, const sector_t *sec)
       case ceiling_special:
         return sec->ceilingdata != NULL;
       case lighting_special:
-        return sec->lightingdata != NULL;
+        return false;
     }
   return true; // don't know which special, must be active, shouldn't be here
 }

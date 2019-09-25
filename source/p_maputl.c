@@ -406,7 +406,7 @@ static void check_intercept(void)
   size_t offset = intercept_p - intercepts;
   if (offset >= num_intercepts)
     {
-      num_intercepts = num_intercepts ? num_intercepts*2 : 128;
+      num_intercepts = num_intercepts ? num_intercepts*2 : 32;
       intercepts = realloc(intercepts, sizeof(*intercepts)*num_intercepts);
       intercept_p = intercepts + offset;
     }

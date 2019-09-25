@@ -221,7 +221,6 @@ static void P_LoadSectors (int lump)
       sector_t *ss = _g->sectors + i;
       const mapsector_t *ms = (const mapsector_t *) data + i;
 
-      ss->iSectorID=i; // proff 04/05/2000: needed for OpenGL
       ss->floorheight = SHORT(ms->floorheight)<<FRACBITS;
       ss->ceilingheight = SHORT(ms->ceilingheight)<<FRACBITS;
       ss->floorpic = R_FlatNumForName(ms->floorpic);
@@ -247,9 +246,6 @@ static void P_LoadSectors (int lump)
 
       // killough 4/11/98 sector used to get ceiling lighting:
       ss->ceilinglightsec = -1;
-
-      // killough 4/4/98: colormaps:
-      ss->bottommap = ss->midmap = ss->topmap = 0;
 
       // killough 10/98: sky textures coming from sidedefs:
       ss->sky = 0;
@@ -340,6 +336,7 @@ static void P_LoadThings (int lump)
       P_SpawnMapThing(&mt);
     }
 
+
   W_UnlockLumpNum(lump); // cph - release the data
 }
 
@@ -377,8 +374,6 @@ static void P_LoadLineDefs (int lump)
       ld->dx = v2->x - v1->x;
       ld->dy = v2->y - v1->y;
 
-      ld->tranlump = -1;   // killough 4/11/98: no translucency by default
-
       ld->slopetype = !ld->dx ? ST_VERTICAL : !ld->dy ? ST_HORIZONTAL :
         FixedDiv(ld->dy, ld->dx) > 0 ? ST_POSITIVE : ST_NEGATIVE;
 
@@ -409,7 +404,6 @@ static void P_LoadLineDefs (int lump)
       ld->soundorg.x = ld->bbox[BOXLEFT] / 2 + ld->bbox[BOXRIGHT] / 2;
       ld->soundorg.y = ld->bbox[BOXTOP] / 2 + ld->bbox[BOXBOTTOM] / 2;
 
-      ld->iLineID=i; // proff 04/05/2000: needed for OpenGL
       ld->sidenum[0] = SHORT(mld->sidenum[0]);
       ld->sidenum[1] = SHORT(mld->sidenum[1]);
 
@@ -461,20 +455,6 @@ static void P_LoadLineDefs2(int lump)
     {
       ld->frontsector = _g->sides[ld->sidenum[0]].sector; //e6y: Can't be NO_INDEX here
       ld->backsector  = ld->sidenum[1]!=NO_INDEX ? _g->sides[ld->sidenum[1]].sector : 0;
-      switch (ld->special)
-        {                       // killough 4/11/98: handle special types
-          int lump, j;
-
-        case 260:               // killough 4/11/98: translucent 2s textures
-            lump = _g->sides[*ld->sidenum].special; // translucency from sidedef
-            if (!ld->tag)                       // if tag==0,
-              ld->tranlump = lump;              // affect this linedef only
-            else
-              for (j=0;j<_g->numlines;j++)          // if tag!=0,
-                if (_g->lines[j].tag == ld->tag)    // affect all matching linedefs
-                  _g->lines[j].tranlump = lump;
-            break;
-        }
     }
 }
 
@@ -523,14 +503,14 @@ static void P_LoadSideDefs2(int lump)
         {
         case 242:                       // variable colormap via 242 linedef
           sd->bottomtexture =
-            (sec->bottommap =   R_ColormapNumForName(msd->bottomtexture)) < 0 ?
-            sec->bottommap = 0, R_TextureNumForName(msd->bottomtexture): 0 ;
+            (R_ColormapNumForName(msd->bottomtexture)) < 0 ?
+            R_TextureNumForName(msd->bottomtexture): 0 ;
           sd->midtexture =
-            (sec->midmap =   R_ColormapNumForName(msd->midtexture)) < 0 ?
-            sec->midmap = 0, R_TextureNumForName(msd->midtexture)  : 0 ;
+            (R_ColormapNumForName(msd->midtexture)) < 0 ?
+            R_TextureNumForName(msd->midtexture)  : 0 ;
           sd->toptexture =
-            (sec->topmap =   R_ColormapNumForName(msd->toptexture)) < 0 ?
-            sec->topmap = 0, R_TextureNumForName(msd->toptexture)  : 0 ;
+            (R_ColormapNumForName(msd->toptexture)) < 0 ?
+            R_TextureNumForName(msd->toptexture)  : 0 ;
           break;
 
         case 260: // killough 4/11/98: apply translucency to 2s normal texture
@@ -1152,11 +1132,9 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // Note: you don't need to clear player queue slots --
   // a much simpler fix is in g_game.c -- killough 10/98
 
-  _g->bodyqueslot = 0;
-
   /* cph - reset all multiplayer starts */
   memset(_g->playerstarts,0,sizeof(_g->playerstarts));
-  _g->deathmatch_p = _g->deathmatchstarts;
+
   for (i = 0; i < MAXPLAYERS; i++)
     _g->players[i].mo = NULL;
 

@@ -502,7 +502,7 @@ void R_StoreWallRange(const int start, const int stop)
   if (_g->ds_p == _g->drawsegs+_g->maxdrawsegs)   // killough 1/98 -- fix 2s line HOM
     {
       unsigned pos = _g->ds_p - _g->drawsegs; // jff 8/9/98 fix from ZDOOM1.14a
-      unsigned newmax = _g->maxdrawsegs ? _g->maxdrawsegs*2 : 128; // killough
+      unsigned newmax = _g->maxdrawsegs ? _g->maxdrawsegs*2 : 32; // killough
       _g->drawsegs = realloc(_g->drawsegs,newmax*sizeof(*_g->drawsegs));
       _g->ds_p = _g->drawsegs + pos;          // jff 8/9/98 fix from ZDOOM1.14a
       _g->maxdrawsegs = newmax;
@@ -549,7 +549,7 @@ void R_StoreWallRange(const int start, const int stop)
         int *oldlast = _g->lastopening; // dropoff overflow
 
         do
-          _g->maxopenings = _g->maxopenings ?_g-> maxopenings*2 : 256;
+          _g->maxopenings = _g->maxopenings ?_g-> maxopenings*2 : 32;
         while (need > _g->maxopenings);
         _g->openings = realloc(_g->openings, _g->maxopenings * sizeof(*_g->openings));
 

@@ -287,9 +287,6 @@ typedef struct mobj_s
     fixed_t             momy;
     fixed_t             momz;
 
-    // If == validcount, already checked.
-    int                 validcount;
-
     mobjtype_t          type;
     const mobjinfo_t*   info;   // &mobjinfo[mobj->type]
 
@@ -325,9 +322,6 @@ typedef struct mobj_s
     // Only valid if type == MT_PLAYER
     struct player_s*    player;
 
-    // Player number last looked for.
-    short               lastlook;
-
     // For nightmare respawn.
     mapthing_t          spawnpoint;
 
@@ -351,8 +345,6 @@ typedef struct mobj_s
     fixed_t             PrevY;
     fixed_t             PrevZ;
 
-    fixed_t             pad; // cph - needed so I can get the size unambiguously on amd64
-
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!
 } mobj_t;
 
@@ -367,7 +359,7 @@ typedef struct mobj_s
 #define ONCEILINGZ      INT_MAX
 
 // Time interval for item respawning.
-#define ITEMQUESIZE     128
+#define ITEMQUESIZE     32
 
 #define FLOATSPEED      (FRACUNIT*4)
 #define STOPSPEED       (FRACUNIT/16)

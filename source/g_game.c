@@ -139,8 +139,6 @@ const fixed_t forwardmove[2] = {0x19, 0x32};
 const fixed_t sidemove[2]    = {0x18, 0x28};
 const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
-const int bodyquesize = 32;        // killough 2/8/98
-
 
 static void G_DoSaveGame (boolean menu);
 static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, boolean failonerror);
@@ -778,27 +776,7 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
   if (!i)
     return false;
 
-  // flush an old corpse if needed
-  // killough 2/8/98: make corpse queue have an adjustable limit
-  // killough 8/1/98: Fix bugs causing strange crashes
-
-  if (bodyquesize > 0)
-  {
-      if (_g->bodyquecount < bodyquesize)
-      {
-          _g->bodyque = realloc(_g->bodyque, bodyquesize*sizeof*_g->bodyque);
-          memset(_g->bodyque+_g->bodyquecount, 0, (bodyquesize-_g->bodyquecount)*sizeof*_g->bodyque);
-          _g->bodyquecount = bodyquesize;
-      }
-
-      if (_g->bodyqueslot >= bodyquesize)
-          P_RemoveMobj(_g->bodyque[_g->bodyqueslot % bodyquesize]);
-
-      _g->bodyque[_g->bodyqueslot++ % bodyquesize] = _g->players[playernum].mo;
-  }
-  else
-      if (!bodyquesize)
-          P_RemoveMobj(_g->players[playernum].mo);
+    P_RemoveMobj(_g->players[playernum].mo);
 
   // spawn a teleport fog
   ss = R_PointInSubsector (x,y);
@@ -821,34 +799,6 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
   }
 
   return true;
-}
-
-
-// G_DeathMatchSpawnPlayer
-// Spawns a player at one of the random death match spots
-// called at level load and each death
-//
-void G_DeathMatchSpawnPlayer (int playernum)
-{
-  int j, selections = _g->deathmatch_p - _g->deathmatchstarts;
-
-  if (selections < MAXPLAYERS)
-    I_Error("G_DeathMatchSpawnPlayer: Only %i deathmatch spots, %d required",
-    selections, MAXPLAYERS);
-
-  for (j=0 ; j<20 ; j++)
-    {
-      int i = P_Random() % selections;
-      if (G_CheckSpot (playernum, &_g->deathmatchstarts[i]) )
-        {
-          _g->deathmatchstarts[i].type = playernum+1;
-          P_SpawnPlayer (playernum, &_g->deathmatchstarts[i]);
-          return;
-        }
-    }
-
-  // no good spot, so the player will probably get stuck
-  P_SpawnPlayer (playernum, &_g->playerstarts[playernum]);
 }
 
 //
@@ -1010,7 +960,7 @@ void G_DoCompleted (void)
 
   // lmpwatch.pl engine-side demo testing support
   // print "FINISHED: <mapname>" when the player exits the current map
-  if (_g->nodrawers && (_g->demoplayback || _g->timingdemo)) {
+  if (nodrawers && (_g->demoplayback || _g->timingdemo)) {
     if (_g->gamemode == commercial)
       lprintf(LO_INFO, "FINISHED: MAP%02d\n", _g->gamemap);
     else

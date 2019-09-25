@@ -88,6 +88,8 @@ const skill_t startskill = sk_medium;
 const int startepisode = 1;
 const int startmap = 1;
 
+const boolean nodrawers = false;
+
 static const char* timedemo = NULL;
 
 /*
@@ -160,7 +162,7 @@ void D_Display (void)
   boolean wipe;
   boolean viewactive = false;
 
-  if (_g->nodrawers)                    // for comparative timing / profiling
+  if (nodrawers)                    // for comparative timing / profiling
     return;
 
   if (!I_StartDisplay())

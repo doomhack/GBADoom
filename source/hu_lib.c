@@ -83,7 +83,6 @@ void HUlib_initTextLine(hu_textline_t* t, int x, int y,
   t->y = y;
   t->f = f;
   t->sc = sc;
-  t->cm = cm;
   HUlib_clearTextLine(t);
 }
 
@@ -152,7 +151,6 @@ void HUlib_drawTextLine
   int     w;
   int     x;
   unsigned char c;
-  int oc = l->cm; //jff 2/17/98 remember default color
   int y = l->y;           // killough 1/18/98 -- support multiple lines
 
   // draw the new stuff
@@ -165,12 +163,6 @@ void HUlib_drawTextLine
       x=0,y+=8;
     else if (c=='\t')    // killough 1/23/98 -- support tab stops
       x=x-x%80+80;
-    else if (c=='\x1b')  //jff 2/17/98 escape code for color change
-    {                    //jff 3/26/98 changed to actual escape char
-      if (++i<l->len)
-        if (l->l[i]>='0' && l->l[i]<='9')
-          l->cm = l->l[i]-'0';
-    }
     else  if (c != ' ' && c >= l->sc && c <= '_')
     {
       w = l->f[c - l->sc]->width;
@@ -188,7 +180,6 @@ void HUlib_drawTextLine
       break;
     }
   }
-  l->cm = oc; //jff 2/17/98 restore original color
 
   // draw the cursor if requested
   if (drawcursor && x + l->f['_' - l->sc]->width <= BASE_WIDTH)
