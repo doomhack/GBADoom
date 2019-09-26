@@ -518,7 +518,7 @@ static void R_Subsector(int num)
   R_AddSprites(sub, (floorlightlevel+ceilinglightlevel)/2);
   while (count--)
   {
-    if (line->miniseg == false)
+    //if (line->miniseg == false)
       R_AddLine (line);
     line++;
     _g->curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */

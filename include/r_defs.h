@@ -80,8 +80,9 @@ typedef struct
 // Each sector has a degenmobj_t in its center for sound origin purposes.
 typedef struct
 {
-  thinker_t thinker;  // not used for anything
-  fixed_t x, y, z;
+  fixed_t x;
+  fixed_t y;
+  fixed_t z;
 } degenmobj_t;
 
 //
@@ -248,12 +249,6 @@ typedef struct
   side_t* sidedef;
   line_t* linedef;
 
-  int iSegID; // proff 11/05/2000: needed for OpenGL
-  // figgi -- needed for glnodes
-  float     length;
-  boolean   miniseg;
-
-
   // Sector references.
   // Could be retrieved from linedef, too
   // (but that would be slower -- killough)
@@ -313,9 +308,6 @@ typedef struct drawseg_s
   fixed_t bsilheight;                   // do not clip sprites above this
   fixed_t tsilheight;                   // do not clip sprites below this
 
-  // Added for filtering (fractional texture u coord) support - POPE
-  fixed_t rw_offset, rw_distance, rw_centerangle; 
-  
   // Pointers to lists for sprite clipping,
   // all three adjusted so [x1] is first value.
 
@@ -365,8 +357,6 @@ typedef post_t	column_t;
 
 typedef struct vissprite_s
 {
-  mobj_t *thing;
-  boolean flip;
   int x1, x2;
   fixed_t gx, gy;              // for line side calculation
   fixed_t gz, gzt;             // global bottom / top for silhouette clipping
@@ -403,16 +393,16 @@ typedef struct vissprite_s
 
 typedef struct
 {
-  // If false use 0 for any position.
-  // Note: as eight entries are available,
-  //  we might as well insert the same name eight times.
-  boolean rotate;
-
   // Lump to use for view angles 0-7.
   short lump[8];
 
   // Flip bit (1 = flip) to use for view angles 0-7.
   byte  flip[8];
+
+  // If false use 0 for any position.
+  // Note: as eight entries are available,
+  //  we might as well insert the same name eight times.
+  boolean rotate;
 
 } spriteframe_t;
 
@@ -439,11 +429,17 @@ typedef struct visplane
   int picnum, lightlevel, minx, maxx;
   fixed_t height;
   fixed_t xoffs, yoffs;         // killough 2/28/98: Support scrolling flats
-  unsigned int pad1;          // leave pads for [minx-1]/[maxx+1]
-  unsigned int top[MAX_SCREENWIDTH];
-  unsigned int pad2, pad3;    // killough 2/8/98, 4/25/98
-  unsigned int bottom[MAX_SCREENWIDTH];
-  unsigned int pad4; // dropoff overflow
+
+  byte		pad1;
+  // Here lies the rub for all
+  //  dynamic resize/change of resolution.
+  byte		top[SCREENWIDTH];
+  byte		pad2;
+  byte		pad3;
+  // See above.
+  byte		bottom[SCREENWIDTH];
+  byte		pad4;
+
 } visplane_t;
 
 #endif

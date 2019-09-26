@@ -2761,7 +2761,7 @@ void T_Friction(friction_t *f)
               (f->friction < thing->friction))
                 {
                 thing->friction   = f->friction;
-                thing->movefactor = f->movefactor;
+                //thing->movefactor = f->movefactor;
                 }
             }
         node = node->m_snext;

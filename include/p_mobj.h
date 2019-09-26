@@ -296,14 +296,16 @@ typedef struct mobj_s
     int                 intflags;  // killough 9/15/98: internal flags
     int                 health;
 
+    // Thing being chased/attacked (or NULL),
+    // also the originator for missiles.
+    struct mobj_s*      target;
+
     // Movement direction, movement generation (zig-zagging).
     short               movedir;        // 0-7
     short               movecount;      // when 0, select a new dir
     short               strafecount;    // killough 9/8/98: monster strafing
 
-    // Thing being chased/attacked (or NULL),
-    // also the originator for missiles.
-    struct mobj_s*      target;
+
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
@@ -336,14 +338,13 @@ typedef struct mobj_s
     // e6y: restored friction properties here
     // Friction values for the sector the object is in
     int friction;                                           // phares 3/17/98
-    int movefactor;
 
     // a linked list of sectors where this object appears
     struct msecnode_s* touching_sectorlist;                 // phares 3/14/98
 
-    fixed_t             PrevX;
-    fixed_t             PrevY;
-    fixed_t             PrevZ;
+    //fixed_t             PrevX;
+    //fixed_t             PrevY;
+    //fixed_t             PrevZ;
 
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!
 } mobj_t;

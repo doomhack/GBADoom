@@ -139,15 +139,13 @@ static void P_LoadSegs (int lump)
       int side, linedef;
       line_t *ldef;
 
-      li->iSegID = i; // proff 11/05/2000: needed for OpenGL
-
       v1 = (unsigned short)SHORT(ml->v1);
       v2 = (unsigned short)SHORT(ml->v2);
       li->v1 = &_g->vertexes[v1];
       li->v2 = &_g->vertexes[v2];
 
-      li->miniseg = false; // figgi -- there are no minisegs in classic BSP nodes
-      li->length  = GetDistance(li->v2->x - li->v1->x, li->v2->y - li->v1->y);
+      //li->miniseg = false; // figgi -- there are no minisegs in classic BSP nodes
+      //li->length  = GetDistance(li->v2->x - li->v1->x, li->v2->y - li->v1->y);
       li->angle = (SHORT(ml->angle))<<16;
       li->offset =(SHORT(ml->offset))<<16;
       linedef = (unsigned short)SHORT(ml->linedef);

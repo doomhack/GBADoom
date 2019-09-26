@@ -508,7 +508,7 @@ void R_StoreWallRange(const int start, const int stop)
       _g->maxdrawsegs = newmax;
     }
 
-  if(_g->curline->miniseg == false) // figgi -- skip minisegs
+  //if(_g->curline->miniseg == false) // figgi -- skip minisegs
     _g->curline->linedef->flags |= ML_MAPPED;
 
 #ifdef RANGECHECK
@@ -748,12 +748,6 @@ void R_StoreWallRange(const int start, const int stop)
       _g->rw_lightlevel = _g->frontsector->lightlevel;
     }
 
-  // Remember the vars used to determine fractional U texture
-  // coords for later - POPE
-  _g->ds_p->rw_offset = _g->rw_offset;
-  _g->ds_p->rw_distance = _g->rw_distance;
-  _g->ds_p->rw_centerangle = _g->rw_centerangle;
-      
   // if a floor / ceiling plane is on the wrong side of the view
   // plane, it is definitely invisible and doesn't need to be marked.
 

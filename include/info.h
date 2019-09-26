@@ -1447,9 +1447,11 @@ typedef enum {
 
 typedef struct
 {
-  int doomednum;    /* Thing number used in id's editor, and now
+  int doomednum;
+  /* Thing number used in id's editor, and now
        probably by every other editor too */
-  int spawnstate;   /* The state (frame) index when this Thing is
+  int spawnstate;
+  /* The state (frame) index when this Thing is
            first created */
   int spawnhealth;  /* The initial hit points for this Thing */
   int seestate;     /* The state when it sees you or wakes up */
