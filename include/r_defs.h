@@ -158,16 +158,18 @@ typedef struct
 {
   fixed_t textureoffset; // add this to the calculated texture column
   fixed_t rowoffset;     // add this to the calculated texture top
+
+  sector_t* sector;      // Sector the SideDef is facing.
+
   short toptexture;      // Texture indices. We do not maintain names here.
   short bottomtexture;
   short midtexture;
-  sector_t* sector;      // Sector the SideDef is facing.
+
 
   // killough 4/4/98, 4/11/98: highest referencing special linedef's type,
   // or lump number of special effect. Allows texture names to be overloaded
   // for other functions.
-
-  int special;
+  short special;
 
 } side_t;
 

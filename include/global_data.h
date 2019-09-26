@@ -652,12 +652,6 @@ angle_t  viewangle;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 
-
-// killough 3/20/98: Support dynamic colormaps, e.g. deep water
-// killough 4/4/98: support dynamic number of them as well
-
-const lighttable_t* zlight[LIGHTLEVELS][MAXLIGHTZ];
-
 const lighttable_t *fullcolormap;
 const lighttable_t *colormaps;
 
@@ -698,7 +692,7 @@ int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 // texture mapping
 //
 
-const lighttable_t **planezlight;
+const unsigned short *planezlight;
 fixed_t planeheight;
 
 // killough 2/8/98: make variables static

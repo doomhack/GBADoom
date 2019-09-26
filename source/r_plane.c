@@ -120,7 +120,7 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
       index = distance >> LIGHTZSHIFT;
       if (index >= MAXLIGHTZ )
         index = MAXLIGHTZ-1;
-      dsvars->colormap = _g->planezlight[index];
+      dsvars->colormap = &_g->colormaps[_g->planezlight[index]];
     }
   else
    {
@@ -390,7 +390,8 @@ static void R_DoDrawPlane(visplane_t *pl)
 				light = 0;
 			
 			stop = pl->maxx + 1;
-            _g->planezlight = _g->zlight[light];
+            _g->planezlight = zlight[light];
+
 			pl->top[pl->minx-1] = pl->top[stop] = 0xffffffffu; // dropoff overflow
 			
 			for (x = pl->minx ; x <= stop ; x++)
