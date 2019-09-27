@@ -4,3 +4,11 @@
 source/iwad/doom2.h
 
 source/iwad/doomu.h
+
+build/
+
+GBADoom.gba
+
+GBADoom.elf
+
+GBADoom.sav

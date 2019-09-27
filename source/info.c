@@ -62,7 +62,7 @@
 // NUMSPRITES is an enum from info.h where all these are listed
 // as SPR_xxxx
 
-const char *sprnames[NUMSPRITES+1] = {
+const char * const sprnames[NUMSPRITES+1] = {
   "TROO","SHTG","PUNG","PISG","PISF","SHTF","SHT2","CHGG","CHGF","MISG",
   "MISF","SAWG","PLSG","PLSF","BFGG","BFGF","BLUD","PUFF","BAL1","BAL2",
   "PLSS","PLSE","MISL","BFS1","BFE1","BFE2","TFOG","IFOG","PLAY","POSS",

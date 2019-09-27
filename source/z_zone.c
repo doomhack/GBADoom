@@ -184,7 +184,7 @@ void *(Z_Malloc)(size_t size, int tag, void **user)
   free_memory -= block->size;
 
   running_count += block->size;
-  printf("Alloc: %d (%d)\n", block->size, running_count);
+  //printf("Alloc: %d (%d)\n", block->size, running_count);
 
 
   block->tag = tag;           // tag
@@ -222,7 +222,7 @@ void (Z_Free)(void *p)
 
   running_count -= block->size;
 
-  printf("Free: %d\n", running_count);
+  //printf("Free: %d\n", running_count);
 
 
   (free)(block);

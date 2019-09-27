@@ -58,7 +58,7 @@
 #include "d_main.h"
 
 #include "mmus2mid.h"
-#include "libtimidity/timidity.h"
+//#include "libtimidity/timidity.h"
 #include "m_fixed.h"
 
 #include "global_data.h"
@@ -415,7 +415,7 @@ void I_ShutdownMusic(void)
 
 void I_InitMusic(void)
 {
-
+/*
     _g->music_init = (mid_init ("D:\\Doom\\dgguspat\\timidity.cfg") >= 0);
 
     _g->music_buffer = (short*)malloc(MUSIC_BUFFER_SAMPLES * 2 * 2);
@@ -424,11 +424,13 @@ void I_InitMusic(void)
 		lprintf(LO_INFO,"I_InitMusic: mid_init failed.\n");
 	else
 		lprintf(LO_INFO,"I_InitMusic: mid_init done.\n");
+        */
 }
 
 
 void playSongBuffer(unsigned int buffNum)
 {
+    /*
     if(!_g->music_init)
 		return;
 
@@ -445,14 +447,17 @@ void playSongBuffer(unsigned int buffNum)
 
     _g->channelinfo[MUSIC_CHANNEL].vol = 0;
 
-	/* Set pointer to end of raw data. */
+
     _g->channelinfo[MUSIC_CHANNEL].enddata = (char*)(_g->music_buffer + buffOffset + (_g->music_sample_counts[buffNum] - 1));
 
     _g->channelinfo[MUSIC_CHANNEL].data = (char*)(&_g->music_buffer[buffOffset]);
+    */
 }
 
 void flipSongBuffer()
 {	
+    /*
+
     if(!_g->music_init)
 		return;
 
@@ -461,10 +466,12 @@ void flipSongBuffer()
     _g->current_music_buffer = 1 - _g->current_music_buffer;
 
     playSongBuffer(_g->current_music_buffer);
+    */
 }
 
 void I_UpdateMusic()
 {
+    /*
     if(!_g->midiSong || !_g->music_init)
 		return;
 
@@ -485,10 +492,12 @@ void I_UpdateMusic()
             _g->music_sample_counts[next_music_buffer] = (mid_song_read_wave (_g->midiSong, (signed char*)(&_g->music_buffer[buffOffset]), MUSIC_BUFFER_SAMPLES * 2) >> 1);
 		}
 	}
+    */
 }
 
 void I_PlaySong(int handle, int looping)
 {
+    /*
     if(!_g->midiSong || !_g->music_init)
 		return;
 
@@ -500,31 +509,39 @@ void I_PlaySong(int handle, int looping)
     _g->music_sample_counts[1] = (mid_song_read_wave (_g->midiSong, (signed char*)(&_g->music_buffer[MUSIC_BUFFER_SAMPLES]), MUSIC_BUFFER_SAMPLES * 2) >> 1);
 
 	playSongBuffer(0);
+    */
 }
 
 
 void I_PauseSong (int handle)
 {
+    /*
 	stopchan(MUSIC_CHANNEL);
+    */
 }
 
 void I_ResumeSong (int handle)
 {
+    /*
     playSongBuffer(_g->current_music_buffer);
+    */
 }
 
 void I_StopSong(int handle)
 {
+    /*
     if(_g->midiSong)
 	{
         mid_song_seek (_g->midiSong, 0);
 	}
 
 	stopchan(MUSIC_CHANNEL);
+    */
 }
 
 void I_UnRegisterSong(int handle)
 {
+    /*
 	I_StopSong(0);
 	
     if(_g->midiSong)
@@ -535,10 +552,12 @@ void I_UnRegisterSong(int handle)
 
     _g->midiSong = NULL;
     _g->midiStream = NULL;
+    */
 }
 
 int I_RegisterSong(const void *data, size_t len)
 {
+    /*
     if(!_g->music_init)
 		return 0;
 
@@ -548,7 +567,7 @@ int I_RegisterSong(const void *data, size_t len)
 	if ( len < 32 )
 		return 0; // the data should at least as big as the MUS header
 
-	/* Convert MUS chunk to MIDI? */
+
 	if ( memcmp(data, "MUS", 3) == 0 )
 	{
 		UBYTE *mid = NULL;
@@ -591,7 +610,7 @@ int I_RegisterSong(const void *data, size_t len)
 		free_mididata(mididata);
 		free(mididata);
 	}
-
+*/
 	return 0;
 }
 
@@ -599,22 +618,25 @@ int I_RegisterSong(const void *data, size_t len)
 //           returns true if could not load the file
 int I_RegisterMusic( const char* filename, musicinfo_t *song )
 {
+    /*
 	if (!filename)
 		return 1;
 	
 	if (!song)
 		return 1;
-	
+    */
 	return 0;
 
 }
 
 void I_SetMusicVolume(int volume)
 {
+    /*
     _g->music_volume = (volume * 4);
 
     if(_g->midiSong)
 	{
         mid_song_set_volume (_g->midiSong, _g->music_volume);
 	}
+    */
 }

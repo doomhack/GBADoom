@@ -82,6 +82,9 @@ static void PrintVer(void)
 
 int main(int argc, const char * const * argv)
 {
+    /* cphipps - call to video specific startup code */
+    I_PreInitGraphics();
+
     /* Version info */
     lprintf(LO_INFO,"\n");
     PrintVer();
@@ -91,9 +94,6 @@ int main(int argc, const char * const * argv)
     Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
     InitGlobals();
-
-    /* cphipps - call to video specific startup code */
-    I_PreInitGraphics();
 
     D_DoomMain ();
     return 0;

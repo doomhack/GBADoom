@@ -41,7 +41,6 @@
 #endif
 
 #include <fcntl.h>
-#include <io.h>
 
 #include "doomstat.h"
 #include "d_net.h"

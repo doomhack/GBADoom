@@ -18,6 +18,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 INCLUDEPATH += "include"
 INCLUDEPATH += "include\libtimidity"
 
+INCLUDEPATH += "C:\devkitPro\libgba\include"
+
 SOURCES += \
         source/am_map.c \
         source/d_client.c \
@@ -37,6 +39,7 @@ SOURCES += \
         source/i_main.c \
         source/i_system.c \
         source/i_system_e32.cpp \
+        source/i_system_gba.cpp \
         source/i_video.c \
         source/info.c \
         source/libtimidity/common.c \
@@ -189,3 +192,6 @@ HEADERS += \
     include/wi_stuff.h \
     include/z_bmalloc.h \
     include/z_zone.h
+
+DISTFILES += \
+    Makefile
