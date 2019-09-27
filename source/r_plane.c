@@ -94,44 +94,47 @@ void R_InitPlanes (void)
 
 static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 {
-  angle_t angle;
-  fixed_t distance, length;
-  unsigned index;
+    angle_t angle;
+    fixed_t distance, length;
+    unsigned index;
 
 #ifdef RANGECHECK
-  if (x2 < x1 || x1<0 || x2>=viewwidth || (unsigned)y>(unsigned)viewheight)
-    I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
+    if (x2 < x1 || x1<0 || x2>=viewwidth || (unsigned)y>(unsigned)viewheight)
+        I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
 #endif
 
-  distance = FixedMul(_g->planeheight, yslope[y]);
-  dsvars->xstep = FixedMul(distance,_g->basexscale);
-  dsvars->ystep = FixedMul(distance,_g->baseyscale);
+    distance = FixedMul(_g->planeheight, yslope[y]);
+    dsvars->xstep = FixedMul(distance,_g->basexscale);
+    dsvars->ystep = FixedMul(distance,_g->baseyscale);
 
-  length = FixedMul (distance, distscale[x1]);
-  angle = (_g->viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
+    length = FixedMul (distance, distscale[x1]);
+    angle = (_g->viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
-  // killough 2/28/98: Add offsets
-  dsvars->xfrac =  _g->viewx + FixedMul(finecosine[angle], length) + _g->xoffs;
-  dsvars->yfrac = -_g->viewy - FixedMul(finesine[angle],   length) + _g->yoffs;
+    // killough 2/28/98: Add offsets
+    dsvars->xfrac =  _g->viewx + FixedMul(finecosine[angle], length) + _g->xoffs;
+    dsvars->yfrac = -_g->viewy - FixedMul(finesine[angle],   length) + _g->yoffs;
 
-  if (!(dsvars->colormap == _g->fixedcolormap))
+    if (!(dsvars->colormap = _g->fixedcolormap))
     {
-      dsvars->z = distance;
-      index = distance >> LIGHTZSHIFT;
-      if (index >= MAXLIGHTZ )
-        index = MAXLIGHTZ-1;
-      dsvars->colormap = &_g->colormaps[_g->planezlight[index]];
-    }
-  else
-   {
-      dsvars->z = 0;
-   }
+        dsvars->z = distance;
+        index = distance >> LIGHTZSHIFT;
+        if (index >= MAXLIGHTZ )
+            index = MAXLIGHTZ-1;
 
-  dsvars->y = y;
-  dsvars->x1 = x1;
-  dsvars->x2 = x2;
-  
-  R_DrawSpan(dsvars);
+        int cm_index = _g->planezlight[index];
+
+        dsvars->colormap = _g->colormaps + cm_index;
+    }
+    else
+    {
+        dsvars->z = 0;
+    }
+
+    dsvars->y = y;
+    dsvars->x1 = x1;
+    dsvars->x2 = x2;
+
+    R_DrawSpan(dsvars);
 }
 
 //
