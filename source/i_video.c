@@ -84,9 +84,8 @@ void I_StartFrame (void)
 
 boolean I_StartDisplay(void)
 {
-  //return true;
     _g->screens[0].data = I_GetBackBuffer();
-
+    return true;
 }
 
 void I_EndDisplay(void)
