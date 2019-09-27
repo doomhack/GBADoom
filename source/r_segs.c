@@ -75,6 +75,49 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
     64*FRACUNIT : num < 256 ? 256 : num : 64*FRACUNIT;
 }
 
+
+
+const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
+{
+    if(texture->patchcount == 1)
+    {
+        //simple texture.
+
+        const unsigned int widthmask = texture->widthmask;
+        const patch_t* patch = W_CacheLumpNum(texture->patches[0].patch);
+
+        const unsigned int xc = texcolumn & widthmask;
+
+        return (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+    }
+    else
+    {
+        const patch_t* realpatch;
+
+        const int xc = texcolumn & texture->widthmask;
+
+        for(int i=0; i<texture->patchcount; i++)
+        {
+            texpatch_t* patch = &texture->patches[i];
+
+            realpatch = W_CacheLumpNum(patch->patch);
+
+            int x1 = patch->originx;
+            int x2 = x1 + realpatch->width;
+
+            if (x2 > texture->width)
+                x2 = texture->width;
+
+            if(xc >= x1 && xc < x2)
+            {
+                return (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
+            }
+        }
+    }
+
+    return NULL;
+}
+
 //
 // R_RenderMaskedSegRange
 //
@@ -136,8 +179,12 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         dcvars.colormap = _g->fixedcolormap;
     }
 
-    const int patchnum = _g->textures[texnum]->patches[0].patch;
-    const unsigned int widthmask = _g->textures[texnum]->widthmask;
+    const texture_t* texture = _g->textures[texnum];
+
+    const int patchnum = texture->patches[0].patch;
+    const unsigned int widthmask = texture->widthmask;
+    const int patchcount = texture->patchcount;
+
     const patch_t* patch = W_CacheLumpNum(patchnum);
 
 
@@ -181,12 +228,25 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
             // when forming multipatched textures (see r_data.c).
 
             // draw the texture
+
             int xc = _g->maskedtexturecol[dcvars.x];
-            while (xc < 0) xc += patch->width;
 
-            xc &= widthmask;
+            const column_t* column;
 
-            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+            //Simple patch.
+            if(patchcount == 1)
+            {
+                while (xc < 0) xc += patch->width;
+
+                xc &= widthmask;
+
+                column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+
+            }
+            else //Composite patch on 2s line. (Eg: E4M1)
+            {
+                column = R_GetColumn(texture, xc);
+            }
 
             R_DrawMaskedColumn(patch, colfunc, &dcvars, column);
 

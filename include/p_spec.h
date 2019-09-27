@@ -726,9 +726,9 @@ typedef struct {
 // phares 3/12/98: added new model of friction for ice/sludge effects
 
 typedef struct {
-  thinker_t thinker;   // Thinker structure for friction
+  //thinker_t thinker;   // Thinker structure for friction
   int friction;        // friction value (E800 = normal)
-  int movefactor;      // inertia factor when adding to momentum
+  //int movefactor;      // inertia factor when adding to momentum
   int affectee;        // Number of affected sector
 } friction_t;
 
