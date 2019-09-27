@@ -151,6 +151,13 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
 
 //**************************************************************************************
 
+void I_SetPallete_e32(const byte* pallete)
+{
+
+}
+
+//**************************************************************************************
+
 int I_GetVideoWidth_e32()
 {
     return vid_width;

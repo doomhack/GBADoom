@@ -2,13 +2,22 @@
 #include <stdio.h>
 #include <cstring>
 
-#include "doomtype.h"
+#ifdef __arm__
+
+extern "C"
+{
+    #include "doomdef.h"
+    #include "doomtype.h"
+    #include "d_main.h"
+    #include "d_event.h"
+}
 
 #include "i_system_e32.h"
 
 #include "lprintf.h"
 
 #include <gba.h>
+#include <gba_input.h>
 
 #define DCNT_PAGE 0x0010
 
@@ -63,7 +72,39 @@ void I_StartWServEvents_e32()
 
 void I_PollWServEvents_e32()
 {
+    scanKeys();
 
+    u16 key_down = keysDown();
+
+    if(key_down & KEY_A)
+    {
+        event_t ev;
+
+        ev.type = ev_keydown;
+
+        ev.data1 = KEYD_ENTER;
+        ev.data2 = 0;
+        ev.data3 = 0;
+
+        if(ev.data1 != 0)
+            D_PostEvent(&ev);
+    }
+
+    u16 key_up = keysUp();
+
+    if(key_up & KEY_A)
+    {
+        event_t ev;
+
+        ev.type = ev_keyup;
+
+        ev.data1 = KEYD_ENTER;
+        ev.data2 = 0;
+        ev.data3 = 0;
+
+        if(ev.data1 != 0)
+            D_PostEvent(&ev);
+    }
 }
 
 //**************************************************************************************
@@ -72,6 +113,8 @@ void I_ClearWindow_e32()
 {
 
 }
+
+//**************************************************************************************
 
 unsigned short* I_GetBackBuffer()
 {
@@ -102,6 +145,19 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
     VBlankIntrWait();
 
     REG_DISPCNT ^= DCNT_PAGE;
+
+    unsigned short* p =I_GetBackBuffer();
+
+    unsigned short x = rand();
+
+    p[0] = x;
+    p[1] = x;
+    p[2] = x;
+    p[3] = x;
+    p[4] = x;
+    p[5] = x;
+    p[6] = x;
+    p[7] = x;
 }
 
 //**************************************************************************************
@@ -180,3 +236,4 @@ void I_Quit_e32()
 
 //**************************************************************************************
 
+#endif
