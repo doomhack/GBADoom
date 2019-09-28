@@ -491,8 +491,8 @@ static void P_NightmareRespawn(mobj_t* mobj)
   mobj_t*      mo;
   mapthing_t*  mthing;
 
-  x = mobj->spawnpoint.x << FRACBITS;
-  y = mobj->spawnpoint.y << FRACBITS;
+  //x = mobj->spawnpoint.x << FRACBITS;
+  //y = mobj->spawnpoint.y << FRACBITS;
 
   /* haleyjd: stupid nightmare respawning bug fix
    *
@@ -540,7 +540,7 @@ static void P_NightmareRespawn(mobj_t* mobj)
 
   // spawn the new monster
 
-  mthing = &mobj->spawnpoint;
+  //mthing = &mobj->spawnpoint;
   if (mobj->info->flags & MF_SPAWNCEILING)
     z = ONCEILINGZ;
   else
@@ -549,7 +549,7 @@ static void P_NightmareRespawn(mobj_t* mobj)
   // inherit attributes from deceased one
 
   mo = P_SpawnMobj (x,y,z, mobj->type);
-  mo->spawnpoint = mobj->spawnpoint;
+  //mo->spawnpoint = mobj->spawnpoint;
   mo->angle = ANG45 * (mthing->angle/45);
 
   if (mthing->options & MTF_AMBUSH)
@@ -710,23 +710,6 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 
 void P_RemoveMobj (mobj_t* mobj)
 {
-  if ((mobj->flags & MF_SPECIAL)
-      && !(mobj->flags & MF_DROPPED)
-      && (mobj->type != MT_INV)
-      && (mobj->type != MT_INS))
-    {
-    _g->itemrespawnque[_g->iquehead] = mobj->spawnpoint;
-    _g->itemrespawntime[_g->iquehead] = _g->leveltime;
-    _g->iquehead = (_g->iquehead+1)&(ITEMQUESIZE-1);
-
-    // lose one off the end?
-
-    if (_g->iquehead == _g->iquetail)
-      _g->iquetail = (_g->iquetail+1)&(ITEMQUESIZE-1);
-    }
-
-  // unlink from sector and block lists
-
   P_UnsetThingPosition (mobj);
 
   // Delete all nodes on the current sector_list               phares 3/16/98
@@ -989,7 +972,7 @@ void P_SpawnMapThing (const mapthing_t* mthing)
     z = ONFLOORZ;
 
   mobj = P_SpawnMobj (x,y,z, i);
-  mobj->spawnpoint = *mthing;
+  //mobj->spawnpoint = *mthing;
 
   if (mobj->tics > 0)
     mobj->tics = 1 + (P_Random () % mobj->tics);
@@ -1156,7 +1139,7 @@ void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   // killough 7/19/98: autoaiming was not in original beta
     {
       // killough 8/2/98: prefer autoaiming at enemies
-      uint_64_t mask = MF_FRIEND;
+      unsigned int mask = MF_FRIEND;
 
       do
   {

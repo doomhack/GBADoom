@@ -363,13 +363,13 @@ typedef struct vissprite_s
   fixed_t xiscale;             // negative if flipped
   fixed_t texturemid;
   int patch;
-  uint_64_t mobjflags;
+  unsigned int mobjflags;
 
   // for color translation and shadow draw, maxbright frames as well
   const lighttable_t *colormap;
 
   // killough 3/27/98: height sector for underwater/fake ceiling support
-  int heightsec;
+  //int heightsec;
 
 } vissprite_t;
 

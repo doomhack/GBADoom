@@ -285,7 +285,7 @@ typedef struct mobj_s
 
     int                 tics;   // state tic counter
     const state_t*      state;
-    uint_64_t           flags;
+    unsigned int        flags;
     int                 intflags;  // killough 9/15/98: internal flags
     int                 health;
 
@@ -318,7 +318,7 @@ typedef struct mobj_s
     struct player_s*    player;
 
     // For nightmare respawn.
-    mapthing_t          spawnpoint;
+    //mapthing_t          spawnpoint;
 
     // Thing being chased/attacked for tracers.
     struct mobj_s*      tracer;

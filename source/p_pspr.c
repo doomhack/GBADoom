@@ -573,7 +573,7 @@ static void P_BulletSlope(mobj_t *mo)
   angle_t an = mo->angle;    // see which target is to be aimed at
 
   /* killough 8/2/98: make autoaiming prefer enemies */
-  uint_64_t mask = MF_FRIEND;
+  unsigned int mask = MF_FRIEND;
 
   do
     {

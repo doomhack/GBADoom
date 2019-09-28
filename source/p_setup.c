@@ -824,9 +824,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   if (_g->gamemode==commercial)
     P_SpawnBrainTargets();
 
-  // clear special respawning que
-  _g->iquehead = _g->iquetail = 0;
-
   // set up world state
   P_SpawnSpecials();
 

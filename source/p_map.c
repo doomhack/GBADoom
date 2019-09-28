@@ -467,7 +467,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   if (thing->flags & MF_SPECIAL)
     {
-      uint_64_t solid = thing->flags & MF_SOLID;
+      unsigned int solid = thing->flags & MF_SOLID;
       if (_g->tmthing->flags & MF_PICKUP)
   P_TouchSpecialThing(thing, _g->tmthing); // can remove thing
       return !solid;

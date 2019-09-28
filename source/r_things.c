@@ -550,9 +550,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   // store information in a vissprite
   vis = R_NewVisSprite ();
 
-  // killough 3/27/98: save sector for special clipping later
-  vis->heightsec = heightsec;
-
   vis->mobjflags = thing->flags;
 // proff 11/06/98: Changed for high-res
   vis->scale = FixedDiv(projectiony, tz);
@@ -883,50 +880,6 @@ static void R_DrawSprite (vissprite_t* spr)
           if (cliptop[x] == -2)
             cliptop[x] = ds->sprtopclip[x];
     }
-
-  // killough 3/27/98:
-  // Clip the sprite against deep water and/or fake ceilings.
-  // killough 4/9/98: optimize by adding mh
-  // killough 4/11/98: improve sprite clipping for underwater/fake ceilings
-  // killough 11/98: fix disappearing sprites
-
-  if (spr->heightsec != -1)  // only things in specially marked sectors
-    {
-      fixed_t h,mh;
-      int phs = _g->viewplayer->mo->subsector->sector->heightsec;
-      if ((mh = _g->sectors[spr->heightsec].floorheight) > spr->gz &&
-          (h = centeryfrac - FixedMul(mh-=_g->viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < viewheight)
-      {
-        if (mh <= 0 || (phs != -1 && _g->viewz > _g->sectors[phs].floorheight))
-          {                          // clip bottom
-            for (x=spr->x1 ; x<=spr->x2 ; x++)
-              if (clipbot[x] == -2 || h < clipbot[x])
-                clipbot[x] = h;
-          }
-        else                        // clip top
-    if (phs != -1 && _g->viewz <= _g->sectors[phs].floorheight) // killough 11/98
-      for (x=spr->x1 ; x<=spr->x2 ; x++)
-        if (cliptop[x] == -2 || h > cliptop[x])
-    cliptop[x] = h;
-      }
-
-      if ((mh = _g->sectors[spr->heightsec].ceilingheight) < spr->gzt &&
-          (h = centeryfrac - FixedMul(mh-_g->viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < viewheight) {
-        if (phs != -1 && _g->viewz >= _g->sectors[phs].ceilingheight)
-          {                         // clip bottom
-            for (x=spr->x1 ; x<=spr->x2 ; x++)
-              if (clipbot[x] == -2 || h < clipbot[x])
-                clipbot[x] = h;
-          }
-        else                       // clip top
-          for (x=spr->x1 ; x<=spr->x2 ; x++)
-            if (cliptop[x] == -2 || h > cliptop[x])
-              cliptop[x] = h;
-      }
-    }
-  // killough 3/27/98: end special clipping for deep water / fake ceilings
 
   // all clipping has been performed, so draw the sprite
   // check for unclipped columns

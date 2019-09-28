@@ -452,11 +452,6 @@ divline_t trace;
 //p_mobj.c
 //******************************************************************************
 
-mapthing_t itemrespawnque[ITEMQUESIZE];
-int        itemrespawntime[ITEMQUESIZE];
-int        iquehead;
-int        iquetail;
-
 struct { int first, next; } *doomed_hash;
 
 //******************************************************************************
