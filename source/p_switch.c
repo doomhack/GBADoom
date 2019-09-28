@@ -162,7 +162,7 @@ static void P_StartButton
       _g->buttonlist[i].btimer = time;
       /* use sound origin of line itself - no need to compatibility-wrap
        * as the popout code gets it wrong whatever its value */
-      _g->buttonlist[i].soundorg = (mobj_t *)&line->soundorg;
+      _g->buttonlist[i].soundorg = (mobj_t *)&line->frontsector->soundorg;
       return;
     }
 
@@ -196,7 +196,7 @@ void P_ChangeSwitchTexture
   sound = sfx_swtchn;
   /* use the sound origin of the linedef (its midpoint)
    * unless in a compatibility mode */
-  soundorg = (mobj_t *)&line->soundorg;
+  soundorg = (mobj_t *)&line->frontsector->soundorg;
 
 
   /* don't zero line->special until after exit switch test */

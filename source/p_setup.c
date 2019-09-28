@@ -399,8 +399,8 @@ static void P_LoadLineDefs (int lump)
       /* calculate sound origin of line to be its midpoint */
       //e6y: fix sound origin for large levels
       // no need for comp_sound test, these are only used when comp_sound = 0
-      ld->soundorg.x = ld->bbox[BOXLEFT] / 2 + ld->bbox[BOXRIGHT] / 2;
-      ld->soundorg.y = ld->bbox[BOXTOP] / 2 + ld->bbox[BOXBOTTOM] / 2;
+      //ld->soundorg.x = ld->bbox[BOXLEFT] / 2 + ld->bbox[BOXRIGHT] / 2;
+      //ld->soundorg.y = ld->bbox[BOXTOP] / 2 + ld->bbox[BOXBOTTOM] / 2;
 
       ld->sidenum[0] = SHORT(mld->sidenum[0]);
       ld->sidenum[1] = SHORT(mld->sidenum[1]);

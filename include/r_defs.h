@@ -192,11 +192,10 @@ typedef enum
 
 typedef struct line_s
 {
-    degenmobj_t soundorg;  // sound origin for switches/buttons
-    fixed_t bbox[4];       // A bounding box, for the linedef's extent
-
     vertex_t *v1, *v2;     // Vertices, from v1 to v2.
     fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
+
+    fixed_t bbox[4];       // A bounding box, for the linedef's extent
 
     slopetype_t slopetype; // To aid move clipping.
     sector_t *frontsector; // Front and back sector.
