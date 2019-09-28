@@ -210,8 +210,6 @@ typedef struct line_s
     short tag;
     unsigned short sidenum[2];        // Visual appearance: SideDefs.
 
-
-
     enum {                 // cph:
         RF_TOP_TILE  = 1,     // Upper texture needs tiling
         RF_MID_TILE = 2,     // Mid texture needs tiling

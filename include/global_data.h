@@ -522,10 +522,10 @@ side_t   *sides;
 int       bmapwidth, bmapheight;  // size in mapblocks
 
 // killough 3/1/98: remove blockmap limit internally:
-long      *blockmap;              // was short -- killough
+short      *blockmap;              // was short -- killough
 
 // offsets in blockmap are from here
-long      *blockmaplump;          // was short -- killough
+const short      *blockmaplump;          // was short -- killough
 
 fixed_t   bmaporgx, bmaporgy;     // origin of block map
 
