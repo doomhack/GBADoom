@@ -216,6 +216,24 @@ enum
   ep_end
 };
 
+
+// The definitions of the Registered/Shareware Episodes menu
+
+static const menuitem_t EpisodeMenu3[]=
+{
+  {1,"M_EPI1", M_Episode},
+  {1,"M_EPI2", M_Episode},
+  {1,"M_EPI3", M_Episode}
+};
+
+static const menu_t EpiDef3 =
+{
+  ep_end-1,        // # of menu items
+  EpisodeMenu3,   // menuitem_t ->
+  M_DrawEpisode, // drawing routine ->
+  48,63,         // x,y
+};
+
 // The definitions of the Episodes menu
 
 static const menuitem_t EpisodeMenu[]=
@@ -233,7 +251,6 @@ static const menu_t EpiDef =
   M_DrawEpisode, // drawing routine ->
   48,63,         // x,y
 };
-
 
 // numerical values for the New Game menu items
 
@@ -311,6 +328,8 @@ void M_NewGame(int choice)
 {
     if ( _g->gamemode == commercial )
         M_SetupNextMenu(&NewDef);
+    else if( (_g->gamemode == shareware) || (_g->gamemode == registered) )
+        M_SetupNextMenu(&EpiDef3);
     else
         M_SetupNextMenu(&EpiDef);
 }
@@ -1205,8 +1224,8 @@ void M_WriteText (int x,int y,const char* string)
     }
 
     w = _g->hu_font[c]->width;
-    if (cx+w > SCREENWIDTH)
-      break;
+    //if (cx+w > SCREENWIDTH*2)
+      //break;
     // proff/nicolas 09/20/98 -- changed for hi-res
     // CPhipps - patch drawing updated
     V_DrawPatch(cx, cy, 0, _g->hu_font[c]);

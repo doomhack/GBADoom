@@ -31,6 +31,8 @@ extern "C"
 #define TM_ENABLE 0x0080
 #define TM_CASCADE 0x0004
 #define TM_FREQ_1024 0x0003
+#define TM_FREQ_256 0x0002
+
 
 //**************************************************************************************
 
@@ -59,8 +61,8 @@ void I_InitScreen_e32()
 
     consoleDemoInit();
 
-    REG_TM2CNT_L= -468;     // 468 ticks = 1/35 secs
-    REG_TM2CNT_H = TM_FREQ_1024 | TM_ENABLE;       // we're using the 1024 cycle timer
+    REG_TM2CNT_L= -1872;     // 1872 ticks = 1/35 secs
+    REG_TM2CNT_H = TM_FREQ_256 | TM_ENABLE;       // we're using the 256 cycle timer
 
     // cascade into tm3
     REG_TM3CNT_H = TM_ENABLE | TM_CASCADE;
