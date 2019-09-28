@@ -94,8 +94,7 @@ typedef struct
 {
   fixed_t floorheight;
   fixed_t ceilingheight;
-  int nexttag,firsttag;  // killough 1/30/98: improves searches for tags.
-  int soundtraversed;    // 0 = untraversed, 1,2 = sndlines-1
+  short nexttag,firsttag;  // killough 1/30/98: improves searches for tags.
   mobj_t *soundtarget;   // thing that made a sound (or null)
   int blockbox[4];       // mapblock bounding box for height changes
   degenmobj_t soundorg;  // origin for any sounds played by the sector
@@ -106,26 +105,24 @@ typedef struct
    * these fields used to be in mobj_t, but presented performance problems
    * when processed as mobj properties. Fix is to make them sector properties.
    */
-  int friction,movefactor;
 
   // thinker_t for reversable actions
   void *floordata;    // jff 2/22/98 make thinkers on
   void *ceilingdata;  // floors, ceilings, lighting,
 
-  // jff 2/26/98 lockout machinery for stairbuilding
-  int stairlock;   // -2 on first locked -1 after thinker done 0 normally
-  int prevsec;     // -1 or number of sector for previous step
-  int nextsec;     // -1 or number of next step sector
 
-  // killough 3/7/98: support flat heights drawn at another sector's heights
-  int heightsec;    // other sector, or -1 if no other sector
 
   // list of mobjs that are at least partially in the sector
   // thinglist is a subset of touching_thinglist
   struct msecnode_s *touching_thinglist;               // phares 3/14/98
 
-  int linecount;
   struct line_s **lines;
+
+  // killough 3/7/98: floor and ceiling texture offsets
+  fixed_t   floor_xoffs,   floor_yoffs;
+  fixed_t ceiling_xoffs, ceiling_yoffs;
+
+  short linecount;
 
   // killough 10/98: support skies coming from sidedefs. Allows scrolling
   // skies and other effects. No "level info" kind of lump is needed,
@@ -134,14 +131,16 @@ typedef struct
   // or ceilingpic, because the rest of Doom needs to know which is sky
   // and which isn't, etc.
 
-  int sky;
+  short sky;
 
-  // killough 3/7/98: floor and ceiling texture offsets
-  fixed_t   floor_xoffs,   floor_yoffs;
-  fixed_t ceiling_xoffs, ceiling_yoffs;
+  short prevsec;     // -1 or number of sector for previous step
+  short nextsec;     // -1 or number of next step sector
+
+  // killough 3/7/98: support flat heights drawn at another sector's heights
+  short heightsec;    // other sector, or -1 if no other sector
 
   // killough 4/11/98: support for lightlevels coming from another sector
-  int floorlightsec, ceilinglightsec;
+  short floorlightsec, ceilinglightsec;
 
   short floorpic;
   short ceilingpic;
@@ -149,6 +148,12 @@ typedef struct
   short special;
   short oldspecial;      //jff 2/16/98 remembers if sector WAS secret (automap)
   short tag;
+
+  byte soundtraversed;    // 0 = untraversed, 1,2 = sndlines-1
+
+  // jff 2/26/98 lockout machinery for stairbuilding
+  byte stairlock;   // -2 on first locked -1 after thinker done 0 normally
+
 } sector_t;
 
 //
@@ -187,27 +192,37 @@ typedef enum
 
 typedef struct line_s
 {
-  vertex_t *v1, *v2;     // Vertices, from v1 to v2.
-  fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
-  unsigned short flags;           // Animation related.
-  short special;
-  short tag;
-  unsigned short sidenum[2];        // Visual appearance: SideDefs.
-  fixed_t bbox[4];       // A bounding box, for the linedef's extent
-  slopetype_t slopetype; // To aid move clipping.
-  sector_t *frontsector; // Front and back sector.
-  sector_t *backsector;
-  int validcount;        // if == validcount, already checked
-  int firsttag,nexttag;  // killough 4/17/98: improves searches for tags.
-  int r_validcount;      // cph: if == gametic, r_flags already done
-  enum {                 // cph:
-    RF_TOP_TILE  = 1,     // Upper texture needs tiling
-    RF_MID_TILE = 2,     // Mid texture needs tiling
-    RF_BOT_TILE = 4,     // Lower texture needs tiling
-    RF_IGNORE   = 8,     // Renderer can skip this line
-    RF_CLOSED   =16,     // Line blocks view
-  } r_flags;
-  degenmobj_t soundorg;  // sound origin for switches/buttons
+    degenmobj_t soundorg;  // sound origin for switches/buttons
+    fixed_t bbox[4];       // A bounding box, for the linedef's extent
+
+    vertex_t *v1, *v2;     // Vertices, from v1 to v2.
+    fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
+
+    slopetype_t slopetype; // To aid move clipping.
+    sector_t *frontsector; // Front and back sector.
+    sector_t *backsector;
+
+    int validcount;        // if == validcount, already checked
+    int r_validcount;      // cph: if == gametic, r_flags already done
+
+    short firsttag,nexttag;  // killough 4/17/98: improves searches for tags.
+    unsigned short flags;           // Animation related.
+    short special;
+    short tag;
+    unsigned short sidenum[2];        // Visual appearance: SideDefs.
+
+
+
+    enum {                 // cph:
+        RF_TOP_TILE  = 1,     // Upper texture needs tiling
+        RF_MID_TILE = 2,     // Mid texture needs tiling
+        RF_BOT_TILE = 4,     // Lower texture needs tiling
+        RF_IGNORE   = 8,     // Renderer can skip this line
+        RF_CLOSED   =16,     // Line blocks view
+    } r_flags;
+
+
+
 } line_t;
 
 

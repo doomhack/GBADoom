@@ -2826,11 +2826,14 @@ static void P_SpawnFriction(void)
   line_t *l = _g->lines;
 
   // killough 8/28/98: initialize all sectors to normal friction first
+
+  /*
   for (i = 0; i < _g->numsectors; i++)
     {
       _g->sectors[i].friction = ORIG_FRICTION;
       _g->sectors[i].movefactor = ORIG_FRICTION_FACTOR;
     }
+    */
 
   for (i = 0 ; i < _g->numlines ; i++,l++)
     if (l->special == 223)
@@ -2868,8 +2871,8 @@ static void P_SpawnFriction(void)
             // drag on CPU. New code adjusts friction of sector only once
             // at level startup, and then uses this friction value.
 
-            _g->sectors[s].friction = friction;
-            _g->sectors[s].movefactor = movefactor;
+            //_g->sectors[s].friction = friction;
+            //_g->sectors[s].movefactor = movefactor;
           }
       }
 }
