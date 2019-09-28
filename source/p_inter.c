@@ -691,7 +691,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   boolean justhit = false;          /* killough 11/98 */
 
   /* killough 8/31/98: allow bouncers to take damage */
-  if (!(target->flags & (MF_SHOOTABLE | MF_BOUNCES)))
+  if (!(target->flags & (MF_SHOOTABLE)))
     return; // shouldn't happen...
 
   if (target->health <= 0)

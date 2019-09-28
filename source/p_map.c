@@ -310,7 +310,7 @@ boolean PIT_CheckLine (line_t* ld)
     }
 
   // killough 8/10/98: allow bouncing objects to pass through as missiles
-  if (!(_g->tmthing->flags & (MF_MISSILE | MF_BOUNCES)))
+  if (!(_g->tmthing->flags & (MF_MISSILE)))
     {
       if (ld->flags & ML_BLOCKING)           // explicitly blocking everything
   return _g->tmunstuck && !untouched(ld);  // killough 8/1/98: allow escape
@@ -371,7 +371,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   int damage;
 
   // killough 11/98: add touchy things
-  if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE|MF_TOUCHY)))
+  if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)))
     return true;
 
   blockdist = thing->radius + _g->tmthing->radius;
@@ -388,32 +388,6 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   if (thing == _g->tmthing)
     return true;
-
-  /* killough 11/98:
-   *
-   * TOUCHY flag, for mines or other objects which die on contact with solids.
-   * If a solid object of a different type comes in contact with a touchy
-   * thing, and the touchy thing is not the sole one moving relative to fixed
-   * surroundings such as walls, then the touchy thing dies immediately.
-   */
-
-  if (thing->flags & MF_TOUCHY &&                  // touchy object
-      _g->tmthing->flags & MF_SOLID &&                 // solid object touches it
-      thing->health > 0 &&                         // touchy object is alive
-      (thing->intflags & MIF_ARMED ||              // Thing is an armed mine
-       sentient(thing)) &&                         // ... or a sentient thing
-      (thing->type != _g->tmthing->type ||             // only different species
-       thing->type == MT_PLAYER) &&                // ... or different players
-      thing->z + thing->height >= _g->tmthing->z &&    // touches vertically
-      _g->tmthing->z + _g->tmthing->height >= thing->z &&
-      (thing->type ^ MT_PAIN) |                    // PEs and lost souls
-      (_g->tmthing->type ^ MT_SKULL) &&                // are considered same
-      (thing->type ^ MT_SKULL) |                   // (but Barons & Knights
-      (_g->tmthing->type ^ MT_PAIN))                   // are intentionally not)
-    {
-      P_DamageMobj(thing, NULL, NULL, thing->health);  // kill object
-      return true;
-    }
 
   // check for skulls slamming into things
 
@@ -437,8 +411,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // missiles can hit other things
   // killough 8/10/98: bouncing non-solid things can hit other things too
 
-  if (_g->tmthing->flags & MF_MISSILE || (_g->tmthing->flags & MF_BOUNCES &&
-              !(_g->tmthing->flags & MF_SOLID)))
+  if (_g->tmthing->flags & MF_MISSILE)
     {
       // see if it went over / under
 
@@ -712,11 +685,6 @@ boolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
         thing->z - _g->tmfloorz > 24*FRACUNIT;
     }
       }
-
-      if (thing->flags & MF_BOUNCES &&    // killough 8/13/98
-    !(thing->flags & (MF_MISSILE|MF_NOGRAVITY)) &&
-    !sentient(thing) && _g->tmfloorz - thing->z > 16*FRACUNIT)
-  return false; // too big a step up for bouncers under gravity
 
       // killough 11/98: prevent falling objects from going up too many steps
       if (thing->intflags & MIF_FALLING && _g->tmfloorz - thing->z >
@@ -1617,7 +1585,7 @@ boolean PIT_RadiusAttack (mobj_t* thing)
    * (missile bouncers are already excluded with MF_NOBLOCKMAP)
    */
 
-  if (!(thing->flags & (MF_SHOOTABLE | MF_BOUNCES)))
+  if (!(thing->flags & MF_SHOOTABLE))
     return true;
 
   // Boss spider and cyborg
@@ -1626,9 +1594,7 @@ boolean PIT_RadiusAttack (mobj_t* thing)
   // killough 8/10/98: allow grenades to hurt anyone, unless
   // fired by Cyberdemons, in which case it won't hurt Cybers.
 
-  if (_g->bombspot->flags & MF_BOUNCES ?
-      thing->type == MT_CYBORG && _g->bombsource->type == MT_CYBORG :
-      thing->type == MT_CYBORG || thing->type == MT_SPIDER)
+  if (thing->type == MT_CYBORG || thing->type == MT_SPIDER)
     return true;
 
   dx = D_abs(thing->x - _g->bombspot->x);
@@ -1732,14 +1698,6 @@ boolean PIT_ChangeSector (mobj_t* thing)
 
     // keep checking
     return true;
-    }
-
-  /* killough 11/98: kill touchy things immediately */
-  if (thing->flags & MF_TOUCHY &&
-      (thing->intflags & MIF_ARMED || sentient(thing)))
-    {
-      P_DamageMobj(thing, NULL, NULL, thing->health);  // kill object
-      return true;   // keep checking
     }
 
   if (! (thing->flags & MF_SHOOTABLE) )
