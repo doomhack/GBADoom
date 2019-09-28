@@ -329,16 +329,6 @@ typedef struct drawseg_s
   int *sprtopclip, *sprbottomclip, *maskedtexturecol; // dropoff overflow
 } drawseg_t;
 
-// proff: Added for OpenGL
-typedef struct
-{
-  int width,height;
-  int leftoffset,topoffset;
-  int lumpnum;
-} patchnum_t;
-
-
-
 // Patches.
 // A patch holds one or more columns.
 // Patches are used for sprites and all masked pictures,

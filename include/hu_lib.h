@@ -108,7 +108,7 @@ typedef struct
   int     cl;                          // current line number
 
   int x,y,w,h;                         // window position and size
-  const patchnum_t *bg;                  // patches for background
+  const patch_t *bg;                  // patches for background
 
   // pointer to boolean stating whether to update window
   boolean*    on;
@@ -150,7 +150,7 @@ void HUlib_initTextLine
   hu_textline_t *t,
   int x,
   int y,
-  const patchnum_t *f,
+  const patch_t *f,
   int sc,
   int cm    //jff 2/16/98 add color range parameter
 );
@@ -175,7 +175,7 @@ void HUlib_initSText
   int   x,
   int   y,
   int   h,
-  const patchnum_t* font,
+  const patch_t* font,
   int   startchar,
   int cm,   //jff 2/16/98 add color range parameter
   boolean*  on );
@@ -189,58 +189,5 @@ void HUlib_drawSText(hu_stext_t* s);
 // erases all stext lines
 void HUlib_eraseSText(hu_stext_t* s);
 
-//jff 2/26/98 message refresh widget
-// initialize refresh text widget
-void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h, const patchnum_t* font,
-         int startchar, int cm, const patchnum_t* bgfont, boolean *on);
-
-//jff 2/26/98 message refresh widget
-// add a text message to refresh text widget
-void HUlib_addMessageToMText(hu_mtext_t* m, const char* prefix, const char* msg);
-
-//jff 2/26/98 new routine to display a background on which
-// the list of last hud_msg_lines are displayed
-void HUlib_drawMBg
-( int x,
-  int y,
-  int w,
-  int h,
-  const patchnum_t* bgp
-);
-
-//jff 2/26/98 message refresh widget
-// draws mtext
-void HUlib_drawMText(hu_mtext_t* m);
-
-//jff 4/28/98 erases behind message list
-void HUlib_eraseMText(hu_mtext_t* m);
-
-// Input Text Line widget routines
-void HUlib_initIText
-( hu_itext_t* it,
-  int   x,
-  int   y,
-  const patchnum_t* font,
-  int   startchar,
-  int cm,   //jff 2/16/98 add color range parameter
-  boolean*  on );
-
-// resets line and left margin
-void HUlib_resetIText(hu_itext_t* it);
-
-// left of left-margin
-void HUlib_addPrefixToIText
-( hu_itext_t* it,
-  char*   str );
-
-// whether eaten
-boolean HUlib_keyInIText
-( hu_itext_t* it,
-  unsigned char ch );
-
-void HUlib_drawIText(hu_itext_t* it);
-
-// erases all itext lines
-void HUlib_eraseIText(hu_itext_t* it);
 
 #endif
