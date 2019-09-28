@@ -333,18 +333,9 @@ typedef struct mobj_s
     // new field: last known enemy -- killough 2/15/98
     struct mobj_s*      lastenemy;
 
-    // killough 8/2/98: friction properties part of sectors,
-    // not objects -- removed friction properties from here
-    // e6y: restored friction properties here
-    // Friction values for the sector the object is in
-    int friction;                                           // phares 3/17/98
-
+                                       // phares 3/17/98
     // a linked list of sectors where this object appears
     struct msecnode_s* touching_sectorlist;                 // phares 3/14/98
-
-    //fixed_t             PrevX;
-    //fixed_t             PrevY;
-    //fixed_t             PrevZ;
 
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!
 } mobj_t;

@@ -2722,47 +2722,9 @@ static void P_SpawnScrollers(void)
 // the length of the controlling linedef.
 
 void T_Friction(friction_t *f)
-    {
-    sector_t *sec;
-    mobj_t   *thing;
-    msecnode_t* node;
+{
 
-    sec = _g->sectors + f->affectee;
-
-    // Be sure the special sector type is still turned on. If so, proceed.
-    // Else, bail out; the sector type has been changed on us.
-
-    if (!(sec->special & FRICTION_MASK))
-        return;
-
-    // Assign the friction value to players on the floor, non-floating,
-    // and clipped. Normally the object's friction value is kept at
-    // ORIG_FRICTION and this thinker changes it for icy or muddy floors.
-
-    // In Phase II, you can apply friction to Things other than players.
-
-    // When the object is straddling sectors with the same
-    // floorheight that have different frictions, use the lowest
-    // friction value (muddy has precedence over icy).
-
-    node = sec->touching_thinglist; // things touching this sector
-    while (node)
-        {
-        thing = node->m_thing;
-        if (thing->player &&
-            !(thing->flags & (MF_NOGRAVITY | MF_NOCLIP)) &&
-            thing->z <= sec->floorheight)
-            {
-            if ((thing->friction == ORIG_FRICTION) ||     // normal friction?
-              (f->friction < thing->friction))
-                {
-                thing->friction   = f->friction;
-                //thing->movefactor = f->movefactor;
-                }
-            }
-        node = node->m_snext;
-        }
-    }
+}
 
 
 // killough 3/7/98 -- end generalized scroll effects
@@ -2818,59 +2780,7 @@ void T_Friction(friction_t *f)
 
 static void P_SpawnFriction(void)
 {
-  int i;
-  line_t *l = _g->lines;
 
-  // killough 8/28/98: initialize all sectors to normal friction first
-
-  /*
-  for (i = 0; i < _g->numsectors; i++)
-    {
-      _g->sectors[i].friction = ORIG_FRICTION;
-      _g->sectors[i].movefactor = ORIG_FRICTION_FACTOR;
-    }
-    */
-
-  for (i = 0 ; i < _g->numlines ; i++,l++)
-    if (l->special == 223)
-      {
-        int length = P_AproxDistance(l->dx,l->dy)>>FRACBITS;
-        int friction = (0x1EB8*length)/0x80 + 0xD000;
-        int movefactor, s;
-
-        // The following check might seem odd. At the time of movement,
-        // the move distance is multiplied by 'friction/0x10000', so a
-        // higher friction value actually means 'less friction'.
-
-        if (friction > ORIG_FRICTION)       // ice
-          movefactor = ((0x10092 - friction)*(0x70))/0x158;
-        else
-          movefactor = ((friction - 0xDB34)*(0xA))/0x80;
-
-            if (friction > FRACUNIT)
-              friction = FRACUNIT;
-            if (friction < 0)
-              friction = 0;
-            if (movefactor < 32)
-              movefactor = 32;
-
-
-        for (s = -1; (s = P_FindSectorFromLineTag(l,s)) >= 0 ; )
-          {
-            // killough 8/28/98:
-            //
-            // Instead of spawning thinkers, which are slow and expensive,
-            // modify the sector's own friction values. Friction should be
-            // a property of sectors, not objects which reside inside them.
-            // Original code scanned every object in every friction sector
-            // on every tic, adjusting its friction, putting unnecessary
-            // drag on CPU. New code adjusts friction of sector only once
-            // at level startup, and then uses this friction value.
-
-            //_g->sectors[s].friction = friction;
-            //_g->sectors[s].movefactor = movefactor;
-          }
-      }
 }
 
 //
