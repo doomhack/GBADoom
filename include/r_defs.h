@@ -368,9 +368,6 @@ typedef struct vissprite_s
   // for color translation and shadow draw, maxbright frames as well
   const lighttable_t *colormap;
 
-  // killough 3/27/98: height sector for underwater/fake ceiling support
-  //int heightsec;
-
 } vissprite_t;
 
 //
@@ -424,7 +421,8 @@ typedef struct
 typedef struct visplane
 {
   struct visplane *next;        // Next visplane in hash chain -- killough
-  int picnum, lightlevel, minx, maxx;
+  short picnum, lightlevel;
+  int minx, maxx;
   fixed_t height;
   fixed_t xoffs, yoffs;         // killough 2/28/98: Support scrolling flats
 
