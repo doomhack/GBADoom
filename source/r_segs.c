@@ -736,10 +736,6 @@ void R_StoreWallRange(const int start, const int stop)
         || _g->backsector->floorpic != _g->frontsector->floorpic
         || _g->backsector->lightlevel != _g->frontsector->lightlevel
 
-        // killough 3/7/98: Add checks for (x,y) offsets
-        || _g->backsector->floor_xoffs != _g->frontsector->floor_xoffs
-        || _g->backsector->floor_yoffs != _g->frontsector->floor_yoffs
-
         // killough 4/15/98: prevent 2s normals
         // from bleeding through deep water
         || _g->frontsector->heightsec != -1
@@ -751,10 +747,6 @@ void R_StoreWallRange(const int start, const int stop)
       _g->markceiling = _g->worldhigh != _g->worldtop
         || _g->backsector->ceilingpic != _g->frontsector->ceilingpic
         || _g->backsector->lightlevel != _g->frontsector->lightlevel
-
-        // killough 3/7/98: Add checks for (x,y) offsets
-        || _g->backsector->ceiling_xoffs != _g->frontsector->ceiling_xoffs
-        || _g->backsector->ceiling_yoffs != _g->frontsector->ceiling_yoffs
 
         // killough 4/15/98: prevent 2s normals
         // from bleeding through fake ceilings

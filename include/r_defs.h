@@ -118,10 +118,6 @@ typedef struct
 
   struct line_s **lines;
 
-  // killough 3/7/98: floor and ceiling texture offsets
-  fixed_t   floor_xoffs,   floor_yoffs;
-  fixed_t ceiling_xoffs, ceiling_yoffs;
-
   short linecount;
 
   // killough 10/98: support skies coming from sidedefs. Allows scrolling
