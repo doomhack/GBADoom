@@ -198,7 +198,8 @@ void D_Display (void)
 
     HU_Erase();
 
-    if (_g->setsizeneeded) {               // change the view size if needed
+    if (_g->setsizeneeded)
+    {               // change the view size if needed
       R_ExecuteSetViewSize();
       _g->oldgamestate = -1;            // force background redraw
     }
@@ -211,7 +212,9 @@ void D_Display (void)
       R_RenderPlayerView (&_g->players[displayplayer]);
     if (_g->automapmode & am_active)
       AM_Drawer();
+
     ST_Drawer((viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), false);
+
     HU_Drawer();
   }
 

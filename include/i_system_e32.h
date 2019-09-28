@@ -26,6 +26,8 @@ void I_SetPallete_e32(const byte* pallete);
 
 void I_ProcessKeyEvents();
 
+int I_GetTime_e32(void);
+
 void I_Error (const char *error, ...);
 
 void I_Quit_e32();

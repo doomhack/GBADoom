@@ -58,6 +58,8 @@
  */
 int I_GetTime(void)
 {
+#ifndef __arm__
+
     struct timeval tv;
     struct timezone tz;
     unsigned long thistimereply;
@@ -82,6 +84,10 @@ int I_GetTime(void)
         thistimereply = _g->lasttimereply;
 
     return (_g->lasttimereply = thistimereply);
+#else
+    return I_GetTime_e32();
+#endif
+
 }
 
 /*
