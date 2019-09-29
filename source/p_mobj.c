@@ -53,59 +53,35 @@
 // Returns true if the mobj is still present.
 //
 
-boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
-  {
-  const state_t*  st;
+boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
+{
+    const state_t*	st;
 
-  // killough 4/9/98: remember states seen, to detect cycles:
-
-  static statenum_t seenstate_tab[NUMSTATES]; // fast transition table
-  statenum_t *seenstate = seenstate_tab;      // pointer to table
-  static int recursion;                       // detects recursion
-  statenum_t i = state;                       // initial state
-  boolean ret = true;                         // return value
-  statenum_t tempstate[NUMSTATES];            // for use with recursion
-
-  if (recursion++)                            // if recursion detected,
-    memset(seenstate=tempstate,0,sizeof tempstate); // clear state table
-
-  do
+    do
     {
-    if (state == S_NULL)
-      {
-      mobj->state = (state_t *) S_NULL;
-      P_RemoveMobj (mobj);
-      ret = false;
-      break;                 // killough 4/9/98
-      }
+        if (state == S_NULL)
+        {
+            mobj->state = (state_t *) S_NULL;
+            P_RemoveMobj (mobj);
+            return false;
+        }
 
-    st = &states[state];
-    mobj->state = st;
-    mobj->tics = st->tics;
-    mobj->sprite = st->sprite;
-    mobj->frame = st->frame;
+        st = &states[state];
+        mobj->state = st;
+        mobj->tics = st->tics;
+        mobj->sprite = st->sprite;
+        mobj->frame = st->frame;
 
-    // Modified handling.
-    // Call action functions when the state is set
+        // Modified handling.
+        // Call action functions when the state is set
+        if (st->action)
+            st->action(mobj);
 
-    if (st->action)
-      st->action(mobj);
+        state = st->nextstate;
+    } while (!mobj->tics);
 
-    seenstate[state] = 1 + st->nextstate;   // killough 4/9/98
-
-    state = st->nextstate;
-    } while (!mobj->tics && !seenstate[state]);   // killough 4/9/98
-
-  if (ret && !mobj->tics)  // killough 4/9/98: detect state cycles
-    doom_printf("Warning: State Cycle Detected");
-
-  if (!--recursion)
-    for (;(state=seenstate[i]);i=state-1)
-      seenstate[i] = 0;  // killough 4/9/98: erase memory of states
-
-  return ret;
-  }
-
+    return true;
+}
 
 //
 // P_ExplodeMissile
