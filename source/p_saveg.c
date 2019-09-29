@@ -566,7 +566,6 @@ enum {
   tc_glow,
   tc_elevator,    //jff 2/22/98 new elevator type thinker
   tc_scroll,      // killough 3/7/98: new scroll effect thinker
-  tc_pusher,      // phares 3/22/98:  new push/pull effect thinker
   tc_flicker,     // killough 10/4/98
   tc_endspecials
 } specials_e;
@@ -624,7 +623,6 @@ void P_ArchiveSpecials (void)
         th->function==T_Glow         ? 4+sizeof(glow_t)    :
         th->function==T_MoveElevator ? 4+sizeof(elevator_t):
         th->function==T_Scroll       ? 4+sizeof(scroll_t)  :
-        th->function==T_Pusher       ? 4+sizeof(pusher_t)  :
         th->function==T_FireFlicker? 4+sizeof(fireflicker_t) :
       0;
 
@@ -774,16 +772,6 @@ void P_ArchiveSpecials (void)
           *_g->save_p++ = tc_scroll;
           memcpy (_g->save_p, th, sizeof(scroll_t));
           _g->save_p += sizeof(scroll_t);
-          continue;
-        }
-
-      // phares 3/22/98: Push/Pull effect thinkers
-
-      if (th->function == T_Pusher)
-        {
-          *_g->save_p++ = tc_pusher;
-          memcpy (_g->save_p, th, sizeof(pusher_t));
-          _g->save_p += sizeof(pusher_t);
           continue;
         }
     }
@@ -938,17 +926,6 @@ void P_UnArchiveSpecials (void)
           _g->save_p += sizeof(scroll_t);
           scroll->thinker.function = T_Scroll;
           P_AddThinker(&scroll->thinker);
-          break;
-        }
-
-      case tc_pusher:   // phares 3/22/98: new Push/Pull effect thinkers
-        {
-          pusher_t *pusher = Z_Malloc (sizeof(pusher_t), PU_LEVEL, NULL);
-          memcpy (pusher, _g->save_p, sizeof(pusher_t));
-          _g->save_p += sizeof(pusher_t);
-          pusher->thinker.function = T_Pusher;
-          pusher->source = P_GetPushThing(pusher->affectee);
-          P_AddThinker(&pusher->thinker);
           break;
         }
 

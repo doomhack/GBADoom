@@ -761,10 +761,10 @@ typedef struct {
 typedef struct
 {
     boolean     istexture;
-    int         picnum;
-    int         basepic;
-    int         numpics;
-    int         speed;
+    short         picnum;
+    short         basepic;
+    short         numpics;
+    short         speed;
 
 } anim_t;
 
@@ -941,12 +941,6 @@ void T_MoveElevator
 
 void T_Scroll
 ( scroll_t * );      // killough 3/7/98: scroll effect thinker
-
-void T_Friction
-( friction_t * );    // phares 3/12/98: friction thinker
-
-void T_Pusher
-( pusher_t * );      // phares 3/20/98: Push thinker
 
 ////////////////////////////////////////////////////////////////
 //
@@ -1157,7 +1151,5 @@ void P_AddActiveCeiling
 
 int P_ActivateInStasisCeiling
 ( line_t* line );
-
-mobj_t* P_GetPushThing(int);                                // phares 3/23/98
 
 #endif

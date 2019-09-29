@@ -713,8 +713,6 @@ static void D_DoomMainSetup(void)
     lprintf(LO_INFO,"HU_Init: Setting up heads up display.\n");
     HU_Init();
 
-    I_InitGraphics();
-
     //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"ST_Init: Init status bar.\n");
     ST_Init();
@@ -728,6 +726,8 @@ static void D_DoomMainSetup(void)
         G_DeferedPlayDemo(timedemo);
         _g->singledemo = true;            // quit after one demo
     }
+
+    I_InitGraphics();
 
     D_StartTitle();                 // start up intro loop
 }

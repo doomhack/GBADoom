@@ -163,27 +163,32 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     y -= patch->topoffset;
     x -= patch->leftoffset;
 
-    int   col;
-    int   left, right, top, bottom;
-    int   DX  = (240<<16)  / 320;
-    int   DXI = (320<<16)          / 240;
-    int   DY  = (SCREENHEIGHT<<16) / 200;
-    int   DYI = (200<<16)          / SCREENHEIGHT;
+    const int   DX  = (240<<16) / 320;
 
-    byte* byte_topleft = (byte*)_g->screens[scrn].data;
-    int byte_pitch = (_g->screens[scrn].byte_pitch * 2);
-    int dc_iscale = DYI;
+    const int   DXI = (320<<16) / 240;
 
-    left = ( x * DX ) >> FRACBITS;
-    top = ( y * DY ) >> FRACBITS;
-    right = ( (x + patch->width) * DX ) >> FRACBITS;
-    bottom = ( (y + patch->height) * DY ) >> FRACBITS;
+    //const int   DY  = (SCREENHEIGHT<<16) / 200;
+    const int DY = 52429;
 
-    col = 0;
+    //const int   DYI = (200<<16) / SCREENHEIGHT;
+    const int   DYI = 81920;
+
+    const byte* byte_topleft = (byte*)_g->screens[scrn].data;
+    const int byte_pitch = (_g->screens[scrn].byte_pitch * 2);
+
+    const int dc_iscale = DYI;
+
+    const int left = ( x * DX ) >> FRACBITS;
+    const int top = ( y * DY ) >> FRACBITS;
+    const int right = ( (x + patch->width) * DX ) >> FRACBITS;
+    const int bottom = ( (y + patch->height) * DY ) >> FRACBITS;
+
+    int   col = 0;
 
     for (int dc_x=left; dc_x<right; dc_x++, col+=DXI)
     {
         const int colindex = (col>>16);
+
         const column_t* column = (const column_t *)((const byte*)patch + patch->columnofs[colindex]);
 
         // ignore this column if it's to the left of our clampRect
@@ -201,8 +206,8 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
             int yoffset = 0;
 
-            int dc_yl = (((y + topdelta) * DY)>>FRACBITS);
-            int dc_yh = (((y + topdelta + column->length) * DY - (FRACUNIT>>1))>>FRACBITS);
+            int dc_yl = (((y + topdelta) * DY) >> FRACBITS);
+            int dc_yh = (((y + topdelta + column->length) * DY) >> FRACBITS);
 
             column = (const column_t *)((const byte *)column + column->length + 4 );
 
@@ -212,9 +217,9 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             if ((dc_yl >= SCREENHEIGHT) || (dc_yl >= bottom))
                 continue;
 
-            if (dc_yh > bottom)
+            if (dc_yh >= bottom)
             {
-                dc_yh = bottom;
+                dc_yh = bottom - 1;
             }
 
             if (dc_yh >= SCREENHEIGHT)
@@ -237,7 +242,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             int dc_texturemid = -((dc_yl-centery)*dc_iscale);
 
             {
-                unsigned int count = dc_yh - dc_yl;
+                int count = (dc_yh - dc_yl);
 
                 const byte *colormap = _g->colormaps;
 
@@ -280,6 +285,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
                     dest += byte_pitch;
                     frac += fracstep;
+
                 } while (count--);
             }
         }

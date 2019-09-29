@@ -196,7 +196,6 @@ void I_PreInitGraphics(void)
 // Sets the screen resolution
 void I_SetRes(void)
 {
-
     //backbuffer
     _g->screens[0].width = SCREENWIDTH;
     _g->screens[0].height = SCREENHEIGHT;

@@ -562,8 +562,8 @@ pusher_t* tmpusher; // pusher structure for blockmap searches
 //p_switch.c
 //******************************************************************************
 
-int		switchlist[MAXSWITCHES * 2];
-int numswitches;                           // killough
+short switchlist[MAXSWITCHES * 2];
+int   numswitches;                           // killough
 
 button_t  buttonlist[MAXBUTTONS];
 
