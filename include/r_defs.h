@@ -114,15 +114,6 @@ typedef struct
 
   short linecount;
 
-  // killough 10/98: support skies coming from sidedefs. Allows scrolling
-  // skies and other effects. No "level info" kind of lump is needed,
-  // because you can use an arbitrary number of skies per level with this
-  // method. This field only applies when skyflatnum is used for floorpic
-  // or ceilingpic, because the rest of Doom needs to know which is sky
-  // and which isn't, etc.
-
-  //short sky;
-
   short prevsec;     // -1 or number of sector for previous step
   short nextsec;     // -1 or number of next step sector
 
@@ -343,14 +334,16 @@ typedef post_t	column_t;
 
 typedef struct vissprite_s
 {
-  int x1, x2;
+  short x1, x2;
   fixed_t gx, gy;              // for line side calculation
   fixed_t gz, gzt;             // global bottom / top for silhouette clipping
   fixed_t startfrac;           // horizontal position of x1
   fixed_t scale;
   fixed_t xiscale;             // negative if flipped
   fixed_t texturemid;
-  int patch;
+
+  short patch;
+
   unsigned int mobjflags;
 
   // for color translation and shadow draw, maxbright frames as well
@@ -410,7 +403,7 @@ typedef struct visplane
 {
   struct visplane *next;        // Next visplane in hash chain -- killough
   short picnum, lightlevel;
-  int minx, maxx;
+  short minx, maxx;
   fixed_t height;
   fixed_t xoffs, yoffs;         // killough 2/28/98: Support scrolling flats
 
