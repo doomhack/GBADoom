@@ -125,7 +125,6 @@ const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
 void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 {
     int      texnum;
-    sector_t tempsec;      // killough 4/13/98
     R_DrawColumn_f colfunc;
     draw_column_vars_t dcvars;
 
@@ -150,7 +149,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     texnum = _g->texturetranslation[texnum];
 
     // killough 4/13/98: get correct lightlevel for 2s normal textures
-    _g->rw_lightlevel = R_FakeFlat(_g->frontsector, &tempsec, NULL, NULL, false) ->lightlevel;
+    _g->rw_lightlevel = _g->frontsector->lightlevel;
 
     _g->maskedtexturecol = ds->maskedtexturecol;
 

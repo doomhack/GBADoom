@@ -170,102 +170,6 @@ static void R_RecalcLineFlags(void)
 }
 
 //
-// killough 3/7/98: Hack floor/ceiling heights for deep water etc.
-//
-// If player's view height is underneath fake floor, lower the
-// drawn ceiling to be just under the floor height, and replace
-// the drawn floor and ceiling textures, and light level, with
-// the control sector's.
-//
-// Similar for ceiling, only reflected.
-//
-// killough 4/11/98, 4/13/98: fix bugs, add 'back' parameter
-//
-
-sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
-                     int *floorlightlevel, int *ceilinglightlevel,
-                     boolean back)
-{
-  if (floorlightlevel)
-    *floorlightlevel = sec->floorlightsec == -1 ?
-      sec->lightlevel : _g->sectors[sec->floorlightsec].lightlevel;
-
-  if (ceilinglightlevel)
-    *ceilinglightlevel = sec->ceilinglightsec == -1 ? // killough 4/11/98
-      sec->lightlevel : _g->sectors[sec->ceilinglightsec].lightlevel;
-
-  if (sec->heightsec != -1)
-    {
-      const sector_t *s = &_g->sectors[sec->heightsec];
-      int heightsec = _g->viewplayer->mo->subsector->sector->heightsec;
-      int underwater = heightsec!=-1 && _g->viewz<=_g->sectors[heightsec].floorheight;
-
-      // Replace sector being drawn, with a copy to be hacked
-      *tempsec = *sec;
-
-      // Replace floor and ceiling height with other sector's heights.
-      tempsec->floorheight   = s->floorheight;
-      tempsec->ceilingheight = s->ceilingheight;
-
-      // killough 11/98: prevent sudden light changes from non-water sectors:
-      if (underwater && (tempsec->  floorheight = sec->floorheight,
-                          tempsec->ceilingheight = s->floorheight-1, !back))
-        {                   // head-below-floor hack
-          tempsec->floorpic    = s->floorpic;
-
-          if (underwater)
-          {
-            if (s->ceilingpic == _g->skyflatnum)
-            {
-		tempsec->floorheight   = tempsec->ceilingheight+1;
-		tempsec->ceilingpic    = tempsec->floorpic;
-
-	    } else {
-		tempsec->ceilingpic    = s->ceilingpic;
-	    }
-	  }
-
-          tempsec->lightlevel  = s->lightlevel;
-
-          if (floorlightlevel)
-            *floorlightlevel = s->floorlightsec == -1 ? s->lightlevel :
-            _g->sectors[s->floorlightsec].lightlevel; // killough 3/16/98
-
-          if (ceilinglightlevel)
-            *ceilinglightlevel = s->ceilinglightsec == -1 ? s->lightlevel :
-            _g->sectors[s->ceilinglightsec].lightlevel; // killough 4/11/98
-        }
-      else
-        if (heightsec != -1 && _g->viewz >= _g->sectors[heightsec].ceilingheight &&
-            sec->ceilingheight > s->ceilingheight)
-          {   // Above-ceiling hack
-            tempsec->ceilingheight = s->ceilingheight;
-            tempsec->floorheight   = s->ceilingheight + 1;
-
-            tempsec->floorpic    = tempsec->ceilingpic    = s->ceilingpic;
-
-            if (s->floorpic != _g->skyflatnum)
-              {
-                tempsec->ceilingheight = sec->ceilingheight;
-                tempsec->floorpic      = s->floorpic;
-              }
-
-            tempsec->lightlevel  = s->lightlevel;
-
-            if (floorlightlevel)
-              *floorlightlevel = s->floorlightsec == -1 ? s->lightlevel :
-              _g->sectors[s->floorlightsec].lightlevel; // killough 3/16/98
-
-            if (ceilinglightlevel)
-              *ceilinglightlevel = s->ceilinglightsec == -1 ? s->lightlevel :
-              _g->sectors[s->ceilinglightsec].lightlevel; // killough 4/11/98
-          }
-      sec = tempsec;               // Use other sector
-    }
-  return sec;
-}
-
-//
 // R_AddLine
 // Clips the given segment
 // and adds any visible pieces to the line list.
@@ -279,7 +183,6 @@ static void R_AddLine (seg_t *line)
   angle_t  angle2;
   angle_t  span;
   angle_t  tspan;
-  static sector_t tempsec;     // killough 3/8/98: ceiling/water hack
 
   _g->curline = line;
 
@@ -336,11 +239,6 @@ static void R_AddLine (seg_t *line)
     return;
 
   _g->backsector = line->backsector;
-
-  // Single sided line?
-  if (_g->backsector)
-    // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-    _g->backsector = R_FakeFlat(_g->backsector, &tempsec, NULL, NULL, true);
 
   /* cph - roll up linedef properties in flags */
   if ((_g->linedef = _g->curline->linedef)->r_validcount != _g->gametic)
@@ -449,9 +347,6 @@ static void R_Subsector(int num)
   int         count;
   seg_t       *line;
   subsector_t *sub;
-  sector_t    tempsec;              // killough 3/7/98: deep water hack
-  int         floorlightlevel;      // killough 3/16/98: set floor lightlevel
-  int         ceilinglightlevel;    // killough 4/11/98
 
 #ifdef RANGECHECK
   if (num>=numsubsectors)
@@ -462,10 +357,6 @@ static void R_Subsector(int num)
   _g->frontsector = sub->sector;
   count = sub->numlines;
   line = &_g->segs[sub->firstline];
-
-  // killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
-  _g->frontsector = R_FakeFlat(_g->frontsector, &tempsec, &floorlightlevel,
-                           &ceilinglightlevel, false);   // killough 4/11/98
 
   // killough 3/7/98: Add (x,y) offsets to flats, add deep water check
   // killough 3/16/98: add floorlightlevel
@@ -478,7 +369,7 @@ static void R_Subsector(int num)
                 _g->frontsector->floorpic == _g->skyflatnum &&  // kilough 10/98
                 _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
                 _g->frontsector->floorpic,
-                floorlightlevel                // killough 3/16/98
+                _g->frontsector->lightlevel                // killough 3/16/98
                 ) : NULL;
 
   _g->ceilingplane = _g->frontsector->ceilingheight > _g->viewz ||
@@ -489,7 +380,7 @@ static void R_Subsector(int num)
                 _g->frontsector->ceilingpic == _g->skyflatnum &&  // kilough 10/98
                 _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
                 _g->frontsector->ceilingpic,
-                ceilinglightlevel
+                _g->frontsector->lightlevel
                 ) : NULL;
 
   // killough 9/18/98: Fix underwater slowdown, by passing real sector
@@ -505,12 +396,11 @@ static void R_Subsector(int num)
   // real sector, or you must account for the lighting in some other way,
   // like passing it as an argument.
 
-  R_AddSprites(sub, (floorlightlevel+ceilinglightlevel)/2);
+  R_AddSprites(sub, _g->frontsector->lightlevel);
   while (count--)
   {
-    //if (line->miniseg == false)
       R_AddLine (line);
-    line++;
+        line++;
     _g->curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
   }
 }
