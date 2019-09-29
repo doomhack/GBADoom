@@ -135,9 +135,7 @@ static void R_RecalcLineFlags(void)
               || _g->curline->sidedef->midtexture
               || _g->backsector->ceilingpic != _g->frontsector->ceilingpic
               || _g->backsector->floorpic != _g->frontsector->floorpic
-              || _g->backsector->floorlightsec != _g->frontsector->floorlightsec
-              || _g->backsector->lightlevel != _g->frontsector->lightlevel
-              || _g->backsector->ceilinglightsec != _g->frontsector->ceilinglightsec)
+              || _g->backsector->lightlevel != _g->frontsector->lightlevel)
       {
           _g->linedef->r_flags = 0; return;
       } else

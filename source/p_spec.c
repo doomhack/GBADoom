@@ -2425,21 +2425,6 @@ void P_SpawnSpecials (void)
           _g->sectors[s].heightsec = sec;
         break;
 
-      // killough 3/16/98: Add support for setting
-      // floor lighting independently (e.g. lava)
-      case 213:
-        sec = _g->sides[*_g->lines[i].sidenum].sector-_g->sectors;
-        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
-          _g->sectors[s].floorlightsec = sec;
-        break;
-
-      // killough 4/11/98: Add support for setting
-      // ceiling lighting independently
-      case 261:
-        sec = _g->sides[*_g->lines[i].sidenum].sector-_g->sectors;
-        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
-          _g->sectors[s].ceilinglightsec = sec;
-        break;
 
         // killough 10/98:
         //

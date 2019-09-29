@@ -234,11 +234,6 @@ static void P_LoadSectors (int lump)
       ss->prevsec = -1; // stair retriggering until build completes
 
       ss->heightsec = -1;       // sector used to get floor and ceiling height
-      ss->floorlightsec = -1;   // sector used to get floor lighting
-      // killough 3/7/98: end changes
-
-      // killough 4/11/98 sector used to get ceiling lighting:
-      ss->ceilinglightsec = -1;
 
       // killough 10/98: sky textures coming from sidedefs:
       ss->sky = 0;

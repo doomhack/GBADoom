@@ -136,7 +136,7 @@ typedef struct
   short heightsec;    // other sector, or -1 if no other sector
 
   // killough 4/11/98: support for lightlevels coming from another sector
-  short floorlightsec, ceilinglightsec;
+  //short floorlightsec, ceilinglightsec;
 
   short floorpic;
   short ceilingpic;

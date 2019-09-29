@@ -738,9 +738,6 @@ void R_StoreWallRange(const int start, const int stop)
         // killough 4/15/98: prevent 2s normals
         // from bleeding through deep water
         || _g->frontsector->heightsec != -1
-
-        // killough 4/17/98: draw floors if different light levels
-        || _g->backsector->floorlightsec != _g->frontsector->floorlightsec
         ;
 
       _g->markceiling = _g->worldhigh != _g->worldtop
@@ -751,9 +748,6 @@ void R_StoreWallRange(const int start, const int stop)
         // from bleeding through fake ceilings
         || (_g->frontsector->heightsec != -1 &&
             _g->frontsector->ceilingpic!=_g->skyflatnum)
-
-        // killough 4/17/98: draw ceilings if different light levels
-        || _g->backsector->ceilinglightsec != _g->frontsector->ceilinglightsec
         ;
 
       if (_g->backsector->ceilingheight <= _g->frontsector->floorheight
