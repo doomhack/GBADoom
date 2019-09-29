@@ -356,15 +356,9 @@ static void R_Subsector(int num)
   count = sub->numlines;
   line = &_g->segs[sub->firstline];
 
-  // killough 3/7/98: Add (x,y) offsets to flats, add deep water check
-  // killough 3/16/98: add floorlightlevel
-  // killough 10/98: add support for skies transferred from sidedefs
-
   if(_g->frontsector->floorheight < _g->viewz)
   {
       _g->floorplane = R_FindPlane(_g->frontsector->floorheight,
-                                   _g->frontsector->floorpic == _g->skyflatnum &&  // kilough 10/98
-                                   _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
                                    _g->frontsector->floorpic,
                                    _g->frontsector->lightlevel                // killough 3/16/98
                                    );
@@ -378,8 +372,6 @@ static void R_Subsector(int num)
   if(_g->frontsector->ceilingheight > _g->viewz || (_g->frontsector->ceilingpic == _g->skyflatnum))
   {
       _g->ceilingplane = R_FindPlane(_g->frontsector->ceilingheight,     // killough 3/8/98
-                  _g->frontsector->ceilingpic == _g->skyflatnum &&  // kilough 10/98
-                  _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
                   _g->frontsector->ceilingpic,
                   _g->frontsector->lightlevel
                   );

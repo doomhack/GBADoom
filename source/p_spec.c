@@ -2411,27 +2411,6 @@ void P_SpawnSpecials (void)
   P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
 
   P_SpawnScrollers(); // killough 3/7/98: Add generalized scrollers
-
-  for (i=0; i<_g->numlines; i++)
-    switch (_g->lines[i].special)
-    {
-      int s, sec;
-
-        // killough 10/98:
-        //
-        // Support for sky textures being transferred from sidedefs.
-        // Allows scrolling and other effects (but if scrolling is
-        // used, then the same sector tag needs to be used for the
-        // sky sector, the sky-transfer linedef, and the scroll-effect
-        // linedef). Still requires user to use F_SKY1 for the floor
-        // or ceiling texture, to distinguish floor and ceiling sky.
-
-      case 271:   // Regular sky
-      case 272:   // Same, only flipped
-        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
-          _g->sectors[s].sky = i | PL_SKYFLAT;
-        break;
-   }
 }
 
 // killough 2/28/98:

@@ -121,7 +121,7 @@ typedef struct
   // or ceilingpic, because the rest of Doom needs to know which is sky
   // and which isn't, etc.
 
-  short sky;
+  //short sky;
 
   short prevsec;     // -1 or number of sector for previous step
   short nextsec;     // -1 or number of next step sector

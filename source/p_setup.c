@@ -233,8 +233,6 @@ static void P_LoadSectors (int lump)
       ss->nextsec = -1; //jff 2/26/98 add fields to support locking out
       ss->prevsec = -1; // stair retriggering until build completes
 
-      // killough 10/98: sky textures coming from sidedefs:
-      ss->sky = 0;
     }
 
   W_UnlockLumpNum(lump); // cph - release the data
