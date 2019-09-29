@@ -360,39 +360,34 @@ static void R_Subsector(int num)
   // killough 3/16/98: add floorlightlevel
   // killough 10/98: add support for skies transferred from sidedefs
 
-  _g->floorplane = _g->frontsector->floorheight < _g->viewz || // killough 3/7/98
-    (_g->frontsector->heightsec != -1 &&
-     _g->sectors[_g->frontsector->heightsec].ceilingpic == _g->skyflatnum) ?
-    R_FindPlane(_g->frontsector->floorheight,
-                _g->frontsector->floorpic == _g->skyflatnum &&  // kilough 10/98
-                _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
-                _g->frontsector->floorpic,
-                _g->frontsector->lightlevel                // killough 3/16/98
-                ) : NULL;
+  if(_g->frontsector->floorheight < _g->viewz)
+  {
+      _g->floorplane = R_FindPlane(_g->frontsector->floorheight,
+                                   _g->frontsector->floorpic == _g->skyflatnum &&  // kilough 10/98
+                                   _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
+                                   _g->frontsector->floorpic,
+                                   _g->frontsector->lightlevel                // killough 3/16/98
+                                   );
+  }
+  else
+  {
+      _g->floorplane = NULL;
+  }
 
-  _g->ceilingplane = _g->frontsector->ceilingheight > _g->viewz ||
-    _g->frontsector->ceilingpic == _g->skyflatnum ||
-    (_g->frontsector->heightsec != -1 &&
-     _g->sectors[_g->frontsector->heightsec].floorpic == _g->skyflatnum) ?
-    R_FindPlane(_g->frontsector->ceilingheight,     // killough 3/8/98
-                _g->frontsector->ceilingpic == _g->skyflatnum &&  // kilough 10/98
-                _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
-                _g->frontsector->ceilingpic,
-                _g->frontsector->lightlevel
-                ) : NULL;
 
-  // killough 9/18/98: Fix underwater slowdown, by passing real sector
-  // instead of fake one. Improve sprite lighting by basing sprite
-  // lightlevels on floor & ceiling lightlevels in the surrounding area.
-  //
-  // 10/98 killough:
-  //
-  // NOTE: TeamTNT fixed this bug incorrectly, messing up sprite lighting!!!
-  // That is part of the 242 effect!!!  If you simply pass sub->sector to
-  // the old code you will not get correct lighting for underwater sprites!!!
-  // Either you must pass the fake sector and handle validcount here, on the
-  // real sector, or you must account for the lighting in some other way,
-  // like passing it as an argument.
+  if(_g->frontsector->ceilingheight > _g->viewz || (_g->frontsector->ceilingpic == _g->skyflatnum))
+  {
+      _g->ceilingplane = R_FindPlane(_g->frontsector->ceilingheight,     // killough 3/8/98
+                  _g->frontsector->ceilingpic == _g->skyflatnum &&  // kilough 10/98
+                  _g->frontsector->sky & PL_SKYFLAT ? _g->frontsector->sky :
+                  _g->frontsector->ceilingpic,
+                  _g->frontsector->lightlevel
+                  );
+  }
+  else
+  {
+      _g->ceilingplane = NULL;
+  }
 
   R_AddSprites(sub, _g->frontsector->lightlevel);
   while (count--)

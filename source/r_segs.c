@@ -734,20 +734,11 @@ void R_StoreWallRange(const int start, const int stop)
       _g->markfloor = _g->worldlow != _g->worldbottom
         || _g->backsector->floorpic != _g->frontsector->floorpic
         || _g->backsector->lightlevel != _g->frontsector->lightlevel
-
-        // killough 4/15/98: prevent 2s normals
-        // from bleeding through deep water
-        || _g->frontsector->heightsec != -1
         ;
 
       _g->markceiling = _g->worldhigh != _g->worldtop
         || _g->backsector->ceilingpic != _g->frontsector->ceilingpic
         || _g->backsector->lightlevel != _g->frontsector->lightlevel
-
-        // killough 4/15/98: prevent 2s normals
-        // from bleeding through fake ceilings
-        || (_g->frontsector->heightsec != -1 &&
-            _g->frontsector->ceilingpic!=_g->skyflatnum)
         ;
 
       if (_g->backsector->ceilingheight <= _g->frontsector->floorheight
@@ -795,16 +786,11 @@ void R_StoreWallRange(const int start, const int stop)
 
   // if a floor / ceiling plane is on the wrong side of the view
   // plane, it is definitely invisible and doesn't need to be marked.
-
-  // killough 3/7/98: add deep water check
-  if (_g->frontsector->heightsec == -1)
-    {
-      if (_g->frontsector->floorheight >= _g->viewz)       // above view plane
-        _g->markfloor = false;
-      if (_g->frontsector->ceilingheight <= _g->viewz &&
-          _g->frontsector->ceilingpic != _g->skyflatnum)   // below view plane
-        _g->markceiling = false;
-    }
+  if (_g->frontsector->floorheight >= _g->viewz)       // above view plane
+    _g->markfloor = false;
+  if (_g->frontsector->ceilingheight <= _g->viewz &&
+      _g->frontsector->ceilingpic != _g->skyflatnum)   // below view plane
+    _g->markceiling = false;
 
   // calculate incremental stepping values for texture edges
   _g->worldtop >>= 4;

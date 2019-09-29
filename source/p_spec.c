@@ -2417,15 +2417,6 @@ void P_SpawnSpecials (void)
     {
       int s, sec;
 
-      // killough 3/7/98:
-      // support for drawn heights coming from different sector
-      case 242:
-        sec = _g->sides[*_g->lines[i].sidenum].sector-_g->sectors;
-        for (s = -1; (s = P_FindSectorFromLineTag(_g->lines+i,s)) >= 0;)
-          _g->sectors[s].heightsec = sec;
-        break;
-
-
         // killough 10/98:
         //
         // Support for sky textures being transferred from sidedefs.
@@ -2507,34 +2498,6 @@ void T_Scroll(scroll_t *s)
     case sc_ceiling:               // killough 3/7/98: Scroll ceiling texture
         sec = _g->sectors + s->affectee;
         break;
-
-    case sc_carry:
-
-      // killough 3/7/98: Carry things on floor
-      // killough 3/20/98: use new sector list which reflects true members
-      // killough 3/27/98: fix carrier bug
-      // killough 4/4/98: Underwater, carry things even w/o gravity
-
-      sec = _g->sectors + s->affectee;
-      height = sec->floorheight;
-      waterheight = sec->heightsec != -1 &&
-        _g->sectors[sec->heightsec].floorheight > height ?
-        _g->sectors[sec->heightsec].floorheight : INT_MIN;
-
-      for (node = sec->touching_thinglist; node; node = node->m_snext)
-        if (!((thing = node->m_thing)->flags & MF_NOCLIP) &&
-            (!(thing->flags & MF_NOGRAVITY || thing->z > height) ||
-             thing->z < waterheight))
-          {
-            // Move objects only if on floor or underwater,
-            // non-floating, and clipped.
-            thing->momx += dx;
-            thing->momy += dy;
-          }
-      break;
-
-    case sc_carry_ceiling:       // to be added later
-      break;
     }
 }
 
@@ -2655,13 +2618,6 @@ static void P_SpawnScrollers(void)
             Add_Scroller(sc_floor, -dx, dy, control, s, accel);
           if (special != 253)
             break;
-
-        case 252: // carry objects on floor
-          dx = FixedMul(dx,CARRYFACTOR);
-          dy = FixedMul(dy,CARRYFACTOR);
-          for (s=-1; (s = P_FindSectorFromLineTag(l,s)) >= 0;)
-            Add_Scroller(sc_carry, dx, dy, control, s, accel);
-          break;
 
           // killough 3/1/98: scroll wall according to linedef
           // (same direction and speed as scrolling floors)

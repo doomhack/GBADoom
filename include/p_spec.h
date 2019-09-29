@@ -718,8 +718,6 @@ typedef struct {
     sc_side,
     sc_floor,
     sc_ceiling,
-    sc_carry,
-    sc_carry_ceiling,  // killough 4/11/98: carry objects hanging on ceilings
   } type;              // Type of scroll effect
 } scroll_t;
 

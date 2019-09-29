@@ -527,26 +527,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
       gzt < _g->viewz - FixedDiv(viewheightfrac-viewheight, xscale))
     return;
 
-    // killough 3/27/98: exclude things totally separated
-    // from the viewer, by either water or fake ceilings
-    // killough 4/11/98: improve sprite clipping for underwater/fake ceilings
-
-  heightsec = thing->subsector->sector->heightsec;
-
-  if (heightsec != -1)   // only clip things which are in special sectors
-    {
-      int phs = _g->viewplayer->mo->subsector->sector->heightsec;
-      if (phs != -1 && _g->viewz < _g->sectors[phs].floorheight ?
-          fz >= _g->sectors[heightsec].floorheight :
-          gzt < _g->sectors[heightsec].floorheight)
-        return;
-      if (phs != -1 && _g->viewz > _g->sectors[phs].ceilingheight ?
-          gzt < _g->sectors[heightsec].ceilingheight &&
-          _g->viewz >= _g->sectors[heightsec].ceilingheight :
-          fz >= _g->sectors[heightsec].ceilingheight)
-        return;
-    }
-
   // store information in a vissprite
   vis = R_NewVisSprite ();
 

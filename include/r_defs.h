@@ -101,16 +101,10 @@ typedef struct
   int validcount;        // if == validcount, already checked
   mobj_t *thinglist;     // list of mobjs in sector
 
-  /* killough 8/28/98: friction is a sector property, not an mobj property.
-   * these fields used to be in mobj_t, but presented performance problems
-   * when processed as mobj properties. Fix is to make them sector properties.
-   */
 
   // thinker_t for reversable actions
   void *floordata;    // jff 2/22/98 make thinkers on
   void *ceilingdata;  // floors, ceilings, lighting,
-
-
 
   // list of mobjs that are at least partially in the sector
   // thinglist is a subset of touching_thinglist
@@ -131,12 +125,6 @@ typedef struct
 
   short prevsec;     // -1 or number of sector for previous step
   short nextsec;     // -1 or number of next step sector
-
-  // killough 3/7/98: support flat heights drawn at another sector's heights
-  short heightsec;    // other sector, or -1 if no other sector
-
-  // killough 4/11/98: support for lightlevels coming from another sector
-  //short floorlightsec, ceilinglightsec;
 
   short floorpic;
   short ceilingpic;
