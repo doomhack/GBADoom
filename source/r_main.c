@@ -87,21 +87,28 @@ const angle_t clipangle = 537395200; //xtoviewangle[0];
 // killough 5/2/98: reformatted
 //
 
-PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const node_t *node)
+PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
 {
-  if (!node->dx)
-    return x <= node->x ? node->dy > 0 : node->dy < 0;
+    fixed_t dx = (fixed_t)node->dx << FRACBITS;
+    fixed_t dy = (fixed_t)node->dy << FRACBITS;
 
-  if (!node->dy)
-    return y <= node->y ? node->dx < 0 : node->dx > 0;
+    fixed_t nx = (fixed_t)node->x << FRACBITS;
+    fixed_t ny = (fixed_t)node->y << FRACBITS;
 
-  x -= node->x;
-  y -= node->y;
+  if (!dx)
+    return x <= nx ? node->dy > 0 : node->dy < 0;
+
+  if (!dy)
+    return y <= ny ? node->dx < 0 : node->dx > 0;
+
+  x -= nx;
+  y -= ny;
 
   // Try to quickly decide by looking at sign bits.
-  if ((node->dy ^ node->dx ^ x ^ y) < 0)
-    return (node->dy ^ x) < 0;  // (left is negative)
-  return FixedMul(y, node->dx>>FRACBITS) >= FixedMul(node->dy>>FRACBITS, x);
+  if ((dy ^ dx ^ x ^ y) < 0)
+    return (dy ^ x) < 0;  // (left is negative)
+
+  return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
 }
 
 // killough 5/2/98: reformatted

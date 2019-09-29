@@ -273,7 +273,7 @@ static const int checkcoord[12][4] = // killough -- static const
 };
 
 // killough 1/28/98: static // CPhipps - const parameter, reformatted
-static boolean R_CheckBBox(const fixed_t *bspcoord)
+static boolean R_CheckBBox(const short *bspcoord)
 {
   angle_t angle1, angle2;
 
@@ -283,20 +283,21 @@ static boolean R_CheckBBox(const fixed_t *bspcoord)
 
     // Find the corners of the box
     // that define the edges from current viewpoint.
-    boxpos = (_g->viewx <= bspcoord[BOXLEFT] ? 0 : _g->viewx < bspcoord[BOXRIGHT ] ? 1 : 2) +
-      (_g->viewy >= bspcoord[BOXTOP ] ? 0 : _g->viewy > bspcoord[BOXBOTTOM] ? 4 : 8);
+    boxpos = (_g->viewx <= ((fixed_t)bspcoord[BOXLEFT]<<FRACBITS) ? 0 : _g->viewx < ((fixed_t)bspcoord[BOXRIGHT]<<FRACBITS) ? 1 : 2) +
+      (_g->viewy >= ((fixed_t)bspcoord[BOXTOP]<<FRACBITS) ? 0 : _g->viewy > ((fixed_t)bspcoord[BOXBOTTOM]<<FRACBITS) ? 4 : 8);
 
     if (boxpos == 5)
       return true;
 
     check = checkcoord[boxpos];
-    angle1 = R_PointToAngle (bspcoord[check[0]], bspcoord[check[1]]) - _g->viewangle;
-    angle2 = R_PointToAngle (bspcoord[check[2]], bspcoord[check[3]]) - _g->viewangle;
+    angle1 = R_PointToAngle (((fixed_t)bspcoord[check[0]]<<FRACBITS), ((fixed_t)bspcoord[check[1]]<<FRACBITS)) - _g->viewangle;
+    angle2 = R_PointToAngle (((fixed_t)bspcoord[check[2]]<<FRACBITS), ((fixed_t)bspcoord[check[3]]<<FRACBITS)) - _g->viewangle;
   }
 
   // cph - replaced old code, which was unclear and badly commented
   // Much more efficient code now
-  if ((signed)angle1 < (signed)angle2) { /* it's "behind" us */
+  if ((signed)angle1 < (signed)angle2)
+  { /* it's "behind" us */
     /* Either angle1 or angle2 is behind us, so it doesn't matter if we
      * change it to the corect sign
      */
@@ -402,7 +403,7 @@ void R_RenderBSPNode(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
     {
-      const node_t *bsp = &_g->nodes[bspnum];
+      const mapnode_t *bsp = &_g->nodes[bspnum];
 
       // Decide which side the view point is on.
       int side = R_PointOnSide(_g->viewx, _g->viewy, bsp);

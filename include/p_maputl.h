@@ -47,7 +47,8 @@
 #define PT_ADDTHINGS    2
 #define PT_EARLYOUT     4
 
-typedef struct {
+typedef struct
+{
   fixed_t     x;
   fixed_t     y;
   fixed_t     dx;

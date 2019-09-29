@@ -178,10 +178,18 @@ static boolean P_CrossBSPNode(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))
     {
-      register const node_t *bsp = _g->nodes + bspnum;
+      register const mapnode_t *bsp = _g->nodes + bspnum;
+
+      divline_t dl;
+      dl.x = ((fixed_t)bsp->x << FRACBITS);
+      dl.y = ((fixed_t)bsp->y << FRACBITS);
+      dl.dx = ((fixed_t)bsp->dx << FRACBITS);
+      dl.dy = ((fixed_t)bsp->dy << FRACBITS);
+
       int side,side2;
-      side = P_DivlineSide(_g->los.strace.x,_g->los.strace.y,(const divline_t *)bsp)&1;
-      side2= P_DivlineSide(_g->los.t2x, _g->los.t2y, (const divline_t *) bsp);
+      side = P_DivlineSide(_g->los.strace.x,_g->los.strace.y,&dl)&1;
+      side2= P_DivlineSide(_g->los.t2x, _g->los.t2y, &dl);
+
       if (side == side2)
          bspnum = bsp->children[side]; // doesn't touch the other side
       else         // the partition plane is crossed here

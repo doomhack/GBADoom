@@ -94,6 +94,7 @@ typedef struct
 {
   fixed_t floorheight;
   fixed_t ceilingheight;
+
   short nexttag,firsttag;  // killough 1/30/98: improves searches for tags.
   mobj_t *soundtarget;   // thing that made a sound (or null)
   int blockbox[4];       // mapblock bounding box for height changes
@@ -119,6 +120,7 @@ typedef struct
 
   short floorpic;
   short ceilingpic;
+
   short lightlevel;
   short special;
   short oldspecial;      //jff 2/16/98 remembers if sector WAS secret (automap)
@@ -128,7 +130,6 @@ typedef struct
 
   // jff 2/26/98 lockout machinery for stairbuilding
   byte stairlock;   // -2 on first locked -1 after thinker done 0 normally
-
 } sector_t;
 
 //
@@ -258,17 +259,6 @@ typedef struct subsector_s
   sector_t *sector;
   unsigned short numlines, firstline;
 } subsector_t;
-
-
-//
-// BSP node.
-//
-typedef struct
-{
-  fixed_t  x,  y, dx, dy;        // Partition line.
-  fixed_t bbox[2][4];            // Bounding box for each child.
-  unsigned short children[2];    // If NF_SUBSECTOR its a subsector.
-} node_t;
 
 //
 // OTHER TYPES

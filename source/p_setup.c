@@ -221,10 +221,12 @@ static void P_LoadSectors (int lump)
       ss->ceilingheight = SHORT(ms->ceilingheight)<<FRACBITS;
       ss->floorpic = R_FlatNumForName(ms->floorpic);
       ss->ceilingpic = R_FlatNumForName(ms->ceilingpic);
+
       ss->lightlevel = SHORT(ms->lightlevel);
       ss->special = SHORT(ms->special);
       ss->oldspecial = SHORT(ms->special);
       ss->tag = SHORT(ms->tag);
+
       ss->thinglist = NULL;
       ss->touching_thinglist = NULL;            // phares 3/14/98
 
@@ -244,14 +246,10 @@ static void P_LoadSectors (int lump)
 
 static void P_LoadNodes (int lump)
 {
-  const byte *data; // cph - const*
-  int  i;
-
   _g->numnodes = W_LumpLength (lump) / sizeof(mapnode_t);
-  _g->nodes = Z_Malloc (_g->numnodes*sizeof(node_t),PU_LEVEL,0);
-  data = W_CacheLumpNum (lump); // cph - wad lump handling updated
+  _g->nodes = W_CacheLumpNum (lump); // cph - wad lump handling updated
 
-  if ((!data) || (!_g->numnodes))
+  if ((!_g->nodes) || (!_g->numnodes))
   {
     // allow trivial maps
     if (_g->numsubsectors == 1)
@@ -260,28 +258,6 @@ static void P_LoadNodes (int lump)
     else
       I_Error("P_LoadNodes: no nodes in level");
   }
-
-  for (i=0; i<_g->numnodes; i++)
-    {
-      node_t *no = _g->nodes + i;
-      const mapnode_t *mn = (const mapnode_t *) data + i;
-      int j;
-
-      no->x = SHORT(mn->x)<<FRACBITS;
-      no->y = SHORT(mn->y)<<FRACBITS;
-      no->dx = SHORT(mn->dx)<<FRACBITS;
-      no->dy = SHORT(mn->dy)<<FRACBITS;
-
-      for (j=0 ; j<2 ; j++)
-        {
-          int k;
-          no->children[j] = SHORT(mn->children[j]);
-          for (k=0 ; k<4 ; k++)
-            no->bbox[j][k] = SHORT(mn->bbox[j][k])<<FRACBITS;
-        }
-    }
-
-  W_UnlockLumpNum(lump); // cph - release the data
 }
 
 

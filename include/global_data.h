@@ -493,11 +493,12 @@ seg_t    *segs;
 int      numsectors;
 sector_t *sectors;
 
+
 int      numsubsectors;
 subsector_t *subsectors;
 
 int      numnodes;
-node_t   *nodes;
+const mapnode_t   *nodes;
 
 int      numlines;
 line_t   *lines;

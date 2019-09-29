@@ -84,7 +84,7 @@ extern const angle_t clipangle;
 // Utility functions.
 //
 
-int R_PointOnSide(fixed_t x, fixed_t y, const node_t *node);
+int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node);
 int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line);
 angle_t R_PointToAngle(fixed_t x, fixed_t y);
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
