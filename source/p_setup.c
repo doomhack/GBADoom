@@ -143,9 +143,6 @@ static void P_LoadSegs (int lump)
       v2 = (unsigned short)SHORT(ml->v2);
       li->v1 = &_g->vertexes[v1];
       li->v2 = &_g->vertexes[v2];
-
-      //li->miniseg = false; // figgi -- there are no minisegs in classic BSP nodes
-      //li->length  = GetDistance(li->v2->x - li->v1->x, li->v2->y - li->v1->y);
       li->angle = (SHORT(ml->angle))<<16;
       li->offset =(SHORT(ml->offset))<<16;
       linedef = (unsigned short)SHORT(ml->linedef);
@@ -159,7 +156,8 @@ static void P_LoadSegs (int lump)
        * referencing the back of a 1S line */
       if (ldef->sidenum[side] != NO_INDEX)
         li->frontsector = _g->sides[ldef->sidenum[side]].sector;
-      else {
+      else
+      {
         li->frontsector = 0;
         lprintf(LO_WARN, "P_LoadSegs: front of seg %i has no sidedef\n", i);
       }
