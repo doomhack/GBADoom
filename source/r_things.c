@@ -281,7 +281,7 @@ static vissprite_t *R_NewVisSprite(void)
     {
       size_t num_vissprite_alloc_prev = _g->num_vissprite_alloc;
 
-      _g->num_vissprite_alloc = _g->num_vissprite_alloc ? _g->num_vissprite_alloc*2 : 32;
+      _g->num_vissprite_alloc = _g->num_vissprite_alloc ? _g->num_vissprite_alloc+32 : 32;
       _g->vissprites = realloc(_g->vissprites,_g->num_vissprite_alloc*sizeof(*_g->vissprites));
       
       //e6y: set all fields to zero
@@ -767,28 +767,27 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
 
 void R_SortVisSprites (void)
 {
-  if (_g->num_vissprite)
+    if (_g->num_vissprite)
     {
-      int i = _g->num_vissprite;
+        int i = _g->num_vissprite;
 
-      // If we need to allocate more pointers for the vissprites,
-      // allocate as many as were allocated for sprites -- killough
-      // killough 9/22/98: allocate twice as many
+        // If we need to allocate more pointers for the vissprites,
+        // allocate as many as were allocated for sprites -- killough
+        // killough 9/22/98: allocate twice as many
 
-      if (_g->num_vissprite_ptrs < _g->num_vissprite*2)
+        if (_g->num_vissprite_ptrs < _g->num_vissprite*2)
         {
-          free(_g->vissprite_ptrs);  // better than realloc -- no preserving needed
-          _g->vissprite_ptrs = malloc((_g->num_vissprite_ptrs = _g->num_vissprite_alloc*2)
-                                  * sizeof *_g->vissprite_ptrs);
+            free(_g->vissprite_ptrs);  // better than realloc -- no preserving needed
+            _g->vissprite_ptrs = malloc((_g->num_vissprite_ptrs = _g->num_vissprite_alloc*2) * sizeof *_g->vissprite_ptrs);
         }
 
-      while (--i>=0)
-        _g->vissprite_ptrs[i] = _g->vissprites+i;
+        while (--i>=0)
+            _g->vissprite_ptrs[i] = _g->vissprites+i;
 
-      // killough 9/22/98: replace qsort with merge sort, since the keys
-      // are roughly in order to begin with, due to BSP rendering.
+        // killough 9/22/98: replace qsort with merge sort, since the keys
+        // are roughly in order to begin with, due to BSP rendering.
 
-      msort(_g->vissprite_ptrs, _g->vissprite_ptrs + _g->num_vissprite, _g->num_vissprite);
+        msort(_g->vissprite_ptrs, _g->vissprite_ptrs + _g->num_vissprite, _g->num_vissprite);
     }
 }
 

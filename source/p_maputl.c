@@ -396,19 +396,16 @@ boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t*))
 // INTERCEPT ROUTINES
 //
 
-// 1/11/98 killough: Intercept limit removed
-static intercept_t *intercepts, *intercept_p;
-
 // Check for limit and double size if necessary -- killough
 static void check_intercept(void)
 {
-  static size_t num_intercepts;
-  size_t offset = intercept_p - intercepts;
-  if (offset >= num_intercepts)
+    static size_t num_intercepts;
+    size_t offset = _g->intercept_p - _g->intercepts;
+    if (offset >= num_intercepts)
     {
-      num_intercepts = num_intercepts ? num_intercepts*2 : 32;
-      intercepts = realloc(intercepts, sizeof(*intercepts)*num_intercepts);
-      intercept_p = intercepts + offset;
+        num_intercepts = num_intercepts ? num_intercepts + 32 : 32;
+        _g->intercepts = realloc(_g->intercepts, sizeof(*_g->intercepts)*num_intercepts);
+        _g->intercept_p = _g->intercepts + offset;
     }
 }
 
@@ -455,10 +452,10 @@ boolean PIT_AddLineIntercepts(line_t *ld)
 
   check_intercept();    // killough
 
-  intercept_p->frac = frac;
-  intercept_p->isaline = true;
-  intercept_p->d.line = ld;
-  intercept_p++;
+  _g->intercept_p->frac = frac;
+  _g->intercept_p->isaline = true;
+  _g->intercept_p->d.line = ld;
+  _g->intercept_p++;
 
   return true;  // continue
 }
@@ -510,10 +507,10 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
 
   check_intercept();            // killough
 
-  intercept_p->frac = frac;
-  intercept_p->isaline = false;
-  intercept_p->d.thing = thing;
-  intercept_p++;
+  _g->intercept_p->frac = frac;
+  _g->intercept_p->isaline = false;
+  _g->intercept_p->d.thing = thing;
+  _g->intercept_p++;
 
   return true;          // keep going
 }
@@ -528,12 +525,12 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
 boolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
 {
   intercept_t *in = NULL;
-  int count = intercept_p - intercepts;
+  int count = _g->intercept_p - _g->intercepts;
   while (count--)
     {
       fixed_t dist = INT_MAX;
       intercept_t *scan;
-      for (scan = intercepts; scan < intercept_p; scan++)
+      for (scan = _g->intercepts; scan < _g->intercept_p; scan++)
         if (scan->frac < dist)
           dist = (in=scan)->frac;
       if (dist > maxfrac)
@@ -567,7 +564,7 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
   int     count;
 
   _g->validcount++;
-  intercept_p = intercepts;
+  _g->intercept_p = _g->intercepts;
 
   if (!((x1-_g->bmaporgx)&(MAPBLOCKSIZE-1)))
     x1 += FRACUNIT;     // don't side exactly on a line

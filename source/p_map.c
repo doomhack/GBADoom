@@ -348,15 +348,13 @@ boolean PIT_CheckLine (line_t* ld)
   // if contacted a special line, add it to the list
 
   if (ld->special)
-    {
+  {
       // 1/11/98 killough: remove limit on lines hit, by array doubling
-      if (_g->numspechit >= _g->spechit_max) {
-        _g->spechit_max = _g->spechit_max ? _g->spechit_max*2 : 8;
-    _g->spechit = realloc(_g->spechit,sizeof *_g->spechit*_g->spechit_max); // killough
+      if (_g->numspechit < 4)
+      {
+        _g->spechit[_g->numspechit++] = ld;
       }
-      _g->spechit[_g->numspechit++] = ld;
-      // e6y: Spechits overrun emulation code
-    }
+  }
 
   return true;
 }

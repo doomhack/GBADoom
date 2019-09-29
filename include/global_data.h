@@ -379,8 +379,7 @@ int         tmunstuck;     /* killough 8/1/98: whether to allow unsticking */
 // but don't process them until the move is proven valid
 
 // 1/11/98 killough: removed limit on special lines crossed
-line_t **spechit;                // new code -- killough
-int spechit_max;          // killough
+line_t *spechit[4];                // new code -- killough
 
 int numspechit;
 
@@ -446,6 +445,9 @@ sector_t *openbacksector;  // made global
 
 divline_t trace;
 
+
+// 1/11/98 killough: Intercept limit removed
+intercept_t *intercepts, *intercept_p;
 
 
 //******************************************************************************
