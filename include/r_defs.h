@@ -193,8 +193,8 @@ typedef struct line_s
     unsigned short flags;           // Animation related.
     short special;
     short tag;
-    unsigned short slopetype; // To aid move clipping.
-    unsigned short r_flags;
+    byte slopetype; // To aid move clipping.
+    byte r_flags;
 
 } line_t;
 
