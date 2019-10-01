@@ -1,6 +1,6 @@
 **GBADoom**
 
-*Well actually, it doesn't even run on a GBA yet.*
+~*Well actually, it doesn't even run on a GBA yet.*~
 
 
 After two weeks of hacking, chopping, slashing and removing code it (surprisingly) still seems to work. 
