@@ -72,8 +72,7 @@ void HUlib_clearTextLine(hu_textline_t* t)
 // Passed a hu_textline_t, and the values used to initialize
 // Returns nothing
 //
-void HUlib_initTextLine(hu_textline_t* t, int x, int y,
-      const patch_t* f, int sc, int cm  )
+void HUlib_initTextLine(hu_textline_t* t, int x, int y, const patch_t* f, int sc)
   //jff 2/16/98 add color range parameter
 {
   t->x = x;
@@ -204,9 +203,7 @@ void HUlib_initSText
   int   y,
   int   h,
   const patch_t* font,
-  int   startchar,
-  int cm,       //jff 2/16/98 add color range parameter
-  boolean*  on )
+  int   startchar,  boolean*  on )
 {
 
   int i;
@@ -222,8 +219,7 @@ void HUlib_initSText
       x,
       y - i*(font[0].height+1),
       font,
-      startchar,
-      cm
+      startchar
     );
 }
 

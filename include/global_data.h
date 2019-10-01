@@ -635,7 +635,6 @@ int       *texturetranslation;
 
 draw_vars_t drawvars;
 
-int fuzzoffset[FUZZTABLE];
 int fuzzpos;
 
 //******************************************************************************

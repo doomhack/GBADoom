@@ -129,7 +129,7 @@ typedef struct
   byte soundtraversed;    // 0 = untraversed, 1,2 = sndlines-1
 
   // jff 2/26/98 lockout machinery for stairbuilding
-  byte stairlock;   // -2 on first locked -1 after thinker done 0 normally
+  char stairlock;   // -2 on first locked -1 after thinker done 0 normally
 } sector_t;
 
 //
@@ -166,6 +166,16 @@ typedef enum
   ST_NEGATIVE
 } slopetype_t;
 
+typedef enum
+{                 // cph:
+    RF_TOP_TILE  = 1,     // Upper texture needs tiling
+    RF_MID_TILE = 2,     // Mid texture needs tiling
+    RF_BOT_TILE = 4,     // Lower texture needs tiling
+    RF_IGNORE   = 8,     // Renderer can skip this line
+    RF_CLOSED   =16,     // Line blocks view
+} r_flags;
+
+
 typedef struct line_s
 {
     vertex_t *v1, *v2;     // Vertices, from v1 to v2.
@@ -173,28 +183,20 @@ typedef struct line_s
 
     fixed_t bbox[4];       // A bounding box, for the linedef's extent
 
-    slopetype_t slopetype; // To aid move clipping.
     sector_t *frontsector; // Front and back sector.
     sector_t *backsector;
 
     int validcount;        // if == validcount, already checked
     int r_validcount;      // cph: if == gametic, r_flags already done
 
+    unsigned short sidenum[2];        // Visual appearance: SideDefs.
+
     short firsttag,nexttag;  // killough 4/17/98: improves searches for tags.
     unsigned short flags;           // Animation related.
     short special;
     short tag;
-    unsigned short sidenum[2];        // Visual appearance: SideDefs.
-
-    enum {                 // cph:
-        RF_TOP_TILE  = 1,     // Upper texture needs tiling
-        RF_MID_TILE = 2,     // Mid texture needs tiling
-        RF_BOT_TILE = 4,     // Lower texture needs tiling
-        RF_IGNORE   = 8,     // Renderer can skip this line
-        RF_CLOSED   =16,     // Line blocks view
-    } r_flags;
-
-
+    unsigned short slopetype; // To aid move clipping.
+    unsigned short r_flags;
 
 } line_t;
 

@@ -94,7 +94,7 @@ const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
     {
         const patch_t* realpatch;
 
-        const int xc = texcolumn & texture->widthmask;
+        const int xc = (texcolumn & 0xffff) & texture->widthmask;
 
         for(int i=0; i<texture->patchcount; i++)
         {
@@ -290,6 +290,16 @@ void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int ca
 }
 
 
+static byte columnCache[128][128];
+
+typedef struct column_cache_entry_t
+{
+    unsigned short texture;
+    unsigned short column;
+}column_cache_entry_t;
+
+static column_cache_entry_t columnCacheEntries[128];
+
 /*
  * Draw a column of pixels of the specified texture.
  * If the texture is simple (1 patch, full height) then just draw
@@ -297,6 +307,9 @@ void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int ca
 */
 static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
+    static int total = 0;
+    static int misses = 0;
+
     texture_t* tex = _g->textures[texture];
 
     if(tex->height == 128 && tex->patchcount == 1)
@@ -316,34 +329,49 @@ static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t*
     }
     else
     {
-        const patch_t* realpatch;
+        const int xc = (texcolumn & 0xfffe) & tex->widthmask;
 
-        byte colcache[128];
+        unsigned int cachekey = (xc & 0x7e) | (texture & 1);
 
-        const int xc = texcolumn & tex->widthmask;
+        byte* colcache = columnCache[cachekey];
+        column_cache_entry_t* cacheEntry = &columnCacheEntries[cachekey];
 
-        for(int i=0; i<tex->patchcount; i++)
+        total++;
+
+        if((cacheEntry->texture != texture) || cacheEntry->column != xc)
         {
-            texpatch_t* patch = &tex->patches[i];
+            byte tmpCol[128];
 
-            realpatch = W_CacheLumpNum(patch->patch);
+            misses++;
 
-            int x1 = patch->originx;
-            int x2 = x1 + realpatch->width;
+            cacheEntry->texture = texture;
+            cacheEntry->column = xc;
 
-            if (x2 > tex->width)
-                x2 = tex->width;
-
-            if(xc >= x1 && xc < x2)
+            for(int i=0; i<tex->patchcount; i++)
             {
-                const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
+                const texpatch_t* patch = &tex->patches[i];
 
-                R_DrawColumnInCache (patchcol,
-                                     colcache,
-                                     patch->originy,
-                                     tex->height);
+                const patch_t* realpatch = W_CacheLumpNum(patch->patch);
 
+                int x1 = patch->originx;
+                int x2 = x1 + realpatch->width;
+
+                if (x2 > tex->width)
+                    x2 = tex->width;
+
+                if(xc >= x1 && xc < x2)
+                {
+                    const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
+
+                    R_DrawColumnInCache (patchcol,
+                                         tmpCol,
+                                         patch->originy,
+                                         tex->height);
+
+                }
             }
+
+            memcpy(colcache, tmpCol, 128);
         }
 
         dcvars->source = colcache;

@@ -608,30 +608,30 @@ static fixed_t P_AvoidDropoff(mobj_t *actor)
 
 static void P_NewChaseDir(mobj_t *actor)
 {
-  mobj_t *target = actor->target;
-  fixed_t deltax = target->x - actor->x;
-  fixed_t deltay = target->y - actor->y;
+    mobj_t *target = actor->target;
+    fixed_t deltax = target->x - actor->x;
+    fixed_t deltay = target->y - actor->y;
 
-  // killough 8/8/98: sometimes move away from target, keeping distance
-  //
-  // 1) Stay a certain distance away from a friend, to avoid being in their way
-  // 2) Take advantage over an enemy without missiles, by keeping distance
+    // killough 8/8/98: sometimes move away from target, keeping distance
+    //
+    // 1) Stay a certain distance away from a friend, to avoid being in their way
+    // 2) Take advantage over an enemy without missiles, by keeping distance
 
-  actor->strafecount = 0;
+    actor->strafecount = 0;
 
     if (actor->floorz - actor->dropoffz > FRACUNIT*24 &&
-  actor->z <= actor->floorz &&
-  !(actor->flags & (MF_DROPOFF|MF_FLOAT)) &&
-  P_AvoidDropoff(actor)) /* Move away from dropoff */
-      {
-  P_DoNewChaseDir(actor, _g->dropoff_deltax, _g->dropoff_deltay);
+            actor->z <= actor->floorz &&
+            !(actor->flags & (MF_DROPOFF|MF_FLOAT)) &&
+            P_AvoidDropoff(actor)) /* Move away from dropoff */
+    {
+        P_DoNewChaseDir(actor, _g->dropoff_deltax, _g->dropoff_deltay);
 
-  // If moving away from dropoff, set movecount to 1 so that
-  // small steps are taken to get monster away from dropoff.
+        // If moving away from dropoff, set movecount to 1 so that
+        // small steps are taken to get monster away from dropoff.
 
-  actor->movecount = 1;
-  return;
-      }
+        actor->movecount = 1;
+        return;
+    }
     else
     {
         fixed_t dist = P_AproxDistance(deltax, deltay);
@@ -648,13 +648,13 @@ static void P_NewChaseDir(mobj_t *actor)
     }
 
 
-  P_DoNewChaseDir(actor, deltax, deltay);
+    P_DoNewChaseDir(actor, deltax, deltay);
 
-  // If strafing, set movecount to strafecount so that old Doom
-  // logic still works the same, except in the strafing part
+    // If strafing, set movecount to strafecount so that old Doom
+    // logic still works the same, except in the strafing part
 
-  if (actor->strafecount)
-    actor->movecount = actor->strafecount;
+    if (actor->strafecount)
+        actor->movecount = actor->strafecount;
 }
 
 //

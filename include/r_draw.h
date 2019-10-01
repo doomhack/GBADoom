@@ -59,8 +59,6 @@ typedef struct {
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars);
 
-void R_VideoErase(int x, int y, int count);
-
 typedef struct {
   int                 y;
   int                 x1;
@@ -102,16 +100,7 @@ void	R_DrawTranslatedColumn (draw_column_vars_t *dcvars);
 void R_DrawSpan(draw_span_vars_t *dsvars);
 
 
-void R_InitBuffer(int width, int height);
-
-// Initialize color translation tables, for player rendering etc.
-void R_InitTranslationTables(void);
-
-// Rendering function.
-void R_FillBackScreen(void);
-
-// If the view size is not full screen, draws a border around it.
-void R_DrawViewBorder(void);
+void R_InitBuffer();
 
 #define FUZZTABLE 50
 

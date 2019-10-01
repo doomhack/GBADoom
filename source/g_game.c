@@ -39,8 +39,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include <fcntl.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -1131,9 +1129,6 @@ void G_DoLoadGame(void)
 
   if (_g->setsizeneeded)
     R_ExecuteSetViewSize ();
-
-  // draw the pattern into the back screen
-  R_FillBackScreen ();
 
   /* killough 12/98: support -recordfrom and -loadgame -playdemo */
   if (!_g->command_loadgame)

@@ -184,8 +184,10 @@ void *(Z_Malloc)(size_t size, int tag, void **user)
   free_memory -= block->size;
 
   running_count += block->size;
-  printf("Alloc: %d (%d)\n", block->size, running_count);
 
+#ifndef __arm__
+  printf("Alloc: %d (%d)\n", block->size, running_count);
+#endif
 
   block->tag = tag;           // tag
   block->user = user;         // user
@@ -222,8 +224,9 @@ void (Z_Free)(void *p)
 
   running_count -= block->size;
 
+#ifndef __arm__
   printf("Free: %d\n", running_count);
-
+#endif
 
   (free)(block);
 

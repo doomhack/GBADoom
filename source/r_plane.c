@@ -248,7 +248,7 @@ visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
   else
     unionh  = pl->maxx, intrh  = stop;
 
-  for (x=intrl ; x <= intrh && pl->top[x] == 0xffffffffu; x++) // dropoff overflow
+  for (x=intrl ; x <= intrh && pl->top[x] == 0xff; x++) // dropoff overflow
     ;
 
   if (x > intrh) { /* Can use existing plane; extend range */
@@ -390,7 +390,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 			stop = pl->maxx + 1;
             _g->planezlight = zlight[light];
 
-			pl->top[pl->minx-1] = pl->top[stop] = 0xffffffffu; // dropoff overflow
+            pl->top[pl->minx-1] = pl->top[stop] = 0xff; // dropoff overflow
 			
 			for (x = pl->minx ; x <= stop ; x++)
 			{

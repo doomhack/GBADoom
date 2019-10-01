@@ -246,7 +246,7 @@ void R_ExecuteSetViewSize (void)
 {
   _g->setsizeneeded = false;
 
-  R_InitBuffer (SCREENWIDTH, viewheight);
+  R_InitBuffer ();
 
   R_InitTextureMapping();
 }
@@ -271,8 +271,6 @@ void R_Init (void)
   R_InitLightTables();
   lprintf(LO_INFO, "R_InitSkyMap\n");
   R_InitSkyMap();
-  lprintf(LO_INFO, "R_InitTranslationsTables\n");
-  R_InitTranslationTables();
 }
 
 //

@@ -65,18 +65,26 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
     {
         if (_g->solidcol[first])
         {
-            if (!(p = memchr(_g->solidcol+first, 0, last-first))) return; // All solid
+            if (!(p = memchr(_g->solidcol+first, 0, last-first)))
+                return; // All solid
+
             first = p - _g->solidcol;
         }
         else
         {
             int to;
-            if (!(p = memchr(_g->solidcol+first, 1, last-first))) to = last;
-            else to = p - _g->solidcol;
+            if (!(p = memchr(_g->solidcol+first, 1, last-first)))
+                to = last;
+            else
+                to = p - _g->solidcol;
+
             R_StoreWallRange(first, to-1);
-            if (solid) {
+
+            if (solid)
+            {
                 memset(_g->solidcol+first,1,to-first);
             }
+
             first = to;
         }
     }

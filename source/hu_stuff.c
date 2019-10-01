@@ -370,7 +370,6 @@ void HU_Start(void)
     HU_MSGHEIGHT,
     _g->hu_font,
     HU_FONTSTART,
-    hudcolor_mesg,
     &_g->message_on
   );
 
@@ -382,8 +381,7 @@ void HU_Start(void)
     HU_TITLEX,
     HU_TITLEY,
     _g->hu_font,
-    HU_FONTSTART,
-    hudcolor_titl
+    HU_FONTSTART
   );
 
   // initialize the automap's level title widget

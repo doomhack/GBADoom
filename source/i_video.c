@@ -253,5 +253,5 @@ void I_UpdateVideoMode(void)
 
   V_AllocScreens();
 
-  R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
+  R_InitBuffer();
 }

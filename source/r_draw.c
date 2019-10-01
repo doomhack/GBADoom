@@ -55,21 +55,15 @@
 //
 
 
-
-// Color tables for different players,
-//  translate a limited part to another
-//  (color ramps used for  suit colors).
-//
-
 //
 // Spectre/Invisibility.
 //
 
-// proff 08/17/98: Changed for high-res
-//#define FUZZOFF (SCREENWIDTH)
-#define FUZZOFF 1
 
-static const int fuzzoffset_org[FUZZTABLE] = {
+#define FUZZOFF (SCREENWIDTH)
+
+static const int fuzzoffset[FUZZTABLE] =
+{
   FUZZOFF,-FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
   FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
   FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,
@@ -78,9 +72,6 @@ static const int fuzzoffset_org[FUZZTABLE] = {
   FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,
   FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF
 };
-
-
-
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 {
@@ -92,19 +83,6 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 }
 
 //
-// R_InitTranslationTables
-// Creates the translation tables to map
-//  the green color ramp to gray, brown, red.
-// Assumes a given structure of the PLAYPAL.
-// Could be read from a lump instead.
-//
-
-void R_InitTranslationTables (void)
-{
-
-}
-
-//
 // A column is a vertical slice/span from a wall texture that,
 //  given the DOOM style restrictions on the view orientation,
 //  will always have constant z depth.
@@ -113,7 +91,7 @@ void R_InitTranslationTables (void)
 // 
 void R_DrawColumn (draw_column_vars_t *dcvars) 
 { 
-    unsigned int count = dcvars->yh - dcvars->yl;
+    int count = dcvars->yh - dcvars->yl;
 
 	const byte *source = dcvars->source;
 	const byte *colormap = dcvars->colormap;
@@ -153,7 +131,7 @@ void R_DrawColumn (draw_column_vars_t *dcvars)
 //
 void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 { 
-    unsigned int count;
+    int count;
 
     unsigned short* dest;
     fixed_t		frac;
@@ -193,7 +171,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 		//  a pixel that is either one column
 		//  left or right of the current one.
 		// Add index from colormap to index.
-        unsigned char srcpxl = dest[_g->fuzzoffset[_g->fuzzpos]] & 0xff;
+        unsigned char srcpxl = dest[fuzzoffset[_g->fuzzpos]] & 0xff;
 
 
         unsigned short color = _g->fullcolormap[6*256+srcpxl];
@@ -224,7 +202,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 
 void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 {
-    unsigned int count = dcvars->yh - dcvars->yl;
+    int count = dcvars->yh - dcvars->yl;
 
 	const byte *source = dcvars->source;
 	const byte *colormap = dcvars->colormap;
@@ -275,7 +253,7 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 //
 void R_DrawSpan(draw_span_vars_t *dsvars)
 {
-	unsigned int count = (dsvars->x2 - dsvars->x1);
+    int count = (dsvars->x2 - dsvars->x1);
 	
 	const byte *source = dsvars->source;
 	const byte *colormap = dsvars->colormap;
@@ -313,85 +291,9 @@ void R_DrawSpan(draw_span_vars_t *dsvars)
 //  of a pixel to draw.
 //
 
-void R_InitBuffer(int width, int height)
+void R_InitBuffer()
 {
-	int i=0;
-
 	// Same with base row offset.
     _g->drawvars.byte_topleft = _g->screens[0].data;
     _g->drawvars.byte_pitch = _g->screens[0].byte_pitch;
-
-	for (i=0; i<FUZZTABLE; i++)
-        _g->fuzzoffset[i] = fuzzoffset_org[i]*_g->screens[0].byte_pitch;
-}
-
-//
-// R_FillBackScreen
-// Fills the back screen with a pattern
-//  for variable screen sizes
-// Also draws a beveled edge.
-//
-// CPhipps - patch drawing updated
-
-void R_FillBackScreen (void)
-{
-
-}
-
-//
-// Copy a screen buffer.
-//
-
-void R_VideoErase(int x, int y, int count)
-{
-//    memcpy(screens[0].data+y*screens[0].byte_pitch+x*V_GetPixelDepth(),
-//           screens[1].data+y*screens[1].byte_pitch+x*V_GetPixelDepth(),
-//           count*V_GetPixelDepth());   // LFB copy.
-}
-
-//
-// R_DrawViewBorder
-// Draws the border around the view
-//  for different size windows?
-//
-
-void R_DrawViewBorder(void)
-{
-	int top, side, i;
-
-    if ((SCREENHEIGHT != viewheight) || ((_g->automapmode & am_active) && ! (_g->automapmode & am_overlay)))
-	{
-		// erase left and right of statusbar
-		side= ( SCREENWIDTH - ST_SCALED_WIDTH ) / 2;
-
-		if (side > 0)
-		{
-			for (i = (SCREENHEIGHT - ST_SCALED_HEIGHT); i < SCREENHEIGHT; i++)
-			{
-				R_VideoErase (0, i, side);
-				R_VideoErase (ST_SCALED_WIDTH+side, i, side);
-			}
-		}
-	}
-
-    if ( viewheight >= ( SCREENHEIGHT - ST_SCALED_HEIGHT ))
-		return; // if high-res, don´t go any further!
-
-    top = 0;
-    side = 0;
-
-	// copy top
-	for (i = 0; i < top; i++)
-		R_VideoErase (0, i, SCREENWIDTH);
-
-	// copy sides
-    for (i = top; i < (top+viewheight); i++)
-	{
-		R_VideoErase (0, i, side);
-        R_VideoErase (SCREENWIDTH+side, i, side);
-	}
-
-	// copy bottom
-    for (i = top+viewheight; i < (SCREENHEIGHT - ST_SCALED_HEIGHT); i++)
-		R_VideoErase (0, i, SCREENWIDTH);
 }

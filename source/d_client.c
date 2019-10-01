@@ -68,8 +68,6 @@
 
 void D_InitNetGame (void)
 {
-    int i;
-
     _g->localcmds = &_g->netcmds[consoleplayer];
 
     _g->playeringame[0] = true;

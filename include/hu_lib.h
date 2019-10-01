@@ -146,14 +146,11 @@ typedef struct
 void HUlib_clearTextLine(hu_textline_t *t);
 
 void HUlib_initTextLine
-(
-  hu_textline_t *t,
+(hu_textline_t *t,
   int x,
   int y,
   const patch_t *f,
-  int sc,
-  int cm    //jff 2/16/98 add color range parameter
-);
+  int sc);
 
 // returns success
 boolean HUlib_addCharToTextLine(hu_textline_t *t, char ch);
@@ -171,13 +168,12 @@ void HUlib_eraseTextLine(hu_textline_t *l);
 
 // initialize an stext widget
 void HUlib_initSText
-( hu_stext_t* s,
+(hu_stext_t* s,
   int   x,
   int   y,
   int   h,
   const patch_t* font,
-  int   startchar,
-  int cm,   //jff 2/16/98 add color range parameter
+  int   startchar,   //jff 2/16/98 add color range parameter
   boolean*  on );
 
 // add a text message to an stext widget
