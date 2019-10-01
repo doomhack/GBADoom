@@ -95,7 +95,7 @@ boolean ST_Responder(const event_t *ev)
       switch(ev->data1)
         {
         case AM_MSGENTERED:
-          _g->st_firsttime = true;
+          _g->st_firsttime = 2;
           break;
 
         case AM_MSGEXITED:
@@ -454,13 +454,13 @@ static void ST_drawWidgets(boolean refresh)
 static void ST_doRefresh(void)
 {
 
-  _g->st_firsttime = false;
+  _g->st_firsttime--;
 
   // draw status bar background to off-screen buff
   ST_refreshBackground();
 
   // and refresh all widgets
-  ST_drawWidgets(true);
+  //ST_drawWidgets(true);
 
 }
 
@@ -476,7 +476,8 @@ void ST_Drawer(boolean statusbaron, boolean refresh)
    * completely by the call from D_Display
    * proff - really do it
    */
-  _g->st_firsttime = _g->st_firsttime || refresh;
+  if(refresh)
+      _g->st_firsttime = 2;
 
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 
@@ -581,7 +582,7 @@ static void ST_initData(void)
 {
   int i;
 
-  _g->st_firsttime = true;
+  _g->st_firsttime = 2;
   _g->plyr = &_g->players[displayplayer];            // killough 3/7/98
 
   _g->st_statusbaron = true;

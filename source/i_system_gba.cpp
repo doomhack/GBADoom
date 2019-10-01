@@ -36,23 +36,13 @@ extern "C"
 
 //**************************************************************************************
 
-unsigned int vid_width = 0;
-unsigned int vid_height = 0;
+byte* columnCache = (byte*)0x6014000;
 
-unsigned int screen_width = 0;
-unsigned int screen_height = 0;
-
-unsigned int y_pitch = 0;
 
 //**************************************************************************************
 
 void I_InitScreen_e32()
 {
-    //Gives 480px on a 5(mx) and 320px on a Revo.
-    vid_width = 120;
-
-    vid_height = screen_height = 160;
-
     // the vblank interrupt must be enabled for VBlankIntrWait() to work
     // since the default dispatcher handles the bios flags no vblank handler
     // is required
@@ -184,14 +174,14 @@ void I_SetPallete_e32(const byte* pallete)
 
 int I_GetVideoWidth_e32()
 {
-    return vid_width;
+    return 120;
 }
 
 //**************************************************************************************
 
 int I_GetVideoHeight_e32()
 {
-    return vid_height;
+    return 160;
 }
 
 //**************************************************************************************

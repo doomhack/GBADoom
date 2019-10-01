@@ -61,6 +61,29 @@
 // killough 5/2/98: reformatted, cleaned up
 // CPhipps - moved here from r_main.c
 
+
+
+//*****************************************
+//Column cache stuff.
+//GBA has 16kb of Video Memory for columns
+//*****************************************
+
+#ifndef __arm__
+static byte columnCache[128*128];
+#else
+extern byte* columnCache;
+#endif
+
+typedef struct column_cache_entry_t
+{
+    unsigned short texture;
+    unsigned short column;
+}column_cache_entry_t;
+
+static column_cache_entry_t columnCacheEntries[128];
+
+//*******************************************
+
 static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 {
   int     anglea = ANG90 + (visangle-_g->viewangle);
@@ -289,17 +312,6 @@ void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int ca
     }
 }
 
-
-static byte columnCache[128][128];
-
-typedef struct column_cache_entry_t
-{
-    unsigned short texture;
-    unsigned short column;
-}column_cache_entry_t;
-
-static column_cache_entry_t columnCacheEntries[128];
-
 /*
  * Draw a column of pixels of the specified texture.
  * If the texture is simple (1 patch, full height) then just draw
@@ -307,8 +319,8 @@ static column_cache_entry_t columnCacheEntries[128];
 */
 static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
-    static int total = 0;
-    static int misses = 0;
+    //static int total = 0;
+    //static int misses = 0;
 
     texture_t* tex = _g->textures[texture];
 
@@ -333,16 +345,16 @@ static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t*
 
         unsigned int cachekey = (xc & 0x7e) | (texture & 1);
 
-        byte* colcache = columnCache[cachekey];
+        byte* colcache = &columnCache[cachekey*128];
         column_cache_entry_t* cacheEntry = &columnCacheEntries[cachekey];
 
-        total++;
+        //total++;
 
         if((cacheEntry->texture != texture) || cacheEntry->column != xc)
         {
             byte tmpCol[128];
 
-            misses++;
+            //misses++;
 
             cacheEntry->texture = texture;
             cacheEntry->column = xc;

@@ -213,7 +213,7 @@ void D_Display (void)
     if (_g->automapmode & am_active)
       AM_Drawer();
 
-    ST_Drawer((viewheight != SCREENHEIGHT) || ((_g->automapmode & am_active) && !(_g->automapmode & am_overlay)), false);
+    ST_Drawer(true, false);
 
     HU_Drawer();
   }

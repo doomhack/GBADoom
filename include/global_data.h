@@ -891,7 +891,7 @@ int      st_randomnumber;
 int st_palette;
 
 // ST_Start() has just been called
-boolean st_firsttime;
+byte st_firsttime;
 
 // whether left-side main status bar is active
 boolean st_statusbaron;
