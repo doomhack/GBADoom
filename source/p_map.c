@@ -249,10 +249,10 @@ boolean PIT_CrossLine (line_t* ld)
   {
   if (!(ld->flags & ML_TWOSIDED) ||
       (ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS)))
-    if (!(_g->tmbbox[BOXLEFT]   > ld->bbox[BOXRIGHT]  ||
-          _g->tmbbox[BOXRIGHT]  < ld->bbox[BOXLEFT]   ||
-          _g->tmbbox[BOXTOP]    < ld->bbox[BOXBOTTOM] ||
-          _g->tmbbox[BOXBOTTOM] > ld->bbox[BOXTOP]))
+    if (!(_g->tmbbox[BOXLEFT]   > LN_BBOX_RIGHT(ld)  ||
+          _g->tmbbox[BOXRIGHT]  < LN_BBOX_LEFT(ld)   ||
+          _g->tmbbox[BOXTOP]    < LN_BBOX_BOTTOM(ld) ||
+          _g->tmbbox[BOXBOTTOM] > LN_BBOX_TOP(ld)))
       if (P_PointOnLineSide(_g->pe_x,_g->pe_y,ld) != P_PointOnLineSide(_g->ls_x,_g->ls_y,ld))
         return(false);  // line blocks trajectory                   //   ^
   return(true); // line doesn't block trajectory                    //   |
@@ -267,10 +267,10 @@ static int untouched(line_t *ld)
 {
   fixed_t x, y, tmbbox[4];
   return
-    (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+_g->tmthing->radius) <= ld->bbox[BOXLEFT] ||
-    (tmbbox[BOXLEFT] = x-_g->tmthing->radius) >= ld->bbox[BOXRIGHT] ||
-    (tmbbox[BOXTOP] = (y=_g->tmthing->y)+_g->tmthing->radius) <= ld->bbox[BOXBOTTOM] ||
-    (tmbbox[BOXBOTTOM] = y-_g->tmthing->radius) >= ld->bbox[BOXTOP] ||
+    (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+_g->tmthing->radius) <= LN_BBOX_LEFT(ld) ||
+    (tmbbox[BOXLEFT] = x-_g->tmthing->radius) >= LN_BBOX_RIGHT(ld) ||
+    (tmbbox[BOXTOP] = (y=_g->tmthing->y)+_g->tmthing->radius) <= LN_BBOX_BOTTOM(ld) ||
+    (tmbbox[BOXBOTTOM] = y-_g->tmthing->radius) >= LN_BBOX_TOP(ld) ||
     P_BoxOnLineSide(tmbbox, ld) != -1;
 }
 
@@ -282,10 +282,10 @@ static int untouched(line_t *ld)
 static // killough 3/26/98: make static
 boolean PIT_CheckLine (line_t* ld)
 {
-  if (_g->tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-   || _g->tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-   || _g->tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-   || _g->tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
+  if (_g->tmbbox[BOXRIGHT] <= LN_BBOX_LEFT(ld)
+   || _g->tmbbox[BOXLEFT] >= LN_BBOX_RIGHT(ld)
+   || _g->tmbbox[BOXTOP] <= LN_BBOX_BOTTOM(ld)
+   || _g->tmbbox[BOXBOTTOM] >= LN_BBOX_TOP(ld) )
     return true; // didn't hit it
 
   if (P_BoxOnLineSide(_g->tmbbox, ld) != -1)
@@ -736,10 +736,10 @@ boolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
 static boolean PIT_ApplyTorque(line_t *ld)
 {
   if (ld->backsector &&       // If thing touches two-sided pivot linedef
-      _g->tmbbox[BOXRIGHT]  > ld->bbox[BOXLEFT]  &&
-      _g->tmbbox[BOXLEFT]   < ld->bbox[BOXRIGHT] &&
-      _g->tmbbox[BOXTOP]    > ld->bbox[BOXBOTTOM] &&
-      _g->tmbbox[BOXBOTTOM] < ld->bbox[BOXTOP] &&
+      _g->tmbbox[BOXRIGHT]  > LN_BBOX_LEFT(ld)  &&
+      _g->tmbbox[BOXLEFT]   < LN_BBOX_RIGHT(ld) &&
+      _g->tmbbox[BOXTOP]    > LN_BBOX_BOTTOM(ld) &&
+      _g->tmbbox[BOXBOTTOM] < LN_BBOX_TOP(ld) &&
       P_BoxOnLineSide(_g->tmbbox, ld) == -1)
     {
       mobj_t *mo = _g->tmthing;
@@ -1924,10 +1924,10 @@ void P_DelSeclist(msecnode_t* node)
 
 boolean PIT_GetSectors(line_t* ld)
   {
-  if (_g->tmbbox[BOXRIGHT]  <= ld->bbox[BOXLEFT]   ||
-      _g->tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||
-      _g->tmbbox[BOXTOP]    <= ld->bbox[BOXBOTTOM] ||
-      _g->tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+  if (_g->tmbbox[BOXRIGHT]  <= LN_BBOX_LEFT(ld)   ||
+      _g->tmbbox[BOXLEFT]   >= LN_BBOX_RIGHT(ld)  ||
+      _g->tmbbox[BOXTOP]    <= LN_BBOX_BOTTOM(ld) ||
+      _g->tmbbox[BOXBOTTOM] >= LN_BBOX_TOP(ld))
     return true;
 
   if (P_BoxOnLineSide(_g->tmbbox, ld) != -1)

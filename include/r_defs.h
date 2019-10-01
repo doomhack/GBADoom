@@ -181,8 +181,6 @@ typedef struct line_s
     vertex_t *v1, *v2;     // Vertices, from v1 to v2.
     fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
 
-    fixed_t bbox[4];       // A bounding box, for the linedef's extent
-
     sector_t *frontsector; // Front and back sector.
     sector_t *backsector;
 
@@ -200,6 +198,11 @@ typedef struct line_s
 
 } line_t;
 
+#define LN_BBOX_LEFT(l) (l->v1->x < l->v2->x ? l->v1->x : l->v2->x)
+#define LN_BBOX_RIGHT(l) (l->v1->x < l->v2->x ? l->v2->x : l->v1->x)
+
+#define LN_BBOX_TOP(l) (l->v1->y < l->v2->y ? l->v2->y : l->v1->y)
+#define LN_BBOX_BOTTOM(l) (l->v1->y < l->v2->y ? l->v1->y : l->v2->y)
 
 // phares 3/14/98
 //
