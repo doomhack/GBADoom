@@ -107,71 +107,11 @@
 #define DM_VICTIMSX    5
 #define DM_VICTIMSY   50
 
-
-// These animation variables, structures, etc. are used for the
-// DOOM/Ultimate DOOM intermission screen animations.  This is
-// totally different from any sprite or texture/flat animations
-typedef enum
-{
-  ANIM_ALWAYS,   // determined by patch entry
-  ANIM_RANDOM,   // occasional
-  ANIM_LEVEL     // continuous
-} animenum_t;
-
 typedef struct
 {
   int   x;       // x/y coordinate pair structure
   int   y;
 } point_t;
-
-
-//
-// Animation.
-// There is another anim_t used in p_spec.
-//
-typedef struct
-{
-  animenum_t  type;
-
-  // period in tics between animations
-  int   period;
-
-  // number of animation frames
-  int   nanims;
-
-  // location of animation
-  point_t loc;
-
-  // ALWAYS: n/a,
-  // RANDOM: period deviation (<256),
-  // LEVEL: level
-  int   data1;
-
-  // ALWAYS: n/a,
-  // RANDOM: random base period,
-  // LEVEL: n/a
-  int   data2;
-
-  /* actual graphics for frames of animations
-   * cphipps - const
-   */
-  const patch_t* p[3];
-
-  // following must be initialized to zero before use!
-
-  // next value of bcnt (used in conjunction with period)
-  int   nexttic;
-
-  // last drawn animation frame
-  int   lastdrawn;
-
-  // next frame number to animate
-  int   ctr;
-
-  // used by RANDOM and LEVEL when animating
-  int   state;
-} wi_anim_t;
-
 
 static const point_t lnodes[NUMEPISODES][NUMMAPS] =
 {
@@ -216,61 +156,6 @@ static const point_t lnodes[NUMEPISODES][NUMMAPS] =
 };
 
 
-//
-// Animation locations for episode 0 (1).
-// Using patches saves a lot of space,
-//  as they replace 320x200 full screen frames.
-//
-static wi_anim_t epsd0animinfo[] =
-{
-  { ANIM_ALWAYS, TICRATE/3, 3, { 224, 104 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 184, 160 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 112, 136 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 72, 112 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 88, 96 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 64, 48 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 192, 40 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 136, 16 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 80, 16 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 64, 24 } }
-};
-
-static wi_anim_t epsd1animinfo[] =
-{
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 1 },
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 2 },
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 3 },
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 4 },
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 5 },
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 6 },
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 7 },
-  { ANIM_LEVEL,  TICRATE/3, 3, { 192, 144 }, 8 },
-  { ANIM_LEVEL,  TICRATE/3, 1, { 128, 136 }, 8 }
-};
-
-static wi_anim_t epsd2animinfo[] =
-{
-  { ANIM_ALWAYS, TICRATE/3, 3, { 104, 168 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 40, 136 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 160, 96 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 104, 80 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 120, 32 } },
-  { ANIM_ALWAYS, TICRATE/4, 3, { 40, 0 } }
-};
-
-static const int NUMANIMS[NUMEPISODES] =
-{
-  sizeof(epsd0animinfo)/sizeof(wi_anim_t),
-  sizeof(epsd1animinfo)/sizeof(wi_anim_t),
-  sizeof(epsd2animinfo)/sizeof(wi_anim_t)
-};
-
-static wi_anim_t *anims[NUMEPISODES] =
-{
-  epsd0animinfo,
-  epsd1animinfo,
-  epsd2animinfo
-};
 
 
 //
@@ -297,18 +182,15 @@ static wi_anim_t *anims[NUMEPISODES] =
 #define SHOWNEXTLOCDELAY  4
 //#define SHOWLASTLOCDELAY  SHOWNEXTLOCDELAY
 
-
-
-
 //
 //  GRAPHICS
 //
 
 // You Are Here graphic
-static const char* yah[2] = { "WIURH0", "WIURH1" };
+static const char* const yah[2] = { "WIURH0", "WIURH1" };
 
 // splat
-static const char* splat = "WISPLAT";
+static const char* const splat = "WISPLAT";
 
 // %, : graphics
 static const char percent[] = {"WIPCNT"};
@@ -372,9 +254,12 @@ static void WI_endNetgameStats(void)
  */
 void WI_levelNameLump(int epis, int map, char* buf)
 {
-  if (_g->gamemode == commercial) {
+  if (_g->gamemode == commercial)
+  {
     sprintf(buf, "CWILV%2.2d", map);
-  } else {
+  }
+  else
+  {
     sprintf(buf, "WILV%d%d", epis, map);
   }
 }
@@ -533,32 +418,7 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
 //
 void WI_initAnimatedBack(void)
 {
-  int   i;
-  wi_anim_t* a;
 
-  if (_g->gamemode == commercial)  // no animation for DOOM2
-    return;
-
-  if (_g->wbs->epsd > 2)
-    return;
-
-  for (i=0;i<NUMANIMS[_g->wbs->epsd];i++)
-  {
-    a = &anims[_g->wbs->epsd][i];
-
-    // init variables
-    a->ctr = -1;
-
-    // specify the next time to draw it
-    if (a->type == ANIM_ALWAYS)
-      a->nexttic = _g->bcnt + 1 + (M_Random()%a->period);
-    else
-      if (a->type == ANIM_RANDOM)
-        a->nexttic = _g->bcnt + 1 + a->data2+(M_Random()%a->data1);
-      else
-        if (a->type == ANIM_LEVEL)
-          a->nexttic = _g->bcnt + 1;
-  }
 }
 
 
@@ -570,52 +430,7 @@ void WI_initAnimatedBack(void)
 //
 void WI_updateAnimatedBack(void)
 {
-  int   i;
-  wi_anim_t* a;
 
-  if (_g->gamemode == commercial)
-    return;
-
-  if (_g->wbs->epsd > 2)
-    return;
-
-  for (i=0;i<NUMANIMS[_g->wbs->epsd];i++)
-  {
-    a = &anims[_g->wbs->epsd][i];
-
-    if (_g->bcnt == a->nexttic)
-    {
-      switch (a->type)
-      {
-        case ANIM_ALWAYS:
-             if (++a->ctr >= a->nanims) a->ctr = 0;
-             a->nexttic = _g->bcnt + a->period;
-             break;
-
-        case ANIM_RANDOM:
-             a->ctr++;
-             if (a->ctr == a->nanims)
-             {
-               a->ctr = -1;
-               a->nexttic = _g->bcnt+a->data2+(M_Random()%a->data1);
-             }
-             else
-               a->nexttic = _g->bcnt + a->period;
-             break;
-
-        case ANIM_LEVEL:
-             // gawd-awful hack for level anims
-             if (!(_g->state == StatCount && i == 7)
-                && _g->wbs->next == a->data1)
-             {
-               a->ctr++;
-               if (a->ctr == a->nanims) a->ctr--;
-               a->nexttic = _g->bcnt + a->period;
-             }
-             break;
-      }
-    }
-  }
 }
 
 
@@ -627,23 +442,7 @@ void WI_updateAnimatedBack(void)
 //
 void WI_drawAnimatedBack(void)
 {
-  int     i;
-  wi_anim_t*   a;
 
-  if (_g->gamemode==commercial) //jff 4/25/98 Someone forgot commercial an enum
-    return;
-
-  if (_g->wbs->epsd > 2)
-    return;
-
-  for (i=0 ; i<NUMANIMS[_g->wbs->epsd] ; i++)
-  {
-    a = &anims[_g->wbs->epsd][i];
-
-    if (a->ctr >= 0)
-      // CPhipps - patch drawing updated
-      V_DrawPatch(a->loc.x, a->loc.y, FB, a->p[a->ctr]);
-  }
 }
 
 
@@ -834,9 +633,6 @@ void WI_updateNoState(void)
     G_WorldDone();
 }
 
-static boolean    snl_pointeron = false;
-
-
 // ====================================================================
 // WI_initShowNextLoc
 // Purpose: Prepare to show the next level's location
@@ -880,7 +676,7 @@ void WI_updateShowNextLoc(void)
   if (!--_g->cnt || _g->acceleratestage)
     WI_initNoState();
   else
-    snl_pointeron = (_g->cnt & 31) < 20;
+    _g->snl_pointeron = (_g->cnt & 31) < 20;
 }
 
 
@@ -892,41 +688,41 @@ void WI_updateShowNextLoc(void)
 //
 void WI_drawShowNextLoc(void)
 {
-  int   i;
-  int   last;
+    int   i;
+    int   last;
 
-  WI_slamBackground();
+    WI_slamBackground();
 
-  // draw animated background
-  WI_drawAnimatedBack();
+    // draw animated background
+    WI_drawAnimatedBack();
 
-  if ( _g->gamemode != commercial)
-  {
-    if (_g->wbs->epsd > 2)
+    if ( _g->gamemode != commercial)
     {
-      WI_drawEL();  // "Entering..." if not E1 or E2
-      return;
+        if (_g->wbs->epsd > 2)
+        {
+            WI_drawEL();  // "Entering..." if not E1 or E2
+            return;
+        }
+
+        last = (_g->wbs->last == 8) ? _g->wbs->next - 1 : _g->wbs->last;
+
+        // draw a splat on taken cities.
+        for (i=0 ; i<=last ; i++)
+            WI_drawOnLnode(i, &splat);
+
+        // splat the secret level?
+        if (_g->wbs->didsecret)
+            WI_drawOnLnode(8, &splat);
+
+        // draw flashing ptr
+        if (_g->snl_pointeron)
+            WI_drawOnLnode(_g->wbs->next, yah);
     }
 
-    last = (_g->wbs->last == 8) ? _g->wbs->next - 1 : _g->wbs->last;
-
-    // draw a splat on taken cities.
-    for (i=0 ; i<=last ; i++)
-      WI_drawOnLnode(i, &splat);
-
-    // splat the secret level?
-    if (_g->wbs->didsecret)
-      WI_drawOnLnode(8, &splat);
-
-    // draw flashing ptr
-    if (snl_pointeron)
-      WI_drawOnLnode(_g->wbs->next, yah);
-  }
-
-  // draws which level you are entering..
-  if ( (_g->gamemode != commercial)
-     || _g->wbs->next != 30)  // check for MAP30 end game
-  WI_drawEL();
+    // draws which level you are entering..
+    if ( (_g->gamemode != commercial)
+         || _g->wbs->next != 30)  // check for MAP30 end game
+        WI_drawEL();
 }
 
 // ====================================================================
@@ -937,7 +733,7 @@ void WI_drawShowNextLoc(void)
 //
 void WI_drawNoState(void)
 {
-  snl_pointeron = true;
+  _g->snl_pointeron = true;
   WI_drawShowNextLoc();
 }
 
@@ -1249,35 +1045,9 @@ void WI_Ticker(void)
 void WI_loadData(void)
 {
   int   i;
-  int   j;
   char  name[9];  // limited to 8 characters
-  wi_anim_t* a;
 
-  if (_g->gamemode != commercial)
-  {
-    if (_g->wbs->epsd < 3)
-    {
-      for (j=0;j<NUMANIMS[_g->wbs->epsd];j++)
-      {
-        a = &anims[_g->wbs->epsd][j];
-        for (i=0;i<a->nanims;i++)
-        {
-          // MONDO HACK!
-          if (_g->wbs->epsd != 1 || j != 8)
-          {
-            // animations
-            sprintf(name, "WIA%d%.2d%.2d", _g->wbs->epsd, j, i);
-            a->p[i] = W_CacheLumpName(name);
-          }
-          else
-          {
-            // HACK ALERT!
-            //a->p[i] = anims[1][4].p[i];
-          }
-        }
-      }
-    }
-  }
+
 
   for (i=0;i<10;i++)
   {

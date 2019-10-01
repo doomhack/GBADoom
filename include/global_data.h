@@ -947,6 +947,8 @@ int *cnt_kills;
 int *cnt_items;
 int *cnt_secret;
 
+boolean snl_pointeron;
+
 
 //******************************************************************************
 #endif // GLOBAL_DEFS_H
