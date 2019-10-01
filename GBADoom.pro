@@ -91,7 +91,7 @@ SOURCES += \
         source/r_plane.iwram.c \
         source/r_segs.iwram.c \
         source/r_sky.c \
-        source/r_things.c \
+        source/r_things.iwram.c \
         source/s_sound.c \
         source/sounds.c \
         source/st_lib.c \
