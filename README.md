@@ -1,10 +1,10 @@
 **GBADoom**
 
-~*Well actually, it doesn't even run on a GBA yet.*~
+~*Well actually, it doesn't even run on a GBA yet.*~ It just about runs in an emulator.
 
 
-After two weeks of hacking, chopping, slashing and removing code it (surprisingly) still seems to work. 
-More importantly, the memory usage is down from about 3-4Mb when I started to...284kb in-game.
+After ~two~ three weeks of hacking, chopping, slashing and removing code it (surprisingly) still seems to work. 
+More importantly, the memory usage is down from about 3-4Mb when I started to...~284kb~ 200kb in-game.
 It is starting to look like it might be possible to get it within our 256kb memory budget.
 
 
@@ -27,7 +27,7 @@ If anyone has any ideas about the music, please drop me a line. Doom music is in
 
 Q) Wheres the ROM?
 
-A) yeh. Uh...Working on it. Come back later...
+A) ~yeh. Uh...Working on it. Come back later...~ There's a rom. it's unplayable, but there's a rom now.
 
 Q) Doesn't GBA already have DOOM?
 
@@ -53,4 +53,4 @@ Q) Whats the plan?
 4) Move the remaining globals to a global struct which can be allocd in EWRAM to free up the 32kb of fast IWRAM.
 5) Port the remaing mess to the GBA.
 6) Move the hot-path code and data to IWRAM.
-7) Play DOOM at about 7fps. Yay!
+7) Play DOOM at about ~7fps~ 3fps. Yay!
