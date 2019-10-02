@@ -206,7 +206,7 @@ visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
   visplane_t *check;
   unsigned hash;                      // killough
 
-  if (picnum == _g->skyflatnum || picnum & PL_SKYFLAT)
+  if (picnum == _g->skyflatnum)
     height = lightlevel = 0;         // killough 7/19/98: most skies map together
 
   // New visplane algorithm uses hash table -- killough
@@ -290,54 +290,18 @@ static void R_DoDrawPlane(visplane_t *pl)
 
 	if (pl->minx <= pl->maxx)
 	{
-        if (pl->picnum == _g->skyflatnum || pl->picnum & PL_SKYFLAT)
+        if (pl->picnum == _g->skyflatnum)
 		{ // sky flat
 			int texture;
 			angle_t an, flip;
 
-			// killough 10/98: allow skies to come from sidedefs.
-			// Allows scrolling and/or animated skies, as well as
-			// arbitrary multiple skies per level without having
-			// to use info lumps.
-
             an = _g->viewangle;
 
-			if (pl->picnum & PL_SKYFLAT)
-			{
-				// Sky Linedef
-                const line_t *l = &_g->lines[pl->picnum & ~PL_SKYFLAT];
+            // Normal Doom sky, only one allowed per level
+            dcvars.texturemid = skytexturemid;    // Default y-offset
+            texture = _g->skytexture;             // Default texture
+            flip = 0;                         // Doom flips it
 
-				// Sky transferred from first sidedef
-                const side_t *s = *l->sidenum + _g->sides;
-				
-				// Texture comes from upper texture of reference sidedef
-                texture = _g->texturetranslation[s->toptexture];
-
-				// Horizontal offset is turned into an angle offset,
-				// to allow sky rotation as well as careful positioning.
-				// However, the offset is scaled very small, so that it
-				// allows a long-period of sky rotation.
-
-		        an += s->textureoffset;
-
-				// Vertical offset allows careful sky positioning.
-
-				dcvars.texturemid = s->rowoffset - 28*FRACUNIT;
-
-				// We sometimes flip the picture horizontally.
-				//
-				// Doom always flipped the picture, so we make it optional,
-				// to make it easier to use the new feature, while to still
-				// allow old sky textures to be used.
-
-				flip = l->special==272 ? 0u : ~0u;
-			}
-			else
-			{    // Normal Doom sky, only one allowed per level
-				dcvars.texturemid = skytexturemid;    // Default y-offset
-                texture = _g->skytexture;             // Default texture
-				flip = 0;                         // Doom flips it
-			}
 
 		  /* Sky is always drawn full bright, i.e. colormaps[0] is used.
 		   * Because of this hack, sky is not affected by INVUL inverse mapping.

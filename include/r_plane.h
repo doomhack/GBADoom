@@ -40,8 +40,6 @@
 #pragma interface
 #endif
 
-/* killough 10/98: special mask indicates sky flat comes from sidedef */
-#define PL_SKYFLAT (0x80000000)
 
 void R_InitPlanes(void);
 void R_ClearPlanes(void);
