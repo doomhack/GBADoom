@@ -399,31 +399,121 @@ static void R_Subsector(int num)
   }
 }
 
+
 //
 // RenderBSPNode
 // Renders all subsectors below a given node,
 //  traversing subtree recursively.
 // Just call with BSP root.
-//
-// killough 5/2/98: reformatted, removed tail recursion
+void R_RenderBSPNode2 (int bspnum)
+{
+
+    // Found a subsector?
+    if (bspnum & NF_SUBSECTOR)
+    {
+        if (bspnum == -1)
+            R_Subsector (0);
+        else
+            R_Subsector (bspnum&(~NF_SUBSECTOR));
+
+        return;
+    }
+
+    const mapnode_t* bsp = &_g->nodes[bspnum];
+
+    // Decide which side the view point is on.
+    int side = R_PointOnSide (_g->viewx, _g->viewy, bsp);
+
+    // Recursively divide front space.
+    R_RenderBSPNode (bsp->children[side]);
+
+
+    // Possibly divide back space.
+    if (R_CheckBBox (bsp->bbox[side^1]))
+    {
+        R_RenderBSPNode (bsp->children[side^1]);
+    }
+}
+
+
+//Render a BSP subsector if bspnum is a leaf node.
+//Return false if bspnum is frame node.
+
+static boolean R_RenderBspSubsector(int bspnum)
+{
+    // Found a subsector?
+    if (bspnum & NF_SUBSECTOR)
+    {
+        if (bspnum == -1)
+            R_Subsector (0);
+        else
+            R_Subsector (bspnum & (~NF_SUBSECTOR));
+
+        return true;
+    }
+
+    return false;
+}
+
+// RenderBSPNode
+// Renders all subsectors below a given node,
+//  traversing subtree recursively.
+// Just call with BSP root.
+
+//Non recursive version.
+//constant stack space used and easier to
+//performance profile.
+#define MAX_BSP_DEPTH 128
 
 void R_RenderBSPNode(int bspnum)
 {
-  while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
+    int stack[MAX_BSP_DEPTH];
+    int sp = 0;
+
+    const mapnode_t* bsp;
+    int side;
+
+    while(true)
     {
-      const mapnode_t *bsp = &_g->nodes[bspnum];
+        //Front sides.
+        while (!R_RenderBspSubsector(bspnum))
+        {
+            if(sp == MAX_BSP_DEPTH)
+                break;
 
-      // Decide which side the view point is on.
-      int side = R_PointOnSide(_g->viewx, _g->viewy, bsp);
-      // Recursively divide front space.
-      R_RenderBSPNode(bsp->children[side]);
+            bsp = &_g->nodes[bspnum];
+            side = R_PointOnSide (_g->viewx, _g->viewy, bsp);
 
-      // Possibly divide back space.
+            stack[sp++] = bspnum;
+            stack[sp++] = side;
 
-      if (!R_CheckBBox(bsp->bbox[side^1]))
-        return;
+            bspnum = bsp->children[side];
+        }
 
-      bspnum = bsp->children[side^1];
+
+        //Back sides.
+        side = stack[--sp];
+        bspnum = stack[--sp];
+        bsp = &_g->nodes[bspnum];
+
+        // Possibly divide back space.
+        //Walk back up the tree until we find
+        //a node that has a visable backspace.
+        while(!R_CheckBBox (bsp->bbox[side^1]))
+        {
+            if(sp == 0)
+            {
+                //back at root node and not visible. All done!
+                return;
+            }
+
+            //Back side next.
+            side = stack[--sp];
+            bspnum = stack[--sp];
+
+            bsp = &_g->nodes[bspnum];
+        }
+
+        bspnum = bsp->children[side^1];
     }
-  R_Subsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
 }
