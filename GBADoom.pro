@@ -83,15 +83,15 @@ SOURCES += \
         source/p_telept.c \
         source/p_tick.c \
         source/p_user.c \
-        source/r_bsp.iwram.c \
+        source/r_bsp.c \
         source/r_data.c \
-        source/r_draw.iwram.c \
-        source/r_main.iwram.c \
+        source/r_draw.c \
+        source/r_main.c \
         source/r_patch.c \
-        source/r_plane.iwram.c \
-        source/r_segs.iwram.c \
+        source/r_plane.c \
+        source/r_segs.c \
         source/r_sky.c \
-        source/r_things.iwram.c \
+        source/r_things.c \
         source/s_sound.c \
         source/sounds.c \
         source/st_lib.c \

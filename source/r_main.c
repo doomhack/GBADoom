@@ -95,20 +95,20 @@ PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
     fixed_t nx = (fixed_t)node->x << FRACBITS;
     fixed_t ny = (fixed_t)node->y << FRACBITS;
 
-  if (!dx)
-    return x <= nx ? node->dy > 0 : node->dy < 0;
+    if (!dx)
+        return x <= nx ? node->dy > 0 : node->dy < 0;
 
-  if (!dy)
-    return y <= ny ? node->dx < 0 : node->dx > 0;
+    if (!dy)
+        return y <= ny ? node->dx < 0 : node->dx > 0;
 
-  x -= nx;
-  y -= ny;
+    x -= nx;
+    y -= ny;
 
-  // Try to quickly decide by looking at sign bits.
-  if ((dy ^ dx ^ x ^ y) < 0)
-    return (dy ^ x) < 0;  // (left is negative)
+    // Try to quickly decide by looking at sign bits.
+    if ((dy ^ dx ^ x ^ y) < 0)
+        return (dy ^ x) < 0;  // (left is negative)
 
-  return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
+    return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
 }
 
 // killough 5/2/98: reformatted

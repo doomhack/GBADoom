@@ -51,11 +51,11 @@ void I_InitScreen_e32()
 
     consoleDemoInit();
 
-    REG_TM2CNT_L= -1872;     // 1872 ticks = 1/35 secs
+    REG_TM2CNT_L= 65535-1872;     // 1872 ticks = 1/35 secs
     REG_TM2CNT_H = TM_FREQ_256 | TM_ENABLE;       // we're using the 256 cycle timer
 
     // cascade into tm3
-    REG_TM3CNT_H = TM_ENABLE | TM_CASCADE;
+    REG_TM3CNT_H = TM_CASCADE | TM_ENABLE;
 }
 
 //**************************************************************************************
@@ -263,7 +263,7 @@ int I_GetTime_e32(void)
 {
     unsigned long thistimereply;
 
-    thistimereply = REG_TM3CNT;
+    thistimereply = REG_TM3CNT_L;
 
     /* Fix for time problem */
     if (!_g->basetime)
