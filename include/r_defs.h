@@ -115,9 +115,6 @@ typedef struct
 
   short linecount;
 
-  short prevsec;     // -1 or number of sector for previous step
-  short nextsec;     // -1 or number of next step sector
-
   short floorpic;
   short ceilingpic;
 
@@ -128,8 +125,6 @@ typedef struct
 
   byte soundtraversed;    // 0 = untraversed, 1,2 = sndlines-1
 
-  // jff 2/26/98 lockout machinery for stairbuilding
-  char stairlock;   // -2 on first locked -1 after thinker done 0 normally
 } sector_t;
 
 //

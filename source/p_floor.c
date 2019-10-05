@@ -292,33 +292,6 @@ void T_MoveFloor(floormove_t* floor)
     floor->sector->floordata = NULL; //jff 2/22/98
     P_RemoveThinker(&floor->thinker);//remove this floor from list of movers
 
-    //jff 2/26/98 implement stair retrigger lockout while still building
-    // note this only applies to the retriggerable generalized stairs
-
-    if (floor->sector->stairlock==-2) // if this sector is stairlocked
-    {
-      sector_t *sec = floor->sector;
-      sec->stairlock=-1;              // thinker done, promote lock to -1
-
-      while (sec->prevsec!=-1 && _g->sectors[sec->prevsec].stairlock!=-2)
-        sec = &_g->sectors[sec->prevsec]; // search for a non-done thinker
-      if (sec->prevsec==-1)           // if all thinkers previous are done
-      {
-        sec = floor->sector;          // search forward
-        while (sec->nextsec!=-1 && _g->sectors[sec->nextsec].stairlock!=-2)
-          sec = &_g->sectors[sec->nextsec];
-        if (sec->nextsec==-1)         // if all thinkers ahead are done too
-        {
-          while (sec->prevsec!=-1)    // clear all locks
-          {
-            sec->stairlock = 0;
-            sec = &_g->sectors[sec->prevsec];
-          }
-          sec->stairlock = 0;
-        }
-      }
-    }
-
     // make floor stop sound
     S_StartSound((mobj_t *)&floor->sector->soundorg, sfx_pstop);
   }

@@ -95,24 +95,6 @@ static void P_LoadVertexes (int lump)
   W_UnlockLumpNum(lump);
 }
 
-static float GetDistance(int dx, int dy)
-{
-  float fx = (float)(dx)/FRACUNIT, fy = (float)(dy)/FRACUNIT;
-  return (float)sqrt(fx*fx + fy*fy);
-}
-
-static int GetOffset(vertex_t *v1, vertex_t *v2)
-{
-  float a, b;
-  int r;
-  a = (float)(v1->x - v2->x) / (float)FRACUNIT;
-  b = (float)(v1->y - v2->y) / (float)FRACUNIT;
-  r = (int)(sqrt(a*a+b*b) * (float)FRACUNIT);
-  return r;
-}
-
-
-
 //
 // P_LoadSegs
 //
@@ -229,10 +211,6 @@ static void P_LoadSectors (int lump)
 
       ss->thinglist = NULL;
       ss->touching_thinglist = NULL;            // phares 3/14/98
-
-      ss->nextsec = -1; //jff 2/26/98 add fields to support locking out
-      ss->prevsec = -1; // stair retriggering until build completes
-
     }
 
   W_UnlockLumpNum(lump); // cph - release the data

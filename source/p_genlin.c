@@ -672,7 +672,7 @@ manual_stair:
     //Do not start another function if floor already moving
     //jff 2/26/98 add special lockout condition to wait for entire
     //staircase to build before retriggering
-    if (P_SectorActive(floor_special,sec) || sec->stairlock)
+    if (P_SectorActive(floor_special,sec))
     {
       if (!manual)
         continue;
@@ -733,10 +733,6 @@ manual_stair:
     floor->crush = false;
     floor->type = genBuildStair; // jff 3/31/98 do not leave uninited
 
-    sec->stairlock = -2;         // jff 2/26/98 set up lock on current sector
-    sec->nextsec = -1;
-    sec->prevsec = -1;
-
     osecnum = secnum;            //jff 3/4/98 preserve loop index
     // Find next sector to raise
     // 1.     Find 2-sided line with same sector side[0]
@@ -763,18 +759,10 @@ manual_stair:
 
 
         //jff 2/26/98 special lockout condition for retriggering
-        if (P_SectorActive(floor_special,tsec) || tsec->stairlock)
+        if (P_SectorActive(floor_special,tsec))
           continue;
 
         height += floor->direction * stairsize;
-
-        // jff 2/26/98
-        // link the stair chain in both directions
-        // lock the stair sector until building complete
-        sec->nextsec = newsecnum; // link step to next
-        tsec->prevsec = secnum;   // link next back
-        tsec->nextsec = -1;       // set next forward link as end
-        tsec->stairlock = -2;     // lock the step
 
         sec = tsec;
         secnum = newsecnum;
