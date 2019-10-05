@@ -732,28 +732,16 @@ void P_RemoveMobj (mobj_t* mobj)
  * killough 8/24/98: rewrote to use hashing
  */
 
-static PUREFUNC int P_FindDoomedNum(unsigned type)
+static PUREFUNC int P_FindDoomedNum(unsigned int type)
 {
-  register int i;
-
-  if (!_g->doomed_hash)
+    // find which type to spawn
+    for (int i=0 ; i< NUMMOBJTYPES ; i++)
     {
-      _g->doomed_hash = Z_Malloc(sizeof *_g->doomed_hash * NUMMOBJTYPES, PU_CACHE, (void **) &_g->doomed_hash);
-      for (i=0; i<NUMMOBJTYPES; i++)
-        _g->doomed_hash[i].first = NUMMOBJTYPES;
-      for (i=0; i<NUMMOBJTYPES; i++)
-  if (mobjinfo[i].doomednum != -1)
-    {
-      unsigned h = (unsigned) mobjinfo[i].doomednum % NUMMOBJTYPES;
-      _g->doomed_hash[i].next = _g->doomed_hash[h].first;
-      _g->doomed_hash[h].first = i;
-    }
+        if (type == mobjinfo[i].doomednum)
+            return i;
     }
 
-  i = _g->doomed_hash[type % NUMMOBJTYPES].first;
-  while ((i < NUMMOBJTYPES) && ((unsigned)mobjinfo[i].doomednum != type))
-    i = _g->doomed_hash[i].next;
-  return i;
+    return NUMMOBJTYPES;
 }
 
 //

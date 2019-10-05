@@ -204,8 +204,6 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     const texture_t* texture = _g->textures[texnum];
 
     const int patchnum = texture->patches[0].patch;
-    const unsigned int widthmask = texture->widthmask;
-    const int patchcount = texture->patchcount;
 
     const patch_t* patch = W_CacheLumpNum(patchnum);
 
@@ -253,24 +251,9 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
             int xc = _g->maskedtexturecol[dcvars.x];
 
-            const column_t* column;
+            const column_t* column = R_GetColumn(texture, xc);
 
-            //Simple patch.
-            if(patchcount == 1)
-            {
-                while (xc < 0) xc += patch->width;
-
-                xc &= widthmask;
-
-                column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
-
-            }
-            else //Composite patch on 2s line. (Eg: E4M1)
-            {
-                column = R_GetColumn(texture, xc);
-            }
-
-            R_DrawMaskedColumn(patch, colfunc, &dcvars, column);
+            R_DrawMaskedColumn(colfunc, &dcvars, column);
 
             _g->maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
         }

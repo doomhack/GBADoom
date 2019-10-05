@@ -292,7 +292,7 @@ static boolean R_CheckBBox(const short *bspcoord)
     // Find the corners of the box
     // that define the edges from current viewpoint.
     boxpos = (_g->viewx <= ((fixed_t)bspcoord[BOXLEFT]<<FRACBITS) ? 0 : _g->viewx < ((fixed_t)bspcoord[BOXRIGHT]<<FRACBITS) ? 1 : 2) +
-      (_g->viewy >= ((fixed_t)bspcoord[BOXTOP]<<FRACBITS) ? 0 : _g->viewy > ((fixed_t)bspcoord[BOXBOTTOM]<<FRACBITS) ? 4 : 8);
+        (_g->viewy >= ((fixed_t)bspcoord[BOXTOP]<<FRACBITS) ? 0 : _g->viewy > ((fixed_t)bspcoord[BOXBOTTOM]<<FRACBITS) ? 4 : 8);
 
     if (boxpos == 5)
       return true;
@@ -434,7 +434,7 @@ void R_RenderBSPNode(int bspnum)
     int sp = 0;
 
     const mapnode_t* bsp;
-    int side;
+    int side = 0;
 
     while(true)
     {
@@ -453,6 +453,11 @@ void R_RenderBSPNode(int bspnum)
             bspnum = bsp->children[side];
         }
 
+        if(sp == 0)
+        {
+            //back at root node and not visible. All done!
+            return;
+        }
 
         //Back sides.
         side = stack[--sp];

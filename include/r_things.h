@@ -42,8 +42,7 @@
 
 /* Constant arrays used for psprite clipping and initializing clipping. */
 
-void R_DrawMaskedColumn(const patch_t *patch,
-                        R_DrawColumn_f colfunc,
+void R_DrawMaskedColumn(R_DrawColumn_f colfunc,
                         draw_column_vars_t *dcvars,
                         const column_t *column);
 void R_SortVisSprites(void);

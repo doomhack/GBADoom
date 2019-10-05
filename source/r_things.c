@@ -46,14 +46,6 @@
 #define MINZ        (FRACUNIT*4)
 #define BASEYCENTER 100
 
-typedef struct {
-  int x1;
-  int x2;
-  int column;
-  int topclip;
-  int bottomclip;
-} maskdraw_t;
-
 //
 // Sprite rotation 0 is facing the viewer,
 //  rotation 1 is one angle turn CLOCKWISE around the axis.
@@ -297,14 +289,7 @@ static vissprite_t *R_NewVisSprite(void)
 // Masked means: partly transparent, i.e. stored
 //  in posts/runs of opaque pixels.
 //
-
-
-
-void R_DrawMaskedColumn(const patch_t *patch,
-  R_DrawColumn_f colfunc,
-  draw_column_vars_t *dcvars,
-  const column_t *column
-)
+void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvars, const column_t *column)
 {
     int     i;
     int     topscreen;
@@ -351,55 +336,51 @@ void R_DrawMaskedColumn(const patch_t *patch,
 // CPhipps - new wad lump handling, *'s to const*'s
 static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
 {
-  int      texturecolumn;
-  fixed_t  frac;
-  const patch_t *patch = W_CacheLumpNum(vis->patch+_g->firstspritelump);
+    int      texturecolumn;
+    fixed_t  frac;
+    const patch_t *patch = W_CacheLumpNum(vis->patch+_g->firstspritelump);
 
-  R_DrawColumn_f colfunc;
-  draw_column_vars_t dcvars;
+    R_DrawColumn_f colfunc;
+    draw_column_vars_t dcvars;
 
 
-  R_SetDefaultDrawColumnVars(&dcvars);
+    R_SetDefaultDrawColumnVars(&dcvars);
 
-  dcvars.colormap = vis->colormap;
+    dcvars.colormap = vis->colormap;
 
-  // killough 4/11/98: rearrange and handle translucent sprites
-  // mixed with translucent/non-translucenct 2s normals
+    // killough 4/11/98: rearrange and handle translucent sprites
+    // mixed with translucent/non-translucenct 2s normals
 
-  if (!dcvars.colormap)   // NULL colormap = shadow draw
-    colfunc = R_DrawFuzzColumn;    // killough 3/14/98
-  else
-    if (vis->mobjflags & MF_TRANSLATION)
-      {
-        colfunc = R_DrawTranslatedColumn;
-        dcvars.translation = translationtables +
-          ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
-      }
+    if (!dcvars.colormap)   // NULL colormap = shadow draw
+        colfunc = R_DrawFuzzColumn;    // killough 3/14/98
     else
-        colfunc = R_DrawColumn; // killough 3/14/98, 4/11/98
-
-// proff 11/06/98: Changed for high-res
-  dcvars.iscale = FixedDiv (FRACUNIT, vis->scale);
-  dcvars.texturemid = vis->texturemid;
-  frac = vis->startfrac;
-
-  _g->spryscale = vis->scale;
-  _g->sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid,_g->spryscale);
-
-  for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
-      texturecolumn = frac>>FRACBITS;
-
-      const column_t* column = (column_t *) ((byte *)patch + patch->columnofs[texturecolumn]);
-
-      R_DrawMaskedColumn(
-        patch,
-        colfunc,
-        &dcvars,
-        column
-      );
+        if (vis->mobjflags & MF_TRANSLATION)
+        {
+            colfunc = R_DrawTranslatedColumn;
+            dcvars.translation = translationtables +
+                    ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
+        }
+        else
+            colfunc = R_DrawColumn; // killough 3/14/98, 4/11/98
     }
-  //R_UnlockPatchNum(vis->patch+_g->firstspritelump); // cph - release lump
+
+    // proff 11/06/98: Changed for high-res
+    dcvars.iscale = FixedDiv (FRACUNIT, vis->scale);
+    dcvars.texturemid = vis->texturemid;
+    frac = vis->startfrac;
+
+    _g->spryscale = vis->scale;
+    _g->sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid,_g->spryscale);
+
+    for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
+    {
+        texturecolumn = frac>>FRACBITS;
+
+        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[texturecolumn]);
+
+        R_DrawMaskedColumn(colfunc, &dcvars, column);
+    }
 }
 
 //
@@ -420,7 +401,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   boolean   flip;
   vissprite_t *vis;
   fixed_t   iscale;
-  int heightsec;      // killough 3/27/98
 
   // transform the origin point
   fixed_t tr_x, tr_y;
@@ -513,7 +493,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     gzt = fz + (patch->topoffset << FRACBITS);
     width = patch->width;
-    //R_UnlockPatchNum(lump+_g->firstspritelump);
   }
 
   // off the side?
@@ -816,8 +795,6 @@ static void R_DrawSprite (vissprite_t* spr)
   // (pointer check was originally nonportable
   // and buggy, by going past LEFT end of array):
 
-  //    for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
-
   for (ds=_g->ds_p ; ds-- > _g->drawsegs ; )  // new -- killough
     {      // determine if the drawseg obscures the sprite
       if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
@@ -882,27 +859,23 @@ static void R_DrawSprite (vissprite_t* spr)
 
 void R_DrawMasked(void)
 {
-  int i;
-  drawseg_t *ds;
+    int i;
+    drawseg_t *ds;
 
-  R_SortVisSprites();
+    R_SortVisSprites();
 
-  // draw all vissprites back to front
+    // draw all vissprites back to front
+    for (i = _g->num_vissprite ;--i>=0; )
+        R_DrawSprite(_g->vissprite_ptrs[i]);         // killough
 
-  for (i = _g->num_vissprite ;--i>=0; )
-    R_DrawSprite(_g->vissprite_ptrs[i]);         // killough
+    // render any remaining masked mid textures
 
-  // render any remaining masked mid textures
-
-  // Modified by Lee Killough:
-  // (pointer check was originally nonportable
-  // and buggy, by going past LEFT end of array):
-
-  //    for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
-
-  for (ds=_g->ds_p ; ds-- > _g->drawsegs ; )  // new -- killough
-    if (ds->maskedtexturecol)
-      R_RenderMaskedSegRange(ds, ds->x1, ds->x2);
+    // Modified by Lee Killough:
+    // (pointer check was originally nonportable
+    // and buggy, by going past LEFT end of array):
+    for (ds=_g->ds_p ; ds-- > _g->drawsegs ; )  // new -- killough
+        if (ds->maskedtexturecol)
+            R_RenderMaskedSegRange(ds, ds->x1, ds->x2);
 
     R_DrawPlayerSprites ();
 }
