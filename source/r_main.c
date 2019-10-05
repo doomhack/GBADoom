@@ -341,5 +341,4 @@ void R_RenderPlayerView (player_t* player)
     R_DrawPlanes ();
 
     R_DrawMasked ();
-
 }

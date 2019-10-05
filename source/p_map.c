@@ -1973,7 +1973,6 @@ void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
   int by;
   msecnode_t* node;
   mobj_t* saved_tmthing = _g->tmthing; /* cph - see comment at func end */
-  fixed_t saved_tmx = _g->tmx, saved_tmy = _g->tmy; /* ditto */
 
   // First, clear out the existing m_thing fields. As each node is
   // added or verified as needed, m_thing will be set properly. When
