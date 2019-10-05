@@ -327,18 +327,18 @@ static void R_SetupFrame (player_t *player)
 //
 void R_RenderPlayerView (player_t* player)
 {
-  R_SetupFrame (player);
+    R_SetupFrame (player);
 
-  // Clear buffers.
-  R_ClearClipSegs ();
-  R_ClearDrawSegs ();
-  R_ClearPlanes ();
-  R_ClearSprites ();
+    // Clear buffers.
+    R_ClearClipSegs ();
+    R_ClearDrawSegs ();
+    R_ClearPlanes ();
+    R_ClearSprites ();
 
-  // The head node is the last node output.
-  R_RenderBSPNode (_g->numnodes-1);
+    // The head node is the last node output.
+    R_RenderBSPNode (_g->numnodes-1);
 
-  R_DrawPlanes ();
+    R_DrawPlanes ();
 
     R_DrawMasked ();
 

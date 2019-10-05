@@ -399,43 +399,6 @@ static void R_Subsector(int num)
   }
 }
 
-
-//
-// RenderBSPNode
-// Renders all subsectors below a given node,
-//  traversing subtree recursively.
-// Just call with BSP root.
-void R_RenderBSPNode2 (int bspnum)
-{
-
-    // Found a subsector?
-    if (bspnum & NF_SUBSECTOR)
-    {
-        if (bspnum == -1)
-            R_Subsector (0);
-        else
-            R_Subsector (bspnum&(~NF_SUBSECTOR));
-
-        return;
-    }
-
-    const mapnode_t* bsp = &_g->nodes[bspnum];
-
-    // Decide which side the view point is on.
-    int side = R_PointOnSide (_g->viewx, _g->viewy, bsp);
-
-    // Recursively divide front space.
-    R_RenderBSPNode (bsp->children[side]);
-
-
-    // Possibly divide back space.
-    if (R_CheckBBox (bsp->bbox[side^1]))
-    {
-        R_RenderBSPNode (bsp->children[side^1]);
-    }
-}
-
-
 //Render a BSP subsector if bspnum is a leaf node.
 //Return false if bspnum is frame node.
 
@@ -498,7 +461,7 @@ void R_RenderBSPNode(int bspnum)
 
         // Possibly divide back space.
         //Walk back up the tree until we find
-        //a node that has a visable backspace.
+        //a node that has a visible backspace.
         while(!R_CheckBBox (bsp->bbox[side^1]))
         {
             if(sp == 0)
