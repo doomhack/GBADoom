@@ -682,54 +682,40 @@ sector_t *P_FindModelCeilingSector(fixed_t ceildestheight,int secnum)
 //
 // RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
 //
-
-// Find the next sector with the same tag as a linedef.
-// Rewritten by Lee Killough to use chained hashing to improve speed
-
-int P_FindSectorFromLineTag(const line_t *line, int start)
+int P_FindSectorFromLineTag(const line_t* line, int start)
 {
-  start = start >= 0 ? _g->sectors[start].nexttag :
-    _g->sectors[(unsigned) line->tag % (unsigned) _g->numsectors].firsttag;
-  while (start >= 0 && _g->sectors[start].tag != line->tag)
-    start = _g->sectors[start].nexttag;
-  return start;
+    int	i;
+
+    for (i=start+1; i<_g->numsectors; i++)
+    {
+        if (_g->sectors[i].tag == line->tag)
+            return i;
+    }
+
+    return -1;
 }
+
 
 // killough 4/16/98: Same thing, only for linedefs
 
 int P_FindLineFromLineTag(const line_t *line, int start)
 {
-  start = start >= 0 ? _g->lines[start].nexttag :
-    _g->lines[(unsigned) line->tag % (unsigned) _g->numlines].firsttag;
-  while (start >= 0 && _g->lines[start].tag != line->tag)
-    start = _g->lines[start].nexttag;
-  return start;
+
+    int	i;
+
+    for (i=start+1; i<_g->numlines; i++)
+    {
+        if (_g->lines[i].tag == line->tag)
+            return i;
+    }
+
+    return -1;
 }
 
 // Hash the sector tags across the sectors and linedefs.
 static void P_InitTagLists(void)
 {
-  register int i;
 
-  for (i=_g->numsectors; --i>=0; )        // Initially make all slots empty.
-    _g->sectors[i].firsttag = -1;
-  for (i=_g->numsectors; --i>=0; )        // Proceed from last to first sector
-    {                                 // so that lower sectors appear first
-      int j = (unsigned) _g->sectors[i].tag % (unsigned) _g->numsectors; // Hash func
-      _g->sectors[i].nexttag = _g->sectors[j].firsttag;   // Prepend sector to chain
-      _g->sectors[j].firsttag = i;
-    }
-
-  // killough 4/17/98: same thing, only for linedefs
-
-  for (i=_g->numlines; --i>=0; )        // Initially make all slots empty.
-    _g->lines[i].firsttag = -1;
-  for (i=_g->numlines; --i>=0; )        // Proceed from last to first linedef
-    {                               // so that lower linedefs appear first
-      int j = (unsigned) _g->lines[i].tag % (unsigned) _g->numlines; // Hash func
-      _g->lines[i].nexttag = _g->lines[j].firsttag;   // Prepend linedef to chain
-      _g->lines[j].firsttag = i;
-    }
 }
 
 //

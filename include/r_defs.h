@@ -95,7 +95,6 @@ typedef struct
   fixed_t floorheight;
   fixed_t ceilingheight;
 
-  short nexttag,firsttag;  // killough 1/30/98: improves searches for tags.
   mobj_t *soundtarget;   // thing that made a sound (or null)
   int blockbox[4];       // mapblock bounding box for height changes
   degenmobj_t soundorg;  // origin for any sounds played by the sector
@@ -123,7 +122,7 @@ typedef struct
   short oldspecial;      //jff 2/16/98 remembers if sector WAS secret (automap)
   short tag;
 
-  byte soundtraversed;    // 0 = untraversed, 1,2 = sndlines-1
+  short soundtraversed;    // 0 = untraversed, 1,2 = sndlines-1
 
 } sector_t;
 
@@ -184,7 +183,6 @@ typedef struct line_s
 
     unsigned short sidenum[2];        // Visual appearance: SideDefs.
 
-    short firsttag,nexttag;  // killough 4/17/98: improves searches for tags.
     unsigned short flags;           // Animation related.
     short special;
     short tag;
