@@ -82,44 +82,6 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 	dcvars->translation = NULL;
 }
 
-//
-// A column is a vertical slice/span from a wall texture that,
-//  given the DOOM style restrictions on the view orientation,
-//  will always have constant z depth.
-// Thus a special case loop for very fast rendering can
-//  be used. It has also been used with Wolfenstein 3D.
-// 
-void R_DrawColumn (draw_column_vars_t *dcvars) 
-{ 
-    int count = dcvars->yh - dcvars->yl;
-
-	const byte *source = dcvars->source;
-	const byte *colormap = dcvars->colormap;
-
-    unsigned short* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
-
-    const fixed_t		fracstep = dcvars->iscale;
-    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
- 
-    // Zero length, column does not exceed a pixel.
-    if (dcvars->yl >= dcvars->yh)
-		return;
-				 
-    // Inner loop that does the actual texture mapping,
-    //  e.g. a DDA-lile scaling.
-    // This is as fast as it gets.
-    do 
-    {
-		// Re-map color indices from wall texture column
-		//  using a lighting/special effects LUT.
-        unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
-
-        *dest = (color | (color << 8));
-	
-		dest += SCREENWIDTH;
-		frac += fracstep;
-    } while (count--); 
-} 
 
 //
 // Framebuffer postprocessing.
@@ -239,49 +201,6 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 
 
 
-//
-// R_DrawSpan
-// With DOOM style restrictions on view orientation,
-//  the floors and ceilings consist of horizontal slices
-//  or spans with constant z depth.
-// However, rotation around the world z axis is possible,
-//  thus this mapping, while simpler and faster than
-//  perspective correct texture mapping, has to traverse
-//  the texture at an angle in all but a few cases.
-// In consequence, flats are not stored by column (like walls),
-//  and the inner loop has to step in texture space u and v.
-//
-void R_DrawSpan(draw_span_vars_t *dsvars)
-{
-    int count = (dsvars->x2 - dsvars->x1);
-	
-	const byte *source = dsvars->source;
-	const byte *colormap = dsvars->colormap;
-	
-    unsigned short* dest = _g->drawvars.byte_topleft + dsvars->y*_g->drawvars.byte_pitch + dsvars->x1;
-	
-	const unsigned int step = ((dsvars->xstep << 10) & 0xffff0000) | ((dsvars->ystep >> 6)  & 0x0000ffff);
-
-    unsigned int position = ((dsvars->xfrac << 10) & 0xffff0000) | ((dsvars->yfrac >> 6)  & 0x0000ffff);
-
-	unsigned int xtemp, ytemp, spot;
-
-    do
-    {
-		// Calculate current texture index in u,v.
-        ytemp = (position >> 4) & 0x0fc0;
-        xtemp = (position >> 26);
-        spot = xtemp | ytemp;
-
-		// Lookup pixel from flat texture tile,
-		//  re-index using light/colormap.
-        unsigned short color = colormap[source[spot]];
-
-        *dest++ = (color | (color << 8));
-        position += step;
-
-	} while (count--);
-}
 
 //
 // R_InitBuffer

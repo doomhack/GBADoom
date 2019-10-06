@@ -53,17 +53,7 @@
 #include "w_wad.h"
 #include "tables.h"
 
-// killough 5/3/98: reformatted
 
-int SlopeDiv(unsigned num, unsigned den)
-{
-  unsigned ans;
-
-  if (den < 512)
-    return SLOPERANGE;
-  ans = (num<<3)/(den>>8);
-  return ans <= SLOPERANGE ? ans : SLOPERANGE;
-}
 
 const fixed_t finetangent[4096] =
 {

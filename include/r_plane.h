@@ -45,14 +45,14 @@ void R_InitPlanes(void);
 void R_ClearPlanes(void);
 void R_DrawPlanes (void);
 
-visplane_t *R_FindPlane(fixed_t height,
-                        int picnum,
-                        int lightlevel);
-
-visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop);
-visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop);
 
 #define MAXVISPLANES 128    /* must be a power of 2 */
+
+// killough -- hash function for visplanes
+// Empirically verified to be fairly uniform:
+
+#define visplane_hash(picnum,lightlevel,height) \
+  ((unsigned)((picnum)*3+(lightlevel)+(height)*7) & (MAXVISPLANES-1))
 
 
 #endif

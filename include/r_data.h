@@ -49,7 +49,7 @@
 typedef struct
 {
   short originx, originy;  // Block origin, which has already accounted
-  int patch;             // for the internal origin of the patch.
+  const patch_t* patch;    // for the internal origin of the patch.
 } texpatch_t;
 
 //
@@ -92,8 +92,7 @@ int R_CheckTextureNumForName (const char *name);
 
 
 int R_ColormapNumForName(const char *name);      // killough 4/4/98
-/* cph 2001/11/17 - new func to do lighting calcs and get suitable colour map */
-const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale);
+
 
 
 #endif

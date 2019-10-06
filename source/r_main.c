@@ -135,59 +135,6 @@ PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
   return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
 }
 
-//
-// R_PointToAngle
-// To get a global angle from cartesian coordinates,
-//  the coordinates are flipped until they are in
-//  the first octant of the coordinate system, then
-//  the y (<=x) is scaled and divided by x to get a
-//  tangent (slope) value which is looked up in the
-//  tantoangle[] table. The +1 size of tantoangle[]
-//  is to handle the case when x==y without additional
-//  checking.
-//
-// killough 5/2/98: reformatted, cleaned up
-
-#include <math.h>
-
-angle_t R_PointToAngle(fixed_t x, fixed_t y)
-{
-  static fixed_t oldx, oldy;
-  static angle_t oldresult;
-
-  x -= _g->viewx; y -= _g->viewy;
-
-  if ( /* !render_precise && */
-      // e6y: here is where "slime trails" can SOMETIMES occur
-      (x < INT_MAX/4 && x > -INT_MAX/4 && y < INT_MAX/4 && y > -INT_MAX/4)
-     )
-  {
-    // old R_PointToAngle
-    return (x || y) ?
-    x >= 0 ?
-      y >= 0 ?
-        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0
-                ANG90-1-tantoangle[SlopeDiv(x,y)] :                // octant 1
-        x > (y = -y) ? 0-tantoangle[SlopeDiv(y,x)] :                // octant 8
-                       ANG270+tantoangle[SlopeDiv(x,y)] :          // octant 7
-      y >= 0 ? (x = -x) > y ? ANG180-1-tantoangle[SlopeDiv(y,x)] : // octant 3
-                            ANG90 + tantoangle[SlopeDiv(x,y)] :    // octant 2
-        (x = -x) > (y = -y) ? ANG180+tantoangle[ SlopeDiv(y,x)] :  // octant 4
-                              ANG270-1-tantoangle[SlopeDiv(x,y)] : // octant 5
-    0;
-  }
-
-  // R_PointToAngleEx merged into R_PointToAngle
-  // e6y: The precision of the code above is abysmal so use the CRT atan2 function instead!
-  if (oldx != x || oldy != y)
-  {
-    oldx = x;
-    oldy = y;
-    oldresult = (int)(atan2(y, x) * ANG180/M_PI);
-  }
-  return oldresult;
-}
-
 angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
   return (y -= viewy, (x -= viewx) || y) ?
@@ -295,7 +242,7 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 // R_SetupFrame
 //
 
-static void R_SetupFrame (player_t *player)
+void R_SetupFrame (player_t *player)
 {
   _g->viewplayer = player;
 
