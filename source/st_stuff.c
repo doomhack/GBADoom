@@ -460,7 +460,7 @@ static void ST_doRefresh(void)
   ST_refreshBackground();
 
   // and refresh all widgets
-  //ST_drawWidgets(true);
+  ST_drawWidgets(true);
 
 }
 

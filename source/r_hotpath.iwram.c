@@ -239,6 +239,45 @@ static const lighttable_t* R_ColourMap(int lightlevel, fixed_t spryscale)
 }
 
 
+//
+// A column is a vertical slice/span from a wall texture that,
+//  given the DOOM style restrictions on the view orientation,
+//  will always have constant z depth.
+// Thus a special case loop for very fast rendering can
+//  be used. It has also been used with Wolfenstein 3D.
+//
+static void R_DrawColumn (draw_column_vars_t *dcvars)
+{
+    int count = dcvars->yh - dcvars->yl;
+
+    const byte *source = dcvars->source;
+    const byte *colormap = dcvars->colormap;
+
+    unsigned short* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
+
+    const fixed_t		fracstep = dcvars->iscale;
+    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
+
+    // Zero length, column does not exceed a pixel.
+    if (dcvars->yl >= dcvars->yh)
+        return;
+
+    // Inner loop that does the actual texture mapping,
+    //  e.g. a DDA-lile scaling.
+    // This is as fast as it gets.
+    do
+    {
+        // Re-map color indices from wall texture column
+        //  using a lighting/special effects LUT.
+        unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
+
+
+        *dest = (color | (color << 8));
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+    } while (count--);
+}
 
 
 //
@@ -386,7 +425,7 @@ static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
 // R_RenderMaskedSegRange
 //
 
-void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
+static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 {
     int      texnum;
     R_DrawColumn_f colfunc;
@@ -776,7 +815,7 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
     }
 }
 
-void R_SortVisSprites (void)
+static void R_SortVisSprites (void)
 {
     if (_g->num_vissprite)
     {
@@ -842,7 +881,7 @@ void R_DrawMasked(void)
 // In consequence, flats are not stored by column (like walls),
 //  and the inner loop has to step in texture space u and v.
 //
-void R_DrawSpan(draw_span_vars_t *dsvars)
+static void R_DrawSpan(draw_span_vars_t *dsvars)
 {
     int count = (dsvars->x2 - dsvars->x1);
 
@@ -1379,57 +1418,48 @@ static visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
         return R_DupPlane(pl,start,stop);
 }
 
+//Copy to GBA VRAM. 16bit access.
 
-//
-// A column is a vertical slice/span from a wall texture that,
-//  given the DOOM style restrictions on the view orientation,
-//  will always have constant z depth.
-// Thus a special case loop for very fast rendering can
-//  be used. It has also been used with Wolfenstein 3D.
-//
-void R_DrawColumn (draw_column_vars_t *dcvars)
+//Optimise this. The +3 offset on a col pixel data
+//pretty much ensures that src is unaligned.
+
+//The src is a pointer to ROM so costs 5-8 cycles to access.
+static inline void VRAM_Memcpy(byte* dest, const byte* src, int count)
 {
-    int count = dcvars->yh - dcvars->yl;
-
-    const byte *source = dcvars->source;
-    const byte *colormap = dcvars->colormap;
-
-    unsigned short* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
-
-    const fixed_t		fracstep = dcvars->iscale;
-    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
-
-    // Zero length, column does not exceed a pixel.
-    if (dcvars->yl >= dcvars->yh)
-        return;
-
-    // Inner loop that does the actual texture mapping,
-    //  e.g. a DDA-lile scaling.
-    // This is as fast as it gets.
-    do
+    if(((unsigned int)dest) & 1)
     {
-        // Re-map color indices from wall texture column
-        //  using a lighting/special effects LUT.
-        unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
+        //Odd address. Write first byte.
+        unsigned short* vrm_dest = (unsigned short*)dest-1;
 
+        *vrm_dest = (*vrm_dest & 0xff) | ((unsigned short)src[0] << 8);
 
-        *dest = (color | (color << 8));
+        count--;
+        src++;
+        dest++;
+    }
 
-        dest += SCREENWIDTH;
-        frac += fracstep;
-    } while (count--);
+    unsigned short* vrm_dest = (unsigned short*)dest;
+
+    while(count >= 2)
+    {
+        *vrm_dest++ = ((unsigned short)src[0] | (unsigned short)src[1] << 8);
+        count-=2;
+        src+=2;
+    }
+
+    if(count)
+    {
+        unsigned short val = vrm_dest[0];
+
+        vrm_dest[0] = (val << 8) | src[1];
+    }
 }
-
-
 
 static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int cacheheight)
 {
     int		count;
     int		position;
     const byte*	source;
-    byte*	dest;
-
-    dest = (byte *)cache + 3;
 
     while (patch->topdelta != 0xff)
     {
@@ -1447,7 +1477,7 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
             count = cacheheight - position;
 
         if (count > 0)
-            memcpy (cache + position, source, count);
+            VRAM_Memcpy (cache + position, source, count);
 
         patch = (const column_t *)(  (const byte *)patch + patch->length + 4);
     }
@@ -1458,7 +1488,7 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
  * If the texture is simple (1 patch, full height) then just draw
  * straight from const patch_t*.
 */
-static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t* dcvars)
+static void DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
     //static int total = 0;
     //static int misses = 0;
@@ -1493,11 +1523,9 @@ static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t*
 
         if((cacheEntry->texture != texture) || cacheEntry->column != xc)
         {
-            byte tmpCol[128];
-
             //misses++;
 
-            cacheEntry->texture = texture;
+            cacheEntry->texture = texture & 0xffff;
             cacheEntry->column = xc;
 
             for(int i=0; i<tex->patchcount; i++)
@@ -1517,14 +1545,12 @@ static void DrawSegTextureColumn(int texture, int texcolumn, draw_column_vars_t*
                     const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
 
                     R_DrawColumnInCache (patchcol,
-                                         tmpCol,
+                                         colcache,
                                          patch->originy,
                                          tex->height);
 
                 }
             }
-
-            memcpy(colcache, tmpCol, 128);
         }
 
         dcvars->source = colcache;

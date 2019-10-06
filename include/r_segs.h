@@ -38,10 +38,5 @@
 #pragma interface
 #endif
 
-void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2);
-
-const column_t* R_GetColumn(const texture_t* texture, int texcolumn);
-
-
 
 #endif

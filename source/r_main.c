@@ -104,9 +104,6 @@ angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 
 void R_Init (void)
 {
-  // CPhipps - R_DrawColumn isn't constant anymore, so must
-  //  initialise in code
-  // current column draw function
   lprintf(LO_INFO, "R_LoadTrigTables\n");
   R_LoadTrigTables();
   lprintf(LO_INFO, "R_InitData\n");

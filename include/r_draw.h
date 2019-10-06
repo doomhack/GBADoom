@@ -82,10 +82,6 @@ typedef struct
 typedef void (*R_DrawColumn_f)(draw_column_vars_t *dcvars);
 
 
-// The span blitting interface.
-void 	R_DrawColumn (draw_column_vars_t *dcvars);
-
-
 // The Spectre/Invisibility effect.
 void 	R_DrawFuzzColumn (draw_column_vars_t *dcvars);
 
@@ -93,12 +89,6 @@ void 	R_DrawFuzzColumn (draw_column_vars_t *dcvars);
 //  for player sprite rendering,
 //  Green/Red/Blue/Indigo shirts.
 void	R_DrawTranslatedColumn (draw_column_vars_t *dcvars);
-
-
-
-// Span blitting for rows, floor/ceiling. No Spectre effect needed.
-void R_DrawSpan(draw_span_vars_t *dsvars);
-
 
 void R_InitBuffer();
 
