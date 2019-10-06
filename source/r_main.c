@@ -78,62 +78,8 @@ const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACB
 const angle_t clipangle = 537395200; //xtoviewangle[0];
 
 
-//
-// R_PointOnSide
-// Traverse BSP (sub) tree,
-//  check point against partition plane.
-// Returns side 0 (front) or 1 (back).
-//
-// killough 5/2/98: reformatted
-//
 
-PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
-{
-    fixed_t dx = (fixed_t)node->dx << FRACBITS;
-    fixed_t dy = (fixed_t)node->dy << FRACBITS;
 
-    fixed_t nx = (fixed_t)node->x << FRACBITS;
-    fixed_t ny = (fixed_t)node->y << FRACBITS;
-
-    if (!dx)
-        return x <= nx ? node->dy > 0 : node->dy < 0;
-
-    if (!dy)
-        return y <= ny ? node->dx < 0 : node->dx > 0;
-
-    x -= nx;
-    y -= ny;
-
-    // Try to quickly decide by looking at sign bits.
-    if ((dy ^ dx ^ x ^ y) < 0)
-        return (dy ^ x) < 0;  // (left is negative)
-
-    return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
-}
-
-// killough 5/2/98: reformatted
-
-PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
-{
-  fixed_t lx = line->v1->x;
-  fixed_t ly = line->v1->y;
-  fixed_t ldx = line->v2->x - lx;
-  fixed_t ldy = line->v2->y - ly;
-
-  if (!ldx)
-    return x <= lx ? ldy > 0 : ldy < 0;
-
-  if (!ldy)
-    return y <= ly ? ldx < 0 : ldx > 0;
-
-  x -= lx;
-  y -= ly;
-
-  // Try to quickly decide by looking at sign bits.
-  if ((ldy ^ ldx ^ x ^ y) < 0)
-    return (ldy ^ x) < 0;          // (left is negative)
-  return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
-}
 
 angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
@@ -151,52 +97,6 @@ angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
     0;
 }
 
-//
-// R_InitTextureMapping
-//
-// killough 5/2/98: reformatted
-
-static void R_InitTextureMapping (void)
-{
-
-}
-
-//
-// R_InitLightTables
-//
-
-#define DISTMAP 2
-
-static void R_InitLightTables (void)
-{
-
-}
-
-//
-// R_SetViewSize
-// Do not really change anything here,
-//  because it might be in the middle of a refresh.
-// The change will take effect next refresh.
-//
-
-
-void R_SetViewSize(int blocks)
-{
-  _g->setsizeneeded = true;
-}
-
-//
-// R_ExecuteSetViewSize
-//
-
-void R_ExecuteSetViewSize (void)
-{
-  _g->setsizeneeded = false;
-
-  R_InitBuffer ();
-
-  R_InitTextureMapping();
-}
 
 //
 // R_Init
@@ -211,13 +111,12 @@ void R_Init (void)
   R_LoadTrigTables();
   lprintf(LO_INFO, "R_InitData\n");
   R_InitData();
-  R_SetViewSize(10);
   lprintf(LO_INFO, "R_Init: R_InitPlanes\n");
   R_InitPlanes();
-  lprintf(LO_INFO, "R_InitLightTables\n");
-  R_InitLightTables();
   lprintf(LO_INFO, "R_InitSkyMap\n");
   R_InitSkyMap();
+
+  R_InitBuffer();
 }
 
 //

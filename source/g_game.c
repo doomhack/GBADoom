@@ -1127,9 +1127,6 @@ void G_DoLoadGame(void)
   // done
   Z_Free (_g->savebuffer);
 
-  if (_g->setsizeneeded)
-    R_ExecuteSetViewSize ();
-
   /* killough 12/98: support -recordfrom and -loadgame -playdemo */
   if (!_g->command_loadgame)
     _g->singledemo = false;  /* Clear singledemo flag if loading from menu */

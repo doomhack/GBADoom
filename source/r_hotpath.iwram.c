@@ -87,7 +87,9 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 
   if (den < 512)
     return SLOPERANGE;
-  ans = (num<<3)/(den>>8);
+
+  ans = IDiv32(num<<3, den>>8);
+
   return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
@@ -497,6 +499,31 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 }
 
 
+// killough 5/2/98: reformatted
+
+static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
+{
+  fixed_t lx = line->v1->x;
+  fixed_t ly = line->v1->y;
+  fixed_t ldx = line->v2->x - lx;
+  fixed_t ldy = line->v2->y - ly;
+
+  if (!ldx)
+    return x <= lx ? ldy > 0 : ldy < 0;
+
+  if (!ldy)
+    return y <= ly ? ldx < 0 : ldx > 0;
+
+  x -= lx;
+  y -= ly;
+
+  // Try to quickly decide by looking at sign bits.
+  if ((ldy ^ ldx ^ x ^ y) < 0)
+    return (ldy ^ x) < 0;          // (left is negative)
+  return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
+}
+
+
 //
 // R_DrawSprite
 //
@@ -841,6 +868,7 @@ void R_DrawSpan(draw_span_vars_t *dsvars)
         //  re-index using light/colormap.
         unsigned short color = colormap[source[spot]];
 
+
         *dest++ = (color | (color << 8));
         position += step;
 
@@ -1181,13 +1209,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (x1 > SCREENWIDTH || x2 < 0)
         return;
 
-    // killough 4/9/98: clip things which are out of view due to height
-    // e6y: fix of hanging decoration disappearing in Batman Doom MAP02
-    // centeryfrac -> viewheightfrac
-    if (fz  > _g->viewz + FixedDiv(viewheightfrac, xscale) ||
-            gzt < _g->viewz - FixedDiv(viewheightfrac-viewheight, xscale))
-        return;
-
     // store information in a vissprite
     vis = R_NewVisSprite ();
 
@@ -1390,6 +1411,7 @@ void R_DrawColumn (draw_column_vars_t *dcvars)
         // Re-map color indices from wall texture column
         //  using a lighting/special effects LUT.
         unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
+
 
         *dest = (color | (color << 8));
 
@@ -1778,7 +1800,8 @@ static void R_StoreWallRange(const int start, const int stop)
     if (stop > start)
     {
         _g->ds_p->scale2 = R_ScaleFromGlobalAngle (_g->viewangle + xtoviewangle[stop]);
-        _g->ds_p->scalestep = _g->rw_scalestep = (_g->ds_p->scale2-_g->rw_scale) / (stop-start);
+        //_g->ds_p->scalestep = _g->rw_scalestep = (_g->ds_p->scale2-_g->rw_scale) / (stop-start);
+        _g->ds_p->scalestep = _g->rw_scalestep = IDiv32(_g->ds_p->scale2-_g->rw_scale, stop-start);
     }
     else
         _g->ds_p->scale2 = _g->ds_p->scale1;
@@ -2399,6 +2422,39 @@ static boolean R_RenderBspSubsector(int bspnum)
     return false;
 }
 
+//
+// R_PointOnSide
+// Traverse BSP (sub) tree,
+//  check point against partition plane.
+// Returns side 0 (front) or 1 (back).
+//
+// killough 5/2/98: reformatted
+//
+
+PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
+{
+    fixed_t dx = (fixed_t)node->dx << FRACBITS;
+    fixed_t dy = (fixed_t)node->dy << FRACBITS;
+
+    fixed_t nx = (fixed_t)node->x << FRACBITS;
+    fixed_t ny = (fixed_t)node->y << FRACBITS;
+
+    if (!dx)
+        return x <= nx ? node->dy > 0 : node->dy < 0;
+
+    if (!dy)
+        return y <= ny ? node->dx < 0 : node->dx > 0;
+
+    x -= nx;
+    y -= ny;
+
+    // Try to quickly decide by looking at sign bits.
+    if ((dy ^ dx ^ x ^ y) < 0)
+        return (dy ^ x) < 0;  // (left is negative)
+
+    return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
+}
+
 
 // RenderBSPNode
 // Renders all subsectors below a given node,
@@ -2467,4 +2523,3 @@ void R_RenderBSPNode(int bspnum)
         bspnum = bsp->children[side^1];
     }
 }
-

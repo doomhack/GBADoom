@@ -85,7 +85,6 @@ extern const angle_t clipangle;
 //
 
 int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node);
-int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line);
 angle_t R_PointToAngle(fixed_t x, fixed_t y);
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y);
@@ -96,9 +95,6 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y);
 
 void R_RenderPlayerView(player_t *player);   // Called by G_Drawer.
 void R_Init(void);                           // Called by startup code.
-void R_SetViewSize(int blocks);              // Called by M_Responder.
-void R_ExecuteSetViewSize(void);             // cph - called by D_Display to complete a view resize
-
 void R_SetupFrame (player_t *player);
 
 

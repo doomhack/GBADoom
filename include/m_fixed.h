@@ -37,6 +37,10 @@
 #include "config.h"
 #include "doomtype.h"
 
+#ifdef __arm__
+#include <gba_systemcalls.h>
+#endif
+
 /*
  * Fixed point, 32bit as 16.16.
  */
@@ -104,5 +108,17 @@ inline static fixed_t CONSTFUNC FixedMod(fixed_t a, fixed_t b)
   } else
     return (a & (b-1));
 }
+
+
+
+inline static int CONSTFUNC IDiv32(int num, int den)
+{
+#ifndef __arm__
+    return num/den;
+#else
+    return Div(num, den);
+#endif
+}
+
 
 #endif

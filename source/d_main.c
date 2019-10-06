@@ -198,12 +198,6 @@ void D_Display (void)
 
     HU_Erase();
 
-    if (_g->setsizeneeded)
-    {               // change the view size if needed
-      R_ExecuteSetViewSize();
-      _g->oldgamestate = -1;            // force background redraw
-    }
-
     // Work out if the player view is visible, and if there is a border
     viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
 

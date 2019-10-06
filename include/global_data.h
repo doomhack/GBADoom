@@ -654,7 +654,6 @@ const lighttable_t *colormaps;
 
 int extralight;                           // bumped light from gun blasts
 
-boolean setsizeneeded;
 
 //******************************************************************************
 //r_patch.c
