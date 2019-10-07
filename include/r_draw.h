@@ -78,6 +78,8 @@ typedef struct
   int   byte_pitch;
 } draw_vars_t;
 
+extern draw_vars_t drawvars;
+
 
 typedef void (*R_DrawColumn_f)(draw_column_vars_t *dcvars);
 

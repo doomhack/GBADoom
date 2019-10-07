@@ -244,7 +244,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             {
                 int count = (dc_yh - dc_yl);
 
-                const byte *colormap = _g->colormaps;
+                const byte *colormap = colormaps;
 
                 byte* dest = byte_topleft + (dc_yl*byte_pitch) + dc_x;
 

@@ -282,7 +282,7 @@ static void R_InitSpriteLumps(void)
 void R_InitColormaps (void)
 {
     int lump = W_GetNumForName("COLORMAP");
-    _g->colormaps = W_CacheLumpNum(lump);
+    colormaps = W_CacheLumpNum(lump);
 }
 
 // killough 4/4/98: get colormap number from name

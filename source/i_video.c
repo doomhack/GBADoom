@@ -87,8 +87,8 @@ boolean I_StartDisplay(void)
     _g->screens[0].data = I_GetBackBuffer();
 
     // Same with base row offset.
-    _g->drawvars.byte_topleft = _g->screens[0].data;
-    _g->drawvars.byte_pitch = _g->screens[0].byte_pitch;
+    drawvars.byte_topleft = _g->screens[0].data;
+    drawvars.byte_pitch = _g->screens[0].byte_pitch;
 
     return true;
 }

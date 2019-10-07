@@ -184,7 +184,7 @@ static boolean P_CrossBSPNode(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))
     {
-      register const mapnode_t *bsp = _g->nodes + bspnum;
+      register const mapnode_t *bsp = nodes + bspnum;
 
       divline_t dl;
       dl.x = ((fixed_t)bsp->x << FRACBITS);
@@ -260,5 +260,5 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
     _g->los.maxz = INT_MAX; _g->los.minz = INT_MIN;
 
   // the head node is the last node output
-  return P_CrossBSPNode(_g->numnodes-1);
+  return P_CrossBSPNode(numnodes-1);
 }

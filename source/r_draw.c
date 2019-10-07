@@ -78,7 +78,7 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 	dcvars->x = dcvars->yl = dcvars->yh = dcvars->z = 0;
 	dcvars->iscale = dcvars->texturemid = 0;
 	dcvars->source = NULL;
-    dcvars->colormap = _g->colormaps;
+    dcvars->colormap = colormaps;
 	dcvars->translation = NULL;
 }
 
@@ -116,7 +116,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
     if (dc_yl >= dc_yh)
 		return;
     
-    dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
+    dest = drawvars.byte_topleft + (dcvars->yl*drawvars.byte_pitch) + dcvars->x;
 
 
     // Looks familiar.
@@ -136,7 +136,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
         unsigned char srcpxl = dest[fuzzoffset[_g->fuzzpos]] & 0xff;
 
 
-        unsigned short color = _g->fullcolormap[6*256+srcpxl];
+        unsigned short color = fullcolormap[6*256+srcpxl];
 
         *dest = (color | (color << 8));
 
@@ -170,7 +170,7 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 	const byte *colormap = dcvars->colormap;
 	const byte *translation = dcvars->translation;
 
-    unsigned short* dest = _g->drawvars.byte_topleft + (dcvars->yl*_g->drawvars.byte_pitch) + dcvars->x;
+    unsigned short* dest = drawvars.byte_topleft + (dcvars->yl*drawvars.byte_pitch) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
     fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
@@ -213,6 +213,6 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 void R_InitBuffer()
 {
 	// Same with base row offset.
-    _g->drawvars.byte_topleft = _g->screens[0].data;
-    _g->drawvars.byte_pitch = _g->screens[0].byte_pitch;
+    drawvars.byte_topleft = _g->screens[0].data;
+    drawvars.byte_pitch = _g->screens[0].byte_pitch;
 }

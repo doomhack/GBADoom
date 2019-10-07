@@ -123,14 +123,14 @@ void R_Init (void)
 
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 {
-  int nodenum = _g->numnodes-1;
+  int nodenum = numnodes-1;
 
   // special case for trivial maps (single subsector, no nodes)
-  if (_g->numnodes == 0)
+  if (numnodes == 0)
     return _g->subsectors;
 
   while (!(nodenum & NF_SUBSECTOR))
-    nodenum = _g->nodes[nodenum].children[R_PointOnSide(x, y, _g->nodes+nodenum)];
+    nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
   return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
@@ -142,25 +142,25 @@ void R_SetupFrame (player_t *player)
 {
   _g->viewplayer = player;
 
-  _g->viewx = player->mo->x;
-  _g->viewy = player->mo->y;
-  _g->viewz = player->viewz;
-  _g->viewangle = player->mo->angle;
+  viewx = player->mo->x;
+  viewy = player->mo->y;
+  viewz = player->viewz;
+  viewangle = player->mo->angle;
 
-  _g->extralight = player->extralight;
+  extralight = player->extralight;
 
-  _g->viewsin = finesine[_g->viewangle>>ANGLETOFINESHIFT];
-  _g->viewcos = finecosine[_g->viewangle>>ANGLETOFINESHIFT];
+  _g->viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
+  _g->viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
-  _g->fullcolormap = &_g->colormaps[0];
+  fullcolormap = &colormaps[0];
 
   if (player->fixedcolormap)
     {
-      _g->fixedcolormap = _g->fullcolormap   // killough 3/20/98: use fullcolormap
+      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
         + player->fixedcolormap*256*sizeof(lighttable_t);
     }
   else
-    _g->fixedcolormap = 0;
+    fixedcolormap = 0;
 
   _g->validcount++;
 }
@@ -179,7 +179,7 @@ void R_RenderPlayerView (player_t* player)
     R_ClearSprites ();
 
     // The head node is the last node output.
-    R_RenderBSPNode (_g->numnodes-1);
+    R_RenderBSPNode (numnodes-1);
 
     R_DrawPlanes ();
 

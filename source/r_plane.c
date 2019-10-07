@@ -100,13 +100,13 @@ void R_ClearPlanes(void)
 
   // opening / clipping determination
   for (i=0 ; i<SCREENWIDTH ; i++)
-    _g->floorclip[i] = viewheight, _g->ceilingclip[i] = -1;
+    floorclip[i] = viewheight, ceilingclip[i] = -1;
 
   for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
     for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
       _g->freehead = &(*_g->freehead)->next;
 
-  _g->lastopening = _g->openings;
+  lastopening = openings;
 
   // scale will be unit scale at SCREENWIDTH/2 distance
   _g->basexscale = FixedDiv (_g->viewsin,projection);

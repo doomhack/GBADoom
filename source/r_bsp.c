@@ -49,12 +49,12 @@
 
 void R_ClearDrawSegs(void)
 {
-  _g->ds_p = _g->drawsegs;
+  ds_p = drawsegs;
 }
 
 
 
 void R_ClearClipSegs (void)
 {
-  memset(_g->solidcol, 0, SCREENWIDTH);
+  memset(solidcol, 0, SCREENWIDTH);
 }

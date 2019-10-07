@@ -497,8 +497,7 @@ sector_t *sectors;
 int      numsubsectors;
 subsector_t *subsectors;
 
-int      numnodes;
-const mapnode_t   *nodes;
+
 
 int      numlines;
 line_t   *lines;
@@ -593,26 +592,6 @@ boolean onground; // whether player is on ground or in air
 //r_bsp.c
 //******************************************************************************
 
-seg_t     *curline;
-side_t    *sidedef;
-line_t    *linedef;
-sector_t  *frontsector;
-sector_t  *backsector;
-drawseg_t *ds_p;
-
-// killough 4/7/98: indicates doors closed wrt automap bugfix:
-// cph - replaced by linedef rendering flags - int      doorclosed;
-
-// killough: New code which removes 2s linedef limit
-drawseg_t *drawsegs;
-unsigned  maxdrawsegs;
-
-// CPhipps -
-// Instead of clipsegs, let's try using an array with one entry for each column,
-// indicating whether it's blocked by a solid wall yet or not.
-
-byte solidcol[MAX_SCREENWIDTH];
-
 
 //******************************************************************************
 //r_data.c
@@ -631,7 +610,6 @@ short       *texturetranslation;
 //r_draw.c
 //******************************************************************************
 
-draw_vars_t drawvars;
 
 int fuzzpos;
 
@@ -640,19 +618,14 @@ int fuzzpos;
 //******************************************************************************
 
 int validcount;         // increment every time a check is made
-const lighttable_t* fixedcolormap;
-// proff 11/06/98: Added for high-res
-fixed_t  viewx, viewy, viewz;
-angle_t  viewangle;
+
+
+
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 
-const lighttable_t *fullcolormap;
-const lighttable_t *colormaps;
-
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
-int extralight;                           // bumped light from gun blasts
 
 
 //******************************************************************************
@@ -667,16 +640,13 @@ int extralight;                           // bumped light from gun blasts
 visplane_t *visplanes[MAXVISPLANES];   // killough
 visplane_t *freetail;                  // killough
 visplane_t **freehead;     // killough
-visplane_t *floorplane, *ceilingplane;
 
-size_t maxopenings;
-int *openings,*lastopening; // dropoff overflow
+
 
 // Clip values are the solid pixel bounding the range.
 //  floorclip starts out SCREENHEIGHT
 //  ceilingclip starts out -1
 
-int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
 
 // spanstart holds the start of a plane span; initialized to 0 at start
 
@@ -698,35 +668,14 @@ fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
 //r_segs.c
 //******************************************************************************
 
-
-// True if any of the segs textures might be visible.
-boolean  segtextured;
-boolean  markfloor;      // False if the back side is the same plane.
-boolean  markceiling;
-boolean  maskedtexture;
-int      toptexture;
-int      bottomtexture;
-int      midtexture;
-
-angle_t         rw_normalangle; // angle to line origin
-int             rw_angle1;
-fixed_t         rw_distance;
-
 //
 // regular wall
 //
-int      rw_x;
-int      rw_stopx;
+
 angle_t  rw_centerangle;
 fixed_t  rw_offset;
-fixed_t  rw_scale;
-fixed_t  rw_scalestep;
-fixed_t  rw_midtexturemid;
-fixed_t  rw_toptexturemid;
-fixed_t  rw_bottomtexturemid;
 int      rw_lightlevel;
-int      worldtop;
-int      worldbottom;
+
 int      worldhigh;
 int      worldlow;
 fixed_t  pixhigh;

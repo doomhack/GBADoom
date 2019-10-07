@@ -80,6 +80,39 @@ extern const fixed_t pspriteyscale;
 
 extern const angle_t clipangle;
 
+
+
+//Global vars.
+
+extern int numnodes;
+extern const mapnode_t *nodes;
+
+extern fixed_t  viewx, viewy, viewz;
+
+extern angle_t  viewangle;
+
+extern byte solidcol[MAX_SCREENWIDTH];
+
+extern seg_t     *curline;
+extern side_t    *sidedef;
+extern line_t    *linedef;
+extern sector_t  *frontsector;
+extern sector_t  *backsector;
+extern drawseg_t *ds_p;
+
+extern drawseg_t *drawsegs;
+
+extern int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH];
+
+extern int *openings,*lastopening; // dropoff overflow
+
+extern const lighttable_t *fullcolormap;
+extern const lighttable_t *colormaps;
+extern const lighttable_t* fixedcolormap;
+
+extern int extralight;                           // bumped light from gun blasts
+
+
 //
 // Utility functions.
 //
