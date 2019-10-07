@@ -389,12 +389,12 @@ static void G_DoLoadLevel (void)
 
   _g->gamestate = GS_LEVEL;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    {
-      if (_g->playeringame[i] && _g->players[i].playerstate == PST_DEAD)
-        _g->players[i].playerstate = PST_REBORN;
-      memset (_g->players[i].frags,0,sizeof(_g->players[i].frags));
-    }
+
+  if (_g->playeringame && _g->players[0].playerstate == PST_DEAD)
+    _g->players[0].playerstate = PST_REBORN;
+
+  memset (_g->players[0].frags,0,sizeof(_g->players[0].frags));
+
 
   // initialize the msecnode_t freelist.                     phares 3/25/98
   // any nodes in the freelist are gone by now, cleared
@@ -494,166 +494,160 @@ boolean G_Responder (event_t* ev)
 // Make ticcmd_ts for the players.
 //
 
-void G_Ticker (void)
-{
-  int i;
+  void G_Ticker (void)
+  {
+      int i;
 
-  P_MapStart();
-  // do player reborns if needed
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    if (_g->playeringame[i] && _g->players[i].playerstate == PST_REBORN)
-      G_DoReborn (i);
-  P_MapEnd();
+      P_MapStart();
+      if(_g->playeringame && _g->players[0].playerstate == PST_REBORN)
+          G_DoReborn (0);
+      P_MapEnd();
 
-  // do things to change the game state
-  while (_g->gameaction != ga_nothing)
-    {
-      switch (_g->gameaction)
-        {
-        case ga_loadlevel:
-    // force players to be initialized on level reload
-    for (i=0 ; i<MAXPLAYERS ; i++)
-      _g->players[i].playerstate = PST_REBORN;
-          G_DoLoadLevel ();
+      // do things to change the game state
+      while (_g->gameaction != ga_nothing)
+      {
+          switch (_g->gameaction)
+          {
+          case ga_loadlevel:
+              // force players to be initialized on level reload
+              for (i=0 ; i<MAXPLAYERS ; i++)
+                  _g->players[i].playerstate = PST_REBORN;
+              G_DoLoadLevel ();
+              break;
+          case ga_newgame:
+              G_DoNewGame ();
+              break;
+          case ga_loadgame:
+              G_DoLoadGame ();
+              break;
+          case ga_savegame:
+              G_DoSaveGame (false);
+              break;
+          case ga_playdemo:
+              G_DoPlayDemo ();
+              break;
+          case ga_completed:
+              G_DoCompleted ();
+              break;
+          case ga_victory:
+              F_StartFinale ();
+              break;
+          case ga_worlddone:
+              G_DoWorldDone ();
+              break;
+          case ga_nothing:
+              break;
+          }
+      }
+
+      if (_g->paused & 2 || (!_g->demoplayback && _g->menuactive))
+          _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
+      else {
+          // get commands, check consistancy, and build new consistancy check
+          int buf = (_g->gametic);
+
+          if (_g->playeringame)
+          {
+              ticcmd_t *cmd = &_g->players[0].cmd;
+
+              memcpy(cmd, &_g->netcmds[0], sizeof *cmd);
+
+              if (_g->demoplayback)
+                  G_ReadDemoTiccmd (cmd);
+          }
+
+
+          if (_g->playeringame)
+          {
+              if (_g->players[0].cmd.buttons & BT_SPECIAL)
+              {
+                  switch (_g->players[0].cmd.buttons & BT_SPECIALMASK)
+                  {
+                  case BTS_PAUSE:
+                      _g->paused ^= 1;
+                      if (_g->paused)
+                          S_PauseSound ();
+                      else
+                          S_ResumeSound ();
+                      break;
+
+                  case BTS_SAVEGAME:
+                      if (!_g->savedescription[0])
+                          strcpy(_g->savedescription, "NET GAME");
+                      _g->savegameslot =
+                              (_g->players[0].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
+                      _g->gameaction = ga_savegame;
+                      break;
+
+                      // CPhipps - remote loadgame request
+                  case BTS_LOADGAME:
+                      _g->savegameslot =
+                              (_g->players[0].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
+                      _g->gameaction = ga_loadgame;
+                      _g->command_loadgame = false;
+                      break;
+
+                      // CPhipps - Restart the level
+                  case BTS_RESTARTLEVEL:
+                      if (_g->demoplayback)
+                          break;     // CPhipps - Ignore in demos or old games
+                      _g->gameaction = ga_loadlevel;
+                      break;
+                  }
+                  _g->players[0].cmd.buttons = 0;
+              }
+          }
+      }
+
+      // cph - if the gamestate changed, we may need to clean up the old gamestate
+      if (_g->gamestate != _g->prevgamestate) {
+          switch (_g->prevgamestate) {
+          case GS_LEVEL:
+              // This causes crashes at level end - Neil Stevens
+              // The crash is because the sounds aren't stopped before freeing them
+              // the following is a possible fix
+              // This fix does avoid the crash wowever, with this fix in, the exit
+              // switch sound is cut off
+              // S_Stop();
+              // Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
+              break;
+          case GS_INTERMISSION:
+              WI_End();
+          default:
+              break;
+          }
+          _g->prevgamestate = _g->gamestate;
+      }
+
+      // e6y
+      // do nothing if a pause has been pressed during playback
+      // pausing during intermission can cause desynchs without that
+      if (_g->paused & 2 && _g->gamestate != GS_LEVEL)
+          return;
+
+      // do main actions
+      switch (_g->gamestate)
+      {
+      case GS_LEVEL:
+          P_Ticker ();
+          ST_Ticker ();
+          AM_Ticker ();
+          HU_Ticker ();
           break;
-        case ga_newgame:
-          G_DoNewGame ();
-          break;
-        case ga_loadgame:
-          G_DoLoadGame ();
-          break;
-        case ga_savegame:
-          G_DoSaveGame (false);
-          break;
-        case ga_playdemo:
-          G_DoPlayDemo ();
-          break;
-        case ga_completed:
-          G_DoCompleted ();
-          break;
-        case ga_victory:
-          F_StartFinale ();
-          break;
-        case ga_worlddone:
-          G_DoWorldDone ();
-          break;
-        case ga_nothing:
-          break;
-        }
-    }
 
-  if (_g->paused & 2 || (!_g->demoplayback && _g->menuactive))
-    _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
-  else {
-    // get commands, check consistancy, and build new consistancy check
-    int buf = (_g->gametic);
+      case GS_INTERMISSION:
+          WI_Ticker ();
+          break;
 
-    for (i=0 ; i<MAXPLAYERS ; i++) {
-      if (_g->playeringame[i])
-        {
-          ticcmd_t *cmd = &_g->players[i].cmd;
+      case GS_FINALE:
+          F_Ticker ();
+          break;
 
-          memcpy(cmd, &_g->netcmds[i], sizeof *cmd);
-
-          if (_g->demoplayback)
-            G_ReadDemoTiccmd (cmd);
-        }
-    }
-
-    // check for special buttons
-    for (i=0; i<MAXPLAYERS; i++) {
-      if (_g->playeringame[i])
-        {
-          if (_g->players[i].cmd.buttons & BT_SPECIAL)
-            {
-              switch (_g->players[i].cmd.buttons & BT_SPECIALMASK)
-                {
-                case BTS_PAUSE:
-                  _g->paused ^= 1;
-                  if (_g->paused)
-                    S_PauseSound ();
-                  else
-                    S_ResumeSound ();
-                  break;
-
-                case BTS_SAVEGAME:
-                  if (!_g->savedescription[0])
-                    strcpy(_g->savedescription, "NET GAME");
-                  _g->savegameslot =
-                    (_g->players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-                  _g->gameaction = ga_savegame;
-                  break;
-
-      // CPhipps - remote loadgame request
-                case BTS_LOADGAME:
-                  _g->savegameslot =
-                    (_g->players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-                  _g->gameaction = ga_loadgame;
-                    _g->command_loadgame = false;
-                  break;
-
-      // CPhipps - Restart the level
-    case BTS_RESTARTLEVEL:
-                  if (_g->demoplayback)
-                    break;     // CPhipps - Ignore in demos or old games
-      _g->gameaction = ga_loadlevel;
-      break;
-                }
-        _g->players[i].cmd.buttons = 0;
-            }
-        }
-    }
+      case GS_DEMOSCREEN:
+          D_PageTicker ();
+          break;
+      }
   }
-
-  // cph - if the gamestate changed, we may need to clean up the old gamestate
-  if (_g->gamestate != _g->prevgamestate) {
-    switch (_g->prevgamestate) {
-    case GS_LEVEL:
-      // This causes crashes at level end - Neil Stevens
-      // The crash is because the sounds aren't stopped before freeing them
-      // the following is a possible fix
-      // This fix does avoid the crash wowever, with this fix in, the exit
-      // switch sound is cut off
-      // S_Stop();
-      // Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
-      break;
-    case GS_INTERMISSION:
-      WI_End();
-    default:
-      break;
-    }
-    _g->prevgamestate = _g->gamestate;
-  }
-
-  // e6y
-  // do nothing if a pause has been pressed during playback
-  // pausing during intermission can cause desynchs without that
-  if (_g->paused & 2 && _g->gamestate != GS_LEVEL)
-    return;
-
-  // do main actions
-  switch (_g->gamestate)
-    {
-    case GS_LEVEL:
-      P_Ticker ();
-      ST_Ticker ();
-      AM_Ticker ();
-      HU_Ticker ();
-      break;
-
-    case GS_INTERMISSION:
-      WI_Ticker ();
-      break;
-
-    case GS_FINALE:
-      F_Ticker ();
-      break;
-
-    case GS_DEMOSCREEN:
-      D_PageTicker ();
-      break;
-    }
-}
 
 //
 // PLAYER STRUCTURE FUNCTIONS
@@ -849,13 +843,10 @@ void G_SecretExitLevel (void)
 
 void G_DoCompleted (void)
 {
-  int i;
-
   _g->gameaction = ga_nothing;
 
-  for (i=0; i<MAXPLAYERS; i++)
-    if (_g->playeringame[i])
-      G_PlayerFinishLevel(i);        // take away cards and stuff
+    if (_g->playeringame)
+      G_PlayerFinishLevel(0);        // take away cards and stuff
 
   if (_g->automapmode & am_active)
     AM_Stop();
@@ -865,8 +856,7 @@ void G_DoCompleted (void)
       {
   // cph - Remove ExM8 special case, so it gets summary screen displayed
       case 9:
-        for (i=0 ; i<MAXPLAYERS ; i++)
-          _g->players[i].didsecret = true;
+          _g->players[0].didsecret = true;
         break;
       }
 
@@ -935,16 +925,14 @@ void G_DoCompleted (void)
 
   _g->wminfo.pnum = consoleplayer;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    {
-      _g->wminfo.plyr[i].in = _g->playeringame[i];
-      _g->wminfo.plyr[i].skills = _g->players[i].killcount;
-      _g->wminfo.plyr[i].sitems = _g->players[i].itemcount;
-      _g->wminfo.plyr[i].ssecret = _g->players[i].secretcount;
-      _g->wminfo.plyr[i].stime = _g->leveltime;
-      memcpy (_g->wminfo.plyr[i].frags, _g->players[i].frags,
-              sizeof(_g->wminfo.plyr[i].frags));
-    }
+
+      _g->wminfo.plyr[0].in = _g->playeringame;
+      _g->wminfo.plyr[0].skills = _g->players[0].killcount;
+      _g->wminfo.plyr[0].sitems = _g->players[0].itemcount;
+      _g->wminfo.plyr[0].ssecret = _g->players[0].secretcount;
+      _g->wminfo.plyr[0].stime = _g->leveltime;
+      memcpy (_g->wminfo.plyr[0].frags, _g->players[0].frags,
+              sizeof(_g->wminfo.plyr[0].frags));
 
   /* cph - modified so that only whole seconds are added to the totalleveltimes
    *  value; so our total is compatible with the "naive" total of just adding
@@ -1084,8 +1072,7 @@ void G_DoLoadGame(void)
   _g->gameepisode = *_g->save_p++;
   _g->gamemap = *_g->save_p++;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    _g->playeringame[i] = *_g->save_p++;
+    _g->playeringame = *_g->save_p++;
   _g->save_p += MIN_MAXPLAYERS-MAXPLAYERS;         // killough 2/28/98
 
   _g->idmusnum = *_g->save_p++;           // jff 3/17/98 restore idmus music
@@ -1218,8 +1205,7 @@ static void G_DoSaveGame (boolean menu)
   *_g->save_p++ = _g->gameepisode;
   *_g->save_p++ = _g->gamemap;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    *_g->save_p++ = _g->playeringame[i];
+    *_g->save_p++ = _g->playeringame;
 
   for (;i<MIN_MAXPLAYERS;i++)         // killough 2/28/98
     *_g->save_p++ = 0;
@@ -1747,8 +1733,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
       if (CheckForOverrun(header_p, demo_p, size, MAXPLAYERS, failonerror))
         return NULL;
 
-      for (i=0 ; i < MAXPLAYERS; i++)
-        _g->playeringame[i] = *demo_p++;
+        _g->playeringame = *demo_p++;
       demo_p += MIN_MAXPLAYERS - MAXPLAYERS;
 
 

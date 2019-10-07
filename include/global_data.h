@@ -212,7 +212,7 @@ boolean command_loadgame;
 
 boolean         usergame;      // ok to save / end game
 boolean         timingdemo;    // if true, exit with report on completion
-boolean         playeringame[MAXPLAYERS];
+boolean         playeringame;
 boolean         demoplayback;
 boolean         singledemo;           // quit after playing a demo from cmdline
 boolean         haswolflevels;// jff 4/18/98 wolf levels present
@@ -600,10 +600,8 @@ boolean onground; // whether player is on ground or in air
 int       firstflat, lastflat, numflats;
 int       firstspritelump, lastspritelump, numspritelumps;
 int       numtextures;
-texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
-fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
-short       *flattranslation;             // for global animation
-short       *texturetranslation;
+
+
 
 
 //******************************************************************************
@@ -621,7 +619,6 @@ int validcount;         // increment every time a check is made
 
 
 
-fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 
 // killough 3/20/98, 4/4/98: end dynamic colormaps
@@ -655,14 +652,11 @@ int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 //
 // texture mapping
 //
-
-const unsigned short *planezlight;
 fixed_t planeheight;
 
 // killough 2/8/98: make variables static
 
-fixed_t basexscale, baseyscale;
-fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
+
 
 //******************************************************************************
 //r_segs.c
@@ -672,21 +666,9 @@ fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
 // regular wall
 //
 
-angle_t  rw_centerangle;
-fixed_t  rw_offset;
-int      rw_lightlevel;
 
-int      worldhigh;
-int      worldlow;
-fixed_t  pixhigh;
-fixed_t  pixlow;
-fixed_t  pixhighstep;
-fixed_t  pixlowstep;
-fixed_t  topfrac;
-fixed_t  topstep;
-fixed_t  bottomfrac;
-fixed_t  bottomstep;
-int      *maskedtexturecol; // dropoff overflow
+
+
 
 int didsolidcol; /* True if at least one column was marked solid */
 
@@ -717,10 +699,7 @@ int maxframe;
 vissprite_t *vissprites, **vissprite_ptrs;  // killough
 size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 
-int   *mfloorclip;   // dropoff overflow
-int   *mceilingclip; // dropoff overflow
-fixed_t spryscale;
-fixed_t sprtopscreen;
+
 
 //******************************************************************************
 //s_sound.c

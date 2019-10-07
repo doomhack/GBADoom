@@ -112,6 +112,15 @@ extern const lighttable_t* fixedcolormap;
 
 extern int extralight;                           // bumped light from gun blasts
 
+extern texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
+extern fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
+
+extern short       *flattranslation;             // for global animation
+extern short       *texturetranslation;
+
+extern fixed_t basexscale, baseyscale;
+
+extern fixed_t  viewcos, viewsin;
 
 //
 // Utility functions.

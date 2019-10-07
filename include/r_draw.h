@@ -46,7 +46,6 @@ typedef struct {
   int                 x;
   int                 yl;
   int                 yh;
-  fixed_t             z; // the current column z coord
   fixed_t             iscale;
   fixed_t             texturemid;
 
@@ -63,7 +62,7 @@ typedef struct {
   int                 y;
   int                 x1;
   int                 x2;
-  fixed_t             z; // the current span z coord
+  //fixed_t             z; // the current span z coord
   fixed_t             xfrac;
   fixed_t             yfrac;
   fixed_t             xstep;

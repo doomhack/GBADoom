@@ -149,8 +149,8 @@ void R_SetupFrame (player_t *player)
 
   extralight = player->extralight;
 
-  _g->viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
-  _g->viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
+  viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
+  viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
   fullcolormap = &colormaps[0];
 

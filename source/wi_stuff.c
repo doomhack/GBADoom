@@ -749,16 +749,6 @@ int WI_fragSum(int playernum)
   int   i;
   int   frags = 0;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-  {
-    if (_g->playeringame[i]  // is this player playing?
-       && i!=playernum) // and it's not the player we're calculating
-    {
-      frags += _g->plrs[playernum].frags[i];
-    }
-  }
-
-
   // JDC hack - negative frags.
   frags -= _g->plrs[playernum].frags[playernum];
 
@@ -963,12 +953,9 @@ void WI_drawStats(void)
 void WI_checkForAccelerate(void)
 {
   int   i;
-  player_t  *player;
+  player_t  *player = _g->players;
 
-  // check for button presses to skip delays
-  for (i=0, player = _g->players ; i<MAXPLAYERS ; i++, player++)
-  {
-    if (_g->playeringame[i])
+    if (_g->playeringame)
     {
       if (player->cmd.buttons & BT_ATTACK)
       {
@@ -988,7 +975,6 @@ void WI_checkForAccelerate(void)
       else
         player->usedown = false;
     }
-  }
 }
 
 // ====================================================================

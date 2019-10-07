@@ -769,10 +769,10 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
 
   // not playing?
 
-  if (!_g->playeringame[n])
+  if (!_g->playeringame)
     return;
 
-  p = &_g->players[n];
+  p = &_g->players[0];
 
   if (p->playerstate == PST_REBORN)
     G_PlayerReborn (mthing->type-1);

@@ -75,7 +75,7 @@ static const int fuzzoffset[FUZZTABLE] =
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 {
-	dcvars->x = dcvars->yl = dcvars->yh = dcvars->z = 0;
+    dcvars->x = dcvars->yl = dcvars->yh = 0;
 	dcvars->iscale = dcvars->texturemid = 0;
 	dcvars->source = NULL;
     dcvars->colormap = colormaps;

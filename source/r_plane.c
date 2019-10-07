@@ -109,8 +109,8 @@ void R_ClearPlanes(void)
   lastopening = openings;
 
   // scale will be unit scale at SCREENWIDTH/2 distance
-  _g->basexscale = FixedDiv (_g->viewsin,projection);
-  _g->baseyscale = FixedDiv (_g->viewcos,projection);
+  basexscale = FixedDiv (viewsin,projection);
+  baseyscale = FixedDiv (viewcos,projection);
 }
 
 

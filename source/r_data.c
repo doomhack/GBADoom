@@ -157,8 +157,8 @@ static void R_InitTextures (void)
     // killough 4/9/98: make column offsets 32-bit;
     // clean up malloc-ing to use sizeof
 
-    _g->textures = Z_Malloc(_g->numtextures*sizeof*_g->textures, PU_STATIC, 0);
-    _g->textureheight = Z_Malloc(_g->numtextures*sizeof*_g->textureheight, PU_STATIC, 0);
+    textures = Z_Malloc(_g->numtextures*sizeof*textures, PU_STATIC, 0);
+    textureheight = Z_Malloc(_g->numtextures*sizeof*textureheight, PU_STATIC, 0);
 
     totalwidth = 0;
 
@@ -179,7 +179,7 @@ static void R_InitTextures (void)
 
         mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
 
-        texture = _g->textures[i] =
+        texture = textures[i] =
                 Z_Malloc(sizeof(texture_t) +
                          sizeof(texpatch_t)*(SHORT(mtexture->patchcount)-1),
                          PU_STATIC, 0);
@@ -213,7 +213,7 @@ static void R_InitTextures (void)
         for (j=1; j*2 <= texture->width; j<<=1)
             ;
         texture->widthmask = j-1;
-        _g->textureheight[i] = texture->height<<FRACBITS;
+        textureheight[i] = texture->height<<FRACBITS;
 
         totalwidth += texture->width;
     }
@@ -234,11 +234,11 @@ static void R_InitTextures (void)
     // killough 4/9/98: make column offsets 32-bit;
     // clean up malloc-ing to use sizeof
 
-    _g->texturetranslation =
-            Z_Malloc((_g->numtextures+1)*sizeof*_g->texturetranslation, PU_STATIC, 0);
+    texturetranslation =
+            Z_Malloc((_g->numtextures+1)*sizeof*texturetranslation, PU_STATIC, 0);
 
     for (i=0 ; i<_g->numtextures ; i++)
-        _g->texturetranslation[i] = i;
+        texturetranslation[i] = i;
 }
 
 //
@@ -256,11 +256,11 @@ static void R_InitFlats(void)
   // killough 4/9/98: make column offsets 32-bit;
   // clean up malloc-ing to use sizeof
 
-  _g->flattranslation =
-    Z_Malloc((_g->numflats+1)*sizeof(*_g->flattranslation), PU_STATIC, 0);
+  flattranslation =
+    Z_Malloc((_g->numflats+1)*sizeof(*flattranslation), PU_STATIC, 0);
 
   for (i=0 ; i<_g->numflats ; i++)
-    _g->flattranslation[i] = i;
+    flattranslation[i] = i;
 }
 
 //
@@ -349,7 +349,7 @@ int PUREFUNC R_CheckTextureNumForName (const char *name)
     return 0;
 
     for (i=0 ; i<_g->numtextures ; i++)
-    if (!strncasecmp (_g->textures[i]->name, name, 8) )
+    if (!strncasecmp (textures[i]->name, name, 8) )
         return i;
 
     return -1;
