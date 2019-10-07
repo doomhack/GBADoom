@@ -2238,57 +2238,57 @@ void P_PlayerInSpecialSector (player_t* player)
 
 void P_UpdateSpecials (void)
 {
-  anim_t*     anim;
-  int         pic;
-  int         i;
+    anim_t*     anim;
+    int         pic;
+    int         i;
 
-  // Animate flats and textures globally
-  for (anim = _g->anims ; anim < _g->lastanim ; anim++)
-  {
-    for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+    // Animate flats and textures globally
+    for (anim = _g->anims ; anim < _g->lastanim ; anim++)
     {
-      pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
-      if (anim->istexture)
-        texturetranslation[i] = pic;
-      else
-        flattranslation[i] = pic;
-    }
-  }
-
-  // Check buttons (retriggerable switches) and change texture on timeout
-  for (i = 0; i < MAXBUTTONS; i++)
-    if (_g->buttonlist[i].btimer)
-    {
-      _g->buttonlist[i].btimer--;
-      if (!_g->buttonlist[i].btimer)
-      {
-        switch(_g->buttonlist[i].where)
+        for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
         {
-          case top:
-            _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
-              _g->buttonlist[i].btexture;
-            break;
-
-          case middle:
-            _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
-              _g->buttonlist[i].btexture;
-            break;
-
-          case bottom:
-            _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
-              _g->buttonlist[i].btexture;
-            break;
+            pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
+            if (anim->istexture)
+                texturetranslation[i] = pic;
+            else
+                flattranslation[i] = pic;
         }
+    }
+
+    // Check buttons (retriggerable switches) and change texture on timeout
+    for (i = 0; i < MAXBUTTONS; i++)
+        if (_g->buttonlist[i].btimer)
         {
-          /* don't take the address of the switch's sound origin,
+            _g->buttonlist[i].btimer--;
+            if (!_g->buttonlist[i].btimer)
+            {
+                switch(_g->buttonlist[i].where)
+                {
+                case top:
+                    _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
+                            _g->buttonlist[i].btexture;
+                    break;
+
+                case middle:
+                    _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
+                            _g->buttonlist[i].btexture;
+                    break;
+
+                case bottom:
+                    _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
+                            _g->buttonlist[i].btexture;
+                    break;
+                }
+                {
+                    /* don't take the address of the switch's sound origin,
            * unless in a compatibility mode. */
-          mobj_t *so = (mobj_t *)_g->buttonlist[i].soundorg;
+                    mobj_t *so = (mobj_t *)_g->buttonlist[i].soundorg;
 
-          S_StartSound(so, sfx_swtchn);
+                    S_StartSound(so, sfx_swtchn);
+                }
+                memset(&_g->buttonlist[i],0,sizeof(button_t));
+            }
         }
-        memset(&_g->buttonlist[i],0,sizeof(button_t));
-      }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

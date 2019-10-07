@@ -181,7 +181,13 @@ typedef struct column_cache_entry_t
 static column_cache_entry_t columnCacheEntries[128];
 
 
-
+//***********************************************************************
+//The following math functions were taken from the Jaguar Port of Doom
+//here: https://github.com/Arc0re/jaguardoom/blob/master/jagonly.c
+//
+//There may be a licence incompatibility with the iD release
+//and the GPL that prBoom (and this as derived work) is under.
+//***********************************************************************
 
 static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 {
@@ -218,7 +224,7 @@ static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 static CONSTFUNC int IDiv32 (int a, int b)
 {
     unsigned        aa,bb,c;
-    int                     sign;
+    int             sign;
 
     sign = a^b;
     if (a<0)
@@ -282,6 +288,9 @@ static CONSTFUNC fixed_t FixedDiv2 (fixed_t a, fixed_t b)
 
 #define FixedDiv FixedDiv2
 
+//***********************************************************************
+//End Jag Doom math functions.
+//***********************************************************************
 
 
 
