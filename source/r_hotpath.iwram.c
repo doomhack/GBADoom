@@ -489,7 +489,7 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
 
     // Zero length, column does not exceed a pixel.
-    if (dcvars->yl >= dcvars->yh)
+    if (count < 0)
         return;
 
     // Inner loop that does the actual texture mapping,
@@ -1663,10 +1663,32 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
  * If the texture is simple (1 patch, full height) then just draw
  * straight from const patch_t*.
 */
+
+static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
+{
+    unsigned int* cc = (unsigned int)columnCacheEntries;
+
+    unsigned int cx = (column << 16 | texture);
+
+    unsigned int i = 0;
+
+    do
+    {
+        unsigned int cy = *cc++;
+        if( (cy == 0) || (cy == cx) )
+            return i;
+
+        i++;
+
+    } while(i < 128);
+
+    return INT_MAX;
+}
+
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
-    //static int total = 0;
-    //static int misses = 0;
+    static int total = 0;
+    static int misses = 0;
 
     texture_t* tex = textures[texture];
 
@@ -1689,16 +1711,19 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
     {
         const int xc = (texcolumn & 0xfffe) & tex->widthmask;
 
-        unsigned int cachekey = (xc & 0x7e) | (texture & 1);
+        unsigned int cachekey = FindColumnCacheItem(texture, xc);
+
+        if(cachekey == INT_MAX) //No space. Random eviction.
+            cachekey = (rand() & 0x7f);
 
         byte* colcache = &columnCache[cachekey*128];
         column_cache_entry_t* cacheEntry = &columnCacheEntries[cachekey];
 
-        //total++;
+        total++;
 
         if((cacheEntry->texture != texture) || cacheEntry->column != xc)
         {
-            //misses++;
+            misses++;
 
             byte tmpCache[128];
 

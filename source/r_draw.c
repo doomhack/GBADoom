@@ -113,8 +113,8 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 	 count = dc_yh - dc_yl;
 
     // Zero length, column does not exceed a pixel.
-    if (dc_yl >= dc_yh)
-		return;
+     if (count < 0)
+         return;
     
     dest = drawvars.byte_topleft + (dcvars->yl*drawvars.byte_pitch) + dcvars->x;
 
@@ -178,8 +178,8 @@ void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
 	const unsigned int sw = SCREENWIDTH;
 
     // Zero length, column does not exceed a pixel.
-    if (dcvars->yl >= dcvars->yh)
-		return;
+    if (count < 0)
+        return;
 
     // Here we do an additional index re-mapping.
     do 

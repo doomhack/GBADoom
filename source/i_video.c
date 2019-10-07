@@ -70,6 +70,7 @@
 
 void I_StartTic (void)
 {
+    I_ProcessKeyEvents();
 }
 
 //
@@ -77,8 +78,6 @@ void I_StartTic (void)
 //
 void I_StartFrame (void)
 {
-    I_ProcessKeyEvents();
-
 	I_UpdateMusic();
 }
 
