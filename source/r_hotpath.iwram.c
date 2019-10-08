@@ -1666,29 +1666,51 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
 
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
-    unsigned int* cc = (unsigned int)columnCacheEntries;
+    //static unsigned int looks, peeks;
 
+    //looks++;
     unsigned int cx = (column << 16 | texture);
 
-    unsigned int i = 0;
+    int i;
+    int iend;
+    int istep;
+
+    if(column & 2)
+    {
+        i = 127;
+        iend = -1;
+        istep = -1;
+    }
+    else
+    {
+        i = 0;
+        iend = 128;
+        istep = 1;
+    }
+
+    unsigned int* cc = (unsigned int*)&columnCacheEntries[i];
 
     do
     {
-        unsigned int cy = *cc++;
+        //peeks++;
+
+        unsigned int cy = *cc;
         if( (cy == 0) || (cy == cx) )
             return i;
 
-        i++;
+        cc += istep;
+        i += istep;
 
-    } while(i < 128);
+    } while(i != iend);
 
-    return INT_MAX;
+    //No space. Random eviction.
+    return (rand() & 0x3f) + ((column & 2) * 32);
 }
 
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
-    static int total = 0;
-    static int misses = 0;
+    //static int total = 0;
+    //static int misses = 0;
 
     texture_t* tex = textures[texture];
 
@@ -1709,21 +1731,25 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
     }
     else
     {
-        const int xc = (texcolumn & 0xfffe) & tex->widthmask;
+        int colmask = 0xfffe;
+
+        if(dcvars->iscale > (4 << FRACBITS))
+            colmask = 0xfff0;
+        else if (dcvars->iscale > (2 << FRACBITS))
+            colmask = 0xfff8;
+
+        const int xc = (texcolumn & colmask) & tex->widthmask;
 
         unsigned int cachekey = FindColumnCacheItem(texture, xc);
-
-        if(cachekey == INT_MAX) //No space. Random eviction.
-            cachekey = (rand() & 0x7f);
 
         byte* colcache = &columnCache[cachekey*128];
         column_cache_entry_t* cacheEntry = &columnCacheEntries[cachekey];
 
-        total++;
+        //total++;
 
         if((cacheEntry->texture != texture) || cacheEntry->column != xc)
         {
-            misses++;
+            //misses++;
 
             byte tmpCache[128];
 
