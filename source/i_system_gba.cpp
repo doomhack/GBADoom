@@ -33,6 +33,8 @@ extern "C"
 #define TM_FREQ_1024 0x0003
 #define TM_FREQ_256 0x0002
 
+#define REG_WAITCNT	*((vu16 *)(0x4000204))
+
 
 //**************************************************************************************
 
@@ -46,6 +48,10 @@ void I_InitScreen_e32()
     // the vblank interrupt must be enabled for VBlankIntrWait() to work
     // since the default dispatcher handles the bios flags no vblank handler
     // is required
+
+    //Set gamepak wait states and prefetch.
+    REG_WAITCNT = 0x45B6;
+
     irqInit();
     irqEnable(IRQ_VBLANK);
 
@@ -226,8 +232,6 @@ void I_CreateBackBuffer_e32()
 
 void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsigned int width, const unsigned int height)
 {
-    VBlankIntrWait();
-
     REG_DISPCNT ^= DCNT_PAGE;
 }
 

@@ -663,10 +663,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   _g->wminfo.partime = 180;
 
   for (i=0; i<MAXPLAYERS; i++)
-    _g->players[i].killcount = _g->players[i].secretcount = _g->players[i].itemcount = 0;
+    _g->player.killcount = _g->player.secretcount = _g->player.itemcount = 0;
 
   // Initial height of PointOfView will be set by player think.
-  _g->players[consoleplayer].viewz = 1;
+  _g->player.viewz = 1;
 
   // Make sure all sounds are stopped before Z_FreeTags.
   S_Start();
@@ -730,14 +730,14 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   memset(_g->playerstarts,0,sizeof(_g->playerstarts));
 
   for (i = 0; i < MAXPLAYERS; i++)
-    _g->players[i].mo = NULL;
+    _g->player.mo = NULL;
 
   P_MapStart();
 
   P_LoadThings(lumpnum+ML_THINGS);
 
   {
-      if (_g->playeringame && !_g->players[0].mo)
+      if (_g->playeringame && !_g->player.mo)
         I_Error("P_SetupLevel: missing player %d start\n", i+1);
   }
 

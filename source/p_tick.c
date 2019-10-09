@@ -260,7 +260,7 @@ void P_Ticker (void)
    */
 
   if (_g->paused || (_g->menuactive && !_g->demoplayback &&
-     _g->players[consoleplayer].viewz != 1))
+     _g->player.viewz != 1))
     return;
 
   P_MapStart();
@@ -268,7 +268,7 @@ void P_Ticker (void)
   if(_g->gamestate==GS_LEVEL)
 
     if (_g->playeringame)
-      P_PlayerThink(&_g->players[0]);
+      P_PlayerThink(&_g->player);
 
   P_RunThinkers();
   P_UpdateSpecials();

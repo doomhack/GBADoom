@@ -90,8 +90,6 @@ fixed_t scale_mtof;
 // used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
 fixed_t scale_ftom;
 
-player_t *plr;           // the player represented by an arrow
-
 int lastlevel, lastepisode;
 
 boolean leveljuststarted;       // kluge until AM_LevelInit() is called
@@ -172,7 +170,7 @@ skill_t         gameskill;
 int             gameepisode;
 int             gamemap;
 
-player_t        players[MAXPLAYERS];
+player_t        player;
 
 int             starttime;     // for comparative timing purposes
 

@@ -422,36 +422,22 @@ static inline int between(int l,int u,int x)
 
 static const lighttable_t* R_ColourMap(int lightlevel)
 {
-  if (fixedcolormap)
-      return fixedcolormap;
-  else
-  {
-    if (curline)
+    if (fixedcolormap)
+        return fixedcolormap;
+    else
     {
-        if (curline->v1->y == curline->v2->y)
-          lightlevel -= 1 << LIGHTSEGSHIFT;
-        else
-          if (curline->v1->x == curline->v2->x)
-            lightlevel += 1 << LIGHTSEGSHIFT;
+        if (curline)
+        {
+            if (curline->v1->y == curline->v2->y)
+                lightlevel -= 1 << LIGHTSEGSHIFT;
+            else if (curline->v1->x == curline->v2->x)
+                lightlevel += 1 << LIGHTSEGSHIFT;
+        }
+
+        lightlevel += extralight << LIGHTSEGSHIFT;
+
+        return fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 16)*256;
     }
-
-    lightlevel += extralight << LIGHTSEGSHIFT;
-
-    /* cph 2001/11/17 -
-     * Work out what colour map to use, remembering to clamp it to the number of
-     * colour maps we actually have. This formula is basically the one from the
-     * original source, just brought into one place. The main difference is it
-     * throws away less precision in the lightlevel half, so it supports 32
-     * light levels in WADs compared to Doom's 16.
-     *
-     * Note we can make it more accurate if we want - we should keep all the
-     * precision until the final step, so slight scale differences can count
-     * against slight light level variations.
-     */
-    //return fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 4 - (FixedMul(spryscale,pspriteiscale)/2 >> LIGHTSCALESHIFT))*256;
-
-    return fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 16)*256;
-  }
 }
 
 
@@ -500,7 +486,6 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
         // Re-map color indices from wall texture column
         //  using a lighting/special effects LUT.
         unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
-
 
         *dest = (color | (color << 8));
 
@@ -560,7 +545,7 @@ static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvar
 //  mfloorclip and mceilingclip should also be set.
 //
 // CPhipps - new wad lump handling, *'s to const*'s
-static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
+static void R_DrawVisSprite(vissprite_t *vis)
 {
     int      texturecolumn;
     fixed_t  frac;
@@ -610,7 +595,6 @@ static void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     }
 }
 
-
 static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
 {
     if(texture->patchcount == 1)
@@ -659,7 +643,6 @@ static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
 static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 {
     int      texnum;
-    R_DrawColumn_f colfunc;
     draw_column_vars_t dcvars;
 
     R_SetDefaultDrawColumnVars(&dcvars);
@@ -669,12 +652,6 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     //   for horizontal / vertical / diagonal. Diagonal?
 
     curline = ds->curline;  // OPTIMIZE: get rid of LIGHTSEGSHIFT globally
-
-    // killough 4/11/98: draw translucent 2s normal textures
-
-    colfunc = R_DrawColumn;
-
-    // killough 4/11/98: end translucent 2s normal code
 
     frontsector = curline->frontsector;
     backsector = curline->backsector;
@@ -731,6 +708,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
             // arithmetic and by skipping the drawing of 2s normals whose
             // mapping to screen coordinates is totally out of range:
 
+            /*
             {
                 int_64_t t = ((int_64_t) centeryfrac << FRACBITS) -
                         (int_64_t) dcvars.texturemid * spryscale;
@@ -739,6 +717,9 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
                     continue;        // skip if the texture is out of screen's range
                 sprtopscreen = (long)(t >> FRACBITS);
             }
+            */
+
+            sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
             dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
 
@@ -758,7 +739,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
             const column_t* column = R_GetColumn(texture, xc);
 
-            R_DrawMaskedColumn(colfunc, &dcvars, column);
+            R_DrawMaskedColumn(R_DrawColumn, &dcvars, column);
 
             maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
         }
@@ -873,7 +854,7 @@ static void R_DrawSprite (vissprite_t* spr)
 
     mfloorclip = clipbot;
     mceilingclip = cliptop;
-    R_DrawVisSprite (spr, spr->x1, spr->x2);
+    R_DrawVisSprite (spr);
 }
 
 
@@ -971,7 +952,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     else
         vis->colormap = R_LoadColorMap(lightlevel);  // local light
 
-    R_DrawVisSprite(vis, vis->x1, vis->x2);
+    R_DrawVisSprite(vis);
 }
 
 
@@ -1709,8 +1690,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
 
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
-    //static int total = 0;
-    //static int misses = 0;
+    //static int total, misses;
 
     texture_t* tex = textures[texture];
 
@@ -2021,12 +2001,13 @@ static void R_StoreWallRange(const int start, const int stop)
     {     // killough 1/6/98, 2/1/98: remove limit on openings
         size_t pos = lastopening - openings;
         size_t need = (rw_stopx - start)*4 + pos;
+
+        drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
+        int *oldopenings = openings; // dropoff overflow
+        int *oldlast = lastopening; // dropoff overflow
+
         if (need > maxopenings)
         {
-            drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
-            int *oldopenings = openings; // dropoff overflow
-            int *oldlast = lastopening; // dropoff overflow
-
             do
                 maxopenings = maxopenings ? maxopenings + 32 : 32;
             while (need > maxopenings);
@@ -2039,13 +2020,12 @@ static void R_StoreWallRange(const int start, const int stop)
             //    were already stored in drawsegs.
             for (ds = drawsegs; ds < ds_p; ds++)
             {
-#define ADJUST(p) if (ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast)\
-    ds->p = ds->p - oldopenings + openings;
+                #define ADJUST(p) if (ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast) ds->p = ds->p - oldopenings + openings;
                 ADJUST (maskedtexturecol)
                 ADJUST (sprtopclip)
                 ADJUST (sprbottomclip)
+                #undef ADJUST
             }
-#undef ADJUST
         }
     }  // killough: end of code to remove limits on openings
 

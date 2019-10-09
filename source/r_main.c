@@ -78,9 +78,6 @@ const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACB
 const angle_t clipangle = 537395200; //xtoviewangle[0];
 
 
-
-
-
 angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
   return (y -= viewy, (x -= viewx) || y) ?

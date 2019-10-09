@@ -772,7 +772,7 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
   if (!_g->playeringame)
     return;
 
-  p = &_g->players[0];
+  p = &_g->player;
 
   if (p->playerstate == PST_REBORN)
     G_PlayerReborn (mthing->type-1);

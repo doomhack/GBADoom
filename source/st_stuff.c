@@ -583,7 +583,7 @@ static void ST_initData(void)
   int i;
 
   _g->st_firsttime = 2;
-  _g->plyr = &_g->players[displayplayer];            // killough 3/7/98
+  _g->plyr = &_g->player;            // killough 3/7/98
 
   _g->st_statusbaron = true;
 

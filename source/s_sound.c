@@ -217,11 +217,11 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
   // Check to see if it is audible, modify the params
   // killough 3/7/98, 4/25/98: code rearranged slightly
 
-  if (!origin || origin == _g->players[displayplayer].mo)
+  if (!origin || origin == _g->player.mo)
   {
     volume *= 8;
   } else
-    if (!S_AdjustSoundParams(_g->players[displayplayer].mo, origin, &volume))
+    if (!S_AdjustSoundParams(_g->player.mo, origin, &volume))
       return;
 
   // kill old sound
