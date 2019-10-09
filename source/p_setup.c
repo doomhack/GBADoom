@@ -52,16 +52,6 @@
 
 #include "global_data.h"
 
-
-//
-// P_GetNodesVersion
-//
-
-static void P_GetNodesVersion()
-{
-    lprintf(LO_DEBUG,"P_GetNodesVersion: using normal BSP nodes\n");
-}
-
 //
 // P_LoadVertexes
 //
@@ -411,39 +401,9 @@ static void P_LoadSideDefs2(int lump)
         sd->sector = sec = &_g->sectors[sector_num];
       }
 
-      // killough 4/4/98: allow sidedef texture names to be overloaded
-      // killough 4/11/98: refined to allow colormaps to work as wall
-      // textures if invalid as colormaps but valid as textures.
-      switch (sd->special)
-        {
-        case 242:                       // variable colormap via 242 linedef
-          sd->bottomtexture =
-            (R_ColormapNumForName(msd->bottomtexture)) < 0 ?
-            R_TextureNumForName(msd->bottomtexture): 0 ;
-          sd->midtexture =
-            (R_ColormapNumForName(msd->midtexture)) < 0 ?
-            R_TextureNumForName(msd->midtexture)  : 0 ;
-          sd->toptexture =
-            (R_ColormapNumForName(msd->toptexture)) < 0 ?
-            R_TextureNumForName(msd->toptexture)  : 0 ;
-          break;
-
-        case 260: // killough 4/11/98: apply translucency to 2s normal texture
-          sd->midtexture = strncasecmp("TRANMAP", msd->midtexture, 8) ?
-            (sd->special = W_CheckNumForName(msd->midtexture)) < 0 ||
-            W_LumpLength(sd->special) != 65536 ?
-            sd->special=0, R_TextureNumForName(msd->midtexture) :
-              (sd->special++, 0) : (sd->special=0);
-          sd->toptexture = R_TextureNumForName(msd->toptexture);
-          sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
-          break;
-
-        default:                        // normal cases
-          sd->midtexture = R_SafeTextureNumForName(msd->midtexture, i);
-          sd->toptexture = R_SafeTextureNumForName(msd->toptexture, i);
-          sd->bottomtexture = R_SafeTextureNumForName(msd->bottomtexture, i);
-          break;
-        }
+      sd->midtexture = R_LoadTextureByName(msd->midtexture);
+      sd->toptexture = R_LoadTextureByName(msd->toptexture);
+      sd->bottomtexture = R_LoadTextureByName(msd->bottomtexture);
     }
 
   W_UnlockLumpNum(lump); // cph - release the lump
@@ -672,6 +632,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   S_Start();
 
   Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
+
+  //Load the sky texture.
+  R_GetTexture(_g->skytexture);
+
   if (_g->rejectlump != -1) { // cph - unlock the reject table
     W_UnlockLumpNum(_g->rejectlump);
     _g->rejectlump = -1;
@@ -695,16 +659,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   lumpnum = W_GetNumForName(lumpname);
 
   _g->leveltime = 0; _g->totallive = 0;
-
-  // note: most of this ordering is important
-
-  // killough 3/1/98: P_LoadBlockMap call moved down to below
-  // killough 4/4/98: split load of sidedefs into two parts,
-  // to allow texture names to be used in special linedefs
-
-  // figgi 10/19/00 -- check for gl lumps and load them
-  P_GetNodesVersion(lumpnum,0);
-
 
   P_LoadVertexes  (lumpnum+ML_VERTEXES);
   P_LoadSectors   (lumpnum+ML_SECTORS);

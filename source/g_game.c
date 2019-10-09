@@ -358,27 +358,27 @@ static void G_DoLoadLevel (void)
     // || gamemode == pack_tnt   //jff 3/27/98 sorry guys pack_tnt,pack_plut
     // || gamemode == pack_plut) //aren't gamemodes, this was matching retail
     {
-      _g->skytexture = R_TextureNumForName ("SKY3");
+      _g->skytexture = R_LoadTextureByName("SKY3");
       if (_g->gamemap < 12)
-        _g->skytexture = R_TextureNumForName ("SKY1");
+        _g->skytexture = R_LoadTextureByName ("SKY1");
       else
         if (_g->gamemap < 21)
-          _g->skytexture = R_TextureNumForName ("SKY2");
+          _g->skytexture = R_LoadTextureByName ("SKY2");
     }
   else //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
     switch (_g->gameepisode)
       {
       case 1:
-        _g->skytexture = R_TextureNumForName ("SKY1");
+        _g->skytexture = R_LoadTextureByName ("SKY1");
         break;
       case 2:
-        _g->skytexture = R_TextureNumForName ("SKY2");
+        _g->skytexture = R_LoadTextureByName ("SKY2");
         break;
       case 3:
-        _g->skytexture = R_TextureNumForName ("SKY3");
+        _g->skytexture = R_LoadTextureByName ("SKY3");
         break;
       case 4: // Special Edition sky
-        _g->skytexture = R_TextureNumForName ("SKY4");
+        _g->skytexture = R_LoadTextureByName ("SKY4");
         break;
       }//jff 3/27/98 end sky setting fix
 

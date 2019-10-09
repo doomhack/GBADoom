@@ -88,156 +88,201 @@ typedef struct
 // of one or more mappatch_t structures that arrange graphic patches.
 
 
+static const texture_t* R_LoadTexture(int texture_num)
+{
+    const byte* pnames = W_CacheLumpName("PNAMES");
+
+    //Skip to list of names.
+    pnames += 4;
+
+    const int  *maptex1, *maptex2;
+    int  numtextures1, numtextures2;
+    const int *directory1, *directory2;
+
+
+    maptex1 = W_CacheLumpName("TEXTURE1");
+    numtextures1 = *maptex1;
+    directory1 = maptex1+1;
+
+
+    if (W_CheckNumForName("TEXTURE2") != -1)
+    {
+        maptex2 = W_CacheLumpName("TEXTURE2");
+        numtextures2 = *maptex2;
+        directory2 = maptex2+1;
+    }
+    else
+    {
+        maptex2 = NULL;
+        numtextures2 = 0;
+        directory2 = NULL;
+    }
+
+    int offset = 0;
+    const int  *maptex = maptex1;
+
+    if(texture_num < numtextures1)
+    {
+        offset = directory1[texture_num];
+    }
+    else if(maptex2 && ((texture_num-numtextures1) < numtextures2) )
+    {
+        maptex = maptex2;
+        offset = directory2[texture_num-numtextures1];
+    }
+    else
+    {
+        I_Error("R_LoadTexture: Texture %d not in range.", texture_num);
+    }
+
+    const maptexture_t *mtexture = (const maptexture_t *) ((const byte *)maptex + offset);
+
+    texture_t* texture = Z_Malloc(sizeof(const texture_t) + sizeof(const texpatch_t)*(mtexture->patchcount-1), PU_LEVEL, (void**)&textures[texture_num]);
+
+    texture->width = mtexture->width;
+    texture->height = mtexture->height;
+    texture->patchcount = mtexture->patchcount;
+    texture->name = mtexture->name;
+
+    texpatch_t* patch = texture->patches;
+    const mappatch_t* mpatch = mtexture->patches;
+
+    for (int j=0 ; j < texture->patchcount ; j++, mpatch++, patch++)
+    {
+        patch->originx = mpatch->originx;
+        patch->originy = mpatch->originy;
+
+        char pname[8];
+        strncpy(pname, (const char*)&pnames[mpatch->patch * 8], 8);
+
+        patch->patch = (const patch_t*)W_CacheLumpName(pname);
+    }
+
+    int w;
+
+    for (w=1; w*2 <= texture->width; w<<=1)
+        ;
+    texture->widthmask = w-1;
+
+    textureheight[texture_num] = texture->height<<FRACBITS;
+
+    texturetranslation[texture_num] = texture_num;
+
+    textures[texture_num] = texture;
+
+    return texture;
+}
+
+const texture_t* R_GetTexture(int texture)
+{
+    if(texture >= _g->numtextures)
+        return NULL;
+
+    if(textures[texture])
+        return textures[texture];
+
+    const texture_t* t = R_LoadTexture(texture);
+
+    textures[texture] = t;
+
+    return t;
+}
+
+static int R_GetTextureNumForName(const char* tex_name)
+{
+    const int  *maptex1, *maptex2;
+    int  numtextures1;
+    const int *directory1, *directory2;
+
+
+    maptex1 = W_CacheLumpName("TEXTURE1");
+    numtextures1 = *maptex1;
+    directory1 = maptex1+1;
+
+
+    if (W_CheckNumForName("TEXTURE2") != -1)
+    {
+        maptex2 = W_CacheLumpName("TEXTURE2");
+        directory2 = maptex2+1;
+    }
+    else
+    {
+        maptex2 = NULL;
+        directory2 = NULL;
+    }
+
+    const int *directory = directory1;
+    const int *maptex = maptex1;
+
+    for (int i=0 ; i<_g->numtextures ; i++, directory++)
+    {
+        if (i == numtextures1)
+        {
+            // Start looking in second texture file.
+            maptex = maptex2;
+            directory = directory2;
+        }
+
+        int offset = *directory;
+
+        const maptexture_t* mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
+
+        if(!strnicmp(tex_name, mtexture->name, 8))
+            return i;
+    }
+
+    return -1;
+}
+
+int R_LoadTextureByName(const char* tex_name)
+{
+    if(tex_name[0] == '-')
+        return NO_TEXTURE;
+
+    int tnum = R_GetTextureNumForName(tex_name);
+
+    if(tnum == -1)
+    {
+        printf("texture name: %s not found.\n", tex_name);
+        return NO_TEXTURE;
+    }
+
+
+    R_GetTexture(tnum);
+
+    return tnum;
+}
+
 //
 // R_InitTextures
 // Initializes the texture list
 //  with the textures from the world map.
 //
 
-static void R_InitTextures (void)
+static void R_InitTextures()
 {
-    const maptexture_t *mtexture;
-    texture_t    *texture;
-    const mappatch_t   *mpatch;
-    texpatch_t   *patch;
-    int  i, j;
-    int         maptex_lump[2] = {-1, -1};
-    const int  *maptex;
-    const int  *maptex1, *maptex2;
-    char name[9];
-    int names_lump; // cph - new wad lump handling
-    const char *names; // cph -
-    const char *name_p;// const*'s
-    int  *patchlookup;
-    int  totalwidth;
-    int  nummappatches;
-    int  offset;
-    int  maxoff, maxoff2;
-    int  numtextures1, numtextures2;
-    const int *directory;
-    int  errors = 0;
+    const int* mtex1 = W_CacheLumpName("TEXTURE1");
+    int numtextures1 = *mtex1;
 
-    // Load the patch names from pnames.lmp.
-    name[8] = 0;
-    names = W_CacheLumpNum(names_lump = W_GetNumForName("PNAMES"));
-    nummappatches = LONG(*((const int *)names));
-    name_p = names+4;
-    patchlookup = malloc(nummappatches*sizeof(*patchlookup));  // killough
-
-    for (i=0 ; i<nummappatches ; i++)
-    {
-        strncpy (name,name_p+i*8, 8);
-        patchlookup[i] = W_CheckNumForName(name);
-    }
-    W_UnlockLumpNum(names_lump); // cph - release the lump
-
-    // Load the map texture definitions from textures.lmp.
-    // The data is contained in one or two lumps,
-    //  TEXTURE1 for shareware, plus TEXTURE2 for commercial.
-
-    maptex = maptex1 = W_CacheLumpNum(maptex_lump[0] = W_GetNumForName("TEXTURE1"));
-    numtextures1 = LONG(*maptex);
-    maxoff = W_LumpLength(maptex_lump[0]);
-    directory = maptex+1;
+    int numtextures2 = 0;
 
     if (W_CheckNumForName("TEXTURE2") != -1)
     {
-        maptex2 = W_CacheLumpNum(maptex_lump[1] = W_GetNumForName("TEXTURE2"));
-        numtextures2 = LONG(*maptex2);
-        maxoff2 = W_LumpLength(maptex_lump[1]);
+        const int* mtex2 = W_CacheLumpName("TEXTURE2");
+        numtextures2 = *mtex2;
     }
-    else
-    {
-        maptex2 = NULL;
-        numtextures2 = 0;
-        maxoff2 = 0;
-    }
+
     _g->numtextures = numtextures1 + numtextures2;
 
-    // killough 4/9/98: make column offsets 32-bit;
-    // clean up malloc-ing to use sizeof
-
     textures = Z_Malloc(_g->numtextures*sizeof*textures, PU_STATIC, 0);
+    memset(textures, 0, _g->numtextures*sizeof*textures);
+
     textureheight = Z_Malloc(_g->numtextures*sizeof*textureheight, PU_STATIC, 0);
+    memset(textureheight, 0, _g->numtextures*sizeof*textureheight);
 
-    totalwidth = 0;
+    texturetranslation = Z_Malloc((_g->numtextures+1)*sizeof*texturetranslation, PU_STATIC, 0);
 
-    for (i=0 ; i<_g->numtextures ; i++, directory++)
-    {
-        if (i == numtextures1)
-        {
-            // Start looking in second texture file.
-            maptex = maptex2;
-            maxoff = maxoff2;
-            directory = maptex+1;
-        }
-
-        offset = LONG(*directory);
-
-        if (offset > maxoff)
-            I_Error("R_InitTextures: Bad texture directory");
-
-        mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
-
-        texture = textures[i] =
-                Z_Malloc(sizeof(texture_t) +
-                         sizeof(texpatch_t)*(SHORT(mtexture->patchcount)-1),
-                         PU_STATIC, 0);
-
-        texture->width = SHORT(mtexture->width);
-        texture->height = SHORT(mtexture->height);
-        texture->patchcount = SHORT(mtexture->patchcount);
-
-        {
-            texture->name = mtexture->name;
-        }
-        /* #endif */
-
-        mpatch = mtexture->patches;
-        patch = texture->patches;
-
-        for (j=0 ; j<texture->patchcount ; j++, mpatch++, patch++)
-        {
-            patch->originx = SHORT(mpatch->originx);
-            patch->originy = SHORT(mpatch->originy);
-            patch->patch = (const patch_t*)W_CacheLumpNum(patchlookup[mpatch->patch]);
-            if (patch->patch == NULL)
-            {
-                //jff 8/3/98 use logical output routine
-                lprintf(LO_ERROR,"\nR_InitTextures: Missing patch %d in texture %.8s",
-                        SHORT(mpatch->patch), texture->name); // killough 4/17/98
-                ++errors;
-            }
-        }
-
-        for (j=1; j*2 <= texture->width; j<<=1)
-            ;
-        texture->widthmask = j-1;
-        textureheight[i] = texture->height<<FRACBITS;
-
-        totalwidth += texture->width;
-    }
-
-    free(patchlookup);         // killough
-
-    for (i=0; i<2; i++) // cph - release the TEXTUREx lumps
-        if (maptex_lump[i] != -1)
-            W_UnlockLumpNum(maptex_lump[i]);
-
-    if (errors)
-        I_Error("R_InitTextures: %d errors", errors);
-
-    if (errors)
-        I_Error("R_InitTextures: %d errors", errors);
-
-    // Create translation table for global animation.
-    // killough 4/9/98: make column offsets 32-bit;
-    // clean up malloc-ing to use sizeof
-
-    texturetranslation =
-            Z_Malloc((_g->numtextures+1)*sizeof*texturetranslation, PU_STATIC, 0);
-
-    for (i=0 ; i<_g->numtextures ; i++)
+    for (int i=0 ; i<_g->numtextures ; i++)
         texturetranslation[i] = i;
 }
 
@@ -283,15 +328,6 @@ void R_InitColormaps (void)
 {
     int lump = W_GetNumForName("COLORMAP");
     colormaps = W_CacheLumpNum(lump);
-}
-
-// killough 4/4/98: get colormap number from name
-// killough 4/11/98: changed to return -1 for illegal names
-// killough 4/17/98: changed to use ns_colormaps tag
-
-int R_ColormapNumForName(const char *name)
-{
-    return 0;
 }
 
 //
@@ -342,42 +378,9 @@ int R_FlatNumForName(const char *name)    // killough -- const added
 
 int PUREFUNC R_CheckTextureNumForName (const char *name)
 {
-    int		i;
-
     // "NoTexture" marker.
     if (name[0] == '-')
-    return 0;
+        return 0;
 
-    for (i=0 ; i<_g->numtextures ; i++)
-    if (!strncasecmp (textures[i]->name, name, 8) )
-        return i;
-
-    return -1;
-}
-
-//
-// R_TextureNumForName
-// Calls R_CheckTextureNumForName,
-//  aborts with error message.
-//
-
-int PUREFUNC R_TextureNumForName(const char *name)  // const added -- killough
-{
-  int i = R_CheckTextureNumForName(name);
-  if (i == -1)
-    I_Error("R_TextureNumForName: %.8s not found", name);
-  return i;
-}
-
-//
-// R_SafeTextureNumForName
-// Calls R_CheckTextureNumForName, and changes any error to NO_TEXTURE
-int PUREFUNC R_SafeTextureNumForName(const char *name, int snum)
-{
-  int i = R_CheckTextureNumForName(name);
-  if (i == -1) {
-    i = NO_TEXTURE; // e6y - return "no texture"
-    lprintf(LO_DEBUG,"bad texture '%s' in sidedef %d\n",name,snum);
-  }
-  return i;
+    return R_GetTextureNumForName(name);
 }

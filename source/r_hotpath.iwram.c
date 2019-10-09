@@ -133,7 +133,7 @@ static int      rw_lightlevel;
 
 static int      *maskedtexturecol; // dropoff overflow
 
-texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
+const texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
 fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
 
 short       *flattranslation;             // for global animation
@@ -636,6 +636,18 @@ static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
     return NULL;
 }
 
+
+static const texture_t* R_GetOrLoadTexture(int tex_num)
+{
+    const texture_t* tex = textures[tex_num];
+
+    if(!tex)
+        tex = R_GetTexture(tex_num);
+
+    return tex;
+}
+
+
 //
 // R_RenderMaskedSegRange
 //
@@ -689,7 +701,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         dcvars.colormap = fixedcolormap;
     }
 
-    const texture_t* texture = textures[texnum];
+    const texture_t* texture = R_GetOrLoadTexture(texnum);
 
     // draw the columns
     for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
@@ -1215,8 +1227,10 @@ static void R_DoDrawPlane(visplane_t *pl)
             // proff 09/21/98: Changed for high-res
             dcvars.iscale = FRACUNIT*200/viewheight;
 
-            const unsigned int widthmask = textures[texture]->widthmask;
-            const patch_t* patch = textures[texture]->patches[0].patch;
+            const texture_t* tex = R_GetOrLoadTexture(texture);
+
+            const unsigned int widthmask = tex->widthmask;
+            const patch_t* patch = tex->patches[0].patch;
 
             // killough 10/98: Use sky scrolling offset, and possibly flip picture
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
@@ -1692,7 +1706,7 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
 {
     //static int total, misses;
 
-    texture_t* tex = textures[texture];
+    const texture_t* tex = R_GetOrLoadTexture(texture);
 
     if(tex->patchcount == 1)
     {

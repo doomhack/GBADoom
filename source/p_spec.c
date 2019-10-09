@@ -47,6 +47,7 @@
 #include "d_englsh.h"
 #include "w_wad.h"
 #include "r_main.h"
+#include "r_data.h"
 #include "p_maputl.h"
 #include "p_map.h"
 #include "g_game.h"
@@ -146,10 +147,10 @@ void P_InitPicAnims (void)
     {
         // different episode ?
         if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
-        continue;
+            continue;
 
-        _g->lastanim->picnum = R_TextureNumForName (animdefs[i].endname);
-        _g->lastanim->basepic = R_TextureNumForName (animdefs[i].startname);
+        _g->lastanim->picnum = R_LoadTextureByName (animdefs[i].endname);
+        _g->lastanim->basepic = R_LoadTextureByName (animdefs[i].startname);
     }
     else
     {
@@ -169,6 +170,17 @@ void P_InitPicAnims (void)
              animdefs[i].endname);
 
     _g->lastanim->speed = animdefs[i].speed;
+
+    //Load in animated textures.
+    if(animdefs[i].istexture)
+    {
+        for(int a = _g->lastanim->basepic; a <= _g->lastanim->picnum; a++)
+        {
+            R_GetTexture(a);
+        }
+    }
+
+
     _g->lastanim++;
     }
 
@@ -2245,13 +2257,27 @@ void P_UpdateSpecials (void)
     // Animate flats and textures globally
     for (anim = _g->anims ; anim < _g->lastanim ; anim++)
     {
-        for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+        if(anim->istexture)
         {
-            pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
-            if (anim->istexture)
-                texturetranslation[i] = pic;
-            else
+            if(textures[i] != NULL)
+            {
+                for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+                {
+                    pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
+                    texturetranslation[i] = pic;
+
+                    //Load the texture.
+                    R_GetTexture(pic);
+                }
+            }
+        }
+        else
+        {
+            for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+            {
+                pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
                 flattranslation[i] = pic;
+            }
         }
     }
 
