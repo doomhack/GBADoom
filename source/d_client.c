@@ -70,17 +70,18 @@ void D_InitNetGame (void)
 {
     _g->localcmds = &_g->netcmds[consoleplayer];
 
-    _g->playeringame[0] = true;
+    _g->playeringame = true;
 }
 
 void D_BuildNewTiccmds(void)
 {
     int newtics = I_GetTime() - _g->lastmadetic;
     _g->lastmadetic += newtics;
+
     while (newtics--)
     {
         I_StartTic();
-        if (_g->maketic - _g->gametic > 0)
+        if (_g->maketic - _g->gametic > 6)
             break;
 
         G_BuildTiccmd(&_g->localcmds[0]);

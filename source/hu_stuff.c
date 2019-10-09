@@ -475,7 +475,7 @@ void HU_Erase(void)
 
 void HU_Ticker(void)
 {
-    player_t* plr = &_g->players[displayplayer];        // killough 3/7/98
+    player_t* plr = &_g->player;        // killough 3/7/98
 
   // tick down message counter if message is up
   if (_g->message_counter && !--_g->message_counter)

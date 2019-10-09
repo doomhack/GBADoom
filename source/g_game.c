@@ -241,9 +241,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   //
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
-  if ((_g->players[consoleplayer].attackdown && // killough
-       !P_CheckAmmo(&_g->players[consoleplayer])) || _g->gamekeydown[key_weapontoggle])
-    newweapon = P_SwitchWeapon(&_g->players[consoleplayer]);           // phares
+  if ((_g->player.attackdown && // killough
+       !P_CheckAmmo(&_g->player)) || _g->gamekeydown[key_weapontoggle])
+    newweapon = P_SwitchWeapon(&_g->player);           // phares
   else
     {                                 // phares 02/26/98: Added gamemode checks
       newweapon =
@@ -270,7 +270,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // Switch to shotgun or SSG based on preferences.
 
         {
-          const player_t *player = &_g->players[consoleplayer];
+          const player_t *player = &_g->player;
 
           // only select chainsaw from '1' if it's owned, it's
           // not already in use, and the player prefers it or
@@ -358,27 +358,27 @@ static void G_DoLoadLevel (void)
     // || gamemode == pack_tnt   //jff 3/27/98 sorry guys pack_tnt,pack_plut
     // || gamemode == pack_plut) //aren't gamemodes, this was matching retail
     {
-      _g->skytexture = R_TextureNumForName ("SKY3");
+      _g->skytexture = R_LoadTextureByName("SKY3");
       if (_g->gamemap < 12)
-        _g->skytexture = R_TextureNumForName ("SKY1");
+        _g->skytexture = R_LoadTextureByName ("SKY1");
       else
         if (_g->gamemap < 21)
-          _g->skytexture = R_TextureNumForName ("SKY2");
+          _g->skytexture = R_LoadTextureByName ("SKY2");
     }
   else //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
     switch (_g->gameepisode)
       {
       case 1:
-        _g->skytexture = R_TextureNumForName ("SKY1");
+        _g->skytexture = R_LoadTextureByName ("SKY1");
         break;
       case 2:
-        _g->skytexture = R_TextureNumForName ("SKY2");
+        _g->skytexture = R_LoadTextureByName ("SKY2");
         break;
       case 3:
-        _g->skytexture = R_TextureNumForName ("SKY3");
+        _g->skytexture = R_LoadTextureByName ("SKY3");
         break;
       case 4: // Special Edition sky
-        _g->skytexture = R_TextureNumForName ("SKY4");
+        _g->skytexture = R_LoadTextureByName ("SKY4");
         break;
       }//jff 3/27/98 end sky setting fix
 
@@ -389,12 +389,12 @@ static void G_DoLoadLevel (void)
 
   _g->gamestate = GS_LEVEL;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    {
-      if (_g->playeringame[i] && _g->players[i].playerstate == PST_DEAD)
-        _g->players[i].playerstate = PST_REBORN;
-      memset (_g->players[i].frags,0,sizeof(_g->players[i].frags));
-    }
+
+  if (_g->playeringame && _g->player.playerstate == PST_DEAD)
+    _g->player.playerstate = PST_REBORN;
+
+  memset (_g->player.frags,0,sizeof(_g->player.frags));
+
 
   // initialize the msecnode_t freelist.                     phares 3/25/98
   // any nodes in the freelist are gone by now, cleared
@@ -494,166 +494,160 @@ boolean G_Responder (event_t* ev)
 // Make ticcmd_ts for the players.
 //
 
-void G_Ticker (void)
-{
-  int i;
+  void G_Ticker (void)
+  {
+      int i;
 
-  P_MapStart();
-  // do player reborns if needed
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    if (_g->playeringame[i] && _g->players[i].playerstate == PST_REBORN)
-      G_DoReborn (i);
-  P_MapEnd();
+      P_MapStart();
+      if(_g->playeringame && _g->player.playerstate == PST_REBORN)
+          G_DoReborn (0);
+      P_MapEnd();
 
-  // do things to change the game state
-  while (_g->gameaction != ga_nothing)
-    {
-      switch (_g->gameaction)
-        {
-        case ga_loadlevel:
-    // force players to be initialized on level reload
-    for (i=0 ; i<MAXPLAYERS ; i++)
-      _g->players[i].playerstate = PST_REBORN;
-          G_DoLoadLevel ();
+      // do things to change the game state
+      while (_g->gameaction != ga_nothing)
+      {
+          switch (_g->gameaction)
+          {
+          case ga_loadlevel:
+              // force players to be initialized on level reload
+              for (i=0 ; i<MAXPLAYERS ; i++)
+                  _g->player.playerstate = PST_REBORN;
+              G_DoLoadLevel ();
+              break;
+          case ga_newgame:
+              G_DoNewGame ();
+              break;
+          case ga_loadgame:
+              G_DoLoadGame ();
+              break;
+          case ga_savegame:
+              G_DoSaveGame (false);
+              break;
+          case ga_playdemo:
+              G_DoPlayDemo ();
+              break;
+          case ga_completed:
+              G_DoCompleted ();
+              break;
+          case ga_victory:
+              F_StartFinale ();
+              break;
+          case ga_worlddone:
+              G_DoWorldDone ();
+              break;
+          case ga_nothing:
+              break;
+          }
+      }
+
+      if (_g->paused & 2 || (!_g->demoplayback && _g->menuactive))
+          _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
+      else {
+          // get commands, check consistancy, and build new consistancy check
+          int buf = (_g->gametic);
+
+          if (_g->playeringame)
+          {
+              ticcmd_t *cmd = &_g->player.cmd;
+
+              memcpy(cmd, &_g->netcmds[0], sizeof *cmd);
+
+              if (_g->demoplayback)
+                  G_ReadDemoTiccmd (cmd);
+          }
+
+
+          if (_g->playeringame)
+          {
+              if (_g->player.cmd.buttons & BT_SPECIAL)
+              {
+                  switch (_g->player.cmd.buttons & BT_SPECIALMASK)
+                  {
+                  case BTS_PAUSE:
+                      _g->paused ^= 1;
+                      if (_g->paused)
+                          S_PauseSound ();
+                      else
+                          S_ResumeSound ();
+                      break;
+
+                  case BTS_SAVEGAME:
+                      if (!_g->savedescription[0])
+                          strcpy(_g->savedescription, "NET GAME");
+                      _g->savegameslot =
+                              (_g->player.cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
+                      _g->gameaction = ga_savegame;
+                      break;
+
+                      // CPhipps - remote loadgame request
+                  case BTS_LOADGAME:
+                      _g->savegameslot =
+                              (_g->player.cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
+                      _g->gameaction = ga_loadgame;
+                      _g->command_loadgame = false;
+                      break;
+
+                      // CPhipps - Restart the level
+                  case BTS_RESTARTLEVEL:
+                      if (_g->demoplayback)
+                          break;     // CPhipps - Ignore in demos or old games
+                      _g->gameaction = ga_loadlevel;
+                      break;
+                  }
+                  _g->player.cmd.buttons = 0;
+              }
+          }
+      }
+
+      // cph - if the gamestate changed, we may need to clean up the old gamestate
+      if (_g->gamestate != _g->prevgamestate) {
+          switch (_g->prevgamestate) {
+          case GS_LEVEL:
+              // This causes crashes at level end - Neil Stevens
+              // The crash is because the sounds aren't stopped before freeing them
+              // the following is a possible fix
+              // This fix does avoid the crash wowever, with this fix in, the exit
+              // switch sound is cut off
+              // S_Stop();
+              // Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
+              break;
+          case GS_INTERMISSION:
+              WI_End();
+          default:
+              break;
+          }
+          _g->prevgamestate = _g->gamestate;
+      }
+
+      // e6y
+      // do nothing if a pause has been pressed during playback
+      // pausing during intermission can cause desynchs without that
+      if (_g->paused & 2 && _g->gamestate != GS_LEVEL)
+          return;
+
+      // do main actions
+      switch (_g->gamestate)
+      {
+      case GS_LEVEL:
+          P_Ticker ();
+          ST_Ticker ();
+          AM_Ticker ();
+          HU_Ticker ();
           break;
-        case ga_newgame:
-          G_DoNewGame ();
-          break;
-        case ga_loadgame:
-          G_DoLoadGame ();
-          break;
-        case ga_savegame:
-          G_DoSaveGame (false);
-          break;
-        case ga_playdemo:
-          G_DoPlayDemo ();
-          break;
-        case ga_completed:
-          G_DoCompleted ();
-          break;
-        case ga_victory:
-          F_StartFinale ();
-          break;
-        case ga_worlddone:
-          G_DoWorldDone ();
-          break;
-        case ga_nothing:
-          break;
-        }
-    }
 
-  if (_g->paused & 2 || (!_g->demoplayback && _g->menuactive))
-    _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
-  else {
-    // get commands, check consistancy, and build new consistancy check
-    int buf = (_g->gametic);
+      case GS_INTERMISSION:
+          WI_Ticker ();
+          break;
 
-    for (i=0 ; i<MAXPLAYERS ; i++) {
-      if (_g->playeringame[i])
-        {
-          ticcmd_t *cmd = &_g->players[i].cmd;
+      case GS_FINALE:
+          F_Ticker ();
+          break;
 
-          memcpy(cmd, &_g->netcmds[i], sizeof *cmd);
-
-          if (_g->demoplayback)
-            G_ReadDemoTiccmd (cmd);
-        }
-    }
-
-    // check for special buttons
-    for (i=0; i<MAXPLAYERS; i++) {
-      if (_g->playeringame[i])
-        {
-          if (_g->players[i].cmd.buttons & BT_SPECIAL)
-            {
-              switch (_g->players[i].cmd.buttons & BT_SPECIALMASK)
-                {
-                case BTS_PAUSE:
-                  _g->paused ^= 1;
-                  if (_g->paused)
-                    S_PauseSound ();
-                  else
-                    S_ResumeSound ();
-                  break;
-
-                case BTS_SAVEGAME:
-                  if (!_g->savedescription[0])
-                    strcpy(_g->savedescription, "NET GAME");
-                  _g->savegameslot =
-                    (_g->players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-                  _g->gameaction = ga_savegame;
-                  break;
-
-      // CPhipps - remote loadgame request
-                case BTS_LOADGAME:
-                  _g->savegameslot =
-                    (_g->players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-                  _g->gameaction = ga_loadgame;
-                    _g->command_loadgame = false;
-                  break;
-
-      // CPhipps - Restart the level
-    case BTS_RESTARTLEVEL:
-                  if (_g->demoplayback)
-                    break;     // CPhipps - Ignore in demos or old games
-      _g->gameaction = ga_loadlevel;
-      break;
-                }
-        _g->players[i].cmd.buttons = 0;
-            }
-        }
-    }
+      case GS_DEMOSCREEN:
+          D_PageTicker ();
+          break;
+      }
   }
-
-  // cph - if the gamestate changed, we may need to clean up the old gamestate
-  if (_g->gamestate != _g->prevgamestate) {
-    switch (_g->prevgamestate) {
-    case GS_LEVEL:
-      // This causes crashes at level end - Neil Stevens
-      // The crash is because the sounds aren't stopped before freeing them
-      // the following is a possible fix
-      // This fix does avoid the crash wowever, with this fix in, the exit
-      // switch sound is cut off
-      // S_Stop();
-      // Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
-      break;
-    case GS_INTERMISSION:
-      WI_End();
-    default:
-      break;
-    }
-    _g->prevgamestate = _g->gamestate;
-  }
-
-  // e6y
-  // do nothing if a pause has been pressed during playback
-  // pausing during intermission can cause desynchs without that
-  if (_g->paused & 2 && _g->gamestate != GS_LEVEL)
-    return;
-
-  // do main actions
-  switch (_g->gamestate)
-    {
-    case GS_LEVEL:
-      P_Ticker ();
-      ST_Ticker ();
-      AM_Ticker ();
-      HU_Ticker ();
-      break;
-
-    case GS_INTERMISSION:
-      WI_Ticker ();
-      break;
-
-    case GS_FINALE:
-      F_Ticker ();
-      break;
-
-    case GS_DEMOSCREEN:
-      D_PageTicker ();
-      break;
-    }
-}
 
 //
 // PLAYER STRUCTURE FUNCTIONS
@@ -667,7 +661,7 @@ void G_Ticker (void)
 
 static void G_PlayerFinishLevel(int player)
 {
-  player_t *p = &_g->players[player];
+  player_t *p = &_g->player;
   memset(p->powers, 0, sizeof p->powers);
   memset(p->cards, 0, sizeof p->cards);
   p->mo = NULL;           // cph - this is allocated PU_LEVEL so it's gone
@@ -704,12 +698,12 @@ void G_PlayerReborn (int player)
   int itemcount;
   int secretcount;
 
-  memcpy (frags, _g->players[player].frags, sizeof frags);
-  killcount = _g->players[player].killcount;
-  itemcount = _g->players[player].itemcount;
-  secretcount = _g->players[player].secretcount;
+  memcpy (frags, _g->player.frags, sizeof frags);
+  killcount = _g->player.killcount;
+  itemcount = _g->player.itemcount;
+  secretcount = _g->player.secretcount;
 
-  p = &_g->players[player];
+  p = &_g->player;
 
   // killough 3/10/98,3/21/98: preserve cheats across idclev
   {
@@ -718,10 +712,10 @@ void G_PlayerReborn (int player)
     p->cheats = cheats;
   }
 
-  memcpy(_g->players[player].frags, frags, sizeof(_g->players[player].frags));
-  _g->players[player].killcount = killcount;
-  _g->players[player].itemcount = itemcount;
-  _g->players[player].secretcount = secretcount;
+  memcpy(_g->player.frags, frags, sizeof(_g->player.frags));
+  _g->player.killcount = killcount;
+  _g->player.itemcount = itemcount;
+  _g->player.secretcount = secretcount;
 
   p->usedown = p->attackdown = true;  // don't do anything immediately
   p->playerstate = PST_LIVE;
@@ -748,15 +742,14 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
   subsector_t *ss;
   int         i;
 
-  if (!_g->players[playernum].mo)
-    {
+  if (!_g->player.mo)
+  {
       // first spawn of level, before corpses
-      for (i=0 ; i<playernum ; i++)
-        if (_g->players[i].mo->x == mthing->x << FRACBITS
-            && _g->players[i].mo->y == mthing->y << FRACBITS)
+      if (_g->player.mo->x == mthing->x << FRACBITS && _g->player.mo->y == mthing->y << FRACBITS)
           return false;
+
       return true;
-    }
+  }
 
   x = mthing->x << FRACBITS;
   y = mthing->y << FRACBITS;
@@ -768,13 +761,15 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
   // if (!P_CheckPosition (players[playernum].mo, x, y))
   //    return false;
 
-  _g->players[playernum].mo->flags |=  MF_SOLID;
-  i = P_CheckPosition(_g->players[playernum].mo, x, y);
-  _g->players[playernum].mo->flags &= ~MF_SOLID;
+  _g->player.mo->flags |=  MF_SOLID;
+  i = P_CheckPosition(_g->player.mo, x, y);
+
+  _g->player.mo->flags &= ~MF_SOLID;
+
   if (!i)
     return false;
 
-    P_RemoveMobj(_g->players[playernum].mo);
+    P_RemoveMobj(_g->player.mo);
 
   // spawn a teleport fog
   ss = R_PointInSubsector (x,y);
@@ -792,7 +787,7 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
 
     mo = P_SpawnMobj(x+20*xa, y+20*ya, ss->sector->floorheight, MT_TFOG);
 
-    if (_g->players[consoleplayer].viewz != 1)
+    if (_g->player.viewz != 1)
       S_StartSound(mo, sfx_telept);  // don't start sound on first frame
   }
 
@@ -849,13 +844,10 @@ void G_SecretExitLevel (void)
 
 void G_DoCompleted (void)
 {
-  int i;
-
   _g->gameaction = ga_nothing;
 
-  for (i=0; i<MAXPLAYERS; i++)
-    if (_g->playeringame[i])
-      G_PlayerFinishLevel(i);        // take away cards and stuff
+    if (_g->playeringame)
+      G_PlayerFinishLevel(0);        // take away cards and stuff
 
   if (_g->automapmode & am_active)
     AM_Stop();
@@ -865,12 +857,11 @@ void G_DoCompleted (void)
       {
   // cph - Remove ExM8 special case, so it gets summary screen displayed
       case 9:
-        for (i=0 ; i<MAXPLAYERS ; i++)
-          _g->players[i].didsecret = true;
+          _g->player.didsecret = true;
         break;
       }
 
-  _g->wminfo.didsecret = _g->players[consoleplayer].didsecret;
+  _g->wminfo.didsecret = _g->player.didsecret;
   _g->wminfo.epsd = _g->gameepisode -1;
   _g->wminfo.last = _g->gamemap -1;
 
@@ -935,16 +926,14 @@ void G_DoCompleted (void)
 
   _g->wminfo.pnum = consoleplayer;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    {
-      _g->wminfo.plyr[i].in = _g->playeringame[i];
-      _g->wminfo.plyr[i].skills = _g->players[i].killcount;
-      _g->wminfo.plyr[i].sitems = _g->players[i].itemcount;
-      _g->wminfo.plyr[i].ssecret = _g->players[i].secretcount;
-      _g->wminfo.plyr[i].stime = _g->leveltime;
-      memcpy (_g->wminfo.plyr[i].frags, _g->players[i].frags,
-              sizeof(_g->wminfo.plyr[i].frags));
-    }
+
+      _g->wminfo.plyr[0].in = _g->playeringame;
+      _g->wminfo.plyr[0].skills = _g->player.killcount;
+      _g->wminfo.plyr[0].sitems = _g->player.itemcount;
+      _g->wminfo.plyr[0].ssecret = _g->player.secretcount;
+      _g->wminfo.plyr[0].stime = _g->leveltime;
+      memcpy (_g->wminfo.plyr[0].frags, _g->player.frags,
+              sizeof(_g->wminfo.plyr[0].frags));
 
   /* cph - modified so that only whole seconds are added to the totalleveltimes
    *  value; so our total is compatible with the "naive" total of just adding
@@ -977,7 +966,7 @@ void G_WorldDone (void)
   _g->gameaction = ga_worlddone;
 
   if (_g->secretexit)
-    _g->players[consoleplayer].didsecret = true;
+    _g->player.didsecret = true;
 
   if (_g->gamemode == commercial)
     {
@@ -1084,8 +1073,7 @@ void G_DoLoadGame(void)
   _g->gameepisode = *_g->save_p++;
   _g->gamemap = *_g->save_p++;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    _g->playeringame[i] = *_g->save_p++;
+    _g->playeringame = *_g->save_p++;
   _g->save_p += MIN_MAXPLAYERS-MAXPLAYERS;         // killough 2/28/98
 
   _g->idmusnum = *_g->save_p++;           // jff 3/17/98 restore idmus music
@@ -1126,9 +1114,6 @@ void G_DoLoadGame(void)
 
   // done
   Z_Free (_g->savebuffer);
-
-  if (_g->setsizeneeded)
-    R_ExecuteSetViewSize ();
 
   /* killough 12/98: support -recordfrom and -loadgame -playdemo */
   if (!_g->command_loadgame)
@@ -1221,8 +1206,7 @@ static void G_DoSaveGame (boolean menu)
   *_g->save_p++ = _g->gameepisode;
   *_g->save_p++ = _g->gamemap;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    *_g->save_p++ = _g->playeringame[i];
+    *_g->save_p++ = _g->playeringame;
 
   for (;i<MIN_MAXPLAYERS;i++)         // killough 2/28/98
     *_g->save_p++ = 0;
@@ -1372,9 +1356,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   _g->respawnmonsters = skill == sk_nightmare;
 
-  // force players to be initialized upon first level load
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    _g->players[i].playerstate = PST_REBORN;
+  _g->player.playerstate = PST_REBORN;
 
   _g->usergame = true;                // will be set false if a demo
   _g->paused = false;
@@ -1750,8 +1732,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
       if (CheckForOverrun(header_p, demo_p, size, MAXPLAYERS, failonerror))
         return NULL;
 
-      for (i=0 ; i < MAXPLAYERS; i++)
-        _g->playeringame[i] = *demo_p++;
+        _g->playeringame = *demo_p++;
       demo_p += MIN_MAXPLAYERS - MAXPLAYERS;
 
 
@@ -1759,8 +1740,7 @@ static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean fai
     G_InitNew(skill, episode, map);
   }
 
-  for (i=0; i<MAXPLAYERS;i++)         // killough 4/24/98
-    _g->players[i].cheats = 0;
+    _g->player.cheats = 0;
 
   return demo_p;
 }
@@ -1841,5 +1821,5 @@ void doom_printf(const char *s, ...)
   vsprintf(msg,s,v);
 #endif
   va_end(v);
-  _g->players[consoleplayer].message = msg;  // set new message
+  _g->player.message = msg;  // set new message
 }

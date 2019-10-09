@@ -546,13 +546,13 @@ int EV_DoFloor
               side = getSide(secnum,i,0);
               // jff 8/14/98 don't scan texture 0, its not real
               if (side->bottomtexture > 0)
-                if (_g->textureheight[side->bottomtexture] < minsize)
-                  minsize = _g->textureheight[side->bottomtexture];
+                if (textureheight[side->bottomtexture] < minsize)
+                  minsize = textureheight[side->bottomtexture];
               side = getSide(secnum,i,1);
               // jff 8/14/98 don't scan texture 0, its not real
               if (side->bottomtexture > 0)
-                if (_g->textureheight[side->bottomtexture] < minsize)
-                  minsize = _g->textureheight[side->bottomtexture];
+                if (textureheight[side->bottomtexture] < minsize)
+                  minsize = textureheight[side->bottomtexture];
             }
           }
           {

@@ -47,6 +47,7 @@
 #include "d_englsh.h"
 #include "w_wad.h"
 #include "r_main.h"
+#include "r_data.h"
 #include "p_maputl.h"
 #include "p_map.h"
 #include "g_game.h"
@@ -146,10 +147,10 @@ void P_InitPicAnims (void)
     {
         // different episode ?
         if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
-        continue;
+            continue;
 
-        _g->lastanim->picnum = R_TextureNumForName (animdefs[i].endname);
-        _g->lastanim->basepic = R_TextureNumForName (animdefs[i].startname);
+        _g->lastanim->picnum = R_LoadTextureByName (animdefs[i].endname);
+        _g->lastanim->basepic = R_LoadTextureByName (animdefs[i].startname);
     }
     else
     {
@@ -169,6 +170,17 @@ void P_InitPicAnims (void)
              animdefs[i].endname);
 
     _g->lastanim->speed = animdefs[i].speed;
+
+    //Load in animated textures.
+    if(animdefs[i].istexture)
+    {
+        for(int a = _g->lastanim->basepic; a <= _g->lastanim->picnum; a++)
+        {
+            R_GetTexture(a);
+        }
+    }
+
+
     _g->lastanim++;
     }
 
@@ -547,12 +559,12 @@ fixed_t P_FindShortestTextureAround(int secnum)
     {
       side = getSide(secnum,i,0);
       if (side->bottomtexture > 0)  //jff 8/14/98 texture 0 is a placeholder
-        if (_g->textureheight[side->bottomtexture] < minsize)
-          minsize = _g->textureheight[side->bottomtexture];
+        if (textureheight[side->bottomtexture] < minsize)
+          minsize = textureheight[side->bottomtexture];
       side = getSide(secnum,i,1);
       if (side->bottomtexture > 0)  //jff 8/14/98 texture 0 is a placeholder
-        if (_g->textureheight[side->bottomtexture] < minsize)
-          minsize = _g->textureheight[side->bottomtexture];
+        if (textureheight[side->bottomtexture] < minsize)
+          minsize = textureheight[side->bottomtexture];
     }
   }
   return minsize;
@@ -585,12 +597,12 @@ fixed_t P_FindShortestUpperAround(int secnum)
     {
       side = getSide(secnum,i,0);
       if (side->toptexture > 0)     //jff 8/14/98 texture 0 is a placeholder
-        if (_g->textureheight[side->toptexture] < minsize)
-          minsize = _g->textureheight[side->toptexture];
+        if (textureheight[side->toptexture] < minsize)
+          minsize = textureheight[side->toptexture];
       side = getSide(secnum,i,1);
       if (side->toptexture > 0)     //jff 8/14/98 texture 0 is a placeholder
-        if (_g->textureheight[side->toptexture] < minsize)
-          minsize = _g->textureheight[side->toptexture];
+        if (textureheight[side->toptexture] < minsize)
+          minsize = textureheight[side->toptexture];
     }
   }
   return minsize;
@@ -2238,57 +2250,71 @@ void P_PlayerInSpecialSector (player_t* player)
 
 void P_UpdateSpecials (void)
 {
-  anim_t*     anim;
-  int         pic;
-  int         i;
+    anim_t*     anim;
+    int         pic;
+    int         i;
 
-  // Animate flats and textures globally
-  for (anim = _g->anims ; anim < _g->lastanim ; anim++)
-  {
-    for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+    // Animate flats and textures globally
+    for (anim = _g->anims ; anim < _g->lastanim ; anim++)
     {
-      pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
-      if (anim->istexture)
-        _g->texturetranslation[i] = pic;
-      else
-        _g->flattranslation[i] = pic;
-    }
-  }
-
-  // Check buttons (retriggerable switches) and change texture on timeout
-  for (i = 0; i < MAXBUTTONS; i++)
-    if (_g->buttonlist[i].btimer)
-    {
-      _g->buttonlist[i].btimer--;
-      if (!_g->buttonlist[i].btimer)
-      {
-        switch(_g->buttonlist[i].where)
+        if(anim->istexture)
         {
-          case top:
-            _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
-              _g->buttonlist[i].btexture;
-            break;
+            if(textures[i] != NULL)
+            {
+                for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+                {
+                    pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
+                    texturetranslation[i] = pic;
 
-          case middle:
-            _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
-              _g->buttonlist[i].btexture;
-            break;
-
-          case bottom:
-            _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
-              _g->buttonlist[i].btexture;
-            break;
+                    //Load the texture.
+                    R_GetTexture(pic);
+                }
+            }
         }
+        else
         {
-          /* don't take the address of the switch's sound origin,
+            for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+            {
+                pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
+                flattranslation[i] = pic;
+            }
+        }
+    }
+
+    // Check buttons (retriggerable switches) and change texture on timeout
+    for (i = 0; i < MAXBUTTONS; i++)
+        if (_g->buttonlist[i].btimer)
+        {
+            _g->buttonlist[i].btimer--;
+            if (!_g->buttonlist[i].btimer)
+            {
+                switch(_g->buttonlist[i].where)
+                {
+                case top:
+                    _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
+                            _g->buttonlist[i].btexture;
+                    break;
+
+                case middle:
+                    _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
+                            _g->buttonlist[i].btexture;
+                    break;
+
+                case bottom:
+                    _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
+                            _g->buttonlist[i].btexture;
+                    break;
+                }
+                {
+                    /* don't take the address of the switch's sound origin,
            * unless in a compatibility mode. */
-          mobj_t *so = (mobj_t *)_g->buttonlist[i].soundorg;
+                    mobj_t *so = (mobj_t *)_g->buttonlist[i].soundorg;
 
-          S_StartSound(so, sfx_swtchn);
+                    S_StartSound(so, sfx_swtchn);
+                }
+                memset(&_g->buttonlist[i],0,sizeof(button_t));
+            }
         }
-        memset(&_g->buttonlist[i],0,sizeof(button_t));
-      }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

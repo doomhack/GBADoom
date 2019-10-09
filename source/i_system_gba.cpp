@@ -33,6 +33,8 @@ extern "C"
 #define TM_FREQ_1024 0x0003
 #define TM_FREQ_256 0x0002
 
+#define REG_WAITCNT	*((vu16 *)(0x4000204))
+
 
 //**************************************************************************************
 
@@ -46,6 +48,10 @@ void I_InitScreen_e32()
     // the vblank interrupt must be enabled for VBlankIntrWait() to work
     // since the default dispatcher handles the bios flags no vblank handler
     // is required
+
+    //Set gamepak wait states and prefetch.
+    REG_WAITCNT = 0x45B6;
+
     irqInit();
     irqEnable(IRQ_VBLANK);
 
@@ -81,108 +87,114 @@ void I_PollWServEvents_e32()
     u16 key_down = keysDown();
 
     event_t ev;
-    ev.type = ev_keydown;
 
-    if(key_down & KEY_SELECT)
+    if(key_down)
     {
-        ev.data1 = KEYD_ENTER;
-        D_PostEvent(&ev);
-    }
+        ev.type = ev_keydown;
 
-    if(key_down & KEY_UP)
-    {
-        ev.data1 = KEYD_UPARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_down & KEY_SELECT)
+        {
+            ev.data1 = KEYD_ENTER;
+            D_PostEvent(&ev);
+        }
 
-    if(key_down & KEY_DOWN)
-    {
-        ev.data1 = KEYD_DOWNARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_down & KEY_UP)
+        {
+            ev.data1 = KEYD_UPARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_down & KEY_LEFT)
-    {
-        ev.data1 = KEYD_LEFTARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_down & KEY_DOWN)
+        {
+            ev.data1 = KEYD_DOWNARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_down & KEY_RIGHT)
-    {
-        ev.data1 = KEYD_RIGHTARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_down & KEY_LEFT)
+        {
+            ev.data1 = KEYD_LEFTARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_down & KEY_START)
-    {
-        ev.data1 = KEYD_ESCAPE;
-        D_PostEvent(&ev);
-    }
+        if(key_down & KEY_RIGHT)
+        {
+            ev.data1 = KEYD_RIGHTARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_down & KEY_A)
-    {
-        ev.data1 = KEYD_RCTRL;
-        D_PostEvent(&ev);
-    }
+        if(key_down & KEY_START)
+        {
+            ev.data1 = KEYD_ESCAPE;
+            D_PostEvent(&ev);
+        }
 
-    if(key_down & KEY_B)
-    {
-        ev.data1 = KEYD_SPACEBAR;
-        D_PostEvent(&ev);
-    }
+        if(key_down & KEY_A)
+        {
+            ev.data1 = KEYD_RCTRL;
+            D_PostEvent(&ev);
+        }
 
+        if(key_down & KEY_B)
+        {
+            ev.data1 = KEYD_SPACEBAR;
+            D_PostEvent(&ev);
+        }
+    }
 
     u16 key_up = keysUp();
-    ev.type = ev_keyup;
 
-    if(key_up & KEY_SELECT)
+    if(key_up)
     {
-        ev.data1 = KEYD_ENTER;
-        D_PostEvent(&ev);
-    }
+        ev.type = ev_keyup;
 
-    if(key_up & KEY_UP)
-    {
-        ev.data1 = KEYD_UPARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_up & KEY_SELECT)
+        {
+            ev.data1 = KEYD_ENTER;
+            D_PostEvent(&ev);
+        }
 
-    if(key_up & KEY_DOWN)
-    {
-        ev.data1 = KEYD_DOWNARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_up & KEY_UP)
+        {
+            ev.data1 = KEYD_UPARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_up & KEY_LEFT)
-    {
-        ev.data1 = KEYD_LEFTARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_up & KEY_DOWN)
+        {
+            ev.data1 = KEYD_DOWNARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_up & KEY_RIGHT)
-    {
-        ev.data1 = KEYD_RIGHTARROW;
-        D_PostEvent(&ev);
-    }
+        if(key_up & KEY_LEFT)
+        {
+            ev.data1 = KEYD_LEFTARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_up & KEY_START)
-    {
-        ev.data1 = KEYD_ESCAPE;
-        D_PostEvent(&ev);
-    }
+        if(key_up & KEY_RIGHT)
+        {
+            ev.data1 = KEYD_RIGHTARROW;
+            D_PostEvent(&ev);
+        }
 
-    if(key_up & KEY_A)
-    {
-        ev.data1 = KEYD_RCTRL;
-        D_PostEvent(&ev);
-    }
+        if(key_up & KEY_START)
+        {
+            ev.data1 = KEYD_ESCAPE;
+            D_PostEvent(&ev);
+        }
 
-    if(key_up & KEY_B)
-    {
-        ev.data1 = KEYD_SPACEBAR;
-        D_PostEvent(&ev);
-    }
+        if(key_up & KEY_A)
+        {
+            ev.data1 = KEYD_RCTRL;
+            D_PostEvent(&ev);
+        }
 
+        if(key_up & KEY_B)
+        {
+            ev.data1 = KEYD_SPACEBAR;
+            D_PostEvent(&ev);
+        }
+    }
 }
 
 //**************************************************************************************
@@ -220,8 +232,6 @@ void I_CreateBackBuffer_e32()
 
 void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsigned int width, const unsigned int height)
 {
-    VBlankIntrWait();
-
     REG_DISPCNT ^= DCNT_PAGE;
 }
 

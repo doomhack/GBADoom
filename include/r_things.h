@@ -42,17 +42,13 @@
 
 /* Constant arrays used for psprite clipping and initializing clipping. */
 
-void R_DrawMaskedColumn(R_DrawColumn_f colfunc,
-                        draw_column_vars_t *dcvars,
-                        const column_t *column);
-void R_SortVisSprites(void);
-void R_AddSprites(subsector_t* subsec, int lightlevel);
-void R_DrawPlayerSprites(void);
 void R_InitSprites(const char * const * namelist);
 void R_ClearSprites(void);
 void R_DrawMasked(void);
 
 #define MAX_SPRITE_FRAMES 29          /* Macroized -- killough 1/25/98 */
 
+#define MINZ        (FRACUNIT*4)
+#define BASEYCENTER 100
 
 #endif

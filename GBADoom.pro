@@ -86,6 +86,7 @@ SOURCES += \
         source/r_bsp.c \
         source/r_data.c \
         source/r_draw.c \
+        source/r_hotpath.iwram.c \
         source/r_main.c \
         source/r_patch.c \
         source/r_plane.c \

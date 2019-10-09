@@ -108,7 +108,7 @@ void P_InitSwitchList(void)
 
     episode = 1;
 
-    if (_g->gamemode == registered)
+    if (_g->gamemode == registered || _g->gamemode == retail)
         episode = 2;
     else
         if ( _g->gamemode == commercial )
@@ -125,8 +125,8 @@ void P_InitSwitchList(void)
 
         if (alphSwitchList[i].episode <= episode)
         {
-            _g->switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name1);
-            _g->switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name2);
+            _g->switchlist[index++] = R_LoadTextureByName(alphSwitchList[i].name1);
+            _g->switchlist[index++] = R_LoadTextureByName(alphSwitchList[i].name2);
         }
     }
 }

@@ -119,7 +119,6 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
 
     app->processEvents();
 
-
     int arrayCount = thesize;
 
     if(arrayCount == 0)

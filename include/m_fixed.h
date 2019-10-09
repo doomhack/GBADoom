@@ -105,4 +105,6 @@ inline static fixed_t CONSTFUNC FixedMod(fixed_t a, fixed_t b)
     return (a & (b-1));
 }
 
+
+
 #endif

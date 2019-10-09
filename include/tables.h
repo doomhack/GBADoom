@@ -101,7 +101,6 @@ extern const fixed_t negonearray[120];
 
 extern const unsigned char translationtables[1023];
 
-extern const unsigned short zlight[16][128];
 
 
 // Utility function, called by R_PointToAngle.

@@ -78,116 +78,6 @@ const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACB
 const angle_t clipangle = 537395200; //xtoviewangle[0];
 
 
-//
-// R_PointOnSide
-// Traverse BSP (sub) tree,
-//  check point against partition plane.
-// Returns side 0 (front) or 1 (back).
-//
-// killough 5/2/98: reformatted
-//
-
-PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
-{
-    fixed_t dx = (fixed_t)node->dx << FRACBITS;
-    fixed_t dy = (fixed_t)node->dy << FRACBITS;
-
-    fixed_t nx = (fixed_t)node->x << FRACBITS;
-    fixed_t ny = (fixed_t)node->y << FRACBITS;
-
-    if (!dx)
-        return x <= nx ? node->dy > 0 : node->dy < 0;
-
-    if (!dy)
-        return y <= ny ? node->dx < 0 : node->dx > 0;
-
-    x -= nx;
-    y -= ny;
-
-    // Try to quickly decide by looking at sign bits.
-    if ((dy ^ dx ^ x ^ y) < 0)
-        return (dy ^ x) < 0;  // (left is negative)
-
-    return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
-}
-
-// killough 5/2/98: reformatted
-
-PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
-{
-  fixed_t lx = line->v1->x;
-  fixed_t ly = line->v1->y;
-  fixed_t ldx = line->v2->x - lx;
-  fixed_t ldy = line->v2->y - ly;
-
-  if (!ldx)
-    return x <= lx ? ldy > 0 : ldy < 0;
-
-  if (!ldy)
-    return y <= ly ? ldx < 0 : ldx > 0;
-
-  x -= lx;
-  y -= ly;
-
-  // Try to quickly decide by looking at sign bits.
-  if ((ldy ^ ldx ^ x ^ y) < 0)
-    return (ldy ^ x) < 0;          // (left is negative)
-  return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
-}
-
-//
-// R_PointToAngle
-// To get a global angle from cartesian coordinates,
-//  the coordinates are flipped until they are in
-//  the first octant of the coordinate system, then
-//  the y (<=x) is scaled and divided by x to get a
-//  tangent (slope) value which is looked up in the
-//  tantoangle[] table. The +1 size of tantoangle[]
-//  is to handle the case when x==y without additional
-//  checking.
-//
-// killough 5/2/98: reformatted, cleaned up
-
-#include <math.h>
-
-angle_t R_PointToAngle(fixed_t x, fixed_t y)
-{
-  static fixed_t oldx, oldy;
-  static angle_t oldresult;
-
-  x -= _g->viewx; y -= _g->viewy;
-
-  if ( /* !render_precise && */
-      // e6y: here is where "slime trails" can SOMETIMES occur
-      (x < INT_MAX/4 && x > -INT_MAX/4 && y < INT_MAX/4 && y > -INT_MAX/4)
-     )
-  {
-    // old R_PointToAngle
-    return (x || y) ?
-    x >= 0 ?
-      y >= 0 ?
-        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0
-                ANG90-1-tantoangle[SlopeDiv(x,y)] :                // octant 1
-        x > (y = -y) ? 0-tantoangle[SlopeDiv(y,x)] :                // octant 8
-                       ANG270+tantoangle[SlopeDiv(x,y)] :          // octant 7
-      y >= 0 ? (x = -x) > y ? ANG180-1-tantoangle[SlopeDiv(y,x)] : // octant 3
-                            ANG90 + tantoangle[SlopeDiv(x,y)] :    // octant 2
-        (x = -x) > (y = -y) ? ANG180+tantoangle[ SlopeDiv(y,x)] :  // octant 4
-                              ANG270-1-tantoangle[SlopeDiv(x,y)] : // octant 5
-    0;
-  }
-
-  // R_PointToAngleEx merged into R_PointToAngle
-  // e6y: The precision of the code above is abysmal so use the CRT atan2 function instead!
-  if (oldx != x || oldy != y)
-  {
-    oldx = x;
-    oldy = y;
-    oldresult = (int)(atan2(y, x) * ANG180/M_PI);
-  }
-  return oldresult;
-}
-
 angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
   return (y -= viewy, (x -= viewx) || y) ?
@@ -204,52 +94,6 @@ angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
     0;
 }
 
-//
-// R_InitTextureMapping
-//
-// killough 5/2/98: reformatted
-
-static void R_InitTextureMapping (void)
-{
-
-}
-
-//
-// R_InitLightTables
-//
-
-#define DISTMAP 2
-
-static void R_InitLightTables (void)
-{
-
-}
-
-//
-// R_SetViewSize
-// Do not really change anything here,
-//  because it might be in the middle of a refresh.
-// The change will take effect next refresh.
-//
-
-
-void R_SetViewSize(int blocks)
-{
-  _g->setsizeneeded = true;
-}
-
-//
-// R_ExecuteSetViewSize
-//
-
-void R_ExecuteSetViewSize (void)
-{
-  _g->setsizeneeded = false;
-
-  R_InitBuffer ();
-
-  R_InitTextureMapping();
-}
 
 //
 // R_Init
@@ -257,20 +101,16 @@ void R_ExecuteSetViewSize (void)
 
 void R_Init (void)
 {
-  // CPhipps - R_DrawColumn isn't constant anymore, so must
-  //  initialise in code
-  // current column draw function
   lprintf(LO_INFO, "R_LoadTrigTables\n");
   R_LoadTrigTables();
   lprintf(LO_INFO, "R_InitData\n");
   R_InitData();
-  R_SetViewSize(10);
   lprintf(LO_INFO, "R_Init: R_InitPlanes\n");
   R_InitPlanes();
-  lprintf(LO_INFO, "R_InitLightTables\n");
-  R_InitLightTables();
   lprintf(LO_INFO, "R_InitSkyMap\n");
   R_InitSkyMap();
+
+  R_InitBuffer();
 }
 
 //
@@ -280,14 +120,14 @@ void R_Init (void)
 
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 {
-  int nodenum = _g->numnodes-1;
+  int nodenum = numnodes-1;
 
   // special case for trivial maps (single subsector, no nodes)
-  if (_g->numnodes == 0)
+  if (numnodes == 0)
     return _g->subsectors;
 
   while (!(nodenum & NF_SUBSECTOR))
-    nodenum = _g->nodes[nodenum].children[R_PointOnSide(x, y, _g->nodes+nodenum)];
+    nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
   return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
@@ -295,29 +135,29 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 // R_SetupFrame
 //
 
-static void R_SetupFrame (player_t *player)
+void R_SetupFrame (player_t *player)
 {
   _g->viewplayer = player;
 
-  _g->viewx = player->mo->x;
-  _g->viewy = player->mo->y;
-  _g->viewz = player->viewz;
-  _g->viewangle = player->mo->angle;
+  viewx = player->mo->x;
+  viewy = player->mo->y;
+  viewz = player->viewz;
+  viewangle = player->mo->angle;
 
-  _g->extralight = player->extralight;
+  extralight = player->extralight;
 
-  _g->viewsin = finesine[_g->viewangle>>ANGLETOFINESHIFT];
-  _g->viewcos = finecosine[_g->viewangle>>ANGLETOFINESHIFT];
+  viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
+  viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
-  _g->fullcolormap = &_g->colormaps[0];
+  fullcolormap = &colormaps[0];
 
   if (player->fixedcolormap)
     {
-      _g->fixedcolormap = _g->fullcolormap   // killough 3/20/98: use fullcolormap
+      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
         + player->fixedcolormap*256*sizeof(lighttable_t);
     }
   else
-    _g->fixedcolormap = 0;
+    fixedcolormap = 0;
 
   _g->validcount++;
 }
@@ -336,7 +176,7 @@ void R_RenderPlayerView (player_t* player)
     R_ClearSprites ();
 
     // The head node is the last node output.
-    R_RenderBSPNode (_g->numnodes-1);
+    R_RenderBSPNode (numnodes-1);
 
     R_DrawPlanes ();
 

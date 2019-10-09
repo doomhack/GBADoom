@@ -46,7 +46,6 @@ typedef struct {
   int                 x;
   int                 yl;
   int                 yh;
-  fixed_t             z; // the current column z coord
   fixed_t             iscale;
   fixed_t             texturemid;
 
@@ -63,7 +62,7 @@ typedef struct {
   int                 y;
   int                 x1;
   int                 x2;
-  fixed_t             z; // the current span z coord
+  //fixed_t             z; // the current span z coord
   fixed_t             xfrac;
   fixed_t             yfrac;
   fixed_t             xstep;
@@ -78,12 +77,10 @@ typedef struct
   int   byte_pitch;
 } draw_vars_t;
 
+extern draw_vars_t drawvars;
+
 
 typedef void (*R_DrawColumn_f)(draw_column_vars_t *dcvars);
-
-
-// The span blitting interface.
-void 	R_DrawColumn (draw_column_vars_t *dcvars);
 
 
 // The Spectre/Invisibility effect.
@@ -93,12 +90,6 @@ void 	R_DrawFuzzColumn (draw_column_vars_t *dcvars);
 //  for player sprite rendering,
 //  Green/Red/Blue/Indigo shirts.
 void	R_DrawTranslatedColumn (draw_column_vars_t *dcvars);
-
-
-
-// Span blitting for rows, floor/ceiling. No Spectre effect needed.
-void R_DrawSpan(draw_span_vars_t *dsvars);
-
 
 void R_InitBuffer();
 

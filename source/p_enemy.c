@@ -741,11 +741,10 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
         // Go back to a player, no matter whether it's visible or not
         for (anyone=0; anyone<=1; anyone++)
-            for (c=0; c<MAXPLAYERS; c++)
-                if (_g->playeringame[c] && _g->players[c].playerstate==PST_LIVE &&
-                        (anyone || P_IsVisible(actor, _g->players[c].mo, allaround)))
+                if (_g->playeringame && _g->player.playerstate==PST_LIVE &&
+                        (anyone || P_IsVisible(actor, _g->player.mo, allaround)))
                 {
-                    P_SetTarget(&actor->target, _g->players[c].mo);
+                    P_SetTarget(&actor->target, _g->player.mo);
 
                     // killough 12/98:
                     // get out of refiring loop, to avoid hitting player accidentally
@@ -763,9 +762,9 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
     }
 
 
-    if(_g->playeringame[consoleplayer])
+    if(_g->playeringame)
     {
-        player = &_g->players[consoleplayer];
+        player = &_g->player;
 
         if (player->health <= 0)
             return false;               // dead
@@ -2025,12 +2024,7 @@ void A_BossDeath(mobj_t *mo)
 
     }
 
-  // make sure there is a player alive for victory
-  for (i=0; i<MAXPLAYERS; i++)
-    if (_g->playeringame[i] && _g->players[i].health > 0)
-      break;
-
-  if (i==MAXPLAYERS)
+  if (!(_g->playeringame && _g->player.health > 0))
     return;     // no one left alive, so do not end game
 
     // scan the remaining thinkers to see

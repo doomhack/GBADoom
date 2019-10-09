@@ -80,7 +80,8 @@
 
 // End Tunables
 
-typedef struct memblock {
+typedef struct memblock
+{
   struct memblock *next,*prev;
   size_t size;
   void **user;

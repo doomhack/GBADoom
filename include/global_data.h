@@ -90,8 +90,6 @@ fixed_t scale_mtof;
 // used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
 fixed_t scale_ftom;
 
-player_t *plr;           // the player represented by an arrow
-
 int lastlevel, lastepisode;
 
 boolean leveljuststarted;       // kluge until AM_LevelInit() is called
@@ -172,7 +170,7 @@ skill_t         gameskill;
 int             gameepisode;
 int             gamemap;
 
-player_t        players[MAXPLAYERS];
+player_t        player;
 
 int             starttime;     // for comparative timing purposes
 
@@ -212,7 +210,7 @@ boolean command_loadgame;
 
 boolean         usergame;      // ok to save / end game
 boolean         timingdemo;    // if true, exit with report on completion
-boolean         playeringame[MAXPLAYERS];
+boolean         playeringame;
 boolean         demoplayback;
 boolean         singledemo;           // quit after playing a demo from cmdline
 boolean         haswolflevels;// jff 4/18/98 wolf levels present
@@ -497,8 +495,7 @@ sector_t *sectors;
 int      numsubsectors;
 subsector_t *subsectors;
 
-int      numnodes;
-const mapnode_t   *nodes;
+
 
 int      numlines;
 line_t   *lines;
@@ -593,26 +590,6 @@ boolean onground; // whether player is on ground or in air
 //r_bsp.c
 //******************************************************************************
 
-seg_t     *curline;
-side_t    *sidedef;
-line_t    *linedef;
-sector_t  *frontsector;
-sector_t  *backsector;
-drawseg_t *ds_p;
-
-// killough 4/7/98: indicates doors closed wrt automap bugfix:
-// cph - replaced by linedef rendering flags - int      doorclosed;
-
-// killough: New code which removes 2s linedef limit
-drawseg_t *drawsegs;
-unsigned  maxdrawsegs;
-
-// CPhipps -
-// Instead of clipsegs, let's try using an array with one entry for each column,
-// indicating whether it's blocked by a solid wall yet or not.
-
-byte solidcol[MAX_SCREENWIDTH];
-
 
 //******************************************************************************
 //r_data.c
@@ -621,17 +598,14 @@ byte solidcol[MAX_SCREENWIDTH];
 int       firstflat, lastflat, numflats;
 int       firstspritelump, lastspritelump, numspritelumps;
 int       numtextures;
-texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
-fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
-short       *flattranslation;             // for global animation
-short       *texturetranslation;
+
+
 
 
 //******************************************************************************
 //r_draw.c
 //******************************************************************************
 
-draw_vars_t drawvars;
 
 int fuzzpos;
 
@@ -640,21 +614,14 @@ int fuzzpos;
 //******************************************************************************
 
 int validcount;         // increment every time a check is made
-const lighttable_t* fixedcolormap;
-// proff 11/06/98: Added for high-res
-fixed_t  viewx, viewy, viewz;
-angle_t  viewangle;
-fixed_t  viewcos, viewsin;
-player_t *viewplayer;
 
-const lighttable_t *fullcolormap;
-const lighttable_t *colormaps;
+
+
+player_t *viewplayer;
 
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
-int extralight;                           // bumped light from gun blasts
 
-boolean setsizeneeded;
 
 //******************************************************************************
 //r_patch.c
@@ -668,16 +635,13 @@ boolean setsizeneeded;
 visplane_t *visplanes[MAXVISPLANES];   // killough
 visplane_t *freetail;                  // killough
 visplane_t **freehead;     // killough
-visplane_t *floorplane, *ceilingplane;
 
-size_t maxopenings;
-int *openings,*lastopening; // dropoff overflow
+
 
 // Clip values are the solid pixel bounding the range.
 //  floorclip starts out SCREENHEIGHT
 //  ceilingclip starts out -1
 
-int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
 
 // spanstart holds the start of a plane span; initialized to 0 at start
 
@@ -686,59 +650,23 @@ int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 //
 // texture mapping
 //
-
-const unsigned short *planezlight;
 fixed_t planeheight;
 
 // killough 2/8/98: make variables static
 
-fixed_t basexscale, baseyscale;
-fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
+
 
 //******************************************************************************
 //r_segs.c
 //******************************************************************************
 
-
-// True if any of the segs textures might be visible.
-boolean  segtextured;
-boolean  markfloor;      // False if the back side is the same plane.
-boolean  markceiling;
-boolean  maskedtexture;
-int      toptexture;
-int      bottomtexture;
-int      midtexture;
-
-angle_t         rw_normalangle; // angle to line origin
-int             rw_angle1;
-fixed_t         rw_distance;
-
 //
 // regular wall
 //
-int      rw_x;
-int      rw_stopx;
-angle_t  rw_centerangle;
-fixed_t  rw_offset;
-fixed_t  rw_scale;
-fixed_t  rw_scalestep;
-fixed_t  rw_midtexturemid;
-fixed_t  rw_toptexturemid;
-fixed_t  rw_bottomtexturemid;
-int      rw_lightlevel;
-int      worldtop;
-int      worldbottom;
-int      worldhigh;
-int      worldlow;
-fixed_t  pixhigh;
-fixed_t  pixlow;
-fixed_t  pixhighstep;
-fixed_t  pixlowstep;
-fixed_t  topfrac;
-fixed_t  topstep;
-fixed_t  bottomfrac;
-fixed_t  bottomstep;
-int      *maskedtexturecol; // dropoff overflow
+
+
+
+
 
 int didsolidcol; /* True if at least one column was marked solid */
 
@@ -769,10 +697,7 @@ int maxframe;
 vissprite_t *vissprites, **vissprite_ptrs;  // killough
 size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 
-int   *mfloorclip;   // dropoff overflow
-int   *mceilingclip; // dropoff overflow
-fixed_t spryscale;
-fixed_t sprtopscreen;
+
 
 //******************************************************************************
 //s_sound.c

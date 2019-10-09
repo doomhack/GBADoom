@@ -173,7 +173,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     //const int   DYI = (200<<16) / SCREENHEIGHT;
     const int   DYI = 81920;
 
-    const byte* byte_topleft = (byte*)_g->screens[scrn].data;
+    byte* byte_topleft = (byte*)_g->screens[scrn].data;
     const int byte_pitch = (_g->screens[scrn].byte_pitch * 2);
 
     const int dc_iscale = DYI;
@@ -199,12 +199,12 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             break;
 
         // step through the posts in a column
-        while (column->topdelta != 0xff )
+        while (column->topdelta != 0xff)
         {
             const byte* source = (const byte*)column + 3;
             const int topdelta = column->topdelta;
 
-            int yoffset = 0;
+            int yoffset;
 
             int dc_yl = (((y + topdelta) * DY) >> FRACBITS);
             int dc_yh = (((y + topdelta + column->length) * DY) >> FRACBITS);
@@ -215,7 +215,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
                 continue;
 
             if ((dc_yl >= SCREENHEIGHT) || (dc_yl >= bottom))
-                continue;
+                break;
 
             if (dc_yh >= bottom)
             {
@@ -244,7 +244,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             {
                 int count = (dc_yh - dc_yl);
 
-                const byte *colormap = _g->colormaps;
+                const byte *colormap = colormaps;
 
                 byte* dest = byte_topleft + (dc_yl*byte_pitch) + dc_x;
 
@@ -252,7 +252,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
                 fixed_t frac = dc_texturemid + (dc_yl - centery)*fracstep;
 
                 // Zero length, column does not exceed a pixel.
-                if (dc_yl >= dc_yh)
+                if (count <= 0)
                     continue;
 
                 // Inner loop that does the actual texture mapping,

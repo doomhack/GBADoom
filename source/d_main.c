@@ -198,22 +198,16 @@ void D_Display (void)
 
     HU_Erase();
 
-    if (_g->setsizeneeded)
-    {               // change the view size if needed
-      R_ExecuteSetViewSize();
-      _g->oldgamestate = -1;            // force background redraw
-    }
-
     // Work out if the player view is visible, and if there is a border
     viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
 
     // Now do the drawing
     if (viewactive)
-      R_RenderPlayerView (&_g->players[displayplayer]);
+      R_RenderPlayerView (&_g->player);
     if (_g->automapmode & am_active)
       AM_Drawer();
 
-    ST_Drawer(true, false);
+    //ST_Drawer(true, false);
 
     HU_Drawer();
   }
@@ -282,8 +276,8 @@ static void D_DoomLoop(void)
 			TryRunTics (); // will run at least one tic
 		
 		// killough 3/16/98: change consoleplayer to displayplayer
-        if (_g->players[displayplayer].mo) // cph 2002/08/10
-            S_UpdateSounds(_g->players[displayplayer].mo);// move positional sounds
+        if (_g->player.mo) // cph 2002/08/10
+            S_UpdateSounds(_g->player.mo);// move positional sounds
 
         // Update display, next frame, with current state.
         D_Display();
@@ -431,7 +425,7 @@ const demostates[][4] =
 
 void D_DoAdvanceDemo(void)
 {
-  _g->players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
+  _g->player.playerstate = PST_LIVE;  /* not reborn */
   _g->advancedemo = _g->usergame = _g->paused = false;
   _g->gameaction = ga_nothing;
 

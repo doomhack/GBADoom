@@ -579,7 +579,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   /* cph 20028/10 - for old-school DM addicts, allow old behavior
    * where only consoleplayer's pickup sounds are heard */
   // displayplayer, not consoleplayer, for viewing multiplayer demos
-  if (player == &_g->players[displayplayer])
+  if (player == &_g->player)
     S_StartSound (player->mo, sound | PICKUP_SOUND);   // killough 4/25/98
 }
 
@@ -611,14 +611,14 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
       if (target->flags & MF_COUNTKILL)
         source->player->killcount++;
       if (target->player)
-        source->player->frags[target->player-_g->players]++;
+        source->player->frags[target->player-&_g->player]++;
     }
   else if (target->flags & MF_COUNTKILL)
   { /* Add to kills tally */
 
       // count all monster deaths,
       // even those caused by other monsters
-      _g->players[0].killcount++;
+      _g->player.killcount++;
 
   }
 
@@ -626,13 +626,13 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
     {
       // count environment kills against you
       if (!source)
-        target->player->frags[target->player-_g->players]++;
+        target->player->frags[target->player-&_g->player]++;
 
       target->flags &= ~MF_SOLID;
       target->player->playerstate = PST_DEAD;
       P_DropWeapon (target->player);
 
-      if (target->player == &_g->players[consoleplayer] && (_g->automapmode & am_active))
+      if (target->player == &_g->player && (_g->automapmode & am_active))
         AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 

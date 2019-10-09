@@ -757,9 +757,9 @@ void M_ChangeMessages(int choice)
   _g->showMessages = 1 - _g->showMessages;
 
   if (!_g->showMessages)
-    _g->players[consoleplayer].message = MSGOFF; // Ty 03/27/98 - externalized
+    _g->player.message = MSGOFF; // Ty 03/27/98 - externalized
   else
-    _g->players[consoleplayer].message = MSGON ; // Ty 03/27/98 - externalized
+    _g->player.message = MSGON ; // Ty 03/27/98 - externalized
 
   _g->message_dontfuckwithme = true;
 }
