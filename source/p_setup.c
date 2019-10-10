@@ -80,9 +80,6 @@ static void P_LoadVertexes (int lump)
       _g->vertexes[i].x = SHORT(data[i].x)<<FRACBITS;
       _g->vertexes[i].y = SHORT(data[i].y)<<FRACBITS;
     }
-
-  // Free buffer memory.
-  W_UnlockLumpNum(lump);
 }
 
 //
@@ -139,8 +136,6 @@ static void P_LoadSegs (int lump)
       else
         li->backsector = 0;
     }
-
-  W_UnlockLumpNum(lump); // cph - release the data
 }
 
 //
@@ -166,8 +161,6 @@ static void P_LoadSubsectors (int lump)
     _g->subsectors[i].numlines  = (unsigned short)SHORT(data[i].numsegs );
     _g->subsectors[i].firstline = (unsigned short)SHORT(data[i].firstseg);
   }
-
-  W_UnlockLumpNum(lump); // cph - release the data
 }
 
 //
@@ -202,8 +195,6 @@ static void P_LoadSectors (int lump)
       ss->thinglist = NULL;
       ss->touching_thinglist = NULL;            // phares 3/14/98
     }
-
-  W_UnlockLumpNum(lump); // cph - release the data
 }
 
 
@@ -261,9 +252,6 @@ static void P_LoadThings (int lump)
       // Do spawn all other stuff.
       P_SpawnMapThing(&mt);
     }
-
-
-  W_UnlockLumpNum(lump); // cph - release the data
 }
 
 //
@@ -345,8 +333,6 @@ static void P_LoadLineDefs (int lump)
       if (ld->sidenum[0] != NO_INDEX && ld->special)
         _g->sides[*ld->sidenum].special = ld->special;
     }
-
-  W_UnlockLumpNum(lump); // cph - release the lump
 }
 
 // killough 4/4/98: delay using sidedefs until they are loaded
@@ -405,8 +391,6 @@ static void P_LoadSideDefs2(int lump)
       sd->toptexture = R_LoadTextureByName(msd->toptexture);
       sd->bottomtexture = R_LoadTextureByName(msd->bottomtexture);
     }
-
-  W_UnlockLumpNum(lump); // cph - release the lump
 }
 
 //
@@ -441,8 +425,6 @@ static void P_LoadBlockMap (int lump)
 {
     _g->blockmaplump = W_CacheLumpNum(lump);
 
-    W_UnlockLumpNum(lump); // cph - unlock the lump
-
     _g->bmaporgx = _g->blockmaplump[0]<<FRACBITS;
     _g->bmaporgy = _g->blockmaplump[1]<<FRACBITS;
     _g->bmapwidth = _g->blockmaplump[2];
@@ -471,9 +453,6 @@ static void P_LoadReject(int lumpnum, int totallines)
   unsigned int length, required;
   byte *newreject;
 
-  // dump any old cached reject lump, then cache the new one
-  if (_g->rejectlump != -1)
-    W_UnlockLumpNum(_g->rejectlump);
   _g->rejectlump = lumpnum + ML_REJECT;
   _g->rejectmatrix = W_CacheLumpNum(_g->rejectlump);
 
@@ -488,8 +467,7 @@ static void P_LoadReject(int lumpnum, int totallines)
   newreject = Z_Malloc(required, PU_LEVEL, NULL);
   _g->rejectmatrix = (const byte *)memmove(newreject, _g->rejectmatrix, length);
   memset(newreject + length, 0, required - length);
-  // unlock the original lump, it is no longer needed
-  W_UnlockLumpNum(_g->rejectlump);
+
   _g->rejectlump = -1;
 
   lprintf(LO_WARN, "P_LoadReject: REJECT too short (%u<%u) - padded\n",
@@ -636,8 +614,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   //Load the sky texture.
   R_GetTexture(_g->skytexture);
 
-  if (_g->rejectlump != -1) { // cph - unlock the reject table
-    W_UnlockLumpNum(_g->rejectlump);
+  if (_g->rejectlump != -1)
+  { // cph - unlock the reject table
     _g->rejectlump = -1;
   }
 

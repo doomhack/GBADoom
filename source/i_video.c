@@ -138,8 +138,6 @@ static void I_UploadNewPalette(int pal)
     _g->current_pallete = palette;
 
     I_SetPallete_e32(palette);
-
-	W_UnlockLumpNum(pplump);
 	
 #ifdef RANGECHECK
 	if ((size_t)pal >= num_pals)

@@ -72,24 +72,6 @@ void R_InitPlanes (void)
 }
 
 //
-// R_MapPlane
-//
-// Uses global vars:
-//  planeheight
-//  dsvars.source
-//  basexscale
-//  baseyscale
-//  viewx
-//  viewy
-//  xoffs
-//  yoffs
-//
-// BASIC PRIMITIVE
-//
-
-
-
-//
 // R_ClearPlanes
 // At begining of frame.
 //

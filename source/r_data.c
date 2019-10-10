@@ -227,7 +227,7 @@ static int R_GetTextureNumForName(const char* tex_name)
 
         const maptexture_t* mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
 
-        if(!strnicmp(tex_name, mtexture->name, 8))
+        if(!strncmp(tex_name, mtexture->name, 8))
             return i;
     }
 
@@ -358,7 +358,8 @@ void R_InitData(void)
 
 int R_FlatNumForName(const char *name)    // killough -- const added
 {
-  int i = (W_CheckNumForName)(name, ns_flats);
+  int i = W_CheckNumForName(name);
+
   if (i == -1)
     I_Error("R_FlatNumForName: %.8s not found", name);
   return i - _g->firstflat;

@@ -57,34 +57,11 @@ typedef struct
   char name[8];
 } filelump_t;
 
-void W_Init(void); // CPhipps - uses the above array
-void W_InitCache(void);
-void W_DoneCache(void);
-
-typedef struct
-{
-  // WARNING: order of some fields important (see info.c).
-
-  char  name[9];
-  int   size;
-
-  // killough 1/31/98: hash table fields, used for ultra-fast hash table lookup
-  int index, next;
-
-  // killough 4/17/98: namespace tags, to prevent conflicts between resources
-  enum {
-    ns_global=0,
-    ns_sprites,
-    ns_flats,
-    ns_colormaps,
-    ns_prboom
-  } li_namespace; // haleyjd 05/21/02: renamed from "namespace"
-
-  int position;
-} lumpinfo_t;
 
 // killough 4/17/98: if W_CheckNumForName() called with only
 // one argument, pass ns_global as the default namespace
+
+void W_Init(void); // CPhipps - uses the above array
 
 #define W_CheckNumForName(name) (W_CheckNumForName)(name, 0)
 int     (W_CheckNumForName)(const char* name, int);   // killough 4/17/98
@@ -93,23 +70,13 @@ const char* W_GetNameForNum(int lump);
 
 
 int     W_LumpLength (int lump);
-void    W_ReadLump (int lump, void *dest);
-const void* W_GetLumpPtr(int lump);
 
 // CPhipps - modified for 'new' lump locking
 const void* W_CacheLumpNum (int lump);
-const void* W_LockLumpNum(int lump);
-void    W_UnlockLumpNum(int lump);
 
 // CPhipps - convenience macros
-//#define W_CacheLumpNum(num) (W_CacheLumpNum)((num),1)
-#define W_CacheLumpName(name) W_CacheLumpNum (W_GetNumForName(name))
-
-//#define W_UnlockLumpNum(num) (W_UnlockLumpNum)((num),1)
-#define W_UnlockLumpName(name) W_UnlockLumpNum (W_GetNumForName(name))
+#define W_CacheLumpName(name) W_CacheLumpNum(W_GetNumForName(name))
 
 void ExtractFileBase(const char *, char *);       // killough
-unsigned W_LumpNameHash(const char *s);           // killough 1/31/98
-void W_HashLumps(void);                           // cph 2001/07/07 - made public
 
 #endif

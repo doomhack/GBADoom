@@ -125,8 +125,8 @@ void P_InitSwitchList(void)
 
         if (alphSwitchList[i].episode <= episode)
         {
-            _g->switchlist[index++] = R_LoadTextureByName(alphSwitchList[i].name1);
-            _g->switchlist[index++] = R_LoadTextureByName(alphSwitchList[i].name2);
+            _g->switchlist[index++] = R_CheckTextureNumForName(alphSwitchList[i].name1);
+            _g->switchlist[index++] = R_CheckTextureNumForName(alphSwitchList[i].name2);
         }
     }
 }

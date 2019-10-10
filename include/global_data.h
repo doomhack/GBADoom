@@ -647,11 +647,6 @@ visplane_t **freehead;     // killough
 
 int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 
-//
-// texture mapping
-//
-fixed_t planeheight;
-
 // killough 2/8/98: make variables static
 
 

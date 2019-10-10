@@ -149,13 +149,13 @@ void P_InitPicAnims (void)
         if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
             continue;
 
-        _g->lastanim->picnum = R_LoadTextureByName (animdefs[i].endname);
-        _g->lastanim->basepic = R_LoadTextureByName (animdefs[i].startname);
+        _g->lastanim->picnum = R_CheckTextureNumForName (animdefs[i].endname);
+        _g->lastanim->basepic = R_CheckTextureNumForName (animdefs[i].startname);
     }
     else
     {
         if (W_CheckNumForName(animdefs[i].startname) == -1)
-        continue;
+            continue;
 
         _g->lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
         _g->lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
@@ -170,16 +170,6 @@ void P_InitPicAnims (void)
              animdefs[i].endname);
 
     _g->lastanim->speed = animdefs[i].speed;
-
-    //Load in animated textures.
-    if(animdefs[i].istexture)
-    {
-        for(int a = _g->lastanim->basepic; a <= _g->lastanim->picnum; a++)
-        {
-            R_GetTexture(a);
-        }
-    }
-
 
     _g->lastanim++;
     }
@@ -2265,9 +2255,6 @@ void P_UpdateSpecials (void)
                 {
                     pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
                     texturetranslation[i] = pic;
-
-                    //Load the texture.
-                    R_GetTexture(pic);
                 }
             }
         }

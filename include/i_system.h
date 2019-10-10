@@ -42,8 +42,6 @@ boolean I_StartDisplay(void);
 void I_EndDisplay(void);
 int I_GetTime(void);     /* killough */
 
-unsigned long I_GetRandomTimeSeed(void); /* cphipps */
-
 /* cphipps - I_GetVersionString
  * Returns a version string in the given buffer
  */

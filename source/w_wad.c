@@ -165,7 +165,7 @@ static const filelump_t* FindLumpByNum(int num)
         if(num >= header->numlumps)
             return NULL;
 
-        fileinfo = (filelump_t*)&doom_iwad[header->infotableofs];
+        fileinfo = (const filelump_t*)&doom_iwad[header->infotableofs];
 
         return &fileinfo[num];
     }
@@ -249,15 +249,10 @@ void W_Init(void)
 
     if (!_g->numlumps)
         I_Error ("W_Init: No files found");
-
-    /* cph 2001/07/07 - separated cache setup */
-    lprintf(LO_INFO,"W_InitCache\n");
-    W_InitCache();
 }
 
 void W_ReleaseAllWads(void)
 {
-	W_DoneCache();
     _g->numlumps = 0;
 }
 
@@ -278,22 +273,6 @@ int W_LumpLength(int lump)
     I_Error ("W_LumpLength: %i >= numlumps",lump);
 }
 
-//
-// W_ReadLump
-// Loads the lump into the given buffer,
-//  which must be >= W_LumpLength().
-//
-
-void W_ReadLump(int lump, void* dest)
-{
-    const filelump_t* l = FindLumpByNum(lump);
-
-    if(l)
-    {
-        memcpy(dest, &doom_iwad[l->filepos], l->size);
-    }
-}
-
 const void* W_GetLumpPtr(int lump)
 {
     const filelump_t* l = FindLumpByNum(lump);
@@ -306,22 +285,7 @@ const void* W_GetLumpPtr(int lump)
     return NULL;
 }
 
-// Hash function used for lump names.
-// Must be mod'ed with table size.
-// Can be used for any 8-character names.
-// by Lee Killough
-
-unsigned W_LumpNameHash(const char *s)
+const void *W_CacheLumpNum(int lump)
 {
-  unsigned hash;
-  (void) ((hash =        toupper(s[0]), s[1]) &&
-          (hash = hash*3+toupper(s[1]), s[2]) &&
-          (hash = hash*2+toupper(s[2]), s[3]) &&
-          (hash = hash*2+toupper(s[3]), s[4]) &&
-          (hash = hash*2+toupper(s[4]), s[5]) &&
-          (hash = hash*2+toupper(s[5]), s[6]) &&
-          (hash = hash*2+toupper(s[6]),
-           hash = hash*2+toupper(s[7]))
-         );
-  return hash;
+    return W_GetLumpPtr(lump);
 }

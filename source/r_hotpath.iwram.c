@@ -161,6 +161,8 @@ static int      worldlow;
 static lighttable_t current_colormap[256];
 static const lighttable_t* current_colormap_ptr;
 
+static fixed_t planeheight;
+
 //*****************************************
 //Column cache stuff.
 //GBA has 16kb of Video Memory for columns
@@ -710,40 +712,11 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         {
             dcvars.colormap = R_LoadColorMap(rw_lightlevel);
 
-            // killough 3/2/98:
-            //
-            // This calculation used to overflow and cause crashes in Doom:
-            //
-            // sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
-            //
-            // This code fixes it, by using double-precision intermediate
-            // arithmetic and by skipping the drawing of 2s normals whose
-            // mapping to screen coordinates is totally out of range:
-
-            /*
-            {
-                int_64_t t = ((int_64_t) centeryfrac << FRACBITS) -
-                        (int_64_t) dcvars.texturemid * spryscale;
-                if (t + (int_64_t) textureheight[texnum] * spryscale < 0 ||
-                        t > (int_64_t) MAX_SCREENHEIGHT << FRACBITS*2)
-                    continue;        // skip if the texture is out of screen's range
-                sprtopscreen = (long)(t >> FRACBITS);
-            }
-            */
-
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
             dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
 
             //dcvars.iscale = 0xffffffffu / (unsigned) spryscale;
-
-            // killough 1/25/98: here's where Medusa came in, because
-            // it implicitly assumed that the column was all one patch.
-            // Originally, Doom did not construct complete columns for
-            // multipatched textures, so there were no header or trailer
-            // bytes in the column referred to below, which explains
-            // the Medusa effect. The fix is to construct true columns
-            // when forming multipatched textures (see r_data.c).
 
             // draw the texture
 
@@ -1146,7 +1119,7 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
         I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
 #endif
 
-    distance = FixedMul(_g->planeheight, yslope[y]);
+    distance = FixedMul(planeheight, yslope[y]);
     dsvars->xstep = FixedMul(distance,basexscale);
     dsvars->ystep = FixedMul(distance,baseyscale);
 
@@ -1257,7 +1230,7 @@ static void R_DoDrawPlane(visplane_t *pl)
             xoffs = pl->xoffs;  // killough 2/28/98: Add offsets
             yoffs = pl->yoffs;
 
-            _g->planeheight = D_abs(pl->height-viewz);
+            planeheight = D_abs(pl->height-viewz);
 
             dsvars.colormap = R_LoadColorMap(pl->lightlevel);
 
@@ -1270,8 +1243,6 @@ static void R_DoDrawPlane(visplane_t *pl)
             {
                 R_MakeSpans(x,pl->top[x-1],pl->bottom[x-1], pl->top[x],pl->bottom[x], &dsvars);
             }
-
-            W_UnlockLumpNum(_g->firstflat + flattranslation[pl->picnum]);
         }
     }
 }

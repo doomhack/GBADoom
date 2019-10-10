@@ -100,7 +100,6 @@ SOURCES += \
         source/tables.c \
         source/v_video.c \
         source/version.c \
-        source/w_memcache.c \
         source/w_wad.c \
         source/wi_stuff.c \
         source/z_bmalloc.c \

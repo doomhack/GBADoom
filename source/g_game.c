@@ -1789,9 +1789,8 @@ boolean G_CheckDemoStatus (void)
       if (_g->singledemo)
         exit(0);  // killough
 
-      if (demolumpnum != -1) {
-  // cph - unlock the demo lump
-  W_UnlockLumpNum(demolumpnum);
+      if (demolumpnum != -1)
+      {
   demolumpnum = -1;
       }
       G_ReloadDefaults();    // killough 3/1/98

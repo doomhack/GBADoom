@@ -174,8 +174,6 @@ static void R_InitSpriteDefs(const char * const * namelist)
             {
               const char* sn = W_GetNameForNum(j + _g->firstspritelump);
 
-              //register lumpinfo_t *lump = _g->lumpinfo + j + _g->firstspritelump;
-
               // Fast portable comparison -- killough
               // (using int pointer cast is nonportable):
 

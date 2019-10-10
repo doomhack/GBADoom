@@ -139,7 +139,6 @@ void V_DrawBackground(const char* flatname, int scrn)
     for (x=y ? 0 : 64; x<SCREENWIDTH ; x+=64)
       V_CopyRect(0, 0, scrn, ((SCREENWIDTH-x) < 64) ? (SCREENWIDTH-x) : 64,
      ((SCREENHEIGHT-y) < 64) ? (SCREENHEIGHT-y) : 64, x, y, scrn, VPT_NONE);
-  W_UnlockLumpNum(lump);
 }
 
 //

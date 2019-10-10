@@ -90,25 +90,11 @@ int I_GetTime(void)
 
 }
 
-/*
- * I_GetRandomTimeSeed
- *
- * CPhipps - extracted from G_ReloadDefaults because it is O/S based
- */
-unsigned long I_GetRandomTimeSeed(void)
-{                            
-  /* killough 3/26/98: shuffle random seed, use the clock */ 
-  struct timeval tv;
-  struct timezone tz;
-  gettimeofday(&tv,&tz);
-  return (tv.tv_sec*1000ul + tv.tv_usec/1000ul);
-}
-
 /* cphipps - I_GetVersionString
  * Returns a version string in the given buffer 
  */
 const char* I_GetVersionString(char* buf, size_t sz)
 {
-  sprintf(buf,"PsionDoom v%s",VERSION);
+  sprintf(buf,"GBADoom v%s",VERSION);
   return buf;
 }
