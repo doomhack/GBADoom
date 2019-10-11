@@ -438,7 +438,12 @@ static const lighttable_t* R_ColourMap(int lightlevel)
 
         lightlevel += extralight << LIGHTSEGSHIFT;
 
-        return fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 16)*256;
+        int cm = ((256-lightlevel)>>2) - 16;
+
+        return fullcolormap + between(0,NUMCOLORMAPS-1, cm)*256;
+
+
+        //return fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 16)*256;
     }
 }
 
@@ -450,7 +455,7 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 
     if(current_colormap_ptr != lm)
     {
-        memcpy(current_colormap, lm, 256);
+        memcpy(&current_colormap[0], lm, 256);
         current_colormap_ptr = lm;
     }
 
@@ -1465,7 +1470,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         vis->colormap = fullcolormap;     // full bright  // killough 3/20/98
     else
     {      // diminished light
-        vis->colormap = R_LoadColorMap(lightlevel);
+        vis->colormap = R_ColourMap(lightlevel);
     }
 }
 
@@ -1996,6 +2001,7 @@ static void R_StoreWallRange(const int start, const int stop)
             do
                 maxopenings = maxopenings ? maxopenings + 32 : 32;
             while (need > maxopenings);
+
             openings = realloc(openings, maxopenings * sizeof(*openings));
 
             lastopening = openings + pos;

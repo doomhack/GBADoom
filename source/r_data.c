@@ -227,7 +227,7 @@ static int R_GetTextureNumForName(const char* tex_name)
 
         const maptexture_t* mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
 
-        if(!strncmp(tex_name, mtexture->name, 8))
+        if(!strnicmp(tex_name, mtexture->name, 8))
             return i;
     }
 
