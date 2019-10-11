@@ -438,10 +438,9 @@ static const lighttable_t* R_ColourMap(int lightlevel)
 
         lightlevel += extralight << LIGHTSEGSHIFT;
 
-        int cm = ((256-lightlevel)>>2) - 16;
+        int cm = ((256-lightlevel)>>2) - 24;
 
         return fullcolormap + between(0,NUMCOLORMAPS-1, cm)*256;
-
 
         //return fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 16)*256;
     }
@@ -720,8 +719,6 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
             dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
-
-            //dcvars.iscale = 0xffffffffu / (unsigned) spryscale;
 
             // draw the texture
 
@@ -1669,8 +1666,8 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
         if( (cy == 0) || (cy == cx) )
             return i;
 
-        cc += istep;
         i += istep;
+        cc += istep;
 
     } while(i != iend);
 
@@ -1839,7 +1836,6 @@ static void R_RenderSegLoop (void)
             dcvars.x = rw_x;
 
             dcvars.iscale = UDiv32(0xffffffffu, (unsigned)rw_scale);
-            //dcvars.iscale = 0xffffffffu / (unsigned)rw_scale;
         }
 
         // draw the wall tiers
