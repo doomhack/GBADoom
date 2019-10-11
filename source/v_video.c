@@ -276,10 +276,11 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
                     }
                     else
                     {
-                        //So even addreses we just write the first color twice.
                         unsigned short* dest16 = (unsigned short*)dest;
 
-                        *dest16 = (color | (color << 8));
+                        unsigned short old = *dest16;
+
+                        *dest16 = ((color & 0xff) | (old << 8));
                     }
 
                     dest += byte_pitch;
