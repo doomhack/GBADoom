@@ -8,10 +8,10 @@ More importantly, the memory usage is down from about 3-4Mb when I started to...
 It is starting to look like it might be possible to get it within our 256kb memory budget.
 
 
-Most of the options are gone, it will draw at 120x160px. (There's just no way I can get it to draw at full resolution.) The renderer is otherwise intact. Z-Depth lighting, colormap effects etc are all still present and correct.
+Most of the options are gone, it will draw at 120x160px. (There's just no way I can get it to draw at full resolution.) The renderer is otherwise intact. ~Z-Depth lighting~, colormap effects etc are all still present and correct.
 
 
-The multi-patch textures are going to be a major headache to get working fast.
+The multi-patch textures are ~going to be~ a major headache to get working fast.
 
 
 Sound won't be too hard to get up and running (but i'm making the assumption that 11250hz samples can be used without re-sampling) but not sure how to do music. I could try the libtimitity route but I think it may be too slow. Maybe converting the music to MOD as part of the build process might work better?
