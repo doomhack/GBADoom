@@ -422,16 +422,8 @@ void S_ChangeMusic(int musicnum, int looping)
   // shutdown old music
   S_StopMusic();
 
-  char namebuf[9];
-  sprintf(namebuf, "d_%s", music->name);
-  int lumpnum = W_GetNumForName(namebuf);
-
-      // load & register it
-      I_RegisterSong(W_CacheLumpNum(lumpnum), W_LumpLength(lumpnum));
-
-
   // play it
-  I_PlaySong(0, looping);
+  I_PlaySong(musicnum, looping);
 
   _g->mus_playing = music;
 }

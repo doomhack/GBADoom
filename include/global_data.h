@@ -1,8 +1,6 @@
 #ifndef GLOBAL_DATA_H
 #define GLOBAL_DATA_H
 
-#include "libtimidity/timidity.h"
-
 #include "doomstat.h"
 #include "doomdef.h"
 #include "m_fixed.h"
@@ -36,8 +34,6 @@
 #include "w_wad.h"
 
 #include "wi_stuff.h"
-
-#include "mmus2mid.h"
 
 
 typedef struct globals_t
@@ -238,22 +234,9 @@ boolean    headsupactive;
 
 boolean sound_inited;
 
-short* music_buffer;
-unsigned int current_music_buffer;
-
 unsigned int music_looping;
 unsigned int music_volume;
 unsigned int music_init;
-
-unsigned int music_sample_counts[2];
-
-channel_info_t channelinfo[MAX_CHANNELS + 1];
-
-MidIStream* midiStream;
-MidSong* midiSong;
-
-
-
 
 unsigned long lasttimereply;
 unsigned long basetime;
@@ -306,12 +289,6 @@ boolean messageNeedsInput; // timed message = no input from user
 int	rndindex;
 int	prndindex;
 
-
-//******************************************************************************
-//mmus2mis.c
-//******************************************************************************
-
-TrackInfo* track;
 
 //******************************************************************************
 //p_ceiling.c

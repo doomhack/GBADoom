@@ -57,30 +57,113 @@
 
 #include "d_main.h"
 
-#include "mmus2mid.h"
-//#include "libtimidity/timidity.h"
 #include "m_fixed.h"
 
 #include "global_data.h"
 
-typedef struct
-{
-    int freq;
-    unsigned char channels;
-    unsigned short samples;
-    unsigned int size;
-    unsigned int (*callback)(unsigned char *stream, const int len);
-} AudioSpec;
+#define __arm__
 
-// Needed for calling the actual sound output.
-static const unsigned int SAMPLECOUNT	= 1024;
+#ifdef __arm__
+
+#include <gba.h>
+#include <maxmod.h>    // Maxmod definitions for GBA
+
+#include "soundbank.h"
+#include "soundbank_bin.h"
+
+#endif
 
 // MWM 2000-01-08: Sample rate in samples/second
 const int snd_samplerate=11250;
 
-static const unsigned int MUSIC_CHANNEL = MAX_CHANNELS;
 
-void flipSongBuffer();
+typedef struct music_map_t
+{
+    unsigned short doom_num;
+    unsigned short mm_num;
+}music_map_t;
+
+
+//Mapping between the Doom music num and the maxmod music number.
+static const music_map_t musicMap[NUMMUSIC] =
+{
+    {mus_None, 0},
+    {mus_e1m1, MOD_D_E1M1},
+    {mus_e1m2, MOD_D_E1M2},
+    {mus_e1m3, MOD_D_E1M3},
+    {mus_e1m4, MOD_D_E1M4},
+    {mus_e1m5, MOD_D_E1M5},
+    {mus_e1m6, MOD_D_E1M6},
+    {mus_e1m7, MOD_D_E1M7},
+    {mus_e1m8, MOD_D_E1M8},
+    {mus_e1m9, MOD_D_E1M9},
+
+    {mus_e2m1, MOD_D_E2M1},
+    {mus_e2m2, MOD_D_E2M2},
+    {mus_e2m3, MOD_D_E2M3},
+    {mus_e2m4, MOD_D_E2M4},
+    {mus_e2m5, MOD_D_E1M7},
+    {mus_e2m6, MOD_D_E2M6},
+    {mus_e2m7, MOD_D_E2M7},
+    {mus_e2m8, MOD_D_E2M8},
+    {mus_e2m9, MOD_D_E2M9},
+
+    {mus_e3m1, MOD_D_E2M9},
+    {mus_e3m2, MOD_D_E3M2},
+    {mus_e3m3, MOD_D_E3M3},
+    {mus_e3m4, MOD_D_E1M8},
+    {mus_e3m5, MOD_D_E1M7},
+    {mus_e3m6, MOD_D_E1M6},
+    {mus_e3m7, MOD_D_E2M7},
+    {mus_e3m8, MOD_D_E3M8},
+    {mus_e3m9, MOD_D_E1M9},
+
+    {mus_inter, MOD_D_E2M3},
+
+    {mus_intro, MOD_D_INTRO},
+    {mus_bunny, MOD_D_BUNNY},
+    {mus_victor, MOD_D_VICTOR},
+    {mus_introa, MOD_D_INTROA},
+    {mus_runnin, MOD_D_RUNNIN},
+    {mus_stalks, MOD_D_STALKS},
+    {mus_countd, MOD_D_COUNTD},
+    {mus_betwee, MOD_D_BETWEE},
+    {mus_doom, MOD_D_DOOM},
+    {mus_the_da, MOD_D_THE_DA},
+    {mus_shawn, MOD_D_SHAWN},
+    {mus_ddtblu, MOD_D_DDTBLU},
+    {mus_in_cit, MOD_D_IN_CIT},
+    {mus_dead, MOD_D_DEAD},
+    {mus_stlks2, MOD_D_STALKS},
+    {mus_theda2, MOD_D_STALKS},
+    {mus_doom2, MOD_D_DOOM},
+    {mus_runni2, MOD_D_RUNNIN},
+    {mus_dead2, MOD_D_DEAD},
+    {mus_stlks3, MOD_D_STALKS},
+    {mus_romero, MOD_D_ROMERO},
+    {mus_shawn2, MOD_D_SHAWN},
+    {mus_messag, MOD_D_MESSAG},
+    {mus_count2, MOD_D_COUNTD},
+    {mus_ddtbl3, MOD_D_DDTBLU},
+    {mus_ampie, MOD_D_AMPIE},
+    {mus_theda3, MOD_D_THE_DA},
+    {mus_adrian, MOD_D_ADRIAN},
+    {mus_messg2, MOD_D_MESSAG},
+    {mus_romer2, MOD_D_ROMERO},
+    {mus_tense, MOD_D_TENSE},
+    {mus_shawn3, MOD_D_SHAWN},
+    {mus_openin, MOD_D_OPENIN},
+    {mus_evil, MOD_D_EVIL},
+    {mus_ultima, MOD_D_ULTIMA},
+    {mus_read_m, MOD_D_READ_M},
+    {mus_dm2ttl, MOD_D_DM2TTL},
+    {mus_dm2int, MOD_D_DM2INT},
+    {mus_openin, MOD_D_OPENIN},
+};
+
+
+
+
 
 /* cph
  * stopchan
@@ -89,7 +172,7 @@ void flipSongBuffer();
 
 static void stopchan(int i)
 {
-    _g->channelinfo[i].data=NULL;
+
 }
 
 //
@@ -100,29 +183,13 @@ static void stopchan(int i)
 // Returns a handle.
 //
 static int addsfx(int sfxid, int channel, const char* data, size_t len)
-{
-	stopchan(channel);
-	
-    _g->channelinfo[channel].data = data + 8;
-
-	/* Set pointer to end of raw data. */
-    _g->channelinfo[channel].enddata = data + len - 1;
-	
+{	
 	return channel;
 }
 
 static void updateSoundParams(int slot, int volume)
 {
 
-#ifdef RANGECHECK
-	if ((handle < 0) || (handle >= MAX_CHANNELS))
-		I_Error("I_UpdateSoundParams: handle out of range");
-#endif
-
-    if (volume < 0 || volume > 127)
-		I_Error("volume out of bounds");
-
-    _g->channelinfo[slot].vol = volume;
 }
 
 void I_UpdateSoundParams(int handle, int volume)
@@ -141,11 +208,7 @@ void I_UpdateSoundParams(int handle, int volume)
 //
 void I_SetChannels(void)
 {
-  // Okay, reset internal mixing channels to zero.
-  for (unsigned int i=0; i<MAX_CHANNELS + 1; i++)
-  {
-      memset(&_g->channelinfo[i],0,sizeof(channel_info_t));
-  }
+
 }
 
 //
@@ -232,23 +295,13 @@ void I_StopSound (int handle)
 
 boolean I_SoundIsPlaying(int handle)
 {
-#ifdef RANGECHECK
-	if ((handle < 0) || (handle >= MAX_CHANNELS))
-		I_Error("I_SoundIsPlaying: handle out of range");
-#endif
-    return _g->channelinfo[handle].data != NULL;
+
 }
 
 
 boolean I_AnySoundStillPlaying(void)
 {
-	boolean result = false;
-	int i;
-	
-	for (i=0; i<MAX_CHANNELS; i++)
-        result |= (_g->channelinfo[i].data != NULL);
-
-	return result;
+    return false;
 }
 
 
@@ -266,93 +319,7 @@ boolean I_AnySoundStillPlaying(void)
 
 static unsigned int I_UpdateSound(unsigned char *stream, const int len)
 {
-	const unsigned int* streamEnd = (unsigned int*)(stream + len);
 
-	unsigned int* streamPos = (unsigned int*)stream;
-
-	unsigned int channelPack = 0;
-	unsigned int i = MAX_CHANNELS;
-
-	do
-	{
-        if(_g->channelinfo[i-1].data)
-		{
-			channelPack <<= 4;
-			channelPack |= i;
-		}
-	} while(--i);
-
-
-    if( (!channelPack) && (!_g->channelinfo[MUSIC_CHANNEL].data) )
-		return 0;
-
-	do
-    {
-		int outSample1 = 0;
-		int outSample2 = 0;
-		int outSample3 = 0;
-		int outSample4 = 0;
-		
-		unsigned int channelPack2 = channelPack;
-
-
-		while(channelPack2)
-		{
-			const unsigned int chan = ((channelPack2 & 0xf) - 1);
-			channelPack2 >>= 4;
-
-            channel_info_t* channel = &_g->channelinfo[chan];
-
-			if(channel->data == NULL)
-				continue;
-
-			const int volume = channel->vol;
-
-			const int inSample03 = *((int*)(channel->data));
-					
-			outSample1 += (((inSample03 << 24)	>> 24) * volume);
-			outSample2 += (((inSample03 << 16)	>> 24) * volume);
-			outSample3 += (((inSample03 << 8)	>> 24) * volume);
-			outSample4 += (( inSample03 >> 24)		   * volume);
-
-			channel->data += 4;
-
-			// Check whether we are done.
-			if (channel->data > channel->enddata)
-				stopchan(chan);
-		}
-
-        channel_info_t* channel = &_g->channelinfo[MUSIC_CHANNEL];
-		// Check channel, if active.
-		if(channel->data)
-		{
-			const int inSample01 = *((int*)(channel->data));
-			const int inSample23 = *((int*)(channel->data+4));
-
-			outSample1 += ((inSample01 << 16)	>> 16);
-			outSample2 += ( inSample01 >> 16);
-			outSample3 += ((inSample23 << 16)	>> 16);
-			outSample4 += ( inSample23 >> 16);
-
-			channel->data += 8;
-
-			// Check whether we are done.
-			if (channel->data > channel->enddata)
-			{
-				stopchan(MUSIC_CHANNEL);
-
-				flipSongBuffer();
-			}
-		}
-		
-        /*
-         * TODO: Write stream to out buff.
-         */
-
-
-	} while (streamPos++ < streamEnd);
-
-	return 1;
 }
 
 void I_ShutdownSound(void)
@@ -369,30 +336,12 @@ void I_ShutdownSound(void)
 
 void I_InitSound(void)
 {
+
+#ifdef __arm__
+    mmInitDefault(soundbank_bin, 8);
+#endif
+
 	I_SetChannels();
-
-    AudioSpec audio;
-
-	// Secure and configure sound device first.
-	lprintf(LO_INFO,"I_InitSound: ");
-
-	// Open the audio device
-    audio.freq = snd_samplerate;
-
-    audio.channels = 1;
-    audio.samples = (unsigned short)SAMPLECOUNT;
-    audio.callback = I_UpdateSound;
-
-    /*
-	if ( OpenAudio(audio) < 0 )
-	{
-		lprintf(LO_INFO,"couldn't open audio with desired format\n");
-		return;
-	}
-    */
-	
-	lprintf(LO_INFO," configured audio device with %d samples/slice\n", SAMPLECOUNT);
-
 
 	if (!nomusicparm)
 		I_InitMusic();
@@ -400,9 +349,6 @@ void I_InitSound(void)
 	// Finished initialization.
 	lprintf(LO_INFO,"I_InitSound: sound module ready\n");
 }
-
-
-
 
 //
 // MUSIC API.
@@ -415,228 +361,54 @@ void I_ShutdownMusic(void)
 
 void I_InitMusic(void)
 {
-/*
-    _g->music_init = (mid_init ("D:\\Doom\\dgguspat\\timidity.cfg") >= 0);
-
-    _g->music_buffer = (short*)malloc(MUSIC_BUFFER_SAMPLES * 2 * 2);
-
-    if(!_g->music_init)
-		lprintf(LO_INFO,"I_InitMusic: mid_init failed.\n");
-	else
-		lprintf(LO_INFO,"I_InitMusic: mid_init done.\n");
-        */
-}
-
-
-void playSongBuffer(unsigned int buffNum)
-{
-    /*
-    if(!_g->music_init)
-		return;
-
-	stopchan(MUSIC_CHANNEL);
-
-	//This stops buffer underruns from killing the song.
-    if(!_g->music_sample_counts[buffNum])
-	{
-        _g->music_sample_counts[buffNum] = MUSIC_BUFFER_SAMPLES;
-		//return;
-	}
-
-	unsigned int buffOffset = (buffNum * MUSIC_BUFFER_SAMPLES);
-
-    _g->channelinfo[MUSIC_CHANNEL].vol = 0;
-
-
-    _g->channelinfo[MUSIC_CHANNEL].enddata = (char*)(_g->music_buffer + buffOffset + (_g->music_sample_counts[buffNum] - 1));
-
-    _g->channelinfo[MUSIC_CHANNEL].data = (char*)(&_g->music_buffer[buffOffset]);
-    */
-}
-
-void flipSongBuffer()
-{	
-    /*
-
-    if(!_g->music_init)
-		return;
-
-    _g->music_sample_counts[_g->current_music_buffer] = 0;
-
-    _g->current_music_buffer = 1 - _g->current_music_buffer;
-
-    playSongBuffer(_g->current_music_buffer);
-    */
 }
 
 void I_UpdateMusic()
 {
-    /*
-    if(!_g->midiSong || !_g->music_init)
-		return;
 
-    unsigned int next_music_buffer = 1 - _g->current_music_buffer;
-
-    if(_g->music_sample_counts[next_music_buffer] == 0)
-	{
-		unsigned int buffOffset = (next_music_buffer * MUSIC_BUFFER_SAMPLES);
-
-
-        _g->music_sample_counts[next_music_buffer] = (mid_song_read_wave (_g->midiSong, (signed char*)(&_g->music_buffer[buffOffset]), MUSIC_BUFFER_SAMPLES * 2) >> 1);
-
-        if( (_g->music_sample_counts[next_music_buffer] == 0) && _g->music_looping)
-		{
-			//Back to start. (Looping)
-            mid_song_start(_g->midiSong);
-
-            _g->music_sample_counts[next_music_buffer] = (mid_song_read_wave (_g->midiSong, (signed char*)(&_g->music_buffer[buffOffset]), MUSIC_BUFFER_SAMPLES * 2) >> 1);
-		}
-	}
-    */
 }
 
 void I_PlaySong(int handle, int looping)
 {
-    /*
-    if(!_g->midiSong || !_g->music_init)
-		return;
+    if(handle == mus_None)
+        return;
 
-    _g->music_looping = looping;
+#ifdef __arm__
+    mm_pmode mode = looping ? MM_PLAY_LOOP : MM_PLAY_ONCE;
 
-    _g->current_music_buffer = 0;
+    unsigned int song = musicMap[handle].mm_num;
 
-    _g->music_sample_counts[0] = (mid_song_read_wave (_g->midiSong, (signed char*)(&_g->music_buffer[0]), MUSIC_BUFFER_SAMPLES * 2) >> 1);
-    _g->music_sample_counts[1] = (mid_song_read_wave (_g->midiSong, (signed char*)(&_g->music_buffer[MUSIC_BUFFER_SAMPLES]), MUSIC_BUFFER_SAMPLES * 2) >> 1);
-
-	playSongBuffer(0);
-    */
+    mmStart(song, mode);
+#endif
 }
 
 
 void I_PauseSong (int handle)
 {
-    /*
-	stopchan(MUSIC_CHANNEL);
-    */
+    mmPause();
 }
 
 void I_ResumeSong (int handle)
 {
-    /*
-    playSongBuffer(_g->current_music_buffer);
-    */
+    mmResume();
 }
 
 void I_StopSong(int handle)
 {
-    /*
-    if(_g->midiSong)
-	{
-        mid_song_seek (_g->midiSong, 0);
-	}
-
-	stopchan(MUSIC_CHANNEL);
-    */
+    mmStop();
 }
 
 void I_UnRegisterSong(int handle)
 {
-    /*
-	I_StopSong(0);
-	
-    if(_g->midiSong)
-        mid_song_free(_g->midiSong);
 
-    if(_g->midiStream)
-        mid_istream_close(_g->midiStream);
-
-    _g->midiSong = NULL;
-    _g->midiStream = NULL;
-    */
 }
 
 int I_RegisterSong(const void *data, size_t len)
 {
-    /*
-    if(!_g->music_init)
-		return 0;
-
-	MIDI *mididata = NULL;
-
-
-	if ( len < 32 )
-		return 0; // the data should at least as big as the MUS header
-
-
-	if ( memcmp(data, "MUS", 3) == 0 )
-	{
-		UBYTE *mid = NULL;
-		int midlen = 0;
-
-		mididata = (MIDI*)malloc(sizeof(MIDI));
-		mmus2mid((const unsigned char*)data, mididata, 89, 0);
-		MIDIToMidi(mididata,&mid,&midlen);
-		
-        _g->midiStream = mid_istream_open_mem (mid, midlen);
-
-        if(_g->midiStream)
-		{
-			MidSongOptions options;
-			
-			options.rate = snd_samplerate;
-			options.format = MID_AUDIO_S16LSB;
-			options.channels = 1;
-			options.buffer_size = 65535;
-
-            _g->midiSong = mid_song_load (_g->midiStream, &options);
-			
-            if(_g->midiSong)
-			{
-                mid_song_set_volume (_g->midiSong, _g->music_volume);
-
-                mid_song_start (_g->midiSong);
-			}
-			else
-			{
-				lprintf(LO_INFO,"I_RegisterSong: mid_song_load returned NULL\n");
-			}
-		}
-		else
-		{
-			lprintf(LO_INFO,"I_RegisterSong: mid_istream_open_mem returned NULL\n");
-		}
-
-		free(mid);
-		free_mididata(mididata);
-		free(mididata);
-	}
-*/
 	return 0;
-}
-
-// cournia - try to load a music file into SDL_Mixer
-//           returns true if could not load the file
-int I_RegisterMusic( const char* filename, musicinfo_t *song )
-{
-    /*
-	if (!filename)
-		return 1;
-	
-	if (!song)
-		return 1;
-    */
-	return 0;
-
 }
 
 void I_SetMusicVolume(int volume)
 {
-    /*
-    _g->music_volume = (volume * 4);
-
-    if(_g->midiSong)
-	{
-        mid_song_set_volume (_g->midiSong, _g->music_volume);
-	}
-    */
+    mmSetModuleVolume(volume * 8);
 }

@@ -11,17 +11,12 @@ CONFIG += force_debug_info
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
-QMAKE_CXXFLAGS += -fno-omit-frame-pointer
-QMAKE_CFLAGS += -fno-omit-frame-pointer
-
-
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 INCLUDEPATH += "include"
-INCLUDEPATH += "include\libtimidity"
 
 INCLUDEPATH += "C:\devkitPro\libgba\include"
 
@@ -47,22 +42,11 @@ SOURCES += \
         source/i_system_gba.cpp \
         source/i_video.c \
         source/info.c \
-        source/libtimidity/common.c \
-        source/libtimidity/instrum.c \
-        source/libtimidity/mix.c \
-        source/libtimidity/output.c \
-        source/libtimidity/playmidi.c \
-        source/libtimidity/readmidi.c \
-        source/libtimidity/resample.c \
-        source/libtimidity/stream.c \
-        source/libtimidity/timi_tables.c \
-        source/libtimidity/timidity.c \
         source/lprintf.c \
         source/m_bbox.c \
         source/m_menu.c \
         source/m_misc.c \
         source/m_random.c \
-        source/mmus2mid.c \
         source/p_ceilng.c \
         source/p_doors.c \
         source/p_enemy.c \
@@ -130,6 +114,7 @@ HEADERS += \
     include/f_finale.h \
     include/f_wipe.h \
     include/g_game.h \
+    include/gba_functions.h \
     include/global_data.h \
     include/global_init.h \
     include/hu_lib.h \
@@ -142,19 +127,6 @@ HEADERS += \
     include/i_system_win.h \
     include/i_video.h \
     include/info.h \
-    include/libtimidity/common.h \
-    include/libtimidity/instrum.h \
-    include/libtimidity/mix.h \
-    include/libtimidity/options.h \
-    include/libtimidity/ospaths.h \
-    include/libtimidity/output.h \
-    include/libtimidity/playmidi.h \
-    include/libtimidity/readmidi.h \
-    include/libtimidity/resample.h \
-    include/libtimidity/timi_endian.h \
-    include/libtimidity/timi_tables.h \
-    include/libtimidity/timidity.h \
-    include/libtimidity/timidity_internal.h \
     include/lprintf.h \
     include/m_bbox.h \
     include/m_fixed.h \
@@ -162,7 +134,6 @@ HEADERS += \
     include/m_misc.h \
     include/m_random.h \
     include/m_swap.h \
-    include/mmus2mid.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_map.h \

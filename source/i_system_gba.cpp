@@ -22,6 +22,8 @@ extern "C"
 #include <gba_input.h>
 #include <gba_timers.h>
 
+#include <maxmod.h>
+
 #define DCNT_PAGE 0x0010
 
 #define VID_PAGE1 VRAM
@@ -43,17 +45,27 @@ byte* columnCache = (byte*)0x6014000;
 
 //**************************************************************************************
 
+//*******************************************************************************
+//VBlank handler.
+//*******************************************************************************
+
+void VBlankCallback()
+{
+    mmVBlank();
+    mmFrame();
+}
+
+
 void I_InitScreen_e32()
 {
-    // the vblank interrupt must be enabled for VBlankIntrWait() to work
-    // since the default dispatcher handles the bios flags no vblank handler
-    // is required
+    irqInit();
+
+    irqSet( IRQ_VBLANK, VBlankCallback );
+    irqEnable(IRQ_VBLANK);
+
 
     //Set gamepak wait states and prefetch.
     REG_WAITCNT = 0x45B6;
-
-    irqInit();
-    irqEnable(IRQ_VBLANK);
 
     consoleDemoInit();
 

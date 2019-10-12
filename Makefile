@@ -25,7 +25,7 @@ BUILD		:= build
 SOURCES		:= source
 INCLUDES	:= include
 DATA		:= data
-MUSIC		:=
+MUSIC		:= music
 
 #---------------------------------------------------------------------------------
 # options for code generation

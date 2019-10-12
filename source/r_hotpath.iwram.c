@@ -57,9 +57,17 @@
 
 #include "global_data.h"
 
+#include "gba_functions.h"
+
+#include <maxmod.h>
+
 //*****************************************
 //Globals.
 //*****************************************
+
+//use the FixedDiv function in gba_functions.h
+#define FixedDiv FixedDiv2
+
 
 int numnodes;
 const mapnode_t *nodes;
@@ -181,120 +189,6 @@ typedef struct column_cache_entry_t
 }column_cache_entry_t;
 
 static column_cache_entry_t columnCacheEntries[128];
-
-
-//***********************************************************************
-//The following math functions were taken from the Jaguar Port of Doom
-//here: https://github.com/Arc0re/jaguardoom/blob/master/jagonly.c
-//
-//There may be a licence incompatibility with the iD release
-//and the GPL that prBoom (and this as derived work) is under.
-//***********************************************************************
-
-static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
-{
-    unsigned        bit;
-    unsigned        c;
-
-    if ( (aa>>30) >= bb)
-        return 0x7fffffff;
-
-    bit = 1;
-    while (aa > bb && bb < 0x80000000)
-    {
-        bb <<= 1;
-        bit <<= 1;
-    }
-
-    c = 0;
-
-    do
-    {
-        if (aa >= bb)
-        {
-            aa -=bb;
-            c |= bit;
-        }
-        bb >>=1;
-        bit >>= 1;
-    } while (bit && aa);
-
-    return c;
-}
-
-
-static CONSTFUNC int IDiv32 (int a, int b)
-{
-    unsigned        aa,bb,c;
-    int             sign;
-
-    sign = a^b;
-    if (a<0)
-        aa = -a;
-    else
-        aa = a;
-    if (b<0)
-        bb = -b;
-    else
-        bb = b;
-
-    c = UDiv32(aa,bb);
-
-    if (sign < 0)
-        c = -(int)c;
-    return c;
-}
-
-static CONSTFUNC fixed_t FixedDiv2 (fixed_t a, fixed_t b)
-{
-/* this code is VERY slow, but exactly simulates the proper assembly */
-/* operation that C doesn't let you represent well */
-    unsigned        aa,bb,c;
-    unsigned        bit;
-    int             sign;
-
-    sign = a^b;
-    if (a<0)
-        aa = -a;
-    else
-        aa = a;
-    if (b<0)
-        bb = -b;
-    else
-        bb = b;
-    if ( (aa>>14) >= bb)
-        return sign<0 ? INT_MIN : INT_MAX;
-    bit = 0x10000;
-    while (aa > bb)
-    {
-        bb <<= 1;
-        bit <<= 1;
-    }
-    c = 0;
-
-    do
-    {
-        if (aa >= bb)
-        {
-            aa -=bb;
-            c |= bit;
-        }
-        aa <<=1;
-        bit >>= 1;
-    } while (bit && aa);
-
-    if (sign < 0)
-        c = -c;
-    return c;
-}
-
-#define FixedDiv FixedDiv2
-
-//***********************************************************************
-//End Jag Doom math functions.
-//***********************************************************************
-
-
 
 // killough 5/3/98: reformatted
 
@@ -441,8 +335,6 @@ static const lighttable_t* R_ColourMap(int lightlevel)
         int cm = ((256-lightlevel)>>2) - 24;
 
         return fullcolormap + between(0,NUMCOLORMAPS-1, cm)*256;
-
-        //return fullcolormap + between(0,NUMCOLORMAPS-1, ((256-lightlevel)*2*NUMCOLORMAPS/256) - 16)*256;
     }
 }
 
@@ -454,7 +346,7 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 
     if(current_colormap_ptr != lm)
     {
-        memcpy(&current_colormap[0], lm, 256);
+        BlockCopy(&current_colormap[0], lm, 256);
         current_colormap_ptr = lm;
     }
 
@@ -718,6 +610,8 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
+
+            //dcvars.iscale = IDiv32(INT_MAX, spryscale >> 1);
             dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
 
             // draw the texture
@@ -1747,7 +1641,7 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
                 }
             }
 
-            memcpy(colcache, tmpCache, 128);
+            BlockCopy(colcache, tmpCache, 128);
         }
 
         dcvars->source = colcache;
