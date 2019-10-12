@@ -195,6 +195,19 @@ static int R_GetTextureNumForName(const char* tex_name)
     const int *directory1, *directory2;
 
 
+    //Convert name to uppercase for comparison.
+    char tex_name_upper[9];
+
+    strncpy(tex_name_upper, tex_name, 8);
+    tex_name_upper[8] = 0; //Ensure null terminated.
+
+    strupr(tex_name_upper);
+
+    if(_g->tex_lookup_last_name && (!strncmp(_g->tex_lookup_last_name, tex_name_upper, 8)))
+    {
+        return _g->tex_lookup_last_num;
+    }
+
     maptex1 = W_CacheLumpName("TEXTURE1");
     numtextures1 = *maptex1;
     directory1 = maptex1+1;
@@ -210,14 +223,6 @@ static int R_GetTextureNumForName(const char* tex_name)
         maptex2 = NULL;
         directory2 = NULL;
     }
-
-    //Convert name to uppercase for comparison.
-    char tex_name_upper[9];
-
-    strncpy(tex_name_upper, tex_name, 8);
-    tex_name_upper[8] = 0;
-
-    strupr(tex_name_upper);
 
     const int *directory = directory1;
     const int *maptex = maptex1;
@@ -236,7 +241,12 @@ static int R_GetTextureNumForName(const char* tex_name)
         const maptexture_t* mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
 
         if(!strncmp(tex_name_upper, mtexture->name, 8))
+        {
+            _g->tex_lookup_last_name = mtexture->name;
+            _g->tex_lookup_last_num = i;
             return i;
+        }
+
     }
 
     return -1;
