@@ -49,7 +49,7 @@
 /* cphipps - enlarged message buffer and made non-static
  * We still have to be careful here, this function can be called after exit
  */
-#define MAX_MESSAGE_SIZE 1024
+#define MAX_MESSAGE_SIZE 128
 
 int lprintf(OutputLevels pri, const char *s, ...)
 {
@@ -62,9 +62,9 @@ int lprintf(OutputLevels pri, const char *s, ...)
 	
 	va_end(v);
 
-    printf("%s", msg);
+    int len = strlen(msg);
 
-	fflush(stdout);
-	
+    printf("%s\n", msg);
+
     return 0;
 }

@@ -43,6 +43,13 @@
 #include "v_video.h"
 #include "m_random.h"
 #include "f_wipe.h"
+#include "global_data.h"
+
+#define __arm__
+
+#ifdef __arm__
+    #include <gba.h>
+#endif
 
 //
 // SCREEN WIPE PACKAGE
@@ -50,18 +57,59 @@
 
 int wipe_StartScreen(void)
 {
+    _g->wipe_tick = 0;
     return 0;
 }
 
 int wipe_EndScreen(void)
 {
+    _g->wipe_tick = 0;
     return 0;
 }
 
 // killough 3/5/98: reformatted and cleaned up
 int wipe_ScreenWipe(int ticks)
 {
-    (void)(ticks);
+    unsigned int wipepos;
 
-    return 1;
+    //Do a pageflip on the 16th tick.
+    boolean pageflip = (_g->wipe_tick < 16) &&  (_g->wipe_tick + ticks >= 16);
+
+    _g->wipe_tick += ticks;
+
+    int wipeticks = _g->wipe_tick;
+
+    if(wipeticks >= 32)
+    {
+        wipeticks = 32;
+        wipepos = 0;
+    }
+    else if(wipeticks < 16)
+    {
+        wipepos = wipeticks;
+    }
+    else //16->31
+    {
+        wipepos = 31 - wipeticks;
+    }
+
+#ifdef __arm__
+    REG_BLDCNT = 0xc4;
+    REG_BLDY = wipepos;
+
+    VBlankIntrWait();
+#endif
+
+    if(pageflip)
+         I_FinishUpdate();
+
+    if(wipeticks >= 32)
+    {
+#ifdef __arm__
+        REG_BLDCNT = 0;
+#endif
+        return 1;
+    }
+
+    return 0;
 }

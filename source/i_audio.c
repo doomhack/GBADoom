@@ -343,7 +343,7 @@ void I_InitSound(void)
 		I_InitMusic();
 
 	// Finished initialization.
-	lprintf(LO_INFO,"I_InitSound: sound module ready\n");
+    lprintf(LO_INFO,"I_InitSound: sound ready");
 }
 
 //

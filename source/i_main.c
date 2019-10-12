@@ -76,8 +76,8 @@ void I_Init(void)
 
 static void PrintVer(void)
 {
-    char vbuf[200];
-    lprintf(LO_INFO,"%s\n",I_GetVersionString(vbuf,200));
+    char vbuf[24];
+    lprintf(LO_INFO,"%s",I_GetVersionString(vbuf,200));
 }
 
 int main(int argc, const char * const * argv)
@@ -85,11 +85,7 @@ int main(int argc, const char * const * argv)
     /* cphipps - call to video specific startup code */
     I_PreInitGraphics();
 
-    /* Version info */
-    lprintf(LO_INFO,"\n");
     PrintVer();
-    lprintf(LO_INFO,"\n");
-
 
     Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 

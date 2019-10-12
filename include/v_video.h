@@ -81,26 +81,6 @@ typedef struct
 
 #define NUM_SCREENS 2
 
-// The available bit-depth modes
-typedef enum {
-  VID_MODE8,
-  VID_MODEMAX
-} video_mode_t;
-
-void V_InitMode(video_mode_t mode);
-
-// video mode query interface
-video_mode_t V_GetMode(void);
-int V_GetModePixelDepth(video_mode_t mode);
-int V_GetNumPixelBits(void);
-int V_GetPixelDepth(void);
-
-//jff 4/24/98 loads color translation lumps
-void V_InitColorTranslation(void);
-
-// Allocates buffer screens, call before R_Init.
-void V_Init (void);
-
 // V_CopyRect
 void V_CopyRect(int srcx,  int srcy,  int srcscrn,
                              int width, int height,
@@ -160,7 +140,5 @@ void V_DrawLine(fline_t* fl, int color);
 
 void V_AllocScreen(screeninfo_t *scrn);
 void V_AllocScreens();
-void V_FreeScreen(screeninfo_t *scrn);
-void V_FreeScreens();
 
 #endif

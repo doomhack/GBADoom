@@ -46,13 +46,6 @@
 
 #include "global_data.h"
 
-
-// killough 5/2/98: tiny engine driven by table above
-void V_InitColorTranslation(void)
-{
-
-}
-
 //
 // V_CopyRect
 //
@@ -139,18 +132,6 @@ void V_DrawBackground(const char* flatname, int scrn)
     for (x=y ? 0 : 64; x<SCREENWIDTH ; x+=64)
       V_CopyRect(0, 0, scrn, ((SCREENWIDTH-x) < 64) ? (SCREENWIDTH-x) : 64,
      ((SCREENHEIGHT-y) < 64) ? (SCREENHEIGHT-y) : 64, x, y, scrn, VPT_NONE);
-}
-
-//
-// V_Init
-//
-// Allocates the 4 full screen buffers in low DOS memory
-// No return
-//
-
-void V_Init (void)
-{
-
 }
 
 /*
@@ -330,22 +311,6 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 }
 
 //
-// V_InitMode
-//
-void V_InitMode(video_mode_t mode)
-{
-    lprintf(LO_INFO, "V_InitMode: using 8 bit video mode\n");
-}
-
-//
-// V_GetNumPixelBits
-//
-int V_GetNumPixelBits(void)
-{
-    return 8;
-}
-
-//
 // V_AllocScreen
 //
 void V_AllocScreen(screeninfo_t *scrn)
@@ -360,22 +325,6 @@ void V_AllocScreen(screeninfo_t *scrn)
 void V_AllocScreens(void)
 {
   V_AllocScreen(&_g->screens[1]);
-}
-
-//
-// V_FreeScreen
-//
-void V_FreeScreen(screeninfo_t *scrn)
-{
-
-}
-
-//
-// V_FreeScreens
-//
-void V_FreeScreens(void)
-{
-
 }
 
 void V_PlotPixel(int scrn, int x, int y, byte color)

@@ -230,7 +230,20 @@ unsigned short* I_GetBackBuffer()
 
 void I_CreateWindow_e32()
 {
-    SetMode(MODE_4 | BG_ALL_ON);
+    SetMode(MODE_4 | BG2_ENABLE);
+
+    unsigned short* bb = I_GetBackBuffer();
+
+    memset(bb, 0, 240*160);
+
+    I_FinishUpdate_e32(NULL, NULL, 0, 0);
+
+    bb = I_GetBackBuffer();
+
+    memset(bb, 0, 240*160);
+
+    I_FinishUpdate_e32(NULL, NULL, 0, 0);
+
 }
 
 //**************************************************************************************

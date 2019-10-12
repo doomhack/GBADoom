@@ -101,15 +101,15 @@ angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 
 void R_Init (void)
 {
-  lprintf(LO_INFO, "R_LoadTrigTables\n");
+  lprintf(LO_INFO, "R_LoadTrigTables");
   R_LoadTrigTables();
-  lprintf(LO_INFO, "R_InitData\n");
+  lprintf(LO_INFO, "R_InitData");
   R_InitData();
-  lprintf(LO_INFO, "R_Init: R_InitPlanes\n");
+  lprintf(LO_INFO, "R_InitPlanes");
   R_InitPlanes();
-  lprintf(LO_INFO, "R_InitSkyMap\n");
+  lprintf(LO_INFO, "R_InitSkyMap");
   R_InitSkyMap();
-
+  lprintf(LO_INFO, "R_InitBuffer");
   R_InitBuffer();
 }
 

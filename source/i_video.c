@@ -204,52 +204,37 @@ void I_SetRes(void)
     _g->screens[1].height = (ST_SCALED_HEIGHT+1);
     _g->screens[1].byte_pitch = SCREENPITCH;
 
-    lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
+    lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d", SCREENWIDTH, SCREENHEIGHT);
 }
 
 void I_InitGraphics(void)
 {
-  char titlebuffer[1024];
-  static int    firsttime=1;
+    static int    firsttime=1;
 
-  if (firsttime)
-  {
-    firsttime = 0;
+    if (firsttime)
+    {
+        firsttime = 0;
 
-    atexit(I_ShutdownGraphics);
-    lprintf(LO_INFO, "I_InitGraphics: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
+        lprintf(LO_INFO, "I_InitGraphics: %dx%d", SCREENWIDTH, SCREENHEIGHT);
 
-    /* Set the video mode */
-    I_UpdateVideoMode();
+        /* Set the video mode */
+        I_UpdateVideoMode();
 
-    /* Setup the window title */
-    strcpy(titlebuffer,PACKAGE);
-    strcat(titlebuffer," ");
-    strcat(titlebuffer,VERSION);
+        /* Initialize the input system */
+        I_InitInputs();
 
-    /* Initialize the input system */
-    I_InitInputs();
-
-	I_CreateBackBuffer_e32();
-  }
+        I_CreateBackBuffer_e32();
+    }
 }
 
 void I_UpdateVideoMode(void)
 {
-  video_mode_t mode;
-
-  lprintf(LO_INFO, "I_UpdateVideoMode: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
-
-  mode = VID_MODE8;
-
-  V_InitMode(mode);
-  V_FreeScreens();
-
+  lprintf(LO_INFO, "I_SetRes: %dx%d", SCREENWIDTH, SCREENHEIGHT);
   I_SetRes();
 
-  lprintf(LO_INFO, "I_UpdateVideoMode:\n");
-
+  lprintf(LO_INFO, "V_AllocScreens:");
   V_AllocScreens();
 
+  lprintf(LO_INFO, "R_InitBuffer:");
   R_InitBuffer();
 }

@@ -146,7 +146,6 @@ static void D_Wipe(void)
 		
 		I_UpdateNoBlit();
 		M_Drawer();                   // menu is drawn even on top of wipes
-		I_FinishUpdate();             // page flip or blit buffer
 
 	} while (!done);
 }
@@ -610,7 +609,7 @@ static void IdentifyVersion()
 
 static void D_DoomMainSetup(void)
 {
-    lprintf(LO_INFO,"M_LoadDefaults: Load system defaults.\n");
+    lprintf(LO_INFO,"M_LoadDefaults: Load defaults.");
 
     M_LoadDefaults();              // load before initing other systems
 
@@ -654,11 +653,20 @@ static void D_DoomMainSetup(void)
         }
 
         /* cphipps - the main display. This shows the build date, copyright, and game type */
-        lprintf(LO_ALWAYS,"PrBoom (built %s), playing: %s\n"
-                          "PrBoom is released under the GNU General Public license v2.0.\n"
-                          "You are welcome to redistribute it under certain conditions.\n"
-                          "It comes with ABSOLUTELY NO WARRANTY. See the file COPYING for details.\n",
-                version_date, doomverstr);
+
+        lprintf(LO_ALWAYS,"PrBoom (built %s)", version_date);
+        lprintf(LO_ALWAYS, "Playing: %s", doomverstr);
+        lprintf(LO_ALWAYS, "PrBoom is released under the");
+        lprintf(LO_ALWAYS, "GNU GPL v2.0.");
+
+        lprintf(LO_ALWAYS, "You are welcome to");
+        lprintf(LO_ALWAYS, "redistribute it under");
+        lprintf(LO_ALWAYS, "certain conditions.");
+
+        lprintf(LO_ALWAYS, "It comes with ABSOLUTELY\nNO WARRANTY.\nSee the file COPYING for\ndetails.");
+
+        lprintf(LO_ALWAYS, "\nPhew. Thats the nasty legal\nstuff out of the way.\nLets play Doom!\n");
+
     }
 
     // init subsystems
@@ -666,49 +674,41 @@ static void D_DoomMainSetup(void)
     G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
     // jff 3/24/98 this sets startskill if it was -1
 
-    //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"V_Init: allocate screens.\n");
-    V_Init();
-
     // CPhipps - move up netgame init
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"D_InitNetGame: Checking for network game.\n");
+    lprintf(LO_INFO,"D_InitNetGame.");
     D_InitNetGame();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"W_Init: Init WADfiles.\n");
+    lprintf(LO_INFO,"W_Init: Init WADfiles.");
     W_Init(); // CPhipps - handling of wadfiles init changed
 
-    lprintf(LO_INFO,"\n");     // killough 3/6/98: add a newline, by popular demand :)
-
-    V_InitColorTranslation(); //jff 4/24/98 load color translation lumps
-
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"M_Init: Init miscellaneous info.\n");
+    lprintf(LO_INFO,"M_Init: Init misc info.");
     M_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"R_Init: Init DOOM refresh daemon - \n");
+    lprintf(LO_INFO,"R_Init: DOOM refresh daemon.");
     R_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"\nP_Init: Init Playloop state.\n");
+    lprintf(LO_INFO,"P_Init: Init Playloop state.");
     P_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"I_Init: Setting up machine state.\n");
+    lprintf(LO_INFO,"I_Init: Set up machine state.");
     I_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"S_Init: Setting up sound.\n");
+    lprintf(LO_INFO,"S_Init: Setting up sound.");
     S_Init(_g->snd_SfxVolume /* *8 */, _g->snd_MusicVolume /* *8*/ );
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"HU_Init: Setting up heads up display.\n");
+    lprintf(LO_INFO,"HU_Init: Setting up HUD.");
     HU_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"ST_Init: Init status bar.\n");
+    lprintf(LO_INFO,"ST_Init: Init status bar.");
     ST_Init();
 
     _g->idmusnum = -1; //jff 3/17/98 insure idmus number is blank
