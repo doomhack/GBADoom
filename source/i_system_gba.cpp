@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <cstring>
 
+#define __arm__
+
 #ifdef __arm__
 
 extern "C"
@@ -106,7 +108,7 @@ void I_PollWServEvents_e32()
 
         if(key_down & KEY_SELECT)
         {
-            ev.data1 = KEYD_ENTER;
+            ev.data1 = KEYD_TAB;
             D_PostEvent(&ev);
         }
 
@@ -151,6 +153,18 @@ void I_PollWServEvents_e32()
             ev.data1 = KEYD_SPACEBAR;
             D_PostEvent(&ev);
         }
+
+        if(key_down & KEY_L)
+        {
+            ev.data1 = ',';
+            D_PostEvent(&ev);
+        }
+
+        if(key_down & KEY_R)
+        {
+            ev.data1 = '.';
+            D_PostEvent(&ev);
+        }
     }
 
     u16 key_up = keysUp();
@@ -161,7 +175,7 @@ void I_PollWServEvents_e32()
 
         if(key_up & KEY_SELECT)
         {
-            ev.data1 = KEYD_ENTER;
+            ev.data1 = KEYD_TAB;
             D_PostEvent(&ev);
         }
 
@@ -204,6 +218,18 @@ void I_PollWServEvents_e32()
         if(key_up & KEY_B)
         {
             ev.data1 = KEYD_SPACEBAR;
+            D_PostEvent(&ev);
+        }
+
+        if(key_up & KEY_L)
+        {
+            ev.data1 = ',';
+            D_PostEvent(&ev);
+        }
+
+        if(key_up & KEY_R)
+        {
+            ev.data1 = '.';
             D_PostEvent(&ev);
         }
     }

@@ -125,8 +125,6 @@ static const mline_t player_arrow[] =
 #undef R
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
-static const fixed_t mtof_zoommul = FRACUNIT; // how far the window zooms each tic (map coords)
-static const fixed_t ftom_zoommul = FRACUNIT; // how far the window zooms each tic (fb coords)
 
 
 //
@@ -405,13 +403,25 @@ boolean AM_Responder
       // Ty 03/27/98 - externalized
       _g->player.message = (_g->automapmode & am_follow) ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF;
     }                                                         //    |
-    else if (ch == key_map_rotate) {
+    else if (ch == key_map_rotate)
+    {
       _g->automapmode ^= am_rotate;
       _g->player.message = (_g->automapmode & am_rotate) ? AMSTR_ROTATEON : AMSTR_ROTATEOFF;
     }
-    else if (ch == key_map_overlay) {
+    else if (ch == key_map_overlay)
+    {
       _g->automapmode ^= am_overlay;
       _g->player.message = (_g->automapmode & am_overlay) ? AMSTR_OVERLAYON : AMSTR_OVERLAYOFF;
+    }
+    else if (ch == key_map_zoomout)
+    {
+      _g->mtof_zoommul = M_ZOOMOUT;
+      _g->ftom_zoommul = M_ZOOMIN;
+    }
+    else if (ch == key_map_zoomin)
+    {
+      _g->mtof_zoommul = M_ZOOMIN;
+      _g->ftom_zoommul = M_ZOOMOUT;
     }
     else                                                        // phares
     {
@@ -441,6 +451,11 @@ boolean AM_Responder
     {
       if (!(_g->automapmode & am_follow))
            _g->m_paninc.y = 0;
+    }
+    else if ((ch == key_map_zoomout) || (ch == key_map_zoomin))
+    {
+      _g->mtof_zoommul = FRACUNIT;
+      _g->ftom_zoommul = FRACUNIT;
     }
   }
   return rc;
@@ -486,7 +501,7 @@ static void AM_rotate(fixed_t* x,  fixed_t* y, angle_t a, fixed_t xorig, fixed_t
 static void AM_changeWindowScale(void)
 {
   // Change the scaling multipliers
-  _g->scale_mtof = FixedMul(_g->scale_mtof, mtof_zoommul);
+  _g->scale_mtof = FixedMul(_g->scale_mtof, _g->mtof_zoommul);
   _g->scale_ftom = FixedDiv(FRACUNIT, _g->scale_mtof);
 
   if (_g->scale_mtof < _g->min_scale_mtof)
@@ -533,7 +548,7 @@ void AM_Ticker (void)
     AM_doFollowPlayer();
 
   // Change the zoom if necessary
-  if (ftom_zoommul != FRACUNIT)
+  if (_g->ftom_zoommul != FRACUNIT)
     AM_changeWindowScale();
 
   // Change x,y location

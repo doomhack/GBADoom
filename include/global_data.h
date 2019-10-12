@@ -91,6 +91,8 @@ int lastlevel, lastepisode;
 boolean leveljuststarted;       // kluge until AM_LevelInit() is called
 boolean stopped;
 
+fixed_t mtof_zoommul; // how far the window zooms each tic (map coords)
+fixed_t ftom_zoommul; // how far the window zooms each tic (fb coords)
 
 //******************************************************************************
 //d_client.c
