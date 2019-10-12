@@ -211,6 +211,14 @@ static int R_GetTextureNumForName(const char* tex_name)
         directory2 = NULL;
     }
 
+    //Convert name to uppercase for comparison.
+    char tex_name_upper[9];
+
+    strncpy(tex_name_upper, tex_name, 8);
+    tex_name_upper[8] = 0;
+
+    strupr(tex_name_upper);
+
     const int *directory = directory1;
     const int *maptex = maptex1;
 
@@ -227,7 +235,7 @@ static int R_GetTextureNumForName(const char* tex_name)
 
         const maptexture_t* mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
 
-        if(!strnicmp(tex_name, mtexture->name, 8))
+        if(!strncmp(tex_name_upper, mtexture->name, 8))
             return i;
     }
 
