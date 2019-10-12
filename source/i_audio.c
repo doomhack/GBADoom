@@ -61,7 +61,7 @@
 
 #include "global_data.h"
 
-#define __arm__
+//#define __arm__
 
 #ifdef __arm__
 
@@ -70,11 +70,6 @@
 
 #include "soundbank.h"
 #include "soundbank_bin.h"
-
-#endif
-
-// MWM 2000-01-08: Sample rate in samples/second
-const int snd_samplerate=11250;
 
 
 typedef struct music_map_t
@@ -161,9 +156,10 @@ static const music_map_t musicMap[NUMMUSIC] =
     {mus_openin, MOD_D_OPENIN},
 };
 
+#endif
 
-
-
+// MWM 2000-01-08: Sample rate in samples/second
+const int snd_samplerate=11250;
 
 /* cph
  * stopchan
@@ -385,17 +381,23 @@ void I_PlaySong(int handle, int looping)
 
 void I_PauseSong (int handle)
 {
+#ifdef __arm__
     mmPause();
+#endif
 }
 
 void I_ResumeSong (int handle)
 {
+#ifdef __arm__
     mmResume();
+#endif
 }
 
 void I_StopSong(int handle)
 {
+#ifdef __arm__
     mmStop();
+#endif
 }
 
 void I_UnRegisterSong(int handle)
@@ -410,5 +412,7 @@ int I_RegisterSong(const void *data, size_t len)
 
 void I_SetMusicVolume(int volume)
 {
+#ifdef __arm__
     mmSetModuleVolume(volume * 8);
+#endif
 }
