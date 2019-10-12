@@ -460,14 +460,14 @@ static void ST_doRefresh(void)
   ST_refreshBackground();
 
   // and refresh all widgets
-  ST_drawWidgets(false);
+  //ST_drawWidgets(false);
 
 }
 
 static void ST_diffDraw(void)
 {
   // update all widgets
-  ST_drawWidgets(false);
+  //ST_drawWidgets(false);
 }
 
 void ST_Drawer(boolean statusbaron, boolean refresh)

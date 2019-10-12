@@ -45,8 +45,6 @@
 #include "f_wipe.h"
 #include "global_data.h"
 
-#define __arm__
-
 #ifdef __arm__
     #include <gba.h>
 #endif
