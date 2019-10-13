@@ -59,7 +59,6 @@
 
 #include "gba_functions.h"
 
-#include <maxmod.h>
 
 //*****************************************
 //Globals.
@@ -313,9 +312,6 @@ static CONSTFUNC fixed_t R_PointToDist(fixed_t x, fixed_t y)
     return FixedDiv(dx, finesine[(tantoangle[FixedDiv(dy,dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT]);
 }
 
-static inline int between(int l,int u,int x)
-{ return (l > x ? l : x > u ? u : x); }
-
 static const lighttable_t* R_ColourMap(int lightlevel)
 {
     if (fixedcolormap)
@@ -334,7 +330,12 @@ static const lighttable_t* R_ColourMap(int lightlevel)
 
         int cm = ((256-lightlevel)>>2) - 24;
 
-        return fullcolormap + between(0,NUMCOLORMAPS-1, cm)*256;
+        if(cm >= NUMCOLORMAPS)
+            cm = NUMCOLORMAPS-1;
+        else if(cm < 0)
+            cm = 0;
+
+        return fullcolormap + cm*256;
     }
 }
 
@@ -1199,8 +1200,7 @@ static vissprite_t *R_NewVisSprite(void)
         _g->vissprites = realloc(_g->vissprites,_g->num_vissprite_alloc*sizeof(*_g->vissprites));
 
         //e6y: set all fields to zero
-        memset(_g->vissprites + num_vissprite_alloc_prev, 0,
-               (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
+        memset(_g->vissprites + num_vissprite_alloc_prev, 0, (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
     }
     return _g->vissprites + _g->num_vissprite++;
 }
