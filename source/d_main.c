@@ -333,7 +333,7 @@ static void D_SetPageName(const char *name)
 static void D_DrawTitle1(const char *name)
 {
   S_StartMusic(mus_intro);
-  _g->pagetic = (TICRATE*170)/35;
+  _g->pagetic = (TICRATE*30);
   D_SetPageName(name);
 }
 
