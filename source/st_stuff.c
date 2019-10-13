@@ -308,28 +308,11 @@ static void ST_updateWidgets(void)
   static int  largeammo = 1994; // means "n/a"
   int         i;
 
-  // must redirect the pointer if the ready weapon has changed.
-  //  if (w_ready.data != plyr->readyweapon)
-  //  {
   if (weaponinfo[_g->plyr->readyweapon].ammo == am_noammo)
     _g->w_ready.num = &largeammo;
   else
     _g->w_ready.num = &_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo];
-  //{
-  // static int tic=0;
-  // static int dir=-1;
-  // if (!(tic&15))
-  //   plyr->ammo[weaponinfo[plyr->readyweapon].ammo]+=dir;
-  // if (plyr->ammo[weaponinfo[plyr->readyweapon].ammo] == -100)
-  //   dir = 1;
-  // tic++;
-  // }
-  _g->w_ready.data = _g->plyr->readyweapon;
 
-  // if (*w_ready.on)
-  //  STlib_updateNum(&w_ready, true);
-  // refresh weapon change
-  //  }
 
   // update keycard multiple widgets
   for (i=0;i<3;i++)
@@ -597,9 +580,6 @@ static void ST_createWidgets(void)
                 &_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo],
                 &_g->st_statusbaron,
                 ST_AMMOWIDTH );
-
-  // the last weapon type
-  _g->w_ready.data = _g->plyr->readyweapon;
 
   // health percentage
   STlib_initPercent(&_g->st_health,

@@ -103,6 +103,9 @@ static void STlib_drawNum
 
   int   neg;
 
+  if(n->need_refresh)
+      refresh = true;
+
   // leban 1/20/99:
   // strange that somebody went through all the work to draw only the
   // differences, and then went and constantly redrew all the numbers.
@@ -110,6 +113,13 @@ static void STlib_drawNum
   // isn't refreshing.
   if(n->oldnum == num && !refresh)
     return;
+
+  //Since we are page-flipping, we need to refresh widgets twice.
+  //otherwise the st-bar flickers.
+  if(n->oldnum != num)
+      n->need_refresh = true;
+  else
+      n->need_refresh = false;
 
   // CPhipps - compact some code, use num instead of *n->num
   if ((neg = (n->oldnum = num) < 0))
@@ -212,7 +222,7 @@ void STlib_initPercent
 
 void STlib_updatePercent(st_percent_t* per, int cm, int refresh)
 {
-    boolean needupdate = (*per->n.on && (refresh || (per->n.oldnum != *per->n.num)));
+    boolean needupdate = (*per->n.on && (refresh || (per->n.oldnum != *per->n.num) || per->n.need_refresh));
 
     STlib_updateNum(&per->n, cm, refresh);
 

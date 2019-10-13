@@ -73,8 +73,8 @@ typedef struct
   // list of patches for 0-9
   const patch_t** p;
 
-  // user data
-  int data;
+  boolean need_refresh;
+
 } st_number_t;
 
 // Percent widget ("child" of number widget,
