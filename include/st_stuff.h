@@ -121,8 +121,8 @@
 // AMMO number pos.
 #define ST_AMMOWIDTH            3
 // proff 08/18/98: Changed for high-res
-#define ST_AMMOX                (ST_X+44)
-#define ST_AMMOY                (ST_Y+3)
+#define ST_AMMOX                (ST_X+46)
+#define ST_AMMOY                (ST_Y+6)
 //#define ST_AMMOX                44
 //#define ST_AMMOY                171
 
@@ -130,7 +130,7 @@
 #define ST_HEALTHWIDTH          3
 // proff 08/18/98: Changed for high-res
 #define ST_HEALTHX              (ST_X+90)
-#define ST_HEALTHY              (ST_Y+3)
+#define ST_HEALTHY              (ST_Y+6)
 
 
 // Weapon pos.

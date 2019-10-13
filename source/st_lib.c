@@ -125,12 +125,7 @@ static void STlib_drawNum
   // clear the area
   x = n->x - numdigits*w;
 
-#ifdef RANGECHECK
-  if (n->y - ST_Y < 0)
-    I_Error("STlib_drawNum: n->y - ST_Y < 0");
-#endif
-
-  V_CopyRect(x, n->y - ST_Y, ST_BG, w*numdigits, h, x, n->y, ST_FG, VPT_STRETCH);
+  V_CopyRect((x-2), (n->y-2) - ST_Y, ST_BG, w*numdigits+4, h+4, x-2, n->y-2, ST_FG, VPT_STRETCH);
 
   // if non-number, do not draw it
   if (num == 1994)
@@ -146,7 +141,8 @@ static void STlib_drawNum
 
   // draw the new number
   //jff 2/16/98 add color translation to digit output
-  while (num && numdigits--) {
+  while (num && numdigits--)
+  {
     // CPhipps - patch drawing updated, reformatted
     x -= w;
     V_DrawPatch(x, n->y, ST_FG, n->p[num % 10]);
@@ -214,20 +210,19 @@ void STlib_initPercent
  * cphipps - const for pointer to the colour translation table
  */
 
-void STlib_updatePercent
-( st_percent_t*   per,
-  int cm,
-  int refresh )
+void STlib_updatePercent(st_percent_t* per, int cm, int refresh)
 {
-  if (*per->n.on && (refresh || (per->n.oldnum != *per->n.num)))
-  {
-    // killough 2/21/98: fix percents not updated;
-    /* CPhipps - make %'s only be updated if number changed */
-    // CPhipps - patch drawing updated
-    V_DrawPatch(per->n.x, per->n.y, ST_FG, per->p);
-  }
+    boolean needupdate = (*per->n.on && (refresh || (per->n.oldnum != *per->n.num)));
 
-  STlib_updateNum(&per->n, cm, refresh);
+    STlib_updateNum(&per->n, cm, refresh);
+
+    if(needupdate)
+    {
+        // killough 2/21/98: fix percents not updated;
+        /* CPhipps - make %'s only be updated if number changed */
+        // CPhipps - patch drawing updated
+        V_DrawPatch(per->n.x, per->n.y, ST_FG, per->p);
+    }
 }
 
 //

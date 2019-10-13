@@ -403,31 +403,17 @@ static void ST_drawWidgets(boolean refresh)
 {
   int i;
 
-  //jff 2/16/98 make color of ammo depend on amount
-  if (*_g->w_ready.num*100 < ammo_red*_g->plyr->maxammo[weaponinfo[_g->w_ready.data].ammo])
-    STlib_updateNum(&_g->w_ready, CR_RED, refresh);
-  else
-    if (*_g->w_ready.num*100 <
-        ammo_yellow*_g->plyr->maxammo[weaponinfo[_g->w_ready.data].ammo])
-      STlib_updateNum(&_g->w_ready, CR_GOLD, refresh);
-    else
-      STlib_updateNum(&_g->w_ready, CR_GREEN, refresh);
+  STlib_updateNum(&_g->w_ready, CR_RED, refresh);
+
+  STlib_updatePercent(&_g->st_health, CR_RED, refresh);
+
+  return;
 
   for (i=0;i<4;i++)
     {
       STlib_updateNum(&_g->st_ammo[i], CR_DEFAULT, refresh);   //jff 2/16/98 no xlation
       STlib_updateNum(&_g->w_maxammo[i], CR_DEFAULT, refresh);
     }
-
-  //jff 2/16/98 make color of health depend on amount
-  if (*_g->st_health.n.num<health_red)
-    STlib_updatePercent(&_g->st_health, CR_RED, refresh);
-  else if (*_g->st_health.n.num<health_yellow)
-    STlib_updatePercent(&_g->st_health, CR_GOLD, refresh);
-  else if (*_g->st_health.n.num<=health_green)
-    STlib_updatePercent(&_g->st_health, CR_GREEN, refresh);
-  else
-    STlib_updatePercent(&_g->st_health, CR_BLUE2, refresh); //killough 2/28/98
 
   //jff 2/16/98 make color of armor depend on amount
   if (*_g->st_armor.n.num<armor_red)
@@ -460,14 +446,14 @@ static void ST_doRefresh(void)
   ST_refreshBackground();
 
   // and refresh all widgets
-  //ST_drawWidgets(false);
+  ST_drawWidgets(true);
 
 }
 
 static void ST_diffDraw(void)
 {
   // update all widgets
-  //ST_drawWidgets(false);
+  ST_drawWidgets(false);
 }
 
 void ST_Drawer(boolean statusbaron, boolean refresh)
@@ -502,8 +488,6 @@ static void ST_loadGraphics(boolean doload)
 {
     int  i, facenum;
     char namebuf[9];
-    // cph - macro that either acquires a pointer and lock for a lump, or
-    // unlocks it. var is referenced exactly once in either case, so ++ in arg works
 
     // Load the numbers, tall and short
     for (i=0;i<10;i++)
