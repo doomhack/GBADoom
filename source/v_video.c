@@ -145,15 +145,15 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
     const int   DX  = (240<<16) / 320;
     const int   DXI = (320<<16) / 240;
-    const int   DY  = (SCREENHEIGHT<<16) / 200;
+    const int   DY  = ((SCREENHEIGHT<<16)+(FRACUNIT-1)) / 200;
     const int   DYI = (200<<16) / SCREENHEIGHT;
 
     byte* byte_topleft = (byte*)_g->screens[scrn].data;
     const int byte_pitch = (_g->screens[scrn].byte_pitch * 2);
 
     const int left = ( x * DX ) >> FRACBITS;
-    const int right = ( (x + patch->width) * DX ) >> FRACBITS;
-    const int bottom = ( (y + patch->height) * DY ) >> FRACBITS;
+    const int right =  ((x + patch->width) *  DX) >> FRACBITS;
+    const int bottom = ((y + patch->height) * DY) >> FRACBITS;
 
     int   col = 0;
 

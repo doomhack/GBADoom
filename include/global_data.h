@@ -431,7 +431,7 @@ divline_t trace;
 
 // 1/11/98 killough: Intercept limit removed
 intercept_t *intercepts, *intercept_p;
-
+size_t num_intercepts;
 
 //******************************************************************************
 //p_mobj.c

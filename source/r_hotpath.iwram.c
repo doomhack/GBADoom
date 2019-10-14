@@ -92,14 +92,14 @@ static fixed_t         rw_distance;
 
 // killough: New code which removes 2s linedef limit
 drawseg_t *drawsegs;
-static unsigned  maxdrawsegs;
+unsigned  maxdrawsegs;
 
 static int      rw_x;
 static int      rw_stopx;
 
 int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
 
-static size_t maxopenings;
+size_t maxopenings;
 int *openings,*lastopening; // dropoff overflow
 
 static fixed_t  rw_scale;

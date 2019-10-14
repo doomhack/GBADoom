@@ -399,12 +399,11 @@ boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t*))
 // Check for limit and double size if necessary -- killough
 static void check_intercept(void)
 {
-    static size_t num_intercepts;
     size_t offset = _g->intercept_p - _g->intercepts;
-    if (offset >= num_intercepts)
+    if (offset >= _g->num_intercepts)
     {
-        num_intercepts = num_intercepts ? num_intercepts + 32 : 32;
-        _g->intercepts = realloc(_g->intercepts, sizeof(*_g->intercepts)*num_intercepts);
+        _g->num_intercepts = _g->num_intercepts ? _g->num_intercepts + 32 : 32;
+        _g->intercepts = realloc(_g->intercepts, sizeof(*_g->intercepts)*_g->num_intercepts);
         _g->intercept_p = _g->intercepts + offset;
     }
 }

@@ -586,6 +586,37 @@ static int P_GroupLines (void)
   return total; // this value is needed by the reject overrun emulation code
 }
 
+
+void P_FreeLevelData()
+{
+    Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
+
+
+    free(_g->intercepts);
+    _g->intercept_p = _g->intercepts = NULL;
+    _g->num_intercepts = 0;
+
+    free(_g->vissprite_ptrs);
+    _g->vissprite_ptrs = NULL;
+    _g->num_vissprite_ptrs = 0;
+
+    free(_g->vissprites);
+    _g->vissprites = NULL;
+    _g->num_vissprite_alloc = 0;
+
+    free(drawsegs);
+    ds_p = drawsegs = NULL;
+    maxdrawsegs = 0;
+
+    free(openings);
+    lastopening = openings = NULL;
+    maxopenings = 0;
+
+    free(_g->braintargets);
+    _g->braintargets = NULL;
+    _g->numbraintargets_alloc = _g->numbraintargets = 0;
+}
+
 //
 // P_SetupLevel
 //
@@ -609,7 +640,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // Make sure all sounds are stopped before Z_FreeTags.
   S_Start();
 
-  Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
+  P_FreeLevelData();
 
   //Load the sky texture.
   R_GetTexture(_g->skytexture);
