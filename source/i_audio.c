@@ -113,7 +113,7 @@ static const music_map_t musicMap[NUMMUSIC] =
     {mus_e3m8, MOD_D_E3M8},
     {mus_e3m9, MOD_D_E1M9},
 
-    {mus_inter, MOD_D_E2M3},
+    {mus_inter, MOD_D_INTER},
 
     {mus_intro, MOD_D_INTRO},
     {mus_bunny, MOD_D_BUNNY},
@@ -130,7 +130,7 @@ static const music_map_t musicMap[NUMMUSIC] =
     {mus_in_cit, MOD_D_IN_CIT},
     {mus_dead, MOD_D_DEAD},
     {mus_stlks2, MOD_D_STALKS},
-    {mus_theda2, MOD_D_STALKS},
+    {mus_theda2, MOD_D_THE_DA},
     {mus_doom2, MOD_D_DOOM},
     {mus_runni2, MOD_D_RUNNIN},
     {mus_dead2, MOD_D_DEAD},
