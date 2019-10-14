@@ -179,7 +179,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   strafe = _g->gamekeydown[key_strafe];
 
-  speed = (_g->gamekeydown[key_speed]); // phares
+  speed = (_g->gamekeydown[key_strafeleft] && _g->gamekeydown[key_straferight]);
 
   forward = side = 0;
 

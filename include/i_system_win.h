@@ -114,6 +114,12 @@ class DoomWindow : public QWidget
         if(event->key() == Qt::Key_8)
             ev.data1 = '8';
 
+        if(event->key() == Qt::Key_Comma)
+            ev.data1 = ',';
+
+        if(event->key() == Qt::Key_Period)
+            ev.data1 = '.';
+
         ev.data2 = 0;
         ev.data3 = 0;
 
@@ -182,6 +188,12 @@ class DoomWindow : public QWidget
 
         if(event->key() == Qt::Key_8)
             ev.data1 = '8';
+
+        if(event->key() == Qt::Key_Comma)
+            ev.data1 = ',';
+
+        if(event->key() == Qt::Key_Period)
+            ev.data1 = '.';
 
         ev.data2 = 0;
         ev.data3 = 0;
