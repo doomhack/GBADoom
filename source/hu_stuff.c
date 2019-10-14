@@ -507,17 +507,6 @@ void HU_Ticker(void)
   }
 }
 
-//
-// HU_dequeueChatChar()
-//
-// Remove the earliest added character from the circular chat queue
-//
-// Passed nothing, returns the character dequeued
-//
-char HU_dequeueChatChar(void)
-{
-    return 0;
-}
 
 //
 // HU_Responder()

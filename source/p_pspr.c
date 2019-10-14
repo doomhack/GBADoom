@@ -131,7 +131,7 @@ WEAPONBOTTOM+FRACUNIT*2;
 
 const int weapon_preferences[NUMWEAPONS+1] =
 {
-    {6, 9, 4, 3, 2, 8, 5, 7, 1},  // !compatibility preferences
+    6, 9, 4, 3, 2, 8, 5, 7, 1,  // !compatibility preferences
 };
 
 // P_SwitchWeapon checks current ammo levels and gives you the
