@@ -1528,8 +1528,8 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
 
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
-    static unsigned int looks, peeks;
-    looks++;
+    //static unsigned int looks, peeks;
+    //looks++;
 
     unsigned int cx = (column << 16 | texture);
 
@@ -1541,7 +1541,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
 
     do
     {
-        peeks++;
+        //peeks++;
         unsigned int cy = *cc;
 
         if( (cy == 0) || (cy == cx) )
@@ -1558,7 +1558,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
 
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
-    static int total, misses;
+    //static int total, misses;
 
     const texture_t* tex = R_GetOrLoadTexture(texture);
 
@@ -1593,11 +1593,11 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
         byte* colcache = &columnCache[cachekey*128];
         column_cache_entry_t* cacheEntry = &columnCacheEntries[cachekey];
 
-        total++;
+        //total++;
 
         if((cacheEntry->texture != texture) || cacheEntry->column != xc)
         {
-            misses++;
+            //misses++;
 
             byte tmpCache[128];
 
