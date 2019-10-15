@@ -1528,50 +1528,37 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
 
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
-    //static unsigned int looks, peeks;
+    static unsigned int looks, peeks;
+    looks++;
 
-    //looks++;
     unsigned int cx = (column << 16 | texture);
 
-    int i;
-    int iend;
-    int istep;
+    unsigned int key = ((column >> 4) ^ texture) & 0xf;
 
-    if(column & 2)
-    {
-        i = 127;
-        iend = -1;
-        istep = -1;
-    }
-    else
-    {
-        i = 0;
-        iend = 128;
-        istep = 1;
-    }
+    unsigned int* cc = (unsigned int*)&columnCacheEntries[key];
 
-    unsigned int* cc = (unsigned int*)&columnCacheEntries[i];
+    unsigned int i = key;
 
     do
     {
-        //peeks++;
-
+        peeks++;
         unsigned int cy = *cc;
+
         if( (cy == 0) || (cy == cx) )
             return i;
 
-        i += istep;
-        cc += istep;
+        cc+=16;
+        i+=16;
 
-    } while(i != iend);
+    } while(i < 128);
 
     //No space. Random eviction.
-    return (rand() & 0x3f) + ((column & 2) * 32);
+    return ((rand() & 7) * 16) + key;
 }
 
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
-    //static int total, misses;
+    static int total, misses;
 
     const texture_t* tex = R_GetOrLoadTexture(texture);
 
@@ -1606,11 +1593,11 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
         byte* colcache = &columnCache[cachekey*128];
         column_cache_entry_t* cacheEntry = &columnCacheEntries[cachekey];
 
-        //total++;
+        total++;
 
         if((cacheEntry->texture != texture) || cacheEntry->column != xc)
         {
-            //misses++;
+            misses++;
 
             byte tmpCache[128];
 
