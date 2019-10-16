@@ -663,8 +663,11 @@ static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 static void R_DrawSprite (vissprite_t* spr)
 {
     drawseg_t *ds;
-    int     clipbot[MAX_SCREENWIDTH]; // killough 2/8/98: // dropoff overflow
-    int     cliptop[MAX_SCREENWIDTH]; // change to MAX_*  // dropoff overflow
+    int* clipbot = floorclip;
+    int* cliptop = ceilingclip;
+
+    //int     clipbot[MAX_SCREENWIDTH]; // killough 2/8/98: // dropoff overflow
+    //int     cliptop[MAX_SCREENWIDTH]; // change to MAX_*  // dropoff overflow
     int     x;
     int     r1;
     int     r2;
