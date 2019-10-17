@@ -197,8 +197,8 @@ static const audio_map_t soundMap[NUMSFX] =
     {sfx_posit1, SFX_DSPOSIT1},
     {sfx_posit2, SFX_DSPOSIT2},
     {sfx_posit3, SFX_DSPOSIT3},
-    {sfx_bgsit1, SFX_DSBGDTH1},
-    {sfx_bgsit2, SFX_DSBGDTH2},
+    {sfx_bgsit1, SFX_DSBGSIT1},
+    {sfx_bgsit2, SFX_DSBGSIT2},
     {sfx_sgtsit, SFX_DSSGTSIT},
     {sfx_cacsit, SFX_DSCACSIT},
     {sfx_brssit, SFX_DSBRSSIT},
@@ -305,7 +305,7 @@ static int addsfx(int sfxid, int channel, int volume, int sep)
     mm_sound_effect sound;
     sound.id      = soundMap[sfxid].mm_num;
     sound.rate    = 1024;
-    sound.handle  = channel + 1;
+    sound.handle  = 0; //channel + 1;
     sound.volume  = mmvol;
     sound.panning = sep;
 
@@ -318,8 +318,8 @@ static int addsfx(int sfxid, int channel, int volume, int sep)
 static void updateSoundParams(int slot, int volume, int sep)
 {
 #ifdef __arm__
-    mmEffectVolume(slot + 1, volume);
-    mmEffectPanning(slot + 1, sep);
+    //mmEffectVolume(slot + 1, volume);
+    //mmEffectPanning(slot + 1, sep);
 #endif
 }
 
