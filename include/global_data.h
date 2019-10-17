@@ -697,20 +697,13 @@ int snd_SfxVolume;
 int snd_MusicVolume;
 
 // music currently being played
-const musicinfo_t *mus_playing;
+int mus_playing;
 
 //jff 3/17/98 to keep track of last IDMUS specified music num
 int idmusnum;
 
 // whether songs are mus_paused
 boolean mus_paused;
-
-//******************************************************************************
-//sounds.c
-//******************************************************************************
-
-sfx_runtime sfx_data[128];
-
 
 //******************************************************************************
 //st_stuff.c

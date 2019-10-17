@@ -54,7 +54,7 @@ void I_SetChannels(void);
 int I_GetSfxLumpNum (const sfxinfo_t *sfxinfo);
 
 // Starts a sound in a particular sound channel.
-int I_StartSound(int id, int channel, int vol);
+int I_StartSound(int id, int channel, int vol, int sep);
 
 // Stops a sound channel.
 void I_StopSound(int handle);
@@ -69,7 +69,7 @@ boolean I_AnySoundStillPlaying(void);
 
 // Updates the volume, separation,
 //  and pitch of a sound channel.
-void I_UpdateSoundParams(int handle, int vol);
+void I_UpdateSoundParams(int handle, int vol, int sep);
 
 
 //

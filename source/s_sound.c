@@ -63,6 +63,10 @@
 
 // Adjustable by menu.
 #define NORM_PRIORITY 64
+#define NORM_SEP      128
+
+#define S_STEREO_SWING		(96*0x10000)
+
 
 
 // number of channels available
@@ -74,7 +78,7 @@ const unsigned int numChannels = 8;
 
 void S_StopChannel(int cnum);
 
-int S_AdjustSoundParams(mobj_t *listener, mobj_t *source, int *vol);
+int S_AdjustSoundParams(mobj_t *listener, mobj_t *source, int *vol, int *sep);
 
 static int S_getChannel(void *origin, const sfxinfo_t *sfxinfo, int is_pickup);
 
@@ -103,10 +107,6 @@ void S_Init(int sfxVolume, int musicVolume)
     // CPhipps - calloc
     _g->channels =
       (channel_t *) calloc(numChannels,sizeof(channel_t));
-
-    // Note that sounds have not been cached (yet).
-    for (i=1 ; i<NUMSFX ; i++)
-      _g->sfx_data[i].lumpnum = -1;
   }
 
   // CPhipps - music init reformatted
@@ -184,6 +184,8 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
   const sfxinfo_t *sfx;
   mobj_t *origin = (mobj_t *) origin_p;
 
+  int sep = NORM_SEP;
+
   //jff 1/22/98 return if sound is not enabled
   if (nosfxparm)
     return;
@@ -221,7 +223,7 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
   {
     volume *= 8;
   } else
-    if (!S_AdjustSoundParams(_g->player.mo, origin, &volume))
+    if (!S_AdjustSoundParams(_g->player.mo, origin, &volume, &sep))
       return;
 
   // kill old sound
@@ -239,17 +241,9 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
   if (cnum<0)
     return;
 
-  // get lumpnum if necessary
-  // killough 2/28/98: make missing sounds non-fatal
-  if (_g->sfx_data[sfx_id].lumpnum < 0 && (_g->sfx_data[sfx_id].lumpnum = I_GetSfxLumpNum(sfx)) < 0)
-    return;
-
-
-  // Assigns the handle to one of the channels in the mix/output buffer.
-  { // e6y: [Fix] Crash with zero-length sounds.
-    int h = I_StartSound(sfx_id, cnum, volume);
-    if (h != -1) _g->channels[cnum].handle = h;
-  }
+    int h = I_StartSound(sfx_id, cnum, volume, sep);
+    if (h != -1)
+        _g->channels[cnum].handle = h;
 }
 
 void S_StartSound(void *origin, int sfx_id)
@@ -311,6 +305,7 @@ void S_UpdateSounds(void* listener_p)
 {
 	mobj_t *listener = (mobj_t*) listener_p;
 	int cnum;
+    int sep = NORM_SEP;
 	
 	//jff 1/22/98 return if sound is not enabled
 	if (nosfxparm)
@@ -352,10 +347,10 @@ void S_UpdateSounds(void* listener_p)
 				
 				if (c->origin && listener_p != c->origin)
 				{ // killough 3/20/98
-					if (!S_AdjustSoundParams(listener, c->origin, &volume))
+                    if (!S_AdjustSoundParams(listener, c->origin, &volume, &sep))
 						S_StopChannel(cnum);
 					else
-						I_UpdateSoundParams(c->handle, volume);
+                        I_UpdateSoundParams(c->handle, volume, sep);
 				}
 			}
 			else   // if channel is allocated but sound has stopped, free it
@@ -401,31 +396,25 @@ void S_StartMusic(int m_id)
   S_ChangeMusic(m_id, false);
 }
 
-
-
 void S_ChangeMusic(int musicnum, int looping)
 {
-  const musicinfo_t *music;
+    //jff 1/22/98 return if music is not enabled
+    if (nomusicparm)
+        return;
 
-  //jff 1/22/98 return if music is not enabled
-  if (nomusicparm)
-    return;
+    if (musicnum <= mus_None || musicnum >= NUMMUSIC)
+        I_Error("S_ChangeMusic: Bad music number %d", musicnum);
 
-  if (musicnum <= mus_None || musicnum >= NUMMUSIC)
-    I_Error("S_ChangeMusic: Bad music number %d", musicnum);
+    if (_g->mus_playing == musicnum)
+        return;
 
-  music = &S_music[musicnum];
+    // shutdown old music
+    S_StopMusic();
 
-  if (_g->mus_playing == music)
-    return;
+    // play it
+    I_PlaySong(musicnum, looping);
 
-  // shutdown old music
-  S_StopMusic();
-
-  // play it
-  I_PlaySong(musicnum, looping);
-
-  _g->mus_playing = music;
+    _g->mus_playing = musicnum;
 }
 
 
@@ -482,10 +471,9 @@ void S_StopChannel(int cnum)
 // Otherwise, modifies parameters and returns 1.
 //
 
-int S_AdjustSoundParams(mobj_t *listener, mobj_t *source, int *vol)
+int S_AdjustSoundParams(mobj_t *listener, mobj_t *source, int *vol, int *sep)
 {
 	fixed_t adx, ady,approx_dist;
-	//angle_t angle;
 
 	//jff 1/22/98 return if sound is not enabled
 	if (nosfxparm)
@@ -525,6 +513,20 @@ int S_AdjustSoundParams(mobj_t *listener, mobj_t *source, int *vol)
 	if (approx_dist > S_CLIPPING_DIST)
 		return 0;
 	
+
+    // angle of source to listener
+    angle_t angle = R_PointToAngle2(listener->x, listener->y, source->x, source->y);
+
+    if (angle <= listener->angle)
+        angle += 0xffffffff;
+
+    angle -= listener->angle;
+    angle >>= ANGLETOFINESHIFT;
+
+    // stereo separation
+    *sep = 128 - (FixedMul(S_STEREO_SWING,finesine[angle])>>FRACBITS);
+
+
 	// volume calculation
 	if (approx_dist < S_CLOSE_DIST)
         *vol = _g->snd_SfxVolume*8;

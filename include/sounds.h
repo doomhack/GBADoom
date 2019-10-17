@@ -60,29 +60,12 @@ struct sfxinfo_struct {
   int volume;
 };
 
-typedef struct sfx_runtime
-{
-    // sound data
-    const void *data;
-
-    // lump number of sfx
-    int lumpnum;
-} sfx_runtime;
-
 //
 // MusicInfo struct.
 //
 
-typedef struct {
-  // up to 6-character name
-  const char *name; // CPhipps - const
-} musicinfo_t;
-
 // the complete set of sound effects
 extern const sfxinfo_t    S_sfx[];
-
-// the complete set of music
-extern const musicinfo_t  S_music[];
 
 //
 // Identifiers for all music in game.

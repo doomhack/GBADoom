@@ -72,15 +72,15 @@
 #include "soundbank_bin.h"
 
 
-typedef struct music_map_t
+typedef struct audio_map_t
 {
     unsigned short doom_num;
     unsigned short mm_num;
-}music_map_t;
+}audio_map_t;
 
 
 //Mapping between the Doom music num and the maxmod music number.
-static const music_map_t musicMap[NUMMUSIC] =
+static const audio_map_t musicMap[NUMMUSIC] =
 {
     {mus_None, 0},
     {mus_e1m1, MOD_D_E1M1},
@@ -156,6 +156,119 @@ static const music_map_t musicMap[NUMMUSIC] =
     {mus_openin, MOD_D_OPENIN},
 };
 
+static const audio_map_t soundMap[NUMSFX] =
+{
+    {sfx_None, 0},
+    {sfx_pistol, SFX_DSPISTOL},
+    {sfx_shotgn, SFX_DSSHOTGN},
+    {sfx_sgcock, SFX_DSSGCOCK},
+    {sfx_dshtgn, SFX_DSDSHTGN},
+    {sfx_dbopn, SFX_DSDBOPN},
+    {sfx_dbcls, SFX_DSDBCLS},
+    {sfx_dbload, SFX_DSDBLOAD},
+    {sfx_plasma, SFX_DSPLASMA},
+    {sfx_bfg, SFX_DSBFG},
+    {sfx_sawup, SFX_DSSAWUP},
+    {sfx_sawidl, SFX_DSSAWIDL},
+    {sfx_sawful, SFX_DSSAWFUL},
+    {sfx_sawhit, SFX_DSSAWHIT},
+    {sfx_rlaunc, SFX_DSRLAUNC},
+    {sfx_rxplod, SFX_DSRXPLOD},
+    {sfx_firsht, SFX_DSFIRSHT},
+    {sfx_firxpl, SFX_DSFIRXPL},
+    {sfx_pstart, SFX_DSPSTART},
+    {sfx_pstop, SFX_DSPSTOP},
+    {sfx_doropn, SFX_DSDOROPN},
+    {sfx_dorcls, SFX_DSDORCLS},
+    {sfx_stnmov, SFX_DSSTNMOV},
+    {sfx_swtchn, SFX_DSSWTCHN},
+    {sfx_swtchx, SFX_DSSWTCHX},
+    {sfx_plpain, SFX_DSPLPAIN},
+    {sfx_dmpain, SFX_DSDMPAIN},
+    {sfx_popain, SFX_DSPOPAIN},
+    {sfx_vipain, SFX_DSVIPAIN},
+    {sfx_mnpain, SFX_DSMNPAIN},
+    {sfx_pepain, SFX_DSPEPAIN},
+    {sfx_slop, SFX_DSSLOP},
+    {sfx_itemup, SFX_DSITEMUP},
+    {sfx_wpnup, SFX_DSWPNUP},
+    {sfx_oof, SFX_DSOOF},
+    {sfx_telept, SFX_DSTELEPT},
+    {sfx_posit1, SFX_DSPOSIT1},
+    {sfx_posit2, SFX_DSPOSIT2},
+    {sfx_posit3, SFX_DSPOSIT3},
+    {sfx_bgsit1, SFX_DSBGDTH1},
+    {sfx_bgsit2, SFX_DSBGDTH2},
+    {sfx_sgtsit, SFX_DSSGTSIT},
+    {sfx_cacsit, SFX_DSCACSIT},
+    {sfx_brssit, SFX_DSBRSSIT},
+    {sfx_cybsit, SFX_DSCYBSIT},
+    {sfx_spisit, SFX_DSSPISIT},
+    {sfx_bspsit, SFX_DSBSPSIT},
+    {sfx_kntsit, SFX_DSKNTSIT},
+    {sfx_vilsit, SFX_DSVILSIT},
+    {sfx_mansit, SFX_DSMANSIT},
+    {sfx_pesit, SFX_DSPESIT},
+    {sfx_sklatk, SFX_DSSKLATK},
+    {sfx_sgtatk, SFX_DSSGTATK},
+    {sfx_skepch, SFX_DSSKEPCH},
+    {sfx_vilatk, SFX_DSVILATK},
+    {sfx_claw, SFX_DSCLAW},
+    {sfx_skeswg, SFX_DSSKESWG},
+    {sfx_pldeth, SFX_DSPLDETH},
+    {sfx_pdiehi, SFX_DSPDIEHI},
+    {sfx_podth1, SFX_DSPODTH1},
+    {sfx_podth2, SFX_DSPODTH2},
+    {sfx_podth3, SFX_DSPODTH3},
+    {sfx_bgdth1, SFX_DSBGDTH1},
+    {sfx_bgdth2, SFX_DSBGDTH2},
+    {sfx_sgtdth, SFX_DSSGTDTH},
+    {sfx_cacdth, SFX_DSCACDTH},
+    {sfx_skldth, SFX_DSSKLDTH},
+    {sfx_brsdth, SFX_DSBRSDTH},
+    {sfx_cybdth, SFX_DSCYBDTH},
+    {sfx_spidth, SFX_DSSPIDTH},
+    {sfx_bspdth, SFX_DSBSPDTH},
+    {sfx_vildth, SFX_DSVILDTH},
+    {sfx_kntdth, SFX_DSKNTDTH},
+    {sfx_pedth, SFX_DSPEDTH},
+    {sfx_skedth, SFX_DSSKEDTH},
+    {sfx_posact, SFX_DSPOSACT},
+    {sfx_bgact, SFX_DSBGACT},
+    {sfx_dmact, SFX_DSDMACT},
+    {sfx_bspact, SFX_DSBSPACT},
+    {sfx_bspwlk, SFX_DSBSPWLK},
+    {sfx_vilact, SFX_DSVILACT},
+    {sfx_noway, SFX_DSNOWAY},
+    {sfx_barexp, SFX_DSBAREXP},
+    {sfx_punch, SFX_DSPUNCH},
+    {sfx_hoof, SFX_DSHOOF},
+    {sfx_metal, SFX_DSMETAL},
+    {sfx_chgun, 0},
+    {sfx_tink, SFX_DSTINK},
+    {sfx_bdopn, SFX_DSBDOPN},
+    {sfx_bdcls, SFX_DSBDCLS},
+    {sfx_itmbk, SFX_DSITMBK},
+    {sfx_flame, SFX_DSFLAME},
+    {sfx_flamst, SFX_DSFLAMST},
+    {sfx_getpow, SFX_DSGETPOW},
+    {sfx_bospit, SFX_DSBOSPIT},
+    {sfx_boscub, SFX_DSBOSCUB},
+    {sfx_bossit, SFX_DSBOSSIT},
+    {sfx_bospn, SFX_DSBOSPN},
+    {sfx_bosdth, SFX_DSBOSDTH},
+    {sfx_manatk, SFX_DSMANATK},
+    {sfx_mandth, SFX_DSMANDTH},
+    {sfx_sssit, SFX_DSSSSIT},
+    {sfx_ssdth, SFX_DSSSDTH},
+    {sfx_keenpn, SFX_DSKEENPN},
+    {sfx_keendt, SFX_DSKEENDT},
+    {sfx_skeact, SFX_DSSKEACT},
+    {sfx_skesit, SFX_DSSKESIT},
+    {sfx_skeatk, SFX_DSSKEATK},
+    {sfx_radio, SFX_DSRADIO},
+};
+
 #endif
 
 // MWM 2000-01-08: Sample rate in samples/second
@@ -168,7 +281,9 @@ const int snd_samplerate=11250;
 
 static void stopchan(int i)
 {
-
+#ifdef __arm__
+    mmEffectCancel(i + 1);
+#endif
 }
 
 //
@@ -178,19 +293,39 @@ static void stopchan(int i)
 //  (eight, usually) of internal channels.
 // Returns a handle.
 //
-static int addsfx(int sfxid, int channel, const char* data, size_t len)
-{	
+static int addsfx(int sfxid, int channel, int volume, int sep)
+{
+#ifdef __arm__
+
+    int mmvol = volume * 4;
+
+    if(mmvol > 255)
+        mmvol = 255;
+
+    mm_sound_effect sound;
+    sound.id      = soundMap[sfxid].mm_num;
+    sound.rate    = 1024;
+    sound.handle  = channel + 1;
+    sound.volume  = mmvol;
+    sound.panning = sep;
+
+    mmEffectEx( &sound );
+#endif
+
 	return channel;
 }
 
-static void updateSoundParams(int slot, int volume)
+static void updateSoundParams(int slot, int volume, int sep)
 {
-
+#ifdef __arm__
+    mmEffectVolume(slot + 1, volume);
+    mmEffectPanning(slot + 1, sep);
+#endif
 }
 
-void I_UpdateSoundParams(int handle, int volume)
+void I_UpdateSoundParams(int handle, int volume, int sep)
 {
-  updateSoundParams(handle, volume);
+  updateSoundParams(handle, volume, sep);
 }
 
 //
@@ -232,46 +367,13 @@ int I_GetSfxLumpNum(const sfxinfo_t *sfx)
 // Pitching (that is, increased speed of playback)
 //  is set, but currently not used by mixing.
 //
-int I_StartSound(int id, int channel, int vol)
+int I_StartSound(int id, int channel, int vol, int sep)
 {
 	if ((channel < 0) || (channel >= MAX_CHANNELS))
-#ifdef RANGECHECK
-		I_Error("I_StartSound: handle out of range");
-#else
 		return -1;
-#endif
-
-    int lump = _g->sfx_data[id].lumpnum;
-
-    if(!_g->sfx_data[id].data)
-	{
-		// We will handle the new SFX.
-		// Set pointer to raw data.
-		unsigned int lumpLen = W_LumpLength(lump);
-
-		// e6y: Crash with zero-length sounds.
-		// Example wad: dakills (http://www.doomworld.com/idgames/index.php?id=2803)
-		// The entries DSBSPWLK, DSBSPACT, DSSWTCHN and DSSWTCHX are all zero-length sounds
-		if (lumpLen<=8) 
-			return -1;
-
-		/* Find padded length */
-		//len -= 8;
-		// do the lump caching outside the SDL_LockAudio/SDL_UnlockAudio pair
-		// use locking which makes sure the sound data is in a malloced area and
-		// not in a memory mapped one
-		const unsigned char* wadData = (const unsigned char*)W_CacheLumpNum(lump);
-
-        _g->sfx_data[id].data = (const void*)wadData;
-	}
-
-
-    const char* data = (const char*)_g->sfx_data[id].data;
-    const unsigned int len = ((const unsigned int*)data)[1]; //No of samples is here.
 
 	// Returns a handle (not used).
-	addsfx(id, channel, data, len);
-	updateSoundParams(channel, vol);
+    addsfx(id, channel, vol, sep);
 
 	return channel;
 }
@@ -413,6 +515,8 @@ int I_RegisterSong(const void *data, size_t len)
 void I_SetMusicVolume(int volume)
 {
 #ifdef __arm__
-    mmSetModuleVolume(volume * 8);
+    int mmvol = volume * 8;
+
+    mmSetModuleVolume(mmvol);
 #endif
 }
