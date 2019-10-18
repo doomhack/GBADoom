@@ -2293,11 +2293,7 @@ void P_UpdateSpecials (void)
                     break;
                 }
                 {
-                    /* don't take the address of the switch's sound origin,
-           * unless in a compatibility mode. */
-                    mobj_t *so = (mobj_t *)_g->buttonlist[i].soundorg;
-
-                    S_StartSound(so, sfx_swtchn);
+                    S_StartSound2(_g->buttonlist[i].soundorg, sfx_swtchn);
                 }
                 memset(&_g->buttonlist[i],0,sizeof(button_t));
             }

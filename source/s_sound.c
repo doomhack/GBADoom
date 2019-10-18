@@ -178,11 +178,10 @@ void S_Start(void)
   S_ChangeMusic(mnum, true);
 }
 
-void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
+void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume)
 {
   int priority, cnum, is_pickup;
   const sfxinfo_t *sfx;
-  mobj_t *origin = (mobj_t *) origin_p;
 
   int sep = NORM_SEP;
 
@@ -246,9 +245,39 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
         _g->channels[cnum].handle = h;
 }
 
-void S_StartSound(void *origin, int sfx_id)
+void S_StartSound(mobj_t *origin, int sfx_id)
 {
-  S_StartSoundAtVolume(origin, sfx_id, _g->snd_SfxVolume);
+    S_StartSoundAtVolume(origin, sfx_id, _g->snd_SfxVolume);
+}
+
+void S_StartSound2(degenmobj_t* origin, int sfx_id)
+{
+    //Look at this mess.
+
+    //Originally, the degenmobj_t had
+    //a thinker_t at the start of the struct
+    //so that it could be passed around and
+    //cast to a mobj_t* in the sound code
+    //for non-mobj sound makers like doors.
+
+    //This also meant that each and every sector_t
+    //struct has 24 bytes wasted. I can't afford
+    //to waste memory like that so we have a seperate
+    //function for these cases which cobbles toget a temp
+    //mobj_t-like struct to pass to the sound code.
+
+
+    struct fake_mobj
+    {
+        thinker_t ununsed;
+        degenmobj_t origin;
+    } fm;
+
+    fm.origin.x = origin->x;
+    fm.origin.y = origin->y;
+    fm.origin.z = origin->z;
+
+    S_StartSoundAtVolume((mobj_t*) &fm, sfx_id, _g->snd_SfxVolume);
 }
 
 void S_StopSound(void *origin)

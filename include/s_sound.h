@@ -38,6 +38,8 @@
 #pragma interface
 #endif
 
+#include "p_mobj.h"
+#include "r_defs.h"
 #include "sounds.h"
 
 //
@@ -61,10 +63,9 @@ void S_Start(void);
 // Start sound for thing at <origin>
 //  using <sound_id> from sounds.h
 //
-void S_StartSound(void *origin, int sound_id);
+void S_StartSound(mobj_t *origin, int sfx_id);
 
-// Will start a sound at a given volume.
-void S_StartSoundAtVolume(void *origin, int sound_id, int volume);
+void S_StartSound2(degenmobj_t* origin, int sfx_id);
 
 // killough 4/25/98: mask used to indicate sound origin is player item pickup
 #define PICKUP_SOUND (0x8000)
