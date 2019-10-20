@@ -4,7 +4,10 @@ A port of prBoom to the GBA. The objective of the project is to get full-fat PC 
 
 This project is currently a WIP but we're getting to the point where there is a playable game in there.
 
-What's working:
+
+
+
+**What's working:**
 
 -Supports Doom Shareware, Retail, Utimate and Doom2 IWADS.
 
@@ -17,7 +20,7 @@ What's working:
 -Sound and music support.
 
 
-Still to do:
+**Still to do:**
 
 -Still needs too much memory. GBA only has 256Kb of work ram. Some levels will crash out as they are larger than this.
 
