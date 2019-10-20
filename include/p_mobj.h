@@ -210,7 +210,7 @@
     // Translucent sprite?                                          // phares
 #define MF_TRANSLUCENT  (unsigned int)(0x0000000040000000)
 
-#define MF_FRIEND       (unsigned int)(0x0000000100000000)
+#define MF_FRIEND       (unsigned int)(0x0000000080000000)
 
 // killough 9/15/98: Same, but internal flags, not intended for .deh
 // (some degree of opaqueness is good, to avoid compatibility woes)
