@@ -1,56 +1,23 @@
 **GBADoom**
 
-~*Well actually, it doesn't even run on a GBA yet.*~ It just about runs in an emulator.
+A port of prBoom to the GBA. The objective of the project is to get full-fat PC Doom running on the GBA.
 
+This project is currently a WIP but we're getting to the point where there is a playable game in there.
 
-After ~two~ three weeks of hacking, chopping, slashing and removing code it (surprisingly) still seems to work. 
-More importantly, the memory usage is down from about 3-4Mb when I started to...~284kb~ 200kb in-game.
-It is starting to look like it might be possible to get it within our 256kb memory budget.
+What's working:
 
+-Supports Doom Shareware, Retail, Utimate and Doom2 IWADS.
+-Renderer is largely intact. Z-Depth lighting is gone and there is mip-mapping but it's otherwise complete.
+-Monster behaviour etc is all intact. (I.e sound propergation etc)
+-Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug aloang at about 5 FPS. It's running like SNES or 3DO Doom.
+-Sound and music support.
 
-Most of the options are gone, it will draw at 120x160px. (There's just no way I can get it to draw at full resolution.) The renderer is otherwise intact. ~Z-Depth lighting~, colormap effects etc are all still present and correct.
+Still to do:
 
-
-The multi-patch textures are ~going to be~ a major headache to get working fast.
-
-
-Sound won't be too hard to get up and running (but i'm making the assumption that 11250hz samples can be used without re-sampling) but not sure how to do music. I could try the libtimitity route but I think it may be too slow. Maybe converting the music to MOD as part of the build process might work better?
-
-
-
-If anyone has any ideas about the music, please drop me a line. Doom music is in a format that can relatively easily be converted to MIDI.
-
-
-
-
-
-
-Q) Wheres the ROM?
-
-A) ~yeh. Uh...Working on it. Come back later...~ There's a rom. it's unplayable, but there's a rom now.
-
-Q) Doesn't GBA already have DOOM?
-
-A) Yep...it's got a port of Jag Doom which has so much content cut and Doom2 running on a different engine. I want to get the cannonical PC Doom running on the GBA.
-
-Q) Hm..k...so why is this Qt Windows project?
-
-A) Because it's the easiest way to develop, test and debug while I delete all the things in the hope it'll fit in 256kb of ram.
-
-Q) Delete what?
-
-A) Everything that causes the internal data structs to be mutable. Like fast monsters. And settings.
-
-Q) Will it have XYZ?
-
-A) No. XYZ got deleted because it uses memory and CPU.
-
-Q) Whats the plan?
-
-1) Delete all the stuff that isn't needed.
-2) Rewrite the IWAD handling to use const memory pointers so it can run from memory-mapped rom.
-3) Remove as many non-const global vars as possible.
-4) Move the remaining globals to a global struct which can be allocd in EWRAM to free up the 32kb of fast IWRAM.
-5) Port the remaing mess to the GBA.
-6) Move the hot-path code and data to IWRAM.
-7) Play DOOM at about ~7fps~ 3fps. Yay!
+-Still needs too much memory. GBA only has 256Kb of work ram. Some levels will crash out as they are larger than this.
+-Status bar is partially rendered. It's actually quite tricky because we are page-flipping we need to draw the stbar twice when it updates else it will flicker.
+-Save-load are stubbed out.
+-Demo compatability is broken.
+-Weapon-swith controls not implimented.
+-General optimisation. We're never going to get a perfect 35FPS but I think there is still another 50-100% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
+-Probably a bunch of other stuff that borked too...
