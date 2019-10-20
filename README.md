@@ -1,6 +1,6 @@
 **GBADoom**
 
-A port of prBoom to the GBA. The objective of the project is to get full-fat PC Doom running on the GBA.
+A port of prBoom to the GBA. The objective of this project is to get full-fat PC Doom running on the GBA.
 
 This project is currently a WIP but we're getting to the point where there is a playable game in there.
 
@@ -13,9 +13,9 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 -Renderer is largely intact. Z-Depth lighting is gone and there is mip-mapping but it's otherwise complete.
 
--Monster behaviour etc is all intact. (I.e sound propergation etc)
+-Monster behaviour etc is all intact. (I.e sound propagation etc)
 
--Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug aloang at about 5 FPS. It's running like SNES or 3DO Doom.
+-Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug along at about 5 FPS. It's running like SNES or 3DO Doom.
 
 -Sound and music support.
 
