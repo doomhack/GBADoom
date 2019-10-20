@@ -478,9 +478,9 @@ static boolean P_TryWalk(mobj_t *actor)
 
 static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 {
-  dirtype_t xdir, ydir, tdir;
-  dirtype_t olddir = actor->movedir;
-  dirtype_t turnaround = olddir;
+  int xdir, ydir, tdir;
+  int olddir = actor->movedir;
+  int turnaround = olddir;
 
   if (turnaround != DI_NODIR)         // find reverse direction
     turnaround ^= 4;
@@ -517,15 +517,17 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 
   // randomly determine direction of search
   if (P_Random() & 1)
-    {
+  {
       for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
-        if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
-    return;
-    }
+          if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
+              return;
+  }
   else
-    for (tdir = DI_SOUTHEAST; tdir != DI_EAST-1; tdir--)
-      if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
-  return;
+  {
+      for (tdir = DI_SOUTHEAST; tdir >= DI_EAST; tdir--)
+          if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
+              return;
+  }
 
   if ((actor->movedir = turnaround) != DI_NODIR && !P_TryWalk(actor))
     actor->movedir = DI_NODIR;
