@@ -468,7 +468,7 @@ byte *save_p;
 //
 
 int      numvertexes;
-vertex_t *vertexes;
+const vertex_t *vertexes;
 
 int      numsegs;
 seg_t    *segs;

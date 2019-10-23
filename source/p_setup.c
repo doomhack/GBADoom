@@ -59,27 +59,13 @@
 //
 static void P_LoadVertexes (int lump)
 {
-  const mapvertex_t *data; // cph - const
-  int i;
-
   // Determine number of lumps:
   //  total lump length / vertex record length.
-  _g->numvertexes = W_LumpLength(lump) / sizeof(mapvertex_t);
+  _g->numvertexes = W_LumpLength(lump) / sizeof(vertex_t);
 
   // Allocate zone memory for buffer.
-  _g->vertexes = Z_Malloc(_g->numvertexes*sizeof(vertex_t),PU_LEVEL,0);
+  _g->vertexes = W_CacheLumpNum(lump);
 
-  // Load data into cache.
-  // cph 2006/07/29 - cast to mapvertex_t here, making the loop below much neater
-  data = (const mapvertex_t *)W_CacheLumpNum(lump);
-
-  // Copy and convert vertex coordinates,
-  // internal representation as fixed.
-  for (i=0; i<_g->numvertexes; i++)
-    {
-      _g->vertexes[i].x = SHORT(data[i].x)<<FRACBITS;
-      _g->vertexes[i].y = SHORT(data[i].y)<<FRACBITS;
-    }
 }
 
 //
