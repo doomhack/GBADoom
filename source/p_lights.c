@@ -309,7 +309,7 @@ void P_SpawnGlowingLight(sector_t*  sector)
 //
 // jff 2/12/98 added int return value, fixed return
 //
-int EV_StartLightStrobing(line_t* line)
+int EV_StartLightStrobing(const line_t* line)
 {
   int   secnum;
   sector_t* sec;
@@ -338,7 +338,7 @@ int EV_StartLightStrobing(line_t* line)
 //
 // jff 2/12/98 added int return value, fixed return
 //
-int EV_TurnTagLightsOff(line_t* line)
+int EV_TurnTagLightsOff(const line_t* line)
 {
   int j;
 
@@ -370,7 +370,7 @@ int EV_TurnTagLightsOff(line_t* line)
 //
 // jff 2/12/98 added int return value, fixed return
 //
-int EV_LightTurnOn(line_t *line, int bright)
+int EV_LightTurnOn(const line_t *line, int bright)
 {
   int i;
 
@@ -408,7 +408,7 @@ int EV_LightTurnOn(line_t *line, int bright)
  * Returns true
  */
 
-int EV_LightTurnOnPartway(line_t *line, fixed_t level)
+int EV_LightTurnOnPartway(const line_t *line, fixed_t level)
 {
   int i;
 

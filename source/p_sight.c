@@ -78,17 +78,17 @@ static boolean P_CrossSubsector(int num)
 #endif
 
   for (count = _g->subsectors[num].numlines; --count >= 0; seg++) { // check lines
-    line_t *line = seg->linedef;
+    const line_t *line = seg->linedef;
     divline_t divl;
 
    if(!line) // figgi -- skip minisegs
      continue;
 
     // allready checked other side?
-    if (line->validcount == _g->validcount)
+    if (LN_VCOUNT(line) == _g->validcount)
       continue;
 
-    line->validcount = _g->validcount;
+    LN_VCOUNT(line) = _g->validcount;
 
     /* OPTIMIZE: killough 4/20/98: Added quick bounding-box rejection test
      * cph - this is causing demo desyncs on original Doom demos.
@@ -132,8 +132,8 @@ static boolean P_CrossSubsector(int num)
     { // Forget this line if it doesn't cross the line of sight
       const vertex_t *v1,*v2;
 
-      v1 = line->v1;
-      v2 = line->v2;
+      v1 = &line->v1;
+      v2 = &line->v2;
 
       if (P_DivlineSide(v1->x, v1->y, &_g->los.strace) ==
           P_DivlineSide(v2->x, v2->y, &_g->los.strace))

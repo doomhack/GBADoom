@@ -44,7 +44,7 @@
 
 #include "global_data.h"
 
-static mobj_t* P_TeleportDestination(line_t* line)
+static mobj_t* P_TeleportDestination(const line_t* line)
 {
   int i;
   for (i = -1; (i = P_FindSectorFromLineTag(line, i)) >= 0;) {
@@ -64,7 +64,7 @@ static mobj_t* P_TeleportDestination(line_t* line)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-int EV_Teleport(line_t *line, int side, mobj_t *thing)
+int EV_Teleport(const line_t *line, int side, mobj_t *thing)
 {
   mobj_t    *m;
 
@@ -130,7 +130,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
 // Primarily for rooms-over-rooms etc.
 //
 
-int EV_SilentTeleport(line_t *line, int side, mobj_t *thing)
+int EV_SilentTeleport(const line_t *line, int side, mobj_t *thing)
 {
   mobj_t    *m;
 
@@ -212,22 +212,22 @@ int EV_SilentTeleport(line_t *line, int side, mobj_t *thing)
 // maximum fixed_t units to move object to avoid hiccups
 #define FUDGEFACTOR 10
 
-int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing,
+int EV_SilentLineTeleport(const line_t *line, int side, mobj_t *thing,
                           boolean reverse)
 {
   int i;
-  line_t *l;
+  const line_t *l;
 
   if (side || thing->flags & MF_MISSILE)
     return 0;
 
   for (i = -1; (i = P_FindLineFromLineTag(line, i)) >= 0;)
-    if ((l=_g->lines+i) != line && l->backsector)
+    if ((l=_g->lines+i) != line && LN_BACKSECTOR(l))
       {
         // Get the thing's position along the source linedef
         fixed_t pos = D_abs(line->dx) > D_abs(line->dy) ?
-          FixedDiv(thing->x - line->v1->x, line->dx) :
-          FixedDiv(thing->y - line->v1->y, line->dy) ;
+          FixedDiv(thing->x - line->v1.x, line->dx) :
+          FixedDiv(thing->y - line->v1.y, line->dy) ;
 
         // Get the angle between the two linedefs, for rotating
         // orientation and momentum. Rotate 180 degrees, and flip
@@ -237,8 +237,8 @@ int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing,
           R_PointToAngle2(0, 0, line->dx, line->dy);
 
         // Interpolate position across the exit linedef
-        fixed_t x = l->v2->x - FixedMul(pos, l->dx);
-        fixed_t y = l->v2->y - FixedMul(pos, l->dy);
+        fixed_t x = l->v2.x - FixedMul(pos, l->dx);
+        fixed_t y = l->v2.y - FixedMul(pos, l->dy);
 
         // Sine, cosine of angle adjustment
         fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
@@ -255,7 +255,7 @@ int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing,
 
         // Whether walking towards first side of exit linedef steps down
         int stepdown =
-          l->frontsector->floorheight < l->backsector->floorheight;
+          LN_FRONTSECTOR(l)->floorheight < LN_BACKSECTOR(l)->floorheight;
 
         // Height of thing above ground
         fixed_t z = thing->z - thing->floorz;

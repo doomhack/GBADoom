@@ -244,7 +244,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
 // returns true if a thinker started
 //
 int EV_DoCeiling
-( line_t* line,
+( const line_t* line,
   ceiling_e type )
 {
   int   secnum;
@@ -366,7 +366,7 @@ int EV_DoCeiling
 // Returns true if a ceiling reactivated
 //
 //jff 4/5/98 return if activated
-int P_ActivateInStasisCeiling(line_t *line)
+int P_ActivateInStasisCeiling(const line_t *line)
 {
   ceilinglist_t *cl;
   int rtn=0;
@@ -393,7 +393,7 @@ int P_ActivateInStasisCeiling(line_t *line)
 // Passed the linedef stopping the ceilings
 // Returns true if a ceiling put in stasis
 //
-int EV_CeilingCrushStop(line_t* line)
+int EV_CeilingCrushStop(const line_t* line)
 {
   int rtn=0;
 

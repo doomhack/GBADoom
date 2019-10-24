@@ -60,7 +60,7 @@ typedef struct {
   boolean     isaline;
   union {
     mobj_t* thing;
-    line_t* line;
+    const line_t* line;
   } d;
 } intercept_t;
 
@@ -84,7 +84,7 @@ fixed_t P_InterceptVector2(const divline_t *v2, const divline_t *v1);
 void    P_LineOpening (const line_t *linedef);
 void    P_UnsetThingPosition(mobj_t *thing);
 void    P_SetThingPosition(mobj_t *thing);
-boolean P_BlockLinesIterator (int x, int y, boolean func(line_t *));
+boolean P_BlockLinesIterator (int x, int y, boolean func(const line_t *));
 boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t *));
 boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
                        int flags, boolean trav(intercept_t *));

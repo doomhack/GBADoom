@@ -141,7 +141,7 @@ void P_InitSwitchList(void)
 // No return.
 //
 static void P_StartButton
-( line_t*       line,
+( const line_t*       line,
   bwhere_e      w,
   int           texture,
   int           time )
@@ -162,7 +162,7 @@ static void P_StartButton
       _g->buttonlist[i].btimer = time;
       /* use sound origin of line itself - no need to compatibility-wrap
        * as the popout code gets it wrong whatever its value */
-      _g->buttonlist[i].soundorg = &line->frontsector->soundorg;
+      _g->buttonlist[i].soundorg = &LN_FRONTSECTOR(line)->soundorg;
       return;
     }
 
@@ -180,7 +180,7 @@ static void P_StartButton
 // No return
 //
 void P_ChangeSwitchTexture
-( line_t*       line,
+( const line_t*       line,
   int           useAgain )
 {
   /* Rearranged a bit to avoid too much code duplication */
@@ -196,7 +196,7 @@ void P_ChangeSwitchTexture
 
   /* don't zero line->special until after exit switch test */
   if (!useAgain)
-    line->special = 0;
+    LN_SPECIAL(line) = 0;
 
   /* search for a texture to change */
   texture = NULL; position = 0;
@@ -213,7 +213,7 @@ void P_ChangeSwitchTexture
     return; /* no switch texture was found to change */
   *texture = _g->switchlist[i^1];
 
-  S_StartSound2(&line->frontsector->soundorg, sound);
+  S_StartSound2(&LN_FRONTSECTOR(line)->soundorg, sound);
 
   if (useAgain)
     P_StartButton(line, position, _g->switchlist[i], BUTTONTIME);
@@ -234,7 +234,7 @@ void P_ChangeSwitchTexture
 boolean
 P_UseSpecialLine
 ( mobj_t*       thing,
-  line_t*       line,
+  const line_t*       line,
   int           side )
 {
 
@@ -248,90 +248,90 @@ P_UseSpecialLine
   {
     // pointer to line function is NULL by default, set non-null if
     // line special is push or switch generalized linedef type
-    int (*linefunc)(line_t *line)=NULL;
+    int (*linefunc)(const line_t *line)=NULL;
 
     // check each range of generalized linedefs
-    if ((unsigned)line->special >= GenEnd)
+    if ((unsigned)LN_SPECIAL(line) >= GenEnd)
     {
       // Out of range for GenFloors
     }
-    else if ((unsigned)line->special >= GenFloorBase)
+    else if ((unsigned)LN_SPECIAL(line) >= GenFloorBase)
     {
       if (!thing->player)
-        if ((line->special & FloorChange) || !(line->special & FloorModel))
+        if ((LN_SPECIAL(line) & FloorChange) || !(LN_SPECIAL(line) & FloorModel))
           return false; // FloorModel is "Allow Monsters" if FloorChange is 0
-      if (!line->tag && ((line->special&6)!=6)) //jff 2/27/98 all non-manual
+      if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
         return false;                         // generalized types require tag
       linefunc = EV_DoGenFloor;
     }
-    else if ((unsigned)line->special >= GenCeilingBase)
+    else if ((unsigned)LN_SPECIAL(line) >= GenCeilingBase)
     {
       if (!thing->player)
-        if ((line->special & CeilingChange) || !(line->special & CeilingModel))
+        if ((LN_SPECIAL(line) & CeilingChange) || !(LN_SPECIAL(line) & CeilingModel))
           return false;   // CeilingModel is "Allow Monsters" if CeilingChange is 0
-      if (!line->tag && ((line->special&6)!=6)) //jff 2/27/98 all non-manual
+      if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
         return false;                         // generalized types require tag
       linefunc = EV_DoGenCeiling;
     }
-    else if ((unsigned)line->special >= GenDoorBase)
+    else if ((unsigned)LN_SPECIAL(line) >= GenDoorBase)
     {
       if (!thing->player)
       {
-        if (!(line->special & DoorMonster))
+        if (!(LN_SPECIAL(line) & DoorMonster))
           return false;   // monsters disallowed from this door
         if (line->flags & ML_SECRET) // they can't open secret doors either
           return false;
       }
-      if (!line->tag && ((line->special&6)!=6)) //jff 3/2/98 all non-manual
+      if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 3/2/98 all non-manual
         return false;                         // generalized types require tag
       linefunc = EV_DoGenDoor;
     }
-    else if ((unsigned)line->special >= GenLockedBase)
+    else if ((unsigned)LN_SPECIAL(line) >= GenLockedBase)
     {
       if (!thing->player)
         return false;   // monsters disallowed from unlocking doors
       if (!P_CanUnlockGenDoor(line,thing->player))
         return false;
-      if (!line->tag && ((line->special&6)!=6)) //jff 2/27/98 all non-manual
+      if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
         return false;                         // generalized types require tag
 
       linefunc = EV_DoGenLockedDoor;
     }
-    else if ((unsigned)line->special >= GenLiftBase)
+    else if ((unsigned)LN_SPECIAL(line) >= GenLiftBase)
     {
       if (!thing->player)
-        if (!(line->special & LiftMonster))
+        if (!(LN_SPECIAL(line) & LiftMonster))
           return false; // monsters disallowed
-      if (!line->tag && ((line->special&6)!=6)) //jff 2/27/98 all non-manual
+      if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
         return false;                         // generalized types require tag
       linefunc = EV_DoGenLift;
     }
-    else if ((unsigned)line->special >= GenStairsBase)
+    else if ((unsigned)LN_SPECIAL(line) >= GenStairsBase)
     {
       if (!thing->player)
-        if (!(line->special & StairMonster))
+        if (!(LN_SPECIAL(line) & StairMonster))
           return false; // monsters disallowed
-      if (!line->tag && ((line->special&6)!=6)) //jff 2/27/98 all non-manual
+      if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
         return false;                         // generalized types require tag
       linefunc = EV_DoGenStairs;
     }
-    else if ((unsigned)line->special >= GenCrusherBase)
+    else if ((unsigned)LN_SPECIAL(line) >= GenCrusherBase)
     {
       if (!thing->player)
-        if (!(line->special & CrusherMonster))
+        if (!(LN_SPECIAL(line) & CrusherMonster))
           return false; // monsters disallowed
-      if (!line->tag && ((line->special&6)!=6)) //jff 2/27/98 all non-manual
+      if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
         return false;                         // generalized types require tag
       linefunc = EV_DoGenCrusher;
     }
 
     if (linefunc)
-      switch((line->special & TriggerType) >> TriggerTypeShift)
+      switch((LN_SPECIAL(line) & TriggerType) >> TriggerTypeShift)
       {
         case PushOnce:
           if (!side)
             if (linefunc(line))
-              line->special = 0;
+              LN_SPECIAL(line) = 0;
           return true;
         case PushMany:
           if (!side)
@@ -357,7 +357,7 @@ P_UseSpecialLine
     if (line->flags & ML_SECRET)
       return false;
 
-    switch(line->special)
+    switch(LN_SPECIAL(line))
     {
       case 1:         // MANUAL DOOR RAISE
       case 32:        // MANUAL BLUE
@@ -379,7 +379,7 @@ P_UseSpecialLine
     return false;
 
   // Dispatch to handler according to linedef type
-  switch (line->special)
+  switch (LN_SPECIAL(line))
   {
     // Manual doors, push type with no tag
     case 1:             // Vertical Door
@@ -584,7 +584,7 @@ P_UseSpecialLine
       // added inner switch, relaxed check to demo_compatibility
 
     default:
-        switch (line->special)
+        switch (LN_SPECIAL(line))
         {
           //jff 1/29/98 added linedef types to fill all functions out so that
           // all possess SR, S1, WR, W1 types

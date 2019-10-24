@@ -66,10 +66,10 @@ fixed_t CONSTFUNC P_AproxDistance(fixed_t dx, fixed_t dy)
 int PUREFUNC P_PointOnLineSide(fixed_t x, fixed_t y, const line_t *line)
 {
   return
-    !line->dx ? x <= line->v1->x ? line->dy > 0 : line->dy < 0 :
-    !line->dy ? y <= line->v1->y ? line->dx < 0 : line->dx > 0 :
-    FixedMul(y-line->v1->y, line->dx>>FRACBITS) >=
-    FixedMul(line->dy>>FRACBITS, x-line->v1->x);
+    !line->dx ? x <= line->v1.x ? line->dy > 0 : line->dy < 0 :
+    !line->dy ? y <= line->v1.y ? line->dx < 0 : line->dx > 0 :
+    FixedMul(y-line->v1.y, line->dx>>FRACBITS) >=
+    FixedMul(line->dy>>FRACBITS, x-line->v1.x);
 }
 
 //
@@ -88,11 +88,11 @@ int PUREFUNC P_BoxOnLineSide(const fixed_t *tmbox, const line_t *ld)
     default: // shut up compiler warnings -- killough
     case ST_HORIZONTAL:
       return
-      (tmbox[BOXBOTTOM] > ld->v1->y) == (p = tmbox[BOXTOP] > ld->v1->y) ?
+      (tmbox[BOXBOTTOM] > ld->v1.y) == (p = tmbox[BOXTOP] > ld->v1.y) ?
         p ^ (ld->dx < 0) : -1;
     case ST_VERTICAL:
       return
-        (tmbox[BOXLEFT] < ld->v1->x) == (p = tmbox[BOXRIGHT] < ld->v1->x) ?
+        (tmbox[BOXLEFT] < ld->v1.x) == (p = tmbox[BOXRIGHT] < ld->v1.x) ?
         p ^ (ld->dy < 0) : -1;
     case ST_POSITIVE:
       return
@@ -126,8 +126,8 @@ static int PUREFUNC P_PointOnDivlineSide(fixed_t x, fixed_t y, const divline_t *
 
 static void P_MakeDivline(const line_t *li, divline_t *dl)
 {
-  dl->x = li->v1->x;
-  dl->y = li->v1->y;
+  dl->x = li->v1.x;
+  dl->y = li->v1.y;
   dl->dx = li->dx;
   dl->dy = li->dy;
 }
@@ -179,8 +179,8 @@ void P_LineOpening(const line_t *linedef)
       return;
     }
 
-  _g->openfrontsector = linedef->frontsector;
-  _g->openbacksector = linedef->backsector;
+  _g->openfrontsector = LN_FRONTSECTOR(linedef);
+  _g->openbacksector = LN_BACKSECTOR(linedef);
 
   if (_g->openfrontsector->ceilingheight < _g->openbacksector->ceilingheight)
     _g->opentop = _g->openfrontsector->ceilingheight;
@@ -348,7 +348,7 @@ void P_SetThingPosition(mobj_t *thing)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-boolean P_BlockLinesIterator(int x, int y, boolean func(line_t*))
+boolean P_BlockLinesIterator(int x, int y, boolean func(const line_t*))
 {
   int        offset;
   const short *list;   // killough 3/1/98: for removal of blockmap limit
@@ -367,10 +367,10 @@ boolean P_BlockLinesIterator(int x, int y, boolean func(line_t*))
     list++;     // skip 0 starting delimiter                      // phares
   for ( ; *list != -1 ; list++)                                   // phares
     {
-      line_t *ld = &_g->lines[*list];
-      if (ld->validcount == _g->validcount)
+      const line_t *ld = &_g->lines[*list];
+      if (LN_VCOUNT(ld) == _g->validcount)
         continue;       // line has already been checked
-      ld->validcount = _g->validcount;
+      LN_VCOUNT(ld) = _g->validcount;
       if (!func(ld))
         return false;
     }
@@ -419,7 +419,7 @@ static void check_intercept(void)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-boolean PIT_AddLineIntercepts(line_t *ld)
+boolean PIT_AddLineIntercepts(const line_t *ld)
 {
   int       s1;
   int       s2;
@@ -430,8 +430,8 @@ boolean PIT_AddLineIntercepts(line_t *ld)
   if (_g->trace.dx >  FRACUNIT*16 || _g->trace.dy >  FRACUNIT*16 ||
       _g->trace.dx < -FRACUNIT*16 || _g->trace.dy < -FRACUNIT*16)
     {
-      s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &_g->trace);
-      s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &_g->trace);
+      s1 = P_PointOnDivlineSide (ld->v1.x, ld->v1.y, &_g->trace);
+      s2 = P_PointOnDivlineSide (ld->v2.x, ld->v2.y, &_g->trace);
     }
   else
     {

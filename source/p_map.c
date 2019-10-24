@@ -245,7 +245,7 @@ boolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, boolean boss)
 //
 
 static // killough 3/26/98: make static
-boolean PIT_CrossLine (line_t* ld)
+boolean PIT_CrossLine (const line_t* ld)
   {
   if (!(ld->flags & ML_TWOSIDED) ||
       (ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS)))
@@ -263,7 +263,7 @@ boolean PIT_CrossLine (line_t* ld)
  * assuming NO movement occurs -- used to avoid sticky situations.
  */
 
-static int untouched(line_t *ld)
+static int untouched(const line_t *ld)
 {
   fixed_t x, y, tmbbox[4];
   return
@@ -280,7 +280,7 @@ static int untouched(line_t *ld)
 //
 
 static // killough 3/26/98: make static
-boolean PIT_CheckLine (line_t* ld)
+boolean PIT_CheckLine (const line_t* ld)
 {
   if (_g->tmbbox[BOXRIGHT] <= LN_BBOX_LEFT(ld)
    || _g->tmbbox[BOXLEFT] >= LN_BBOX_RIGHT(ld)
@@ -302,7 +302,7 @@ boolean PIT_CheckLine (line_t* ld)
   // could be crossed in either order.
 
   // killough 7/24/98: allow player to move out of 1s wall, to prevent sticking
-  if (!ld->backsector) // one sided line
+  if (!LN_BACKSECTOR(ld)) // one sided line
     {
       _g->blockline = ld;
       return _g->tmunstuck && !untouched(ld) &&
@@ -347,7 +347,7 @@ boolean PIT_CheckLine (line_t* ld)
 
   // if contacted a special line, add it to the list
 
-  if (ld->special)
+  if (LN_SPECIAL(ld))
   {
       // 1/11/98 killough: remove limit on lines hit, by array doubling
       if (_g->numspechit < 4)
@@ -709,7 +709,7 @@ boolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
 
   if (! (thing->flags&(MF_TELEPORT|MF_NOCLIP)) )
     while (_g->numspechit--)
-      if (_g->spechit[_g->numspechit]->special)  // see if the line was crossed
+      if (LN_SPECIAL(_g->spechit[_g->numspechit]))  // see if the line was crossed
   {
     int oldside;
     if ((oldside = P_PointOnLineSide(oldx, oldy, _g->spechit[_g->numspechit])) !=
@@ -733,9 +733,9 @@ boolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
  * so balancing is possible.
  */
 
-static boolean PIT_ApplyTorque(line_t *ld)
+static boolean PIT_ApplyTorque(const line_t *ld)
 {
-  if (ld->backsector &&       // If thing touches two-sided pivot linedef
+  if (LN_BACKSECTOR(ld) &&       // If thing touches two-sided pivot linedef
       _g->tmbbox[BOXRIGHT]  > LN_BBOX_LEFT(ld)  &&
       _g->tmbbox[BOXLEFT]   < LN_BBOX_RIGHT(ld) &&
       _g->tmbbox[BOXTOP]    > LN_BBOX_BOTTOM(ld) &&
@@ -747,14 +747,14 @@ static boolean PIT_ApplyTorque(line_t *ld)
       fixed_t dist =                               // lever arm
   + (ld->dx >> FRACBITS) * (mo->y >> FRACBITS)
   - (ld->dy >> FRACBITS) * (mo->x >> FRACBITS)
-  - (ld->dx >> FRACBITS) * (ld->v1->y >> FRACBITS)
-  + (ld->dy >> FRACBITS) * (ld->v1->x >> FRACBITS);
+  - (ld->dx >> FRACBITS) * (ld->v1.y >> FRACBITS)
+  + (ld->dy >> FRACBITS) * (ld->v1.x >> FRACBITS);
 
       if (dist < 0 ?                               // dropoff direction
-    ld->frontsector->floorheight < mo->z &&
-    ld->backsector->floorheight >= mo->z :
-          ld->backsector->floorheight < mo->z &&
-          ld->frontsector->floorheight >= mo->z)
+    LN_FRONTSECTOR(ld)->floorheight < mo->z &&
+    LN_BACKSECTOR(ld)->floorheight >= mo->z :
+          LN_BACKSECTOR(ld)->floorheight < mo->z &&
+          LN_FRONTSECTOR(ld)->floorheight >= mo->z)
   {
     /* At this point, we know that the object straddles a two-sided
      * linedef, and that the object's center of mass is above-ground.
@@ -914,7 +914,7 @@ boolean P_ThingHeightClip (mobj_t* thing)
 // If the floor is icy, then you can bounce off a wall.             // phares
 //
 
-void P_HitSlideLine (line_t* ld)
+void P_HitSlideLine (const line_t* ld)
   {
   int     side;
   angle_t lineangle;
@@ -1017,7 +1017,7 @@ void P_HitSlideLine (line_t* ld)
 
 boolean PTR_SlideTraverse (intercept_t* in)
   {
-  line_t* li;
+  const line_t* li;
 
   if (!in->isaline)
     I_Error ("PTR_SlideTraverse: not a line?");
@@ -1192,7 +1192,7 @@ void P_SlideMove(mobj_t *mo)
 //
 boolean PTR_AimTraverse (intercept_t* in)
   {
-  line_t* li;
+  const line_t* li;
   mobj_t* th;
   fixed_t slope;
   fixed_t thingtopslope;
@@ -1217,14 +1217,14 @@ boolean PTR_AimTraverse (intercept_t* in)
 
     dist = FixedMul (_g->attackrange, in->frac);
 
-    if (li->frontsector->floorheight != li->backsector->floorheight)
+    if (LN_FRONTSECTOR(li)->floorheight != LN_BACKSECTOR(li)->floorheight)
       {
       slope = FixedDiv (_g->openbottom - _g->shootz , dist);
       if (slope > _g->bottomslope)
         _g->bottomslope = slope;
       }
 
-    if (li->frontsector->ceilingheight != li->backsector->ceilingheight)
+    if (LN_FRONTSECTOR(li)->ceilingheight != LN_BACKSECTOR(li)->ceilingheight)
       {
       slope = FixedDiv (_g->opentop - _g->shootz , dist);
       if (slope < _g->topslope)
@@ -1299,9 +1299,9 @@ boolean PTR_ShootTraverse (intercept_t* in)
 
   if (in->isaline)
     {
-    line_t *li = in->d.line;
+    const line_t *li = in->d.line;
 
-    if (li->special)
+    if (LN_SPECIAL(li))
       P_ShootSpecialLine (_g->shootthing, li);
 
       if (li->flags & ML_TWOSIDED)
@@ -1311,9 +1311,9 @@ boolean PTR_ShootTraverse (intercept_t* in)
 
     // killough 11/98: simplify
 
-    if ((li->frontsector->floorheight==li->backsector->floorheight ||
+    if ((LN_FRONTSECTOR(li)->floorheight==LN_BACKSECTOR(li)->floorheight ||
          (slope = FixedDiv(_g->openbottom - _g->shootz , dist)) <= _g->aimslope) &&
-        (li->frontsector->ceilingheight==li->backsector->ceilingheight ||
+        (LN_FRONTSECTOR(li)->ceilingheight==LN_BACKSECTOR(li)->ceilingheight ||
          (slope = FixedDiv (_g->opentop - _g->shootz , dist)) >= _g->aimslope))
       return true;      // shot continues
   }
@@ -1326,21 +1326,21 @@ boolean PTR_ShootTraverse (intercept_t* in)
     y = _g->trace.y + FixedMul (_g->trace.dy, frac);
     z = _g->shootz + FixedMul (_g->aimslope, FixedMul(frac, _g->attackrange));
 
-    if (li->frontsector->ceilingpic == _g->skyflatnum)
+    if (LN_FRONTSECTOR(li)->ceilingpic == _g->skyflatnum)
       {
       // don't shoot the sky!
 
-      if (z > li->frontsector->ceilingheight)
+      if (z > LN_FRONTSECTOR(li)->ceilingheight)
         return false;
 
       // it's a sky hack wall
 
-      if  (li->backsector && li->backsector->ceilingpic == _g->skyflatnum)
+      if  (LN_BACKSECTOR(li) && LN_BACKSECTOR(li)->ceilingpic == _g->skyflatnum)
 
         // fix bullet-eaters -- killough:
         // WARNING: Almost all demos will lose sync without this
         // demo_compatibility flag check!!! killough 1/18/98
-      if (li->backsector->ceilingheight < z)
+      if (LN_BACKSECTOR(li)->ceilingheight < z)
         return false;
       }
 
@@ -1472,7 +1472,9 @@ boolean PTR_UseTraverse (intercept_t* in)
   {
   int side;
 
-  if (!in->d.line->special)
+
+
+  if (!LN_SPECIAL(in->d.line))
     {
     P_LineOpening (in->d.line);
     if (_g->openrange <= 0)
@@ -1515,9 +1517,9 @@ boolean PTR_UseTraverse (intercept_t* in)
 
 boolean PTR_NoWayTraverse(intercept_t* in)
   {
-  line_t *ld = in->d.line;
+  const line_t *ld = in->d.line;
                                            // This linedef
-  return ld->special || !(                 // Ignore specials
+  return LN_SPECIAL(ld) || !(                 // Ignore specials
    ld->flags & ML_BLOCKING || (            // Always blocking
    P_LineOpening(ld),                      // Find openings
    _g->openrange <= 0 ||                       // No opening
@@ -1922,7 +1924,7 @@ void P_DelSeclist(msecnode_t* node)
 // at this location, so don't bother with checking impassable or
 // blocking lines.
 
-boolean PIT_GetSectors(line_t* ld)
+boolean PIT_GetSectors(const line_t* ld)
   {
   if (_g->tmbbox[BOXRIGHT]  <= LN_BBOX_LEFT(ld)   ||
       _g->tmbbox[BOXLEFT]   >= LN_BBOX_RIGHT(ld)  ||
@@ -1940,7 +1942,7 @@ boolean PIT_GetSectors(line_t* ld)
   // allowed to move to this position, then the sector_list
   // will be attached to the Thing's mobj_t at touching_sectorlist.
 
-  _g->sector_list = P_AddSecnode(ld->frontsector,_g->tmthing,_g->sector_list);
+  _g->sector_list = P_AddSecnode(LN_FRONTSECTOR(ld),_g->tmthing,_g->sector_list);
 
   /* Don't assume all lines are 2-sided, since some Things
    * like MT_TFOG are allowed regardless of whether their radius takes
@@ -1951,8 +1953,8 @@ boolean PIT_GetSectors(line_t* ld)
    * killough 8/1/98: avoid duplicate if same sector on both sides
    * cph - DEMOSYNC? */
 
-  if (ld->backsector && ld->backsector != ld->frontsector)
-    _g->sector_list = P_AddSecnode(ld->backsector, _g->tmthing, _g->sector_list);
+  if (LN_BACKSECTOR(ld) && LN_BACKSECTOR(ld) != LN_FRONTSECTOR(ld))
+    _g->sector_list = P_AddSecnode(LN_BACKSECTOR(ld), _g->tmthing, _g->sector_list);
 
   return true;
   }

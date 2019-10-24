@@ -834,10 +834,10 @@ static void AM_drawWalls(void)
   // draw the unclipped visible portions of all lines
   for (i=0;i<_g->numlines;i++)
   {
-    l.a.x = _g->lines[i].v1->x >> FRACTOMAPBITS;//e6y
-    l.a.y = _g->lines[i].v1->y >> FRACTOMAPBITS;//e6y
-    l.b.x = _g->lines[i].v2->x >> FRACTOMAPBITS;//e6y
-    l.b.y = _g->lines[i].v2->y >> FRACTOMAPBITS;//e6y
+    l.a.x = _g->lines[i].v1.x >> FRACTOMAPBITS;//e6y
+    l.a.y = _g->lines[i].v1.y >> FRACTOMAPBITS;//e6y
+    l.b.x = _g->lines[i].v2.x >> FRACTOMAPBITS;//e6y
+    l.b.y = _g->lines[i].v2.y >> FRACTOMAPBITS;//e6y
 
     if (_g->automapmode & am_rotate) {
       AM_rotate(&l.a.x, &l.a.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
@@ -854,7 +854,7 @@ static void AM_drawWalls(void)
         int amd;
         if ((mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
             !(_g->lines[i].flags & ML_SECRET) &&    /* non-secret */
-          (amd = AM_DoorColor(_g->lines[i].special)) != -1
+          (amd = AM_DoorColor(LN_SPECIAL(&_g->lines[i]))) != -1
         )
         {
           {
@@ -888,32 +888,32 @@ static void AM_drawWalls(void)
         (
           mapcolor_exit &&
           (
-            _g->lines[i].special==11 ||
-            _g->lines[i].special==52 ||
-            _g->lines[i].special==197 ||
-            _g->lines[i].special==51  ||
-            _g->lines[i].special==124 ||
-            _g->lines[i].special==198
+            LN_SPECIAL(&_g->lines[i])==11 ||
+            LN_SPECIAL(&_g->lines[i])==52 ||
+            LN_SPECIAL(&_g->lines[i])==197 ||
+            LN_SPECIAL(&_g->lines[i])==51  ||
+            LN_SPECIAL(&_g->lines[i])==124 ||
+            LN_SPECIAL(&_g->lines[i])==198
           )
         ) {
           AM_drawMline(&l, mapcolor_exit); /* exit line */
           continue;
         }
 
-      if (!_g->lines[i].backsector)
+        if(LN_BACKSECTOR(&_g->lines[i]))
       {
         // jff 1/10/98 add new color for 1S secret sector boundary
         if (mapcolor_secr && //jff 4/3/98 0 is disable
             (
              (
               map_secret_after &&
-              P_WasSecret(_g->lines[i].frontsector) &&
-              !P_IsSecret(_g->lines[i].frontsector)
+              P_WasSecret(LN_FRONTSECTOR(&_g->lines[i])) &&
+              !P_IsSecret(LN_FRONTSECTOR(&_g->lines[i]))
              )
              ||
              (
               !map_secret_after &&
-              P_WasSecret(_g->lines[i].frontsector)
+              P_WasSecret(LN_FRONTSECTOR(&_g->lines[i]))
              )
             )
           )
@@ -927,8 +927,8 @@ static void AM_drawWalls(void)
         if
         (
             mapcolor_tele && !(_g->lines[i].flags & ML_SECRET) &&
-            (_g->lines[i].special == 39 || _g->lines[i].special == 97 ||
-            _g->lines[i].special == 125 || _g->lines[i].special == 126)
+            (LN_SPECIAL(&_g->lines[i]) == 39 || LN_SPECIAL(&_g->lines[i]) == 97 ||
+            LN_SPECIAL(&_g->lines[i]) == 125 || LN_SPECIAL(&_g->lines[i]) == 126)
         )
         { // teleporters
           AM_drawMline(&l, mapcolor_tele);
@@ -941,8 +941,8 @@ static void AM_drawWalls(void)
         (
             mapcolor_clsd &&
             !(_g->lines[i].flags & ML_SECRET) &&    // non-secret closed door
-            ((_g->lines[i].backsector->floorheight==_g->lines[i].backsector->ceilingheight) ||
-            (_g->lines[i].frontsector->floorheight==_g->lines[i].frontsector->ceilingheight))
+            ((LN_BACKSECTOR(&_g->lines[i])->floorheight==LN_BACKSECTOR(&_g->lines[i])->ceilingheight) ||
+            (LN_FRONTSECTOR(&_g->lines[i])->floorheight==LN_FRONTSECTOR(&_g->lines[i])->ceilingheight))
         )
         {
           AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
@@ -953,30 +953,30 @@ static void AM_drawWalls(void)
             (                    // special was cleared after getting it
               (map_secret_after &&
                (
-                (P_WasSecret(_g->lines[i].frontsector)
-                 && !P_IsSecret(_g->lines[i].frontsector)) ||
-                (P_WasSecret(_g->lines[i].backsector)
-                 && !P_IsSecret(_g->lines[i].backsector))
+                (P_WasSecret(LN_FRONTSECTOR(&_g->lines[i]))
+                 && !P_IsSecret(LN_FRONTSECTOR(&_g->lines[i]))) ||
+                (P_WasSecret(LN_BACKSECTOR(&_g->lines[i]))
+                 && !P_IsSecret(LN_BACKSECTOR(&_g->lines[i])))
                )
               )
               ||  //jff 3/9/98 add logic to not show secret til after entered
               (   // if map_secret_after is true
                 !map_secret_after &&
-                 (P_WasSecret(_g->lines[i].frontsector) ||
-                  P_WasSecret(_g->lines[i].backsector))
+                 (P_WasSecret(LN_FRONTSECTOR(&_g->lines[i])) ||
+                  P_WasSecret(LN_BACKSECTOR(&_g->lines[i])))
               )
             )
         )
         {
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
         } //jff 1/6/98 end secret sector line change
-        else if (_g->lines[i].backsector->floorheight !=
-                  _g->lines[i].frontsector->floorheight)
+        else if (LN_BACKSECTOR(&_g->lines[i])->floorheight !=
+                  LN_FRONTSECTOR(&_g->lines[i])->floorheight)
         {
           AM_drawMline(&l, mapcolor_fchg); // floor level change
         }
-        else if (_g->lines[i].backsector->ceilingheight !=
-                  _g->lines[i].frontsector->ceilingheight)
+        else if (LN_BACKSECTOR(&_g->lines[i])->ceilingheight !=
+                  LN_FRONTSECTOR(&_g->lines[i])->ceilingheight)
         {
           AM_drawMline(&l, mapcolor_cchg); // ceiling level change
         }
@@ -990,13 +990,13 @@ static void AM_drawWalls(void)
         (
           mapcolor_flat
           ||
-          !_g->lines[i].backsector
+          !LN_BACKSECTOR(&_g->lines[i])
           ||
-          _g->lines[i].backsector->floorheight
-          != _g->lines[i].frontsector->floorheight
+          LN_BACKSECTOR(&_g->lines[i])->floorheight
+          != LN_FRONTSECTOR(&_g->lines[i])->floorheight
           ||
-          _g->lines[i].backsector->ceilingheight
-          != _g->lines[i].frontsector->ceilingheight
+          LN_BACKSECTOR(&_g->lines[i])->ceilingheight
+          != LN_FRONTSECTOR(&_g->lines[i])->ceilingheight
         )
           AM_drawMline(&l, mapcolor_unsn);
       }

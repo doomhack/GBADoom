@@ -388,7 +388,7 @@ void T_MoveElevator(elevator_t* elevator)
 // Returns true if a thinker was created.
 //
 int EV_DoFloor
-( line_t*       line,
+( const line_t*       line,
   floor_e       floortype )
 {
   int           secnum;
@@ -522,10 +522,10 @@ int EV_DoFloor
         floor->sector = sec;
         floor->speed = FLOORSPEED;
         floor->floordestheight = floor->sector->floorheight + 24 * FRACUNIT;
-        sec->floorpic = line->frontsector->floorpic;
-        sec->special = line->frontsector->special;
+        sec->floorpic = LN_FRONTSECTOR(line)->floorpic;
+        sec->special = LN_FRONTSECTOR(line)->special;
         //jff 3/14/98 transfer both old and new special
-        sec->oldspecial = line->frontsector->oldspecial;
+        sec->oldspecial = LN_FRONTSECTOR(line)->oldspecial;
         break;
 
       case raiseToTexture:
@@ -608,7 +608,7 @@ int EV_DoFloor
 // jff 3/15/98 added to better support generalized sector types
 //
 int EV_DoChange
-( line_t*       line,
+( const line_t*       line,
   change_e      changetype )
 {
   int                   secnum;
@@ -629,9 +629,9 @@ int EV_DoChange
     switch(changetype)
     {
       case trigChangeOnly:
-        sec->floorpic = line->frontsector->floorpic;
-        sec->special = line->frontsector->special;
-        sec->oldspecial = line->frontsector->oldspecial;
+        sec->floorpic = LN_FRONTSECTOR(line)->floorpic;
+        sec->special = LN_FRONTSECTOR(line)->special;
+        sec->oldspecial = LN_FRONTSECTOR(line)->oldspecial;
         break;
       case numChangeOnly:
         secm = P_FindModelFloorSector(sec->floorheight,secnum);
@@ -673,7 +673,7 @@ int EV_DoChange
  * - Boom fixed the bug, and MBF/PrBoom without comp_stairs work right
  */
 static inline int P_FindSectorFromLineTagWithLowerBound
-(line_t* l, int start, int min)
+(const line_t* l, int start, int min)
 {
   /* Emulate original Doom's linear lower-bounded P_FindSectorFromLineTag
    * as needed */
@@ -684,7 +684,7 @@ static inline int P_FindSectorFromLineTagWithLowerBound
 }
 
 int EV_BuildStairs
-( line_t*       line,
+( const line_t*       line,
   stair_e       type )
 {
   /* cph 2001/09/22 - cleaned up this function to save my sanity. A separate
@@ -750,8 +750,8 @@ int EV_BuildStairs
       ok = 0;
 
       for (i = 0;i < sec->linecount;i++)
-      {
-        sector_t* tsec = (sec->lines[i])->frontsector;
+      {          
+        sector_t* tsec = LN_FRONTSECTOR((sec->lines[i]));
         int newsecnum;
         if ( !((sec->lines[i])->flags & ML_TWOSIDED) )
           continue;
@@ -761,7 +761,7 @@ int EV_BuildStairs
         if (secnum != newsecnum)
           continue;
 
-        tsec = (sec->lines[i])->backsector;
+        tsec = LN_BACKSECTOR((sec->lines[i]));
         if (!tsec) continue;     //jff 5/7/98 if no backside, continue
         newsecnum = tsec - _g->sectors;
 
@@ -811,7 +811,7 @@ int EV_BuildStairs
 // Passed the linedef that triggered the donut
 // Returns whether a thinker was created
 //
-int EV_DoDonut(line_t*  line)
+int EV_DoDonut(const line_t*  line)
 {
   sector_t* s1;
   sector_t* s2;
@@ -844,12 +844,14 @@ int EV_DoDonut(line_t*  line)
     // find a two sided line around the pool whose other side isn't the pillar
     for (i = 0;i < s2->linecount;i++)
     {
-        if (!s2->lines[i]->backsector || s2->lines[i]->backsector == s1)
+
+
+        if (!LN_BACKSECTOR((s2->lines[i])) || LN_BACKSECTOR((s2->lines[i])) == s1)
             continue;
 
       rtn = 1; //jff 1/26/98 no donut action - no switch change on return
 
-      s3 = s2->lines[i]->backsector;      // s3 is model sector for changes
+      s3 = LN_BACKSECTOR((s2->lines[i]));      // s3 is model sector for changes
 
       //  Spawn rising slime
       floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
@@ -894,7 +896,7 @@ int EV_DoDonut(line_t*  line)
 // jff 2/22/98 new type to move floor and ceiling in parallel
 //
 int EV_DoElevator
-( line_t*       line,
+( const line_t*       line,
   elevator_e    elevtype )
 {
   int                   secnum;
@@ -952,7 +954,7 @@ int EV_DoElevator
       case elevateCurrent:
         elevator->sector = sec;
         elevator->speed = ELEVATORSPEED;
-        elevator->floordestheight = line->frontsector->floorheight;
+        elevator->floordestheight = LN_FRONTSECTOR(line)->floorheight;
         elevator->ceilingdestheight =
           elevator->floordestheight + sec->ceilingheight - sec->floorheight;
         elevator->direction =

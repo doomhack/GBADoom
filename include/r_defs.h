@@ -110,7 +110,7 @@ typedef struct
   // thinglist is a subset of touching_thinglist
   struct msecnode_s *touching_thinglist;               // phares 3/14/98
 
-  struct line_s **lines;
+  const struct line_s **lines;
 
   short linecount;
 
@@ -167,9 +167,10 @@ typedef enum
     RF_BOT_TILE = 4,     // Lower texture needs tiling
     RF_IGNORE   = 8,     // Renderer can skip this line
     RF_CLOSED   =16,     // Line blocks view
+    RF_MAPPED   =32      // Seen so show on automap.
 } r_flags;
 
-
+/*
 typedef struct line_s
 {
     vertex_t *v1, *v2;     // Vertices, from v1 to v2.
@@ -184,18 +185,55 @@ typedef struct line_s
     unsigned short sidenum[2];        // Visual appearance: SideDefs.
 
     unsigned short flags;           // Animation related.
-    short special;
     short tag;
     byte slopetype; // To aid move clipping.
-    byte r_flags;
+
+
+} line_t;
+*/
+
+
+//Runtime mutable data for lines.
+typedef struct linedata_s
+{
+    unsigned short validcount;        // if == validcount, already checked
+    unsigned short r_validcount;      // cph: if == gametic, r_flags already done
+
+    short special;
+    short r_flags;
+} linedata_t;
+
+typedef struct line_s
+{
+    vertex_t v1;
+    vertex_t v2;     // Vertices, from v1 to v2.
+    unsigned int lineno;         //line number.
+
+    fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
+
+    unsigned short sidenum[2];        // Visual appearance: SideDefs.
+
+    unsigned short flags;           // Animation related.
+    short const_special;
+    short tag;
+    short slopetype; // To aid move clipping.
 
 } line_t;
 
-#define LN_BBOX_LEFT(l) (l->v1->x < l->v2->x ? l->v1->x : l->v2->x)
-#define LN_BBOX_RIGHT(l) (l->v1->x < l->v2->x ? l->v2->x : l->v1->x)
+#define LN_BBOX_LEFT(l) (l->v1.x < l->v2.x ? l->v1.x : l->v2.x)
+#define LN_BBOX_RIGHT(l) (l->v1.x < l->v2.x ? l->v2.x : l->v1.x)
 
-#define LN_BBOX_TOP(l) (l->v1->y < l->v2->y ? l->v2->y : l->v1->y)
-#define LN_BBOX_BOTTOM(l) (l->v1->y < l->v2->y ? l->v1->y : l->v2->y)
+#define LN_BBOX_TOP(l) (l->v1.y < l->v2.y ? l->v2.y : l->v1.y)
+#define LN_BBOX_BOTTOM(l) (l->v1.y < l->v2.y ? l->v1.y : l->v2.y)
+
+#define LN_FRONTSECTOR(l) (_g->sides[(l)->sidenum[0]].sector)
+#define LN_BACKSECTOR(l) ((l)->sidenum[1] != NO_INDEX ? _g->sides[(l)->sidenum[1]].sector : NULL)
+
+#define LN_SPECIAL(l) (_g->linedata[(l)->lineno].special)
+#define LN_VCOUNT(l) (_g->linedata[(l)->lineno].validcount)
+#define LN_RVCOUNT(l) (_g->linedata[(l)->lineno].r_validcount)
+#define LN_RFLAGS(l) (_g->linedata[(l)->lineno].r_flags)
+
 
 // phares 3/14/98
 //
@@ -233,7 +271,7 @@ typedef struct
   fixed_t offset;
   angle_t angle;
   side_t* sidedef;
-  line_t* linedef;
+  const line_t* linedef;
 
   // Sector references.
   // Could be retrieved from linedef, too

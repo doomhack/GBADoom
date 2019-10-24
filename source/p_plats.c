@@ -175,7 +175,7 @@ void T_PlatRaise(plat_t* plat)
 // Returns true if a thinker is started, or restarted from stasis
 //
 int EV_DoPlat
-( line_t*       line,
+( const line_t*       line,
   plattype_e    type,
   int           amount )
 {
@@ -363,7 +363,7 @@ void P_ActivateInStasis(int tag)
 //
 // jff 2/12/98 added int return value, fixed return
 //
-int EV_StopPlat(line_t* line)
+int EV_StopPlat(const line_t* line)
 {
   platlist_t *pl;
   for (pl=_g->activeplats; pl; pl=pl->next)  // search the active plats

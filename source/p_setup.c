@@ -92,7 +92,7 @@ static void P_LoadSegs (int lump)
       unsigned short v1, v2;
 
       int side, linedef;
-      line_t *ldef;
+      const line_t *ldef;
 
       v1 = (unsigned short)SHORT(ml->v1);
       v2 = (unsigned short)SHORT(ml->v2);
@@ -253,65 +253,21 @@ static void P_LoadThings (int lump)
 
 static void P_LoadLineDefs (int lump)
 {
-  const byte *data; // cph - const*
-  int  i;
+    int  i;
 
-  _g->numlines = W_LumpLength (lump) / sizeof(maplinedef_t);
-  _g->lines = Z_Calloc (_g->numlines,sizeof(line_t),PU_LEVEL,0);
-  data = W_CacheLumpNum (lump); // cph - wad lump handling updated
+    _g->numlines = W_LumpLength (lump) / sizeof(line_t);
+    _g->lines = W_CacheLumpNum (lump);
 
-  for (i=0; i<_g->numlines; i++)
+    _g->linedata = Z_Calloc(_g->numlines,sizeof(linedata_t),PU_LEVEL,0);
+
+    for (i=0; i<_g->numlines; i++)
     {
-      const maplinedef_t *mld = (const maplinedef_t *) data + i;
-      line_t *ld = _g->lines+i;
-      vertex_t *v1, *v2;
+        const line_t* ld = &_g->lines[i];
+        // killough 4/4/98: support special sidedef interpretation below
+        if (ld->sidenum[0] != NO_INDEX && ld->const_special)
+            _g->sides[*ld->sidenum].special = ld->const_special;
 
-      ld->flags = (unsigned short)SHORT(mld->flags);
-      ld->special = SHORT(mld->special);
-      ld->tag = SHORT(mld->tag);
-      v1 = ld->v1 = &_g->vertexes[(unsigned short)SHORT(mld->v1)];
-      v2 = ld->v2 = &_g->vertexes[(unsigned short)SHORT(mld->v2)];
-      ld->dx = v2->x - v1->x;
-      ld->dy = v2->y - v1->y;
-
-      ld->slopetype = !ld->dx ? ST_VERTICAL : !ld->dy ? ST_HORIZONTAL :
-        FixedDiv(ld->dy, ld->dx) > 0 ? ST_POSITIVE : ST_NEGATIVE;
-
-      ld->sidenum[0] = SHORT(mld->sidenum[0]);
-      ld->sidenum[1] = SHORT(mld->sidenum[1]);
-
-      { 
-        /* cph 2006/09/30 - fix sidedef errors right away.
-         * cph 2002/07/20 - these errors are fatal if not fixed, so apply them
-         * in compatibility mode - a desync is better than a crash! */
-        int j;
-        
-        for (j=0; j < 2; j++)
-        {
-          if (ld->sidenum[j] != NO_INDEX && ld->sidenum[j] >= _g->numsides) {
-            ld->sidenum[j] = NO_INDEX;
-            lprintf(LO_WARN, "P_LoadLineDefs: linedef %d has out-of-range sidedef number\n",_g->numlines-i-1);
-          }
-        }
-        
-        // killough 11/98: fix common wad errors (missing sidedefs):
-        
-        if (ld->sidenum[0] == NO_INDEX) {
-          ld->sidenum[0] = 0;  // Substitute dummy sidedef for missing right side
-          // cph - print a warning about the bug
-          lprintf(LO_WARN, "P_LoadLineDefs: linedef %d missing first sidedef\n",_g->numlines-i-1);
-        }
-        
-        if ((ld->sidenum[1] == NO_INDEX) && (ld->flags & ML_TWOSIDED)) {
-          ld->flags &= ~ML_TWOSIDED;  // Clear 2s flag for missing left side
-          // cph - print a warning about the bug
-          lprintf(LO_WARN, "P_LoadLineDefs: linedef %d has two-sided flag set, but no second sidedef\n",_g->numlines-i-1);
-        }
-      }
-
-      // killough 4/4/98: support special sidedef interpretation below
-      if (ld->sidenum[0] != NO_INDEX && ld->special)
-        _g->sides[*ld->sidenum].special = ld->special;
+        _g->linedata[i].special = _g->lines[i].const_special;
     }
 }
 
@@ -320,6 +276,7 @@ static void P_LoadLineDefs (int lump)
 
 static void P_LoadLineDefs2(int lump)
 {
+    /*
   int i = _g->numlines;
   register line_t *ld = _g->lines;
   for (;i--;ld++)
@@ -327,6 +284,7 @@ static void P_LoadLineDefs2(int lump)
       ld->frontsector = _g->sides[ld->sidenum[0]].sector; //e6y: Can't be NO_INDEX here
       ld->backsector  = ld->sidenum[1]!=NO_INDEX ? _g->sides[ld->sidenum[1]].sector : 0;
     }
+    */
 }
 
 //
@@ -465,19 +423,19 @@ static void P_LoadReject(int lumpnum, int totallines)
 // figgi 09/18/00 -- adapted for gl-nodes
 
 // cph - convenient sub-function
-static void P_AddLineToSector(line_t* li, sector_t* sector)
+static void P_AddLineToSector(const line_t* li, sector_t* sector)
 {
   fixed_t *bbox = (void*)sector->blockbox;
 
   sector->lines[sector->linecount++] = li;
-  M_AddToBox (bbox, li->v1->x, li->v1->y);
-  M_AddToBox (bbox, li->v2->x, li->v2->y);
+  M_AddToBox (bbox, li->v1.x, li->v1.y);
+  M_AddToBox (bbox, li->v2.x, li->v2.y);
 }
 
 // modified to return totallines (needed by P_LoadReject)
 static int P_GroupLines (void)
 {
-  register line_t *li;
+  register const line_t *li;
   register sector_t *sector;
   int i,j, total = _g->numlines;
 
@@ -502,16 +460,16 @@ static int P_GroupLines (void)
   // count number of lines in each sector
   for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
     {
-      li->frontsector->linecount++;
-      if (li->backsector && li->backsector != li->frontsector)
+      LN_FRONTSECTOR(li)->linecount++;
+      if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
         {
-          li->backsector->linecount++;
+          LN_BACKSECTOR(li)->linecount++;
           total++;
         }
     }
 
   {  // allocate line tables for each sector
-    line_t **linebuffer = Z_Malloc(total*sizeof(line_t *), PU_LEVEL, 0);
+    const line_t **linebuffer = Z_Malloc(total*sizeof(line_t *), PU_LEVEL, 0);
 
     // e6y: REJECT overrun emulation code
     // moved to P_LoadReject
@@ -528,9 +486,9 @@ static int P_GroupLines (void)
   // Enter those lines
   for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
   {
-    P_AddLineToSector(li, li->frontsector);
-    if (li->backsector && li->backsector != li->frontsector)
-      P_AddLineToSector(li, li->backsector);
+    P_AddLineToSector(li, LN_FRONTSECTOR(li));
+    if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
+      P_AddLineToSector(li, LN_BACKSECTOR(li));
   }
 
   for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)

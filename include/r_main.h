@@ -95,7 +95,7 @@ extern byte solidcol[MAX_SCREENWIDTH];
 
 extern seg_t     *curline;
 extern side_t    *sidedef;
-extern line_t    *linedef;
+extern const line_t    *linedef;
 extern sector_t  *frontsector;
 extern sector_t  *backsector;
 extern drawseg_t *ds_p;

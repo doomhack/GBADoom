@@ -99,7 +99,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks,
   for (i=0; i<sec->linecount; i++)
     {
       sector_t *other;
-      line_t *check = sec->lines[i];
+      const line_t *check = sec->lines[i];
 
       if (!(check->flags & ML_TWOSIDED))
         continue;
@@ -263,7 +263,7 @@ static boolean P_IsOnLift(const mobj_t *actor)
   // Check to see if it's in a sector which can be activated as a lift.
   if ((line.tag = sec->tag))
     for (l = -1; (l = P_FindLineFromLineTag(&line, l)) >= 0;)
-      switch (_g->lines[l].special)
+      switch (_g->linedata[l].special)
   {
   case  10: case  14: case  15: case  20: case  21: case  22:
   case  47: case  53: case  62: case  66: case  67: case  68:
@@ -544,17 +544,17 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 // monsters to free themselves without making them tend to
 // hang over dropoffs.
 
-static boolean PIT_AvoidDropoff(line_t *line)
+static boolean PIT_AvoidDropoff(const line_t *line)
 {
-  if (line->backsector                          && // Ignore one-sided linedefs
+  if (LN_BACKSECTOR(line)                          && // Ignore one-sided linedefs
       _g->tmbbox[BOXRIGHT]  > LN_BBOX_LEFT(line)   &&
       _g->tmbbox[BOXLEFT]   < LN_BBOX_RIGHT(line)  &&
       _g->tmbbox[BOXTOP]    > LN_BBOX_BOTTOM(line) && // Linedef must be contacted
       _g->tmbbox[BOXBOTTOM] < LN_BBOX_TOP(line)    &&
       P_BoxOnLineSide(_g->tmbbox, line) == -1)
     {
-      fixed_t front = line->frontsector->floorheight;
-      fixed_t back  = line->backsector->floorheight;
+      fixed_t front = LN_FRONTSECTOR(line)->floorheight;
+      fixed_t back  = LN_BACKSECTOR(line)->floorheight;
       angle_t angle;
 
       // The monster must contact one of the two floors,

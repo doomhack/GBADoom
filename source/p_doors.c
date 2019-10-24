@@ -278,7 +278,7 @@ void T_VerticalDoor (vldoor_t* door)
 // Returns true if a thinker created
 //
 int EV_DoLockedDoor
-( line_t* line,
+( const line_t* line,
   vldoor_e  type,
   mobj_t* thing )
 {
@@ -290,7 +290,7 @@ int EV_DoLockedDoor
     return 0;
 
   // check type of linedef, and if key is possessed to open it
-  switch(line->special)
+  switch(LN_SPECIAL(line))
   {
     case 99:  // Blue Lock
     case 133:
@@ -337,7 +337,7 @@ int EV_DoLockedDoor
 // Returns true if a thinker created
 //
 int EV_DoDoor
-( line_t* line,
+( const line_t* line,
   vldoor_e  type )
 {
   int   secnum,rtn;
@@ -432,7 +432,7 @@ int EV_DoDoor
 // jff 2/12/98 added int return value, fixed all returns
 //
 int EV_VerticalDoor
-( line_t* line,
+( const line_t* line,
   mobj_t* thing )
 {
   player_t* player;
@@ -443,7 +443,7 @@ int EV_VerticalDoor
   //  Check for locks
   player = thing->player;
 
-  switch(line->special)
+  switch(LN_SPECIAL(line))
   {
     case 26: // Blue Lock
     case 32:
@@ -509,7 +509,7 @@ int EV_VerticalDoor
   /* If this is a repeatable line, and the door is already moving, then we can just reverse the current action. Note that in prboom 2.3.0 I erroneously removed the if-this-is-repeatable check, hence the prboom_4_compatibility clause below (foolishly assumed that already moving implies repeatable - but it could be moving due to another switch, e.g. lv19-509) */
   if (door &&
       (
-	   (line->special == 1) || (line->special == 117) || (line->special == 26) || (line->special == 27) || (line->special == 28)
+       (LN_SPECIAL(line) == 1) || (LN_SPECIAL(line) == 117) || (LN_SPECIAL(line) == 26) || (LN_SPECIAL(line) == 27) || (LN_SPECIAL(line) == 28)
 	  )
      ) {
     /* For old demos we have to emulate the old buggy behavior and
@@ -555,7 +555,7 @@ int EV_VerticalDoor
   }
 
   // emit proper sound
-  switch(line->special)
+  switch(LN_SPECIAL(line))
   {
     case 117: // blazing door raise
     case 118: // blazing door open
@@ -583,7 +583,7 @@ int EV_VerticalDoor
   door->lighttag = line->tag;
 
   // set the type of door from the activating linedef type
-  switch(line->special)
+  switch(LN_SPECIAL(line))
   {
     case 1:
     case 26:
@@ -597,7 +597,7 @@ int EV_VerticalDoor
     case 33:
     case 34:
       door->type = dopen;
-      line->special = 0;
+      LN_SPECIAL(line) = 0;
       break;
 
     case 117: // blazing door raise
@@ -606,7 +606,7 @@ int EV_VerticalDoor
       break;
     case 118: // blazing door open
       door->type = blazeOpen;
-      line->special = 0;
+      LN_SPECIAL(line) = 0;
       door->speed = VDOORSPEED*4;
       break;
 

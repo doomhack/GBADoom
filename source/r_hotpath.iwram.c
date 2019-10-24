@@ -79,7 +79,7 @@ byte solidcol[MAX_SCREENWIDTH];
 
 seg_t     *curline;
 side_t    *sidedef;
-line_t    *linedef;
+const line_t    *linedef;
 sector_t  *frontsector;
 sector_t  *backsector;
 drawseg_t *ds_p;
@@ -1836,7 +1836,7 @@ static void R_StoreWallRange(const int start, const int stop)
         maxdrawsegs = newmax;
     }
 
-    curline->linedef->flags |= ML_MAPPED;
+    //curline->linedef->flags |= ML_MAPPED;
 
 #ifdef RANGECHECK
     if (start >=viewwidth || start > stop)
@@ -1847,7 +1847,7 @@ static void R_StoreWallRange(const int start, const int stop)
     linedef = curline->linedef;
 
     // mark the segment as visible for auto map
-    linedef->flags |= ML_MAPPED;
+    //linedef->flags |= ML_MAPPED;
 
     // calculate rw_distance for scale calculation
     rw_normalangle = curline->angle + ANG90;
@@ -1948,7 +1948,7 @@ static void R_StoreWallRange(const int start, const int stop)
         ds_p->sprtopclip = ds_p->sprbottomclip = NULL;
         ds_p->silhouette = 0;
 
-        if (linedef->r_flags & RF_CLOSED)
+        if (LN_RFLAGS(linedef) & RF_CLOSED)
         { /* cph - closed 2S line e.g. door */
             // cph - killough's (outdated) comment follows - this deals with both
             // "automap fixes", his and mine
@@ -2169,7 +2169,7 @@ static void R_StoreWallRange(const int start, const int stop)
 
 static void R_RecalcLineFlags(void)
 {
-    linedef->r_validcount = _g->gametic;
+    LN_RVCOUNT(linedef) = _g->gametic;
 
     /* First decide if the line is closed, normal, or invisible */
     if (!(linedef->flags & ML_TWOSIDED)
@@ -2191,7 +2191,7 @@ static void R_RecalcLineFlags(void)
                     frontsector->ceilingpic!=_g->skyflatnum)
                 )
             )
-        linedef->r_flags = RF_CLOSED;
+        LN_RFLAGS(linedef) = RF_CLOSED;
     else
     {
         // Reject empty lines used for triggers
@@ -2207,9 +2207,9 @@ static void R_RecalcLineFlags(void)
                 || backsector->floorpic != frontsector->floorpic
                 || backsector->lightlevel != frontsector->lightlevel)
         {
-            linedef->r_flags = 0; return;
+            LN_RFLAGS(linedef) = 0; return;
         } else
-            linedef->r_flags = RF_IGNORE;
+            LN_RFLAGS(linedef) = RF_IGNORE;
     }
 
     /* cph - I'm too lazy to try and work with offsets in this */
@@ -2222,18 +2222,18 @@ static void R_RecalcLineFlags(void)
         /* Does top texture need tiling */
         if ((c = frontsector->ceilingheight - backsector->ceilingheight) > 0 &&
                 (textureheight[texturetranslation[curline->sidedef->toptexture]] > c))
-            linedef->r_flags |= RF_TOP_TILE;
+            LN_RFLAGS(linedef) |= RF_TOP_TILE;
 
         /* Does bottom texture need tiling */
         if ((c = frontsector->floorheight - backsector->floorheight) > 0 &&
                 (textureheight[texturetranslation[curline->sidedef->bottomtexture]] > c))
-            linedef->r_flags |= RF_BOT_TILE;
+            LN_RFLAGS(linedef) |= RF_BOT_TILE;
     } else {
         int c;
         /* Does middle texture need tiling */
         if ((c = frontsector->ceilingheight - frontsector->floorheight) > 0 &&
                 (textureheight[texturetranslation[curline->sidedef->midtexture]] > c))
-            linedef->r_flags |= RF_MID_TILE;
+            LN_RFLAGS(linedef) |= RF_MID_TILE;
     }
 }
 
@@ -2353,15 +2353,17 @@ static void R_AddLine (seg_t *line)
     backsector = line->backsector;
 
     /* cph - roll up linedef properties in flags */
-    if ((linedef = curline->linedef)->r_validcount != _g->gametic)
+    linedef = curline->linedef;
+
+    if (LN_RVCOUNT(linedef) != _g->gametic)
         R_RecalcLineFlags();
 
-    if (linedef->r_flags & RF_IGNORE)
+    if (LN_RFLAGS(linedef) & RF_IGNORE)
     {
         return;
     }
     else
-        R_ClipWallSegment (x1, x2, linedef->r_flags & RF_CLOSED);
+        R_ClipWallSegment (x1, x2, LN_RFLAGS(linedef) & RF_CLOSED);
 }
 
 //

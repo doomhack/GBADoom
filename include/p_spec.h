@@ -534,7 +534,7 @@ typedef struct
 
 typedef struct
 {
-  line_t* line;
+  const line_t* line;
   bwhere_e where;
   int   btexture;
   int   btimer;
@@ -635,7 +635,7 @@ typedef struct
   int topcountdown;
 
   //jff 1/31/98 keep track of line door is triggered by
-  line_t *line;
+  const line_t *line;
 
   /* killough 10/98: sector tag for gradual lighting effects */
   int lighttag;
@@ -859,14 +859,14 @@ int P_FindMinSurroundingLight
   int max );
 
 sector_t* getNextSector
-( line_t* line,
+( const line_t* line,
   sector_t* sec );
 
 int P_CheckTag
-(line_t *line); // jff 2/27/98
+(const line_t *line); // jff 2/27/98
 
 boolean P_CanUnlockGenDoor
-( line_t* line,
+( const line_t* line,
   player_t* player);
 
 boolean P_SectorActive
@@ -880,7 +880,7 @@ boolean P_WasSecret
 ( const sector_t *sec );
 
 void P_ChangeSwitchTexture
-( line_t* line,
+( const line_t* line,
   int useAgain );
 
 ////////////////////////////////////////////////////////////////
@@ -949,19 +949,19 @@ void T_Scroll
 // p_telept
 
 int EV_Teleport
-( line_t* line,
+( const line_t* line,
   int side,
   mobj_t* thing );
 
 // killough 2/14/98: Add silent teleporter
 int EV_SilentTeleport
-( line_t* line,
+( const line_t* line,
   int side,
   mobj_t* thing );
 
 // killough 1/31/98: Add silent line teleporter
 int EV_SilentLineTeleport
-( line_t* line,
+( const line_t* line,
   int side,
   mobj_t* thing,
   boolean reverse);
@@ -970,96 +970,96 @@ int EV_SilentLineTeleport
 
 int
 EV_DoElevator
-( line_t* line,
+( const line_t* line,
   elevator_e type );
 
 int EV_BuildStairs
-( line_t* line,
+( const line_t* line,
   stair_e type );
 
 int EV_DoFloor
-( line_t* line,
+( const line_t* line,
   floor_e floortype );
 
 // p_ceilng
 
 int EV_DoCeiling
-( line_t* line,
+( const line_t* line,
   ceiling_e type );
 
 int EV_CeilingCrushStop
-( line_t* line );
+( const line_t* line );
 
 // p_doors
 
 int EV_VerticalDoor
-( line_t* line,
+( const line_t* line,
   mobj_t* thing );
 
 int EV_DoDoor
-( line_t* line,
+( const line_t* line,
   vldoor_e type );
 
 int EV_DoLockedDoor
-( line_t* line,
+( const line_t* line,
   vldoor_e type,
   mobj_t* thing );
 
 // p_lights
 
 int EV_StartLightStrobing
-( line_t* line );
+( const line_t* line );
 
 int EV_TurnTagLightsOff
-( line_t* line );
+( const line_t* line );
 
 int EV_LightTurnOn
-( line_t* line,
+( const line_t* line,
   int   bright );
 
-int EV_LightTurnOnPartway(line_t* line, fixed_t level); // killough 10/10/98
+int EV_LightTurnOnPartway(const line_t* line, fixed_t level); // killough 10/10/98
 
 // p_floor
 
 int EV_DoChange
-( line_t* line,
+( const line_t* line,
   change_e changetype );
 
 int EV_DoDonut
-( line_t* line );
+( const line_t* line );
 
 // p_plats
 
 int EV_DoPlat
-( line_t* line,
+( const line_t* line,
   plattype_e  type,
   int amount );
 
 int EV_StopPlat
-( line_t* line );
+( const line_t* line );
 
 // p_genlin
 
 int EV_DoGenFloor
-( line_t* line );
+( const line_t* line );
 
 int EV_DoGenCeiling
-( line_t* line );
+( const line_t* line );
 
 int EV_DoGenLift
-( line_t* line );
+( const line_t* line );
 
 int EV_DoGenStairs
-( line_t* line );
+( const line_t* line );
 
 int EV_DoGenCrusher
-( line_t* line );
+( const line_t* line );
 
 int EV_DoGenDoor
-( line_t* line );
+( const line_t* line );
 
 int EV_DoGenLockedDoor
-( line_t* line );
+( const line_t* line );
 
 ////////////////////////////////////////////////////////////////
 //
@@ -1085,14 +1085,14 @@ void P_UpdateSpecials
 // when needed
 boolean P_UseSpecialLine
 ( mobj_t* thing,
-  line_t* line,
+  const line_t* line,
   int   side );
 
 void P_ShootSpecialLine
 ( mobj_t* thing,
-  line_t* line );
+  const line_t* line );
 
-void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing);
+void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing);
 
 void P_PlayerInSpecialSector
 ( player_t* player );
@@ -1148,6 +1148,6 @@ void P_AddActiveCeiling
 ( ceiling_t* c );
 
 int P_ActivateInStasisCeiling
-( line_t* line );
+( const line_t* line );
 
 #endif
