@@ -2169,7 +2169,7 @@ static void R_StoreWallRange(const int start, const int stop)
 
 static void R_RecalcLineFlags(void)
 {
-    LN_RVCOUNT(linedef) = _g->gametic;
+    LN_RVCOUNT(linedef) = (_g->gametic & 0xffff);
 
     /* First decide if the line is closed, normal, or invisible */
     if (!(linedef->flags & ML_TWOSIDED)
@@ -2355,7 +2355,7 @@ static void R_AddLine (seg_t *line)
     /* cph - roll up linedef properties in flags */
     linedef = curline->linedef;
 
-    if (LN_RVCOUNT(linedef) != _g->gametic)
+    if (LN_RVCOUNT(linedef) != (_g->gametic & 0xffff))
         R_RecalcLineFlags();
 
     if (LN_RFLAGS(linedef) & RF_IGNORE)
