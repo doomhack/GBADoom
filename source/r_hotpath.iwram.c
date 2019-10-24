@@ -1836,6 +1836,7 @@ static void R_StoreWallRange(const int start, const int stop)
         maxdrawsegs = newmax;
     }
 
+    LN_RFLAGS(curline->linedef) |= ML_MAPPED;
     //curline->linedef->flags |= ML_MAPPED;
 
 #ifdef RANGECHECK
@@ -1847,6 +1848,8 @@ static void R_StoreWallRange(const int start, const int stop)
     linedef = curline->linedef;
 
     // mark the segment as visible for auto map
+    LN_RFLAGS(linedef) |= ML_MAPPED;
+
     //linedef->flags |= ML_MAPPED;
 
     // calculate rw_distance for scale calculation
@@ -2207,7 +2210,7 @@ static void R_RecalcLineFlags(void)
                 || backsector->floorpic != frontsector->floorpic
                 || backsector->lightlevel != frontsector->lightlevel)
         {
-            LN_RFLAGS(linedef) = 0; return;
+            LN_RFLAGS(linedef) &= 0xffe0; return;
         } else
             LN_RFLAGS(linedef) = RF_IGNORE;
     }

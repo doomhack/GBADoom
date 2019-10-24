@@ -839,13 +839,17 @@ static void AM_drawWalls(void)
     l.b.x = _g->lines[i].v2.x >> FRACTOMAPBITS;//e6y
     l.b.y = _g->lines[i].v2.y >> FRACTOMAPBITS;//e6y
 
+
+    const sector_t* backsector = LN_BACKSECTOR(&_g->lines[i]);
+    const sector_t* frontsector = LN_FRONTSECTOR(&_g->lines[i]);
+
     if (_g->automapmode & am_rotate) {
       AM_rotate(&l.a.x, &l.a.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
       AM_rotate(&l.b.x, &l.b.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
     }
 
     // if line has been seen or IDDT has been used
-    if (_g->lines[i].flags & ML_MAPPED)
+    if (_g->linedata[i].r_flags & ML_MAPPED)
     {
       if (_g->lines[i].flags & ML_DONTDRAW)
         continue;
@@ -900,7 +904,7 @@ static void AM_drawWalls(void)
           continue;
         }
 
-        if(LN_BACKSECTOR(&_g->lines[i]))
+      if(!backsector)
       {
         // jff 1/10/98 add new color for 1S secret sector boundary
         if (mapcolor_secr && //jff 4/3/98 0 is disable
@@ -941,8 +945,8 @@ static void AM_drawWalls(void)
         (
             mapcolor_clsd &&
             !(_g->lines[i].flags & ML_SECRET) &&    // non-secret closed door
-            ((LN_BACKSECTOR(&_g->lines[i])->floorheight==LN_BACKSECTOR(&_g->lines[i])->ceilingheight) ||
-            (LN_FRONTSECTOR(&_g->lines[i])->floorheight==LN_FRONTSECTOR(&_g->lines[i])->ceilingheight))
+            ((backsector->floorheight==backsector->ceilingheight) ||
+            (frontsector->floorheight==frontsector->ceilingheight))
         )
         {
           AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
