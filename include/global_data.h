@@ -843,9 +843,9 @@ const patch_t* num[10];
 
 int  sp_state;
 
-int *cnt_kills;
-int *cnt_items;
-int *cnt_secret;
+int cnt_kills;
+int cnt_items;
+int cnt_secret;
 
 boolean snl_pointeron;
 

@@ -920,8 +920,11 @@ static void R_SortVisSprites (void)
 
         if (_g->num_vissprite_ptrs < _g->num_vissprite*2)
         {
-            free(_g->vissprite_ptrs);  // better than realloc -- no preserving needed
-            _g->vissprite_ptrs = malloc((_g->num_vissprite_ptrs = _g->num_vissprite_alloc*2) * sizeof *_g->vissprite_ptrs);
+            Z_Free(_g->vissprite_ptrs);
+
+            _g->num_vissprite_ptrs = (_g->num_vissprite_alloc*2);
+
+            _g->vissprite_ptrs = Z_Malloc(_g->num_vissprite_ptrs * sizeof(*_g->vissprite_ptrs), PU_LEVEL, &_g->vissprite_ptrs);
         }
 
         while (--i>=0)

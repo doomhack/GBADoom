@@ -239,9 +239,9 @@ static void WI_endNetgameStats(void);
 //
 static void WI_endNetgameStats(void)
 {
-  free(_g->cnt_secret); _g->cnt_secret = NULL;
-  free(_g->cnt_items); _g->cnt_items = NULL;
-  free(_g->cnt_kills); _g->cnt_kills = NULL;
+    _g->cnt_kills = -1;
+    _g->cnt_secret = -1;
+    _g->cnt_items = -1;
 }
 
 
@@ -774,10 +774,10 @@ void WI_initStats(void)
   _g->acceleratestage = 0;
   _g->sp_state = 1;
 
-  // CPhipps - allocate (awful code, I know, but saves changing it all) and initialise
-  *(_g->cnt_kills = malloc(sizeof(*_g->cnt_kills))) =
-  *(_g->cnt_items = malloc(sizeof(*_g->cnt_items))) =
-  *(_g->cnt_secret= malloc(sizeof(*_g->cnt_secret))) = -1;
+  _g->cnt_kills = -1;
+  _g->cnt_secret = -1;
+  _g->cnt_items = -1;
+
   _g->cnt_time = _g->cnt_par = _g->cnt_total_time = -1;
   _g->cnt_pause = TICRATE;
 
@@ -797,11 +797,11 @@ void WI_updateStats(void)
   if (_g->acceleratestage && _g->sp_state != 10)
   {
     _g->acceleratestage = 0;
-    _g->cnt_kills[0] = (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills;
-    _g->cnt_items[0] = (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems;
+    _g->cnt_kills = (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills;
+    _g->cnt_items = (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems;
 
     // killough 2/22/98: Make secrets = 100% if maxsecret = 0:
-    _g->cnt_secret[0] = (_g->wbs->maxsecret ?
+    _g->cnt_secret = (_g->wbs->maxsecret ?
       (_g->plrs[_g->me].ssecret * 100) / _g->wbs->maxsecret : 100);
 
     _g->cnt_total_time = _g->wbs->totaltimes / TICRATE;
@@ -813,43 +813,43 @@ void WI_updateStats(void)
 
   if (_g->sp_state == 2)
   {
-    _g->cnt_kills[0] += 2;
+    _g->cnt_kills += 2;
 
     if (!(_g->bcnt&3))
       S_StartSound(0, sfx_pistol);
 
-    if (_g->cnt_kills[0] >= (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills)
+    if (_g->cnt_kills >= (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills)
     {
-      _g->cnt_kills[0] = (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills;
+      _g->cnt_kills = (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills;
       S_StartSound(0, sfx_barexp);
       _g->sp_state++;
     }
   }
   else if (_g->sp_state == 4)
   {
-    _g->cnt_items[0] += 2;
+    _g->cnt_items += 2;
 
     if (!(_g->bcnt&3))
       S_StartSound(0, sfx_pistol);
 
-    if (_g->cnt_items[0] >= (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems)
+    if (_g->cnt_items >= (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems)
     {
-      _g->cnt_items[0] = (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems;
+      _g->cnt_items = (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems;
       S_StartSound(0, sfx_barexp);
       _g->sp_state++;
     }
   }
   else if (_g->sp_state == 6)
   {
-    _g->cnt_secret[0] += 2;
+    _g->cnt_secret += 2;
 
     if (!(_g->bcnt&3))
       S_StartSound(0, sfx_pistol);
 
     // killough 2/22/98: Make secrets = 100% if maxsecret = 0:
-    if (_g->cnt_secret[0] >= (_g->wbs->maxsecret ? (_g->plrs[_g->me].ssecret * 100) / _g->wbs->maxsecret : 100))
+    if (_g->cnt_secret >= (_g->wbs->maxsecret ? (_g->plrs[_g->me].ssecret * 100) / _g->wbs->maxsecret : 100))
     {
-      _g->cnt_secret[0] = (_g->wbs->maxsecret ?
+      _g->cnt_secret = (_g->wbs->maxsecret ?
         (_g->plrs[_g->me].ssecret * 100) / _g->wbs->maxsecret : 100);
       S_StartSound(0, sfx_barexp);
       _g->sp_state++;
@@ -929,15 +929,15 @@ void WI_drawStats(void)
 
   V_DrawNamePatch(SP_STATSX, SP_STATSY, FB, kills, CR_DEFAULT, VPT_STRETCH);
   if (_g->cnt_kills)
-    WI_drawPercent(320 - SP_STATSX, SP_STATSY, _g->cnt_kills[0]);
+    WI_drawPercent(320 - SP_STATSX, SP_STATSY, _g->cnt_kills);
 
   V_DrawNamePatch(SP_STATSX, SP_STATSY+lh, FB, items, CR_DEFAULT, VPT_STRETCH);
   if (_g->cnt_items)
-    WI_drawPercent(320 - SP_STATSX, SP_STATSY+lh, _g->cnt_items[0]);
+    WI_drawPercent(320 - SP_STATSX, SP_STATSY+lh, _g->cnt_items);
 
   V_DrawNamePatch(SP_STATSX, SP_STATSY+2*lh, FB, sp_secret, CR_DEFAULT, VPT_STRETCH);
   if (_g->cnt_secret)
-    WI_drawPercent(320 - SP_STATSX, SP_STATSY+2*lh, _g->cnt_secret[0]);
+    WI_drawPercent(320 - SP_STATSX, SP_STATSY+2*lh, _g->cnt_secret);
 
   WI_drawTimeStats(_g->cnt_time, _g->cnt_total_time, _g->cnt_par);
 }
