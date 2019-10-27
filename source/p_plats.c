@@ -389,13 +389,14 @@ int EV_StopPlat(const line_t* line)
 //
 void P_AddActivePlat(plat_t* plat)
 {
-  platlist_t *list = Z_Malloc(sizeof *list, PU_LEVEL, &_g->activeplats);
-  list->plat = plat;
-  plat->list = list;
-  if ((list->next = _g->activeplats))
-    list->next->prev = &list->next;
-  list->prev = &_g->activeplats;
-  _g->activeplats = list;
+    platlist_t* old_head = _g->activeplats;
+
+    platlist_t *list = Z_Malloc(sizeof *list, PU_LEVEL, &_g->activeplats);
+    list->plat = plat;
+    plat->list = list;
+    if ((list->next = old_head))
+        list->next->prev = &list->next;
+    list->prev = old_head;
 }
 
 //
