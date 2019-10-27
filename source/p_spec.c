@@ -2249,7 +2249,7 @@ void P_UpdateSpecials (void)
     {
         if(anim->istexture)
         {
-            if(textures[i] != NULL)
+            if(textures[anim->basepic] != NULL)
             {
                 for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
                 {
