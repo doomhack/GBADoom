@@ -471,7 +471,7 @@ int      numvertexes;
 const vertex_t *vertexes;
 
 int      numsegs;
-seg_t    *segs;
+const seg_t    *segs;
 
 int      numsectors;
 sector_t *sectors;

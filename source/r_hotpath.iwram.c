@@ -77,7 +77,7 @@ angle_t  viewangle;
 
 byte solidcol[MAX_SCREENWIDTH];
 
-seg_t     *curline;
+const seg_t     *curline;
 side_t    *sidedef;
 const line_t    *linedef;
 sector_t  *frontsector;
@@ -320,9 +320,9 @@ static const lighttable_t* R_ColourMap(int lightlevel)
     {
         if (curline)
         {
-            if (curline->v1->y == curline->v2->y)
+            if (curline->v1.y == curline->v2.y)
                 lightlevel -= 1 << LIGHTSEGSHIFT;
-            else if (curline->v1->x == curline->v2->x)
+            else if (curline->v1.x == curline->v2.x)
                 lightlevel += 1 << LIGHTSEGSHIFT;
         }
 
@@ -564,10 +564,10 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
     curline = ds->curline;  // OPTIMIZE: get rid of LIGHTSEGSHIFT globally
 
-    frontsector = curline->frontsector;
-    backsector = curline->backsector;
+    frontsector = SG_FRONTSECTOR(curline);
+    backsector = SG_BACKSECTOR(curline);
 
-    texnum = curline->sidedef->midtexture;
+    texnum = _g->sides[curline->sidenum].midtexture;
     texnum = texturetranslation[texnum];
 
     // killough 4/13/98: get correct lightlevel for 2s normal textures
@@ -581,7 +581,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     mceilingclip = ds->sprtopclip;
 
     // find positioning
-    if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+    if (_g->lines[curline->linenum].flags & ML_DONTPEGBOTTOM)
     {
         dcvars.texturemid = frontsector->floorheight > backsector->floorheight
                 ? frontsector->floorheight : backsector->floorheight;
@@ -594,7 +594,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         dcvars.texturemid = dcvars.texturemid - viewz;
     }
 
-    dcvars.texturemid += curline->sidedef->rowoffset;
+    dcvars.texturemid += _g->sides[curline->sidenum].rowoffset;
 
     if (fixedcolormap) {
         dcvars.colormap = fixedcolormap;
@@ -635,10 +635,10 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
 static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 {
-  fixed_t lx = line->v1->x;
-  fixed_t ly = line->v1->y;
-  fixed_t ldx = line->v2->x - lx;
-  fixed_t ldy = line->v2->y - ly;
+  fixed_t lx = line->v1.x;
+  fixed_t ly = line->v1.y;
+  fixed_t ldx = line->v2.x - lx;
+  fixed_t ldy = line->v2.y - ly;
 
   if (!ldx)
     return x <= lx ? ldy > 0 : ldy < 0;
@@ -1839,7 +1839,8 @@ static void R_StoreWallRange(const int start, const int stop)
         maxdrawsegs = newmax;
     }
 
-    LN_RFLAGS(curline->linedef) |= ML_MAPPED;
+    _g->linedata[curline->linenum].r_flags |= ML_MAPPED;
+    //LN_RFLAGS(curline->linedef) |= ML_MAPPED;
     //curline->linedef->flags |= ML_MAPPED;
 
 #ifdef RANGECHECK
@@ -1847,8 +1848,8 @@ static void R_StoreWallRange(const int start, const int stop)
         I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
 #endif
 
-    sidedef = curline->sidedef;
-    linedef = curline->linedef;
+    sidedef = &_g->sides[curline->sidenum];
+    linedef = &_g->lines[curline->linenum];
 
     // mark the segment as visible for auto map
     LN_RFLAGS(linedef) |= ML_MAPPED;
@@ -1863,8 +1864,8 @@ static void R_StoreWallRange(const int start, const int stop)
     if (D_abs(offsetangle) > ANG90)
         offsetangle = ANG90;
 
-    hyp = (viewx==curline->v1->x && viewy==curline->v1->y)?
-                0 : R_PointToDist (curline->v1->x, curline->v1->y);
+    hyp = (viewx==curline->v1.x && viewy==curline->v1.y)?
+                0 : R_PointToDist (curline->v1.x, curline->v1.y);
 
     rw_distance = FixedMul(hyp, finecosine[offsetangle>>ANGLETOFINESHIFT]);
 
@@ -2187,10 +2188,10 @@ static void R_RecalcLineFlags(void)
 
                 // preserve a kind of transparent door/lift special effect:
                 && (backsector->ceilingheight >= frontsector->ceilingheight ||
-                    curline->sidedef->toptexture)
+                    _g->sides[curline->sidenum].toptexture)
 
                 && (backsector->floorheight <= frontsector->floorheight ||
-                    curline->sidedef->bottomtexture)
+                    _g->sides[curline->sidenum].bottomtexture)
 
                 // properly render skies (consider door "open" if both ceilings are sky):
                 && (backsector->ceilingpic !=_g->skyflatnum ||
@@ -2208,7 +2209,7 @@ static void R_RecalcLineFlags(void)
         // CPhipps - recode for speed, not certain if this is portable though
         if (backsector->ceilingheight != frontsector->ceilingheight
                 || backsector->floorheight != frontsector->floorheight
-                || curline->sidedef->midtexture
+                || _g->sides[curline->sidenum].midtexture
                 || backsector->ceilingpic != frontsector->ceilingpic
                 || backsector->floorpic != frontsector->floorpic
                 || backsector->lightlevel != frontsector->lightlevel)
@@ -2219,7 +2220,7 @@ static void R_RecalcLineFlags(void)
     }
 
     /* cph - I'm too lazy to try and work with offsets in this */
-    if (curline->sidedef->rowoffset) return;
+    if (_g->sides[curline->sidenum].rowoffset) return;
 
     /* Now decide on texture tiling */
     if (linedef->flags & ML_TWOSIDED) {
@@ -2227,18 +2228,18 @@ static void R_RecalcLineFlags(void)
 
         /* Does top texture need tiling */
         if ((c = frontsector->ceilingheight - backsector->ceilingheight) > 0 &&
-                (textureheight[texturetranslation[curline->sidedef->toptexture]] > c))
+                (textureheight[texturetranslation[_g->sides[curline->sidenum].toptexture]] > c))
             LN_RFLAGS(linedef) |= RF_TOP_TILE;
 
         /* Does bottom texture need tiling */
         if ((c = frontsector->floorheight - backsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[curline->sidedef->bottomtexture]] > c))
+                (textureheight[texturetranslation[_g->sides[curline->sidenum].bottomtexture]] > c))
             LN_RFLAGS(linedef) |= RF_BOT_TILE;
     } else {
         int c;
         /* Does middle texture need tiling */
         if ((c = frontsector->ceilingheight - frontsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[curline->sidedef->midtexture]] > c))
+                (textureheight[texturetranslation[_g->sides[curline->sidenum].midtexture]] > c))
             LN_RFLAGS(linedef) |= RF_MID_TILE;
     }
 }
@@ -2293,7 +2294,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
 // and adds any visible pieces to the line list.
 //
 
-static void R_AddLine (seg_t *line)
+static void R_AddLine (const seg_t *line)
 {
     int      x1;
     int      x2;
@@ -2304,8 +2305,8 @@ static void R_AddLine (seg_t *line)
 
     curline = line;
 
-    angle1 = R_PointToAngle (line->v1->x, line->v1->y);
-    angle2 = R_PointToAngle (line->v2->x, line->v2->y);
+    angle1 = R_PointToAngle (line->v1.x, line->v1.y);
+    angle2 = R_PointToAngle (line->v2.x, line->v2.y);
 
     // Clip to view edges.
     span = angle1 - angle2;
@@ -2356,10 +2357,10 @@ static void R_AddLine (seg_t *line)
     if (x1 >= x2)       // killough 1/31/98 -- change == to >= for robustness
         return;
 
-    backsector = line->backsector;
+    backsector = SG_BACKSECTOR(line);
 
     /* cph - roll up linedef properties in flags */
-    linedef = curline->linedef;
+    linedef = &_g->lines[curline->linenum];
 
     if (LN_RVCOUNT(linedef) != (_g->gametic & 0xffff))
         R_RecalcLineFlags();
@@ -2383,7 +2384,7 @@ static void R_AddLine (seg_t *line)
 static void R_Subsector(int num)
 {
     int         count;
-    seg_t       *line;
+    const seg_t       *line;
     subsector_t *sub;
 
 #ifdef RANGECHECK

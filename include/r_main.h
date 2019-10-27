@@ -93,7 +93,7 @@ extern angle_t  viewangle;
 
 extern byte solidcol[MAX_SCREENWIDTH];
 
-extern seg_t     *curline;
+extern const seg_t     *curline;
 extern side_t    *sidedef;
 extern const line_t    *linedef;
 extern sector_t  *frontsector;

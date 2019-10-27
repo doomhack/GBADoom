@@ -75,53 +75,11 @@ static void P_LoadVertexes (int lump)
 
 static void P_LoadSegs (int lump)
 {
-  int  i;
-  const mapseg_t *data; // cph - const
+    _g->numsegs = W_LumpLength(lump) / sizeof(seg_t);
+    _g->segs = (const seg_t *)W_CacheLumpNum(lump);
 
-  _g->numsegs = W_LumpLength(lump) / sizeof(mapseg_t);
-  _g->segs = Z_Calloc(_g->numsegs,sizeof(seg_t),PU_LEVEL,0);
-  data = (const mapseg_t *)W_CacheLumpNum(lump); // cph - wad lump handling updated
-
-  if ((!data) || (!_g->numsegs))
-    I_Error("P_LoadSegs: no segs in level");
-
-  for (i=0; i<_g->numsegs; i++)
-    {
-      seg_t *li = _g->segs+i;
-      const mapseg_t *ml = data + i;
-      unsigned short v1, v2;
-
-      int side, linedef;
-      const line_t *ldef;
-
-      v1 = (unsigned short)SHORT(ml->v1);
-      v2 = (unsigned short)SHORT(ml->v2);
-      li->v1 = &_g->vertexes[v1];
-      li->v2 = &_g->vertexes[v2];
-      li->angle = (SHORT(ml->angle))<<16;
-      li->offset =(SHORT(ml->offset))<<16;
-      linedef = (unsigned short)SHORT(ml->linedef);
-      ldef = &_g->lines[linedef];
-      li->linedef = ldef;
-      side = SHORT(ml->side);
-      li->sidedef = &_g->sides[ldef->sidenum[side]];
-
-      /* cph 2006/09/30 - our frontsector can be the second side of the
-       * linedef, so must check for NO_INDEX in case we are incorrectly
-       * referencing the back of a 1S line */
-      if (ldef->sidenum[side] != NO_INDEX)
-        li->frontsector = _g->sides[ldef->sidenum[side]].sector;
-      else
-      {
-        li->frontsector = 0;
-        lprintf(LO_WARN, "P_LoadSegs: front of seg %i has no sidedef\n", i);
-      }
-
-      if (ldef->flags & ML_TWOSIDED && ldef->sidenum[side^1]!=NO_INDEX)
-        li->backsector = _g->sides[ldef->sidenum[side^1]].sector;
-      else
-        li->backsector = 0;
-    }
+    if (!_g->numsegs)
+      I_Error("P_LoadSegs: no segs in level");
 }
 
 //
@@ -442,13 +400,13 @@ static int P_GroupLines (void)
   // figgi
   for (i=0 ; i<_g->numsubsectors ; i++)
   {
-    seg_t *seg = &_g->segs[_g->subsectors[i].firstline];
+    const seg_t *seg = &_g->segs[_g->subsectors[i].firstline];
     _g->subsectors[i].sector = NULL;
     for(j=0; j<_g->subsectors[i].numlines; j++)
     {
-      if(seg->sidedef)
+      if(seg->sidenum != NO_INDEX)
       {
-        _g->subsectors[i].sector = seg->sidedef->sector;
+        _g->subsectors[i].sector = _g->sides[seg->sidenum].sector;
         break;
       }
       seg++;

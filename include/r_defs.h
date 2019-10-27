@@ -170,29 +170,6 @@ typedef enum
     RF_MAPPED   =32      // Seen so show on automap.
 } r_flags;
 
-/*
-typedef struct line_s
-{
-    vertex_t *v1, *v2;     // Vertices, from v1 to v2.
-    fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
-
-    sector_t *frontsector; // Front and back sector.
-    sector_t *backsector;
-
-    int validcount;        // if == validcount, already checked
-    int r_validcount;      // cph: if == gametic, r_flags already done
-
-    unsigned short sidenum[2];        // Visual appearance: SideDefs.
-
-    unsigned short flags;           // Animation related.
-    short tag;
-    byte slopetype; // To aid move clipping.
-
-
-} line_t;
-*/
-
-
 //Runtime mutable data for lines.
 typedef struct linedata_s
 {
@@ -265,6 +242,8 @@ typedef struct msecnode_s
 //
 // The LineSeg.
 //
+
+/*
 typedef struct
 {
   vertex_t *v1, *v2;
@@ -280,7 +259,28 @@ typedef struct
 
   sector_t *frontsector, *backsector;
 } seg_t;
+*/
 
+//
+// The LineSeg.
+//
+typedef struct
+{
+    vertex_t v1;
+    vertex_t v2;            // Vertices, from v1 to v2.
+
+    fixed_t offset;
+    angle_t angle;
+
+    unsigned short sidenum;
+    unsigned short linenum;
+
+    unsigned short frontsectornum;
+    unsigned short backsectornum;
+} seg_t;
+
+#define SG_FRONTSECTOR(s) ((s)->frontsectornum != NO_INDEX ? &_g->sectors[(s)->frontsectornum] : NULL)
+#define SG_BACKSECTOR(s) ((s)->backsectornum != NO_INDEX ? &_g->sectors[(s)->backsectornum] : NULL)
 
 //
 // A SubSector.
@@ -314,7 +314,7 @@ typedef byte  lighttable_t;
 
 typedef struct drawseg_s
 {
-  seg_t *curline;
+  const seg_t *curline;
   int x1, x2;
   fixed_t scale1, scale2, scalestep;
   int silhouette;                       // 0=none, 1=bottom, 2=top, 3=both

@@ -67,7 +67,7 @@ inline static int P_DivlineSide(fixed_t x, fixed_t y, const divline_t *node)
 
 static boolean P_CrossSubsector(int num)
 {
-  seg_t *seg = _g->segs + _g->subsectors[num].firstline;
+  const seg_t *seg = _g->segs + _g->subsectors[num].firstline;
   int count;
   fixed_t opentop = 0, openbottom = 0;
   const sector_t *front = NULL, *back = NULL;
@@ -77,8 +77,9 @@ static boolean P_CrossSubsector(int num)
     I_Error("P_CrossSubsector: ss %i with numss = %i", num, numsubsectors);
 #endif
 
-  for (count = _g->subsectors[num].numlines; --count >= 0; seg++) { // check lines
-    const line_t *line = seg->linedef;
+  for (count = _g->subsectors[num].numlines; --count >= 0; seg++)
+  { // check lines
+    const line_t *line = &_g->lines[seg->linenum];
     divline_t divl;
 
    if(!line) // figgi -- skip minisegs
@@ -107,12 +108,11 @@ static boolean P_CrossSubsector(int num)
         continue;
 
     // cph - do what we can before forced to check intersection
-    if (line->flags & ML_TWOSIDED) {
+    if (line->flags & ML_TWOSIDED)
+    {
 
       // no wall to block sight with?
-      if ((front = seg->frontsector)->floorheight ==
-    (back = seg->backsector)->floorheight   &&
-    front->ceilingheight == back->ceilingheight)
+      if ((front = SG_FRONTSECTOR(seg))->floorheight == (back = SG_BACKSECTOR(seg))->floorheight && front->ceilingheight == back->ceilingheight)
   continue;
 
       // possible occluder
