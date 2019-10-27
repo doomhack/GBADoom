@@ -14,3 +14,7 @@ GBADoom.elf
 GBADoom.sav
 
 source/iwad/doomu.gba.h
+
+source/iwad/doom1.gba.h
+
+source/iwad/doom2.gba.h
