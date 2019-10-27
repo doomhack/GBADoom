@@ -92,6 +92,10 @@ void P_SetupPsprites(struct player_s *curplayer);
 void P_MovePsprites(struct player_s *curplayer);
 void P_DropWeapon(struct player_s *player);
 
+int P_WeaponCycleUp(struct player_s *player);
+int P_WeaponCycleDown(struct player_s *player);
+
+
 void A_Light0();
 void A_WeaponReady();
 void A_Lower();

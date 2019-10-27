@@ -216,10 +216,18 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     forward += forwardmove[speed];
   if (_g->gamekeydown[key_down])
     forward -= forwardmove[speed];
+
+
+
+
   if (_g->gamekeydown[key_straferight])
     side += sidemove[speed];
+
+
   if (_g->gamekeydown[key_strafeleft])
     side -= sidemove[speed];
+
+
 
   if (_g->gamekeydown[key_fire])
     cmd->buttons |= BT_ATTACK;
@@ -240,7 +248,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   //
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
-  if ((_g->player.attackdown && !P_CheckAmmo(&_g->player)) || _g->gamekeydown[key_weapontoggle])
+  if(_g->gamekeydown[key_use] && _g->gamekeydown[key_up])
+      newweapon = P_WeaponCycleUp(&_g->player);
+  else if(_g->gamekeydown[key_use] && _g->gamekeydown[key_down])
+      newweapon = P_WeaponCycleDown(&_g->player);
+  else if ((_g->player.attackdown && !P_CheckAmmo(&_g->player)) || _g->gamekeydown[key_weapontoggle])
     newweapon = P_SwitchWeapon(&_g->player);           // phares
   else
     {                                 // phares 02/26/98: Added gamemode checks

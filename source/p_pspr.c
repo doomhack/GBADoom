@@ -213,6 +213,117 @@ int P_WeaponPreferred(int w1, int w2)
    ))))))))))))))));
 }
 
+int P_CheckCanSwitchWeapon(weapontype_t weapon, player_t* player)
+{
+    switch(weapon)
+    {
+        case wp_fist:
+        {
+            return wp_fist;
+        }
+        break;
+
+        case wp_pistol:
+        {
+            if (player->ammo[am_clip])
+                return wp_pistol;
+        }
+        break;
+
+        case wp_shotgun:
+        {
+            if (player->ammo[am_shell])
+                return wp_shotgun;
+        }
+        break;
+
+        case wp_chaingun:
+        {
+            if (player->ammo[am_clip])
+                return wp_chaingun;
+        }
+        break;
+
+        case wp_missile:
+        {
+            if (player->ammo[am_misl])
+                return wp_missile;
+        }
+        break;
+
+        case wp_plasma:
+        {
+            if (player->ammo[am_cell])
+                return wp_plasma;
+        }
+        break;
+
+        case wp_bfg:
+        {
+            if ((player->ammo[am_cell] >= 40) && (_g->gamemode != shareware))
+                return wp_bfg;
+        }
+        break;
+
+        case wp_chainsaw:
+        {
+            return wp_chainsaw;
+        }
+        break;
+
+        case wp_supershotgun:
+        {
+            if ((player->ammo[am_shell] >= 2) && (_g->gamemode == commercial))
+                return wp_supershotgun;
+        }
+        break;
+    }
+
+    return wp_nochange;
+}
+
+
+int P_WeaponCycleUp(player_t *player)
+{
+    int w = player->readyweapon;
+
+    for(int i = 0; i < NUMWEAPONS; i++)
+    {
+        w++;
+        if(w >= NUMWEAPONS)
+            w = 0;
+
+        if(!player->weaponowned[w])
+            continue;
+
+        if(P_CheckCanSwitchWeapon(w, player) != wp_nochange)
+            return w;
+
+    }
+
+    return player->readyweapon;
+}
+
+int P_WeaponCycleDown(player_t *player)
+{
+    int w = player->readyweapon;
+
+    for(int i = 0; i < NUMWEAPONS; i++)
+    {
+        w--;
+        if(w < 0)
+            w = NUMWEAPONS-1;
+
+        if(!player->weaponowned[w])
+            continue;
+
+        if(P_CheckCanSwitchWeapon(w, player) != wp_nochange)
+            return w;
+    }
+
+    return player->readyweapon;
+}
+
 //
 // P_CheckAmmo
 // Returns true if there is enough ammo to shoot.
