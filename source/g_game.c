@@ -135,10 +135,9 @@ const int     key_weapon9 = '9';                                                
 #define SLOWTURNTICS  6
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
 
-const fixed_t forwardmove[2] = {0x19, 0x32};
-const fixed_t sidemove[2]    = {0x18, 0x28};
-const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
-
+static const fixed_t forwardmove[2] = {0x19, 0x32};
+static const fixed_t sidemove[2]    = {0x18, 0x28};
+static const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
 static void G_DoSaveGame (boolean menu);
 static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, boolean failonerror);
@@ -346,8 +345,6 @@ void G_RestartLevel(void)
 
 static void G_DoLoadLevel (void)
 {
-  int i;
-
   // Set the sky map.
   // First thing, we have a dummy sky texture name,
   //  a flat. The data is in the WAD only because
@@ -547,9 +544,6 @@ boolean G_Responder (event_t* ev)
       if (_g->paused & 2 || (!_g->demoplayback && _g->menuactive))
           _g->basetic++;  // For revenant tracers and RNG -- we must maintain sync
       else {
-          // get commands, check consistancy, and build new consistancy check
-          int buf = (_g->gametic);
-
           if (_g->playeringame)
           {
               ticcmd_t *cmd = &_g->player.cmd;
@@ -731,71 +725,6 @@ void G_PlayerReborn (int player)
 
   for (i=0 ; i<NUMAMMO ; i++)
     p->maxammo[i] = maxammo[i];
-}
-
-//
-// G_CheckSpot
-// Returns false if the player cannot be respawned
-// at the given mapthing_t spot
-// because something is occupying it
-//
-
-static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
-{
-  fixed_t     x,y;
-  subsector_t *ss;
-  int         i;
-
-  if (!_g->player.mo)
-  {
-      // first spawn of level, before corpses
-      if (_g->player.mo->x == mthing->x << FRACBITS && _g->player.mo->y == mthing->y << FRACBITS)
-          return false;
-
-      return true;
-  }
-
-  x = mthing->x << FRACBITS;
-  y = mthing->y << FRACBITS;
-
-  // killough 4/2/98: fix bug where P_CheckPosition() uses a non-solid
-  // corpse to detect collisions with other players in DM starts
-  //
-  // Old code:
-  // if (!P_CheckPosition (players[playernum].mo, x, y))
-  //    return false;
-
-  _g->player.mo->flags |=  MF_SOLID;
-  i = P_CheckPosition(_g->player.mo, x, y);
-
-  _g->player.mo->flags &= ~MF_SOLID;
-
-  if (!i)
-    return false;
-
-    P_RemoveMobj(_g->player.mo);
-
-  // spawn a teleport fog
-  ss = R_PointInSubsector (x,y);
-  { // Teleport fog at respawn point
-    fixed_t xa,ya;
-    int an;
-    mobj_t      *mo;
-
-/* BUG: an can end up negative, because mthing->angle is (signed) short.
- * We have to emulate original Doom's behaviour, deferencing past the start
- * of the array, into the previous array (finetangent) */
-    an = ( ANG45 * ((signed)mthing->angle/45) ) >> ANGLETOFINESHIFT;
-    xa = finecosine[an];
-    ya = finesine[an];
-
-    mo = P_SpawnMobj(x+20*xa, y+20*ya, ss->sector->floorheight, MT_TFOG);
-
-    if (_g->player.viewz != 1)
-      S_StartSound(mo, sfx_telept);  // don't start sound on first frame
-  }
-
-  return true;
 }
 
 //
@@ -1043,7 +972,7 @@ void G_LoadGame(int slot, boolean command)
 
 void G_DoLoadGame(void)
 {
-  int  length, i;
+  int  length;
   // CPhipps - do savegame filename stuff here
   char name[PATH_MAX+1];     // killough 3/22/98
 
@@ -1212,7 +1141,7 @@ static void G_DoSaveGame (boolean menu)
 
     *_g->save_p++ = _g->playeringame;
 
-  for (;i<MIN_MAXPLAYERS;i++)         // killough 2/28/98
+  for (i = 0; i<MIN_MAXPLAYERS; i++)         // killough 2/28/98
     *_g->save_p++ = 0;
 
   *_g->save_p++ = _g->idmusnum;               // jff 3/17/98 save idmus state
@@ -1320,8 +1249,6 @@ void G_SetFastParms(int fast_pending)
 
 void G_InitNew(skill_t skill, int episode, int map)
 {
-  int i;
-
   if (_g->paused)
     {
       _g->paused = false;
@@ -1600,7 +1527,7 @@ static boolean CheckForOverrun(const byte *start_p, const byte *current_p, size_
 static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean failonerror)
 {
   skill_t skill;
-  int i, episode, map;
+  int episode, map;
 
   // e6y
   // The local variable should be used instead of demobuffer,
