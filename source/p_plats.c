@@ -396,6 +396,7 @@ void P_AddActivePlat(plat_t* plat)
     plat->list = list;
     if ((list->next = old_head))
         list->next->prev = &list->next;
+
     list->prev = old_head;
 }
 
@@ -411,9 +412,12 @@ void P_RemoveActivePlat(plat_t* plat)
 {
   platlist_t *list = plat->list;
   plat->sector->floordata = NULL; //jff 2/23/98 multiple thinkers
+
   P_RemoveThinker(&plat->thinker);
-  if ((*list->prev = list->next))
+
+  if (list->prev && (*list->prev = list->next))
     list->next->prev = list->prev;
+
   free(list);
 }
 
