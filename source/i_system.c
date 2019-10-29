@@ -70,7 +70,7 @@ int I_GetTime(void)
 
     thistimereply = (thistimereply & 0xffff);
 #else
-    thistimereply I_GetTime_e32();
+    thistimereply = I_GetTime_e32();
 #endif
 
     if (thistimereply < _g->lasttimereply)
