@@ -1110,10 +1110,10 @@ void M_StartMessage (const char* string,void* routine,boolean input)
 // CPhipps - patch drawing updated
 //
 void M_DrawThermo(int x,int y,int thermWidth,int thermDot )
-  {
-  int          xx;
-  int           i;
-  /*
+{
+    int          xx;
+    int           i;
+    /*
    * Modification By Barry Mead to allow the Thermometer to have vastly
    * larger ranges. (the thermWidth parameter can now have a value as
    * large as 200.      Modified 1-9-2000  Originally I used it to make
@@ -1121,23 +1121,27 @@ void M_DrawThermo(int x,int y,int thermWidth,int thermDot )
    * be used to improve the dynamic range of music and sound affect
    * volume controls for example.
    */
-  int horizScaler; //Used to allow more thermo range for mouse sensitivity.
-  thermWidth = (thermWidth > 200) ? 200 : thermWidth; //Clamp to 200 max
-  horizScaler = (thermWidth > 23) ? (200 / thermWidth) : 8; //Dynamic range
-  xx = x;
-  V_DrawNamePatch(xx, y, 0, "M_THERML", CR_DEFAULT, VPT_STRETCH);
-  xx += 8;
-  for (i=0;i<thermWidth;i++)
+    int horizScaler; //Used to allow more thermo range for mouse sensitivity.
+    thermWidth = (thermWidth > 200) ? 200 : thermWidth; //Clamp to 200 max
+    horizScaler = (thermWidth > 23) ? (200 / thermWidth) : 8; //Dynamic range
+    xx = x;
+
+    int thermm_lump = W_GetNumForName("M_THERMM");
+
+    V_DrawNamePatch(xx, y, 0, "M_THERML", CR_DEFAULT, VPT_STRETCH);
+
+    xx += 8;
+    for (i=0;i<thermWidth;i++)
     {
-    V_DrawNamePatch(xx, y, 0, "M_THERMM", CR_DEFAULT, VPT_STRETCH);
-    xx += horizScaler;
+        V_DrawNumPatch(xx, y, 0, thermm_lump, CR_DEFAULT, VPT_STRETCH);
+        xx += horizScaler;
     }
 
-  xx += (8 - horizScaler);  /* make the right end look even */
+    xx += (8 - horizScaler);  /* make the right end look even */
 
-  V_DrawNamePatch(xx, y, 0, "M_THERMR", CR_DEFAULT, VPT_STRETCH);
-  V_DrawNamePatch((x+8)+thermDot*horizScaler,y,0,"M_THERMO",CR_DEFAULT,VPT_STRETCH);
-  }
+    V_DrawNamePatch(xx, y, 0, "M_THERMR", CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatch((x+8)+thermDot*horizScaler,y,0,"M_THERMO",CR_DEFAULT,VPT_STRETCH);
+}
 
 //
 // Draw an empty cell in the thermometer

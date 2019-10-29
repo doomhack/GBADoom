@@ -303,13 +303,13 @@ void D_PageTicker(void)
 //
 static void D_PageDrawer(void)
 {
-  // proff/nicolas 09/14/98 -- now stretchs bitmaps to fullscreen!
-  // CPhipps - updated for new patch drawing
-  // proff - added M_DrawCredits
-  if (_g->pagename)
-  {
-    V_DrawNamePatch(0, 0, 0, _g->pagename, CR_DEFAULT, VPT_STRETCH);
-  }
+    // proff/nicolas 09/14/98 -- now stretchs bitmaps to fullscreen!
+    // CPhipps - updated for new patch drawing
+    // proff - added M_DrawCredits
+    if (_g->pagelump)
+    {
+        V_DrawNumPatch(0, 0, 0, _g->pagelump, CR_DEFAULT, VPT_STRETCH);
+    }
 }
 
 //
@@ -327,7 +327,7 @@ void D_AdvanceDemo (void)
 
 static void D_SetPageName(const char *name)
 {
-  _g->pagename = name;
+    _g->pagelump = W_GetNumForName(name);
 }
 
 static void D_DrawTitle1(const char *name)

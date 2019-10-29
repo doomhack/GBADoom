@@ -113,7 +113,7 @@ gamestate_t oldgamestate;
 
 int  demosequence;         // killough 5/2/98: made static
 int  pagetic;
-const char *pagename; // CPhipps - const
+int pagelump; // CPhipps - const
 
 boolean singletics; // debug flag to cancel adaptiveness
 boolean advancedemo;
