@@ -58,15 +58,28 @@
  */
 int I_GetTime(void)
 {
-#ifndef __arm__
+    int thistimereply;
 
+#ifndef __arm__
     struct timeval tv;
     struct timezone tz;
-    unsigned long thistimereply;
 
     gettimeofday(&tv, &tz);
 
     thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
+
+    thistimereply = (thistimereply & 0xffff);
+#else
+    thistimereply I_GetTime_e32();
+#endif
+
+    if (thistimereply < _g->lasttimereply)
+    {
+        _g->basetime -= 0xffff;
+    }
+
+    _g->lasttimereply = thistimereply;
+
 
     /* Fix for time problem */
     if (!_g->basetime)
@@ -79,15 +92,7 @@ int I_GetTime(void)
         thistimereply -= _g->basetime;
     }
 
-
-    if (thistimereply < _g->lasttimereply)
-        thistimereply = _g->lasttimereply;
-
-    return (_g->lasttimereply = thistimereply);
-#else
-    return I_GetTime_e32();
-#endif
-
+    return thistimereply;
 }
 
 /* cphipps - I_GetVersionString

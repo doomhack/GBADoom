@@ -320,26 +320,9 @@ int I_GetVideoHeight_e32()
 
 int I_GetTime_e32(void)
 {
-    unsigned long thistimereply;
+    int thistimereply = REG_TM3CNT_L;
 
-    thistimereply = REG_TM3CNT_L;
-
-    /* Fix for time problem */
-    if (!_g->basetime)
-    {
-        _g->basetime = thistimereply;
-        thistimereply = 0;
-    }
-    else
-    {
-        thistimereply -= _g->basetime;
-    }
-
-
-    if (thistimereply < _g->lasttimereply)
-        thistimereply = _g->lasttimereply;
-
-    return (_g->lasttimereply = thistimereply);
+    return thistimereply;
 }
 
 //**************************************************************************************

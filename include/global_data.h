@@ -246,8 +246,8 @@ unsigned int music_looping;
 unsigned int music_volume;
 unsigned int music_init;
 
-unsigned long lasttimereply;
-unsigned long basetime;
+int lasttimereply;
+int basetime;
 
 
 
