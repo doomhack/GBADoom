@@ -78,7 +78,7 @@ void I_StartTic (void)
 //
 void I_StartFrame (void)
 {
-	I_UpdateMusic();
+
 }
 
 
@@ -118,31 +118,14 @@ static void I_UploadNewPalette(int pal)
   // This is used to replace the current 256 colour cmap with a new one
   // Used by 256 colour PseudoColor modes
   
-	int pplump;
+    if(!_g->pallete_lump)
+    {
+        _g->pallete_lump = W_CacheLumpName("PLAYPAL");
+    }
 
-	const byte* palette;
+    _g->current_pallete = &_g->pallete_lump[pal*256*3];
 
-	unsigned int num_pals;
-
-	pplump = W_GetNumForName("PLAYPAL");
-	
-	palette = W_CacheLumpNum(pplump);
-		
-    num_pals = W_LumpLength(pplump) / (3*256);
-	
-    if(pal >= num_pals)
-        pal = 0;
-
-	palette += (pal*256*3);
-
-    _g->current_pallete = palette;
-
-    I_SetPallete_e32(palette);
-	
-#ifdef RANGECHECK
-	if ((size_t)pal >= num_pals)
-		I_Error("I_UploadNewPalette: Palette number out of range (%d>=%d)", pal, num_pals);
-#endif
+    I_SetPallete_e32(_g->current_pallete);
 }
 
 //////////////////////////////////////////////////////////////////////////////
