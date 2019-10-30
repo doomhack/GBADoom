@@ -45,7 +45,7 @@ To build the GBA version, you will need DevKitArm. The easiest way to get up and
 
 You will also need GBAWadUtil (https://github.com/doomhack/GbaWadUtil). To build this, you will need Qt Framework 5.13.
 
-1) Use GBAWadUtil to create a header file with the WAD data. Useage: GBAWadUtil -in path/to/iwad.wad -cfile path/to/iwadheader.h
+1) Use GBAWadUtil to create a header file with the WAD data. Retail, Ultimate and Doom2 wads have been tested. Plutonia and TNT should work. Usage: GBAWadUtil -in path/to/iwad.wad -cfile path/to/iwadheader.h
 2) This will create a big .h source file. It's the WAD data. Copy it to /source/iwad/
 3) Change the #include "iwad/doom1.gba.h" line in /source/doom_iwad.c if required.
 4) Ensure the DevKitArm tools are in your path.
