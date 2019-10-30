@@ -125,8 +125,6 @@ void M_DrawSave(void);
 void M_DrawSaveLoadBorder(int x,int y);
 void M_SetupNextMenu(const menu_t *menudef);
 void M_DrawThermo(int x,int y,int thermWidth,int thermDot);
-void M_DrawEmptyCell(menu_t *menu,int item);
-void M_DrawSelCell(menu_t *menu,int item);
 void M_WriteText(int x, int y, const char *string);
 int  M_StringWidth(const char *string);
 int  M_StringHeight(const char *string);
@@ -1141,28 +1139,6 @@ void M_DrawThermo(int x,int y,int thermWidth,int thermDot )
 
     V_DrawNamePatch(xx, y, 0, "M_THERMR", CR_DEFAULT, VPT_STRETCH);
     V_DrawNamePatch((x+8)+thermDot*horizScaler,y,0,"M_THERMO",CR_DEFAULT,VPT_STRETCH);
-}
-
-//
-// Draw an empty cell in the thermometer
-//
-
-void M_DrawEmptyCell (menu_t* menu,int item)
-{
-  // CPhipps - patch drawing updated
-  V_DrawNamePatch(menu->x - 10, menu->y+item*LINEHEIGHT - 1, 0,
-      "M_CELL1", CR_DEFAULT, VPT_STRETCH);
-}
-
-//
-// Draw a full cell in the thermometer
-//
-
-void M_DrawSelCell (menu_t* menu,int item)
-{
-  // CPhipps - patch drawing updated
-  V_DrawNamePatch(menu->x - 10, menu->y+item*LINEHEIGHT - 1, 0,
-      "M_CELL2", CR_DEFAULT, VPT_STRETCH);
 }
 
 /////////////////////////////
