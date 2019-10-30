@@ -37,3 +37,19 @@ This project is currently a WIP but we're getting to the point where there is a 
 - General optimisation. We're never going to get a perfect 35FPS but I think there is still another 50-100% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
 
 - Probably a bunch of other stuff that's borked too...
+
+
+**Building:**
+
+To build the GBA version, you will need DevKitArm. The easiest way to get up and running for Windows users is download the installer from here (https://github.com/devkitPro/installer/releases) and install the GBA dev components.
+
+You will also need GBAWadUtil (https://github.com/doomhack/GbaWadUtil). To build this, you will need Qt Framework 5.13.
+
+1) Use GBAWadUtil to create a header file with the WAD data. Useage: GBAWadUtil -in path/to/iwad.wad -cfile path/to/iwadheader.h
+2) This will create a big .h source file. It's the WAD data. Copy it to /source/iwad/
+3) Change the #include "iwad/doom1.gba.h" line in /source/doom_iwad.c if required.
+4) Ensure the DevKitArm tools are in your path.
+5) Open a cmd prompt in the source folder for GBA Doom.
+6) Run 'make'.
+7) The project should build GBADoom.gba and GBADoom.elf.
+8) Rip and tear.
