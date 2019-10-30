@@ -52,4 +52,4 @@ You will also need GBAWadUtil (https://github.com/doomhack/GbaWadUtil). To build
 5) Open a cmd prompt in the source folder for GBA Doom.
 6) Run 'make'.
 7) The project should build GBADoom.gba and GBADoom.elf.
-8) Rip and tear.
+8) Rip and tear...or just stumble around in the dark until you get a headache.
