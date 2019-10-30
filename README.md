@@ -22,7 +22,7 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 **Still to do:**
 
-- --Still needs too much memory. GBA only has 256Kb of work ram. Some levels will crash out as they are larger than this.--
+- ~~Still needs too much memory. GBA only has 256Kb of work ram. Some levels will crash out as they are larger than this.~~ Memory issues are pretty much resolved now. Only Doom2 Map15 has issues. Occasionally still get a blue screen of death after playing for a while on that level.
 
 -Status bar is partially rendered. It's actually quite tricky because we are page-flipping we need to draw the stbar twice when it updates else it will flicker.
 
@@ -30,7 +30,7 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 -Demo compatability is broken.
 
-- --Weapon-swith controls not implimented.--
+- ~~Weapon-swith controls not implimented.~~
 
 -General optimisation. We're never going to get a perfect 35FPS but I think there is still another 50-100% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
 
