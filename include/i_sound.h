@@ -50,9 +50,6 @@ void I_ShutdownSound(void);
 // Initialize channels?
 void I_SetChannels(void);
 
-// Get raw data lump index for sound descriptor.
-int I_GetSfxLumpNum (const sfxinfo_t *sfxinfo);
-
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id, int channel, int vol, int sep);
 
@@ -76,9 +73,6 @@ void I_UpdateSoundParams(int handle, int vol, int sep);
 //  MUSIC I/O
 //
 void I_InitMusic(void);
-void I_ShutdownMusic(void);
-
-void I_UpdateMusic(void);
 
 // Volume.
 void I_SetMusicVolume(int volume);
@@ -86,9 +80,6 @@ void I_SetMusicVolume(int volume);
 // PAUSE game handling.
 void I_PauseSong(int handle);
 void I_ResumeSong(int handle);
-
-// Registers a song handle to song data.
-int I_RegisterSong(const void *data, size_t len);
 
 // Called by anything that wishes to start music.
 //  plays a song, and when the song is done,

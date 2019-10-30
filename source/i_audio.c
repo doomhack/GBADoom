@@ -271,9 +271,6 @@ static const audio_map_t soundMap[NUMSFX] =
 
 #endif
 
-// MWM 2000-01-08: Sample rate in samples/second
-const int snd_samplerate=11250;
-
 /* cph
  * stopchan
  * Stops a sound, unlocks the data
@@ -305,7 +302,7 @@ static int addsfx(int sfxid, int channel, int volume, int sep)
     mm_sound_effect sound;
     sound.id      = soundMap[sfxid].mm_num;
     sound.rate    = 1024;
-    sound.handle  = 0; //channel + 1;
+    sound.handle  = channel + 1;
     sound.volume  = mmvol;
     sound.panning = sep;
 
@@ -325,7 +322,7 @@ static void updateSoundParams(int slot, int volume, int sep)
 
 void I_UpdateSoundParams(int handle, int volume, int sep)
 {
-  updateSoundParams(handle, volume, sep);
+  //updateSoundParams(handle, volume, sep);
 }
 
 //
@@ -341,19 +338,6 @@ void I_SetChannels(void)
 {
 
 }
-
-//
-// Retrieve the raw data lump index
-//  for a given SFX name.
-//
-int I_GetSfxLumpNum(const sfxinfo_t *sfx)
-{
-    char namebuf[9];
-    sprintf(namebuf, "ds%s", sfx->name);
-    return W_GetNumForName(namebuf);
-}
-
-
 
 //
 // Starting a sound means adding it
@@ -382,42 +366,19 @@ int I_StartSound(int id, int channel, int vol, int sep)
 
 void I_StopSound (int handle)
 {
-#ifdef RANGECHECK
-	if ((handle < 0) || (handle >= MAX_CHANNELS))
-		I_Error("I_StopSound: handle out of range");
-#endif
-
 	stopchan(handle);
 }
 
 
 boolean I_SoundIsPlaying(int handle)
 {
-
+    return false;
 }
 
 
 boolean I_AnySoundStillPlaying(void)
 {
     return false;
-}
-
-
-//
-// This function loops all active (internal) sound
-//  channels, retrieves a given number of samples
-//  from the raw sound data, modifies it according
-//  to the current (internal) channel parameters,
-//  mixes the per channel samples into the given
-//  mixing buffer, and clamping it to the allowed
-//  range.
-//
-// This function currently supports only 16bit.
-//
-
-static unsigned int I_UpdateSound(unsigned char *stream, const int len)
-{
-
 }
 
 void I_ShutdownSound(void)
@@ -448,22 +409,8 @@ void I_InitSound(void)
     lprintf(LO_INFO,"I_InitSound: sound ready");
 }
 
-//
-// MUSIC API.
-
-
-void I_ShutdownMusic(void)
-{
-
-}
-
 void I_InitMusic(void)
 {
-}
-
-void I_UpdateMusic()
-{
-
 }
 
 void I_PlaySong(int handle, int looping)

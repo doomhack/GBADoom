@@ -339,8 +339,6 @@ void S_UpdateSounds(void* listener_p)
 	//jff 1/22/98 return if sound is not enabled
 	if (nosfxparm)
 		return;
-
-	I_UpdateMusic();
 	
 	for (cnum=0 ; cnum<numChannels ; cnum++)
 	{

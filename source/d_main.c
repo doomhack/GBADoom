@@ -142,8 +142,6 @@ static void D_Wipe(void)
 		wipestart = nowtime;
 		done = wipe_ScreenWipe(tics);
 
-		I_UpdateMusic();	
-		
 		I_UpdateNoBlit();
 		M_Drawer();                   // menu is drawn even on top of wipes
 
