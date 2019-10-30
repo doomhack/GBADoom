@@ -79,17 +79,16 @@ static boolean P_CrossSubsector(int num)
 
   for (count = _g->subsectors[num].numlines; --count >= 0; seg++)
   { // check lines
-    const line_t *line = &_g->lines[seg->linenum];
+      int linenum = seg->linenum;
+
+    const line_t *line = &_g->lines[linenum];
     divline_t divl;
 
-   if(!line) // figgi -- skip minisegs
-     continue;
-
     // allready checked other side?
-    if (LN_VCOUNT(line) == _g->validcount)
-      continue;
+    if(_g->linedata[linenum].validcount == _g->validcount)
+        continue;
 
-    LN_VCOUNT(line) = _g->validcount;
+    _g->linedata[linenum].validcount = _g->validcount;
 
     /* OPTIMIZE: killough 4/20/98: Added quick bounding-box rejection test
      * cph - this is causing demo desyncs on original Doom demos.

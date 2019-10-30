@@ -124,7 +124,7 @@ static void W_AddFile()
 //Return -1 if not found.
 //Set lump ptr if found.
 
-static int FindLumpByName(const char* name, const filelump_t** lump)
+static int PUREFUNC FindLumpByName(const char* name, const filelump_t** lump)
 {
     const wadinfo_t* header;
     const filelump_t  *fileinfo;
@@ -150,7 +150,7 @@ static int FindLumpByName(const char* name, const filelump_t** lump)
     return -1;
 }
 
-static const filelump_t* FindLumpByNum(int num)
+static const filelump_t* PUREFUNC FindLumpByNum(int num)
 {
     const wadinfo_t* header;
     const filelump_t  *fileinfo;
@@ -192,7 +192,7 @@ static const filelump_t* FindLumpByNum(int num)
 // between different resources such as flats, sprites, colormaps
 //
 
-int (W_CheckNumForName)(const char *name, int li_namespace)
+int PUREFUNC W_CheckNumForName(const char *name)
 {
     const filelump_t* lump = NULL;
 
@@ -202,7 +202,7 @@ int (W_CheckNumForName)(const char *name, int li_namespace)
 // W_GetNumForName
 // Calls W_CheckNumForName, but bombs out if not found.
 //
-int W_GetNumForName (const char* name)     // killough -- const added
+int PUREFUNC W_GetNumForName(const char* name)     // killough -- const added
 {
     int i = W_CheckNumForName (name);
     if (i == -1)
@@ -210,7 +210,7 @@ int W_GetNumForName (const char* name)     // killough -- const added
     return i;
 }
 
-const char* W_GetNameForNum(int lump)
+const char* PUREFUNC W_GetNameForNum(int lump)
 {
     const filelump_t* l = FindLumpByNum(lump);
 
@@ -261,7 +261,7 @@ void W_ReleaseAllWads(void)
 // Returns the buffer size needed to load the given lump.
 //
 
-int W_LumpLength(int lump)
+int PUREFUNC W_LumpLength(int lump)
 {
     const filelump_t* l = FindLumpByNum(lump);
 
@@ -273,7 +273,7 @@ int W_LumpLength(int lump)
     I_Error ("W_LumpLength: %i >= numlumps",lump);
 }
 
-const void* W_GetLumpPtr(int lump)
+const void* PUREFUNC W_GetLumpPtr(int lump)
 {
     const filelump_t* l = FindLumpByNum(lump);
 
@@ -285,7 +285,7 @@ const void* W_GetLumpPtr(int lump)
     return NULL;
 }
 
-const void *W_CacheLumpNum(int lump)
+const void* PUREFUNC W_CacheLumpNum(int lump)
 {
     return W_GetLumpPtr(lump);
 }

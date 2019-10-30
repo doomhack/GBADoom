@@ -35,9 +35,7 @@
 #ifndef __W_WAD__
 #define __W_WAD__
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+#include "doomtype.h"
 
 //
 // TYPES
@@ -63,16 +61,15 @@ typedef struct
 
 void W_Init(void); // CPhipps - uses the above array
 
-#define W_CheckNumForName(name) (W_CheckNumForName)(name, 0)
-int     (W_CheckNumForName)(const char* name, int);   // killough 4/17/98
-int     W_GetNumForName (const char* name);
-const char* W_GetNameForNum(int lump);
+int PUREFUNC W_CheckNumForName(const char* name);   // killough 4/17/98
+int PUREFUNC W_GetNumForName (const char* name);
+const char* PUREFUNC W_GetNameForNum(int lump);
 
 
-int     W_LumpLength (int lump);
+int PUREFUNC W_LumpLength (int lump);
 
 // CPhipps - modified for 'new' lump locking
-const void* W_CacheLumpNum (int lump);
+const void* PUREFUNC W_CacheLumpNum (int lump);
 
 // CPhipps - convenience macros
 #define W_CacheLumpName(name) W_CacheLumpNum(W_GetNumForName(name))
