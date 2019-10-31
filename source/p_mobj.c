@@ -356,7 +356,6 @@ static void P_ZMovement (mobj_t* mo)
 
   mo->z += mo->momz;
 
-floater:
   if ((mo->flags & MF_FLOAT) && mo->target)
 
     // float down towards target if too close
@@ -554,6 +553,8 @@ void P_MobjThinker (mobj_t* mobj)
     // killough 11/98:
     // removed old code which looked at target references
     // (we use pointer reference counting now)
+
+    return;
 
     // momentum movement
     if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
