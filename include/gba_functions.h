@@ -132,4 +132,12 @@ void BlockCopy(void* dest, const void* src, const unsigned int len)
 #endif
 }
 
+void ByteCopy(byte* dest, const byte* src, unsigned int count)
+{
+    do
+    {
+        *dest++ = *src++;
+    } while(count--);
+}
+
 #endif // GBA_FUNCTIONS_H

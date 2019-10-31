@@ -198,7 +198,7 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
   if (den < 512)
     return SLOPERANGE;
 
-  ans = UDiv32(num<<3, den>>8);
+  ans = IDiv32(num<<3, den>>8);
 
   return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
@@ -612,8 +612,8 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
 
-            //dcvars.iscale = IDiv32(INT_MAX, spryscale >> 1);
-            dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
+            dcvars.iscale = IDiv32(INT_MAX, spryscale >> 1);
+            //dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
 
             // draw the texture
 
@@ -868,7 +868,8 @@ static void R_DrawPlayerSprites(void)
 // linked lists, and to use faster sorting algorithm.
 //
 
-#define bcopyp(d, s, n) memcpy(d, s, (n) * sizeof(void *))
+//#define bcopyp(d, s, n) memcpy(d, s, (n) * sizeof(void *))
+#define bcopyp(d, s, n) BlockCopy(d, s, (n) * sizeof(void *))
 
 // killough 9/2/98: merge sort
 
@@ -1499,7 +1500,7 @@ static visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
 
 static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int cacheheight)
 {
-    int		count;
+    int     count;
     int		position;
     const byte*	source;
 
@@ -1519,7 +1520,7 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
             count = cacheheight - position;
 
         if (count > 0)
-            memcpy(cache + position, source, count);
+            ByteCopy(cache + position, source, count);
 
         patch = (const column_t *)(  (const byte *)patch + patch->length + 4);
     }
@@ -1721,7 +1722,9 @@ static void R_RenderSegLoop (void)
 
             dcvars.x = rw_x;
 
-            dcvars.iscale = UDiv32(0xffffffffu, (unsigned)rw_scale);
+            dcvars.iscale = IDiv32(INT_MAX, ((unsigned)rw_scale) >> 1);
+
+            //dcvars.iscale = IDiv32(0xffffffffu >> 1, ((unsigned)rw_scale) >> 1);
         }
 
         // draw the wall tiers
@@ -2140,14 +2143,16 @@ static void R_StoreWallRange(const int start, const int stop)
     // save sprite clipping info
     if ((ds_p->silhouette & SIL_TOP || maskedtexture) && !ds_p->sprtopclip)
     {
-        memcpy (lastopening, ceilingclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
+        BlockCopy(lastopening, ceilingclip+start, sizeof(int)*(rw_stopx-start));
+        //memcpy (lastopening, ceilingclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
         ds_p->sprtopclip = lastopening - start;
         lastopening += rw_stopx - start;
     }
 
     if ((ds_p->silhouette & SIL_BOTTOM || maskedtexture) && !ds_p->sprbottomclip)
     {
-        memcpy (lastopening, floorclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
+        BlockCopy(lastopening, floorclip+start, sizeof(int)*(rw_stopx-start));
+        //memcpy (lastopening, floorclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
         ds_p->sprbottomclip = lastopening - start;
         lastopening += rw_stopx - start;
     }
