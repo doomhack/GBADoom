@@ -1239,11 +1239,10 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     fixed_t tz;
     int width;
 
-    {
-        fx = thing->x;
-        fy = thing->y;
-        fz = thing->z;
-    }
+    fx = thing->x;
+    fy = thing->y;
+    fz = thing->z;
+
     tr_x = fx - viewx;
     tr_y = fy - viewy;
 
@@ -1278,14 +1277,14 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if ((thing->frame&FF_FRAMEMASK) >= sprdef->numframes)
         I_Error ("R_ProjectSprite: Invalid sprite frame %i : %i", thing->sprite,
                  thing->frame);
-#endif
+
 
     if (!sprdef->spriteframes)
     {
         I_Error ("R_ProjectSprite: Missing spriteframes %i : %i", thing->sprite,
                  thing->frame);
     }
-
+#endif
 
     sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
 
@@ -1304,30 +1303,35 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         flip = (boolean) sprframe->flip[0];
     }
 
-    {
+    const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);
 
-        const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);
-
-        /* calculate edges of the shape
+    /* calculate edges of the shape
      * cph 2003/08/1 - fraggle points out that this offset must be flipped
      * if the sprite is flipped; e.g. FreeDoom imp is messed up by this. */
-        if (flip) {
-            tx -= (patch->width - patch->leftoffset) << FRACBITS;
-        } else {
-            tx -= patch->leftoffset << FRACBITS;
-        }
-        x1 = (centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
-
-        tx += patch->width<<FRACBITS;
-        x2 = ((centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
-
-        gzt = fz + (patch->topoffset << FRACBITS);
-        width = patch->width;
+    if (flip)
+    {
+        tx -= (patch->width - patch->leftoffset) << FRACBITS;
+    } else
+    {
+        tx -= patch->leftoffset << FRACBITS;
     }
+    x1 = (centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
 
     // off the side?
-    if (x1 > SCREENWIDTH || x2 < 0)
+    if(x1 > SCREENWIDTH)
         return;
+
+    tx += patch->width<<FRACBITS;
+
+    x2 = ((centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
+
+    // off the side?
+    if(x2 < 0)
+        return;
+
+
+    gzt = fz + (patch->topoffset << FRACBITS);
+    width = patch->width;
 
     // store information in a vissprite
     vis = R_NewVisSprite ();

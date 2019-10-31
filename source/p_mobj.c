@@ -554,8 +554,6 @@ void P_MobjThinker (mobj_t* mobj)
     // removed old code which looked at target references
     // (we use pointer reference counting now)
 
-    return;
-
     // momentum movement
     if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
     {
