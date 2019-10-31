@@ -5,6 +5,8 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
+#define __arm__
+
 #ifdef __arm__
     #include <gba_systemcalls.h>
     #include <gba_dma.h>
@@ -129,6 +131,17 @@ void BlockCopy(void* dest, const void* src, const unsigned int len)
     DMA3COPY(src, dest, DMA_DST_INC | DMA_SRC_INC | DMA32 | DMA_IMMEDIATE | words)
 #else
     memcpy(dest, src, len);
+#endif
+}
+
+void BlockSet(void* dest, volatile unsigned int val, const unsigned int len)
+{
+#ifdef __arm__
+    const int words = len >> 2;
+
+    DMA3COPY(&val, dest, DMA_SRC_FIXED | DMA_DST_INC | DMA32 | DMA_IMMEDIATE | words)
+#else
+    memset(dest, val, len);
 #endif
 }
 

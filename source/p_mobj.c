@@ -460,18 +460,15 @@ floater:
 //
 
 static void P_NightmareRespawn(mobj_t* mobj)
-  {
-  fixed_t      x;
-  fixed_t      y;
-  fixed_t      z;
-  subsector_t* ss;
-  mobj_t*      mo;
-  mapthing_t*  mthing;
+{
+    fixed_t      x;
+    fixed_t      y;
+    fixed_t      z;
+    subsector_t* ss;
+    mobj_t*      mo;
+    mapthing_t*  mthing;
 
-  //x = mobj->spawnpoint.x << FRACBITS;
-  //y = mobj->spawnpoint.y << FRACBITS;
-
-  /* haleyjd: stupid nightmare respawning bug fix
+    /* haleyjd: stupid nightmare respawning bug fix
    *
    * 08/09/00: compatibility added, time to ramble :)
    * This fixes the notorious nightmare respawning bug that causes monsters
@@ -483,64 +480,69 @@ static void P_NightmareRespawn(mobj_t* mobj)
    *   and the logic is reversed (i.e. like the rest of comp_ it *disables*
    *   the fix)
    */
-  if(!x && !y)
-  {
-     // spawnpoint was zeroed out, so use point of death instead
-     x = mobj->x;
-     y = mobj->y;
-  }
 
-  // something is occupying its position?
+    //ZLB: Everything respawns at its death point.
+    //The spawnpoint is removed from the mobj.
 
-  if (!P_CheckPosition (mobj, x, y) )
-    return; // no respwan
+    x = mobj->x;
+    y = mobj->y;
 
-  // spawn a teleport fog at old spot
-  // because of removal of the body?
+    if(!x && !y)
+    {
+        return;
+    }
 
-  mo = P_SpawnMobj (mobj->x,
-                    mobj->y,
-                    mobj->subsector->sector->floorheight,
-                    MT_TFOG);
+    // something is occupying its position?
 
-  // initiate teleport sound
+    if (!P_CheckPosition (mobj, x, y) )
+        return; // no respwan
 
-  S_StartSound (mo, sfx_telept);
+    // spawn a teleport fog at old spot
+    // because of removal of the body?
 
-  // spawn a teleport fog at the new spot
+    mo = P_SpawnMobj (mobj->x,
+                      mobj->y,
+                      mobj->subsector->sector->floorheight,
+                      MT_TFOG);
 
-  ss = R_PointInSubsector (x,y);
+    // initiate teleport sound
 
-  mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG);
+    S_StartSound (mo, sfx_telept);
 
-  S_StartSound (mo, sfx_telept);
+    // spawn a teleport fog at the new spot
 
-  // spawn the new monster
+    ss = R_PointInSubsector (x,y);
 
-  //mthing = &mobj->spawnpoint;
-  if (mobj->info->flags & MF_SPAWNCEILING)
-    z = ONCEILINGZ;
-  else
-    z = ONFLOORZ;
+    mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG);
 
-  // inherit attributes from deceased one
+    S_StartSound (mo, sfx_telept);
 
-  mo = P_SpawnMobj (x,y,z, mobj->type);
-  //mo->spawnpoint = mobj->spawnpoint;
-  mo->angle = ANG45 * (mthing->angle/45);
+    // spawn the new monster
 
-  if (mthing->options & MTF_AMBUSH)
-    mo->flags |= MF_AMBUSH;
+    //mthing = &mobj->spawnpoint;
+    if (mobj->info->flags & MF_SPAWNCEILING)
+        z = ONCEILINGZ;
+    else
+        z = ONFLOORZ;
 
-  /* killough 11/98: transfer friendliness from deceased */
-  mo->flags = (mo->flags & ~MF_FRIEND) | (mobj->flags & MF_FRIEND);
+    // inherit attributes from deceased one
 
-  mo->reactiontime = 18;
+    mo = P_SpawnMobj (x,y,z, mobj->type);
+    //mo->spawnpoint = mobj->spawnpoint;
+    mo->angle = ANG45 * (mthing->angle/45);
 
-  // remove the old monster,
+    if (mthing->options & MTF_AMBUSH)
+        mo->flags |= MF_AMBUSH;
 
-  P_RemoveMobj (mobj);
-  }
+    /* killough 11/98: transfer friendliness from deceased */
+    mo->flags = (mo->flags & ~MF_FRIEND) | (mobj->flags & MF_FRIEND);
+
+    mo->reactiontime = 18;
+
+    // remove the old monster,
+
+    P_RemoveMobj (mobj);
+}
 
 
 //

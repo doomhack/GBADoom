@@ -365,6 +365,10 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
 {
     int count = dcvars->yh - dcvars->yl;
 
+    // Zero length, column does not exceed a pixel.
+    if (count < 0)
+        return;
+
     const byte *source = dcvars->source;
     const byte *colormap = dcvars->colormap;
 
@@ -372,10 +376,6 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
 
     const fixed_t		fracstep = dcvars->iscale;
     fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
-
-    // Zero length, column does not exceed a pixel.
-    if (count < 0)
-        return;
 
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
@@ -1206,7 +1206,8 @@ static vissprite_t *R_NewVisSprite(void)
         _g->vissprites = realloc(_g->vissprites,_g->num_vissprite_alloc*sizeof(*_g->vissprites));
 
         //e6y: set all fields to zero
-        memset(_g->vissprites + num_vissprite_alloc_prev, 0, (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
+        //memset(_g->vissprites + num_vissprite_alloc_prev, 0, (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
+        BlockSet(_g->vissprites + num_vissprite_alloc_prev, 0, (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
     }
     return _g->vissprites + _g->num_vissprite++;
 }
@@ -1444,7 +1445,8 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
     check->minx = SCREENWIDTH; // Was SCREENWIDTH -- killough 11/98
     check->maxx = -1;
 
-    memset (check->top, 0xff, sizeof check->top);
+    BlockSet(check->top, UINT_MAX, sizeof(check->top));
+    //memset (check->top, 0xff, sizeof check->top);
 
     return check;
 }
@@ -1466,7 +1468,10 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->yoffs = pl->yoffs;
     new_pl->minx = start;
     new_pl->maxx = stop;
-    memset(new_pl->top, 0xff, sizeof new_pl->top);
+
+    BlockSet(new_pl->top, UINT_MAX, sizeof(new_pl->top));
+
+    //memset(new_pl->top, 0xff, sizeof new_pl->top);
     return new_pl;
 }
 

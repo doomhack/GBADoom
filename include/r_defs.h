@@ -434,7 +434,7 @@ typedef struct visplane
   fixed_t height;
   fixed_t xoffs, yoffs;         // killough 2/28/98: Support scrolling flats
 
-  byte		pad1;
+  //byte		pad1;
   // Here lies the rub for all
   //  dynamic resize/change of resolution.
   byte		top[SCREENWIDTH];
