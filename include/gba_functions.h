@@ -80,49 +80,6 @@ CONSTFUNC int IDiv32 (int a, int b)
 #endif
 }
 
-CONSTFUNC fixed_t FixedDiv2 (fixed_t a, fixed_t b)
-{
-/* this code is VERY slow, but exactly simulates the proper assembly */
-/* operation that C doesn't let you represent well */
-    unsigned        aa,bb,c;
-    unsigned        bit;
-    int             sign;
-
-    sign = a^b;
-    if (a<0)
-        aa = -a;
-    else
-        aa = a;
-    if (b<0)
-        bb = -b;
-    else
-        bb = b;
-    if ( (aa>>14) >= bb)
-        return sign<0 ? INT_MIN : INT_MAX;
-    bit = 0x10000;
-    while (aa > bb)
-    {
-        bb <<= 1;
-        bit <<= 1;
-    }
-    c = 0;
-
-    do
-    {
-        if (aa >= bb)
-        {
-            aa -=bb;
-            c |= bit;
-        }
-        aa <<=1;
-        bit >>= 1;
-    } while (bit && aa);
-
-    if (sign < 0)
-        c = -c;
-    return c;
-}
-
 void BlockCopy(void* dest, const void* src, const unsigned int len)
 {
 #ifdef __arm__

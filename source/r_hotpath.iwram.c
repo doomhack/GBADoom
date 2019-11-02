@@ -64,10 +64,6 @@
 //Globals.
 //*****************************************
 
-//use the FixedDiv function in gba_functions.h
-#define FixedDiv FixedDiv2
-
-
 int numnodes;
 const mapnode_t *nodes;
 

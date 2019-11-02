@@ -87,7 +87,8 @@ SOURCES += \
         source/w_wad.c \
         source/wi_stuff.c \
         source/z_bmalloc.c \
-        source/z_zone.c
+        source/z_zone.c \
+        source/fixeddiv.s
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -170,4 +171,5 @@ HEADERS += \
     include/z_zone.h
 
 DISTFILES += \
-    Makefile
+    Makefile \
+

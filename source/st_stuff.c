@@ -395,6 +395,8 @@ static void ST_drawWidgets(boolean refresh)
   for (i=0;i<3;i++)
     STlib_updateMultIcon(&_g->w_keyboxes[i], refresh);
 
+  STlib_updateMultIcon(&_g->w_faces, refresh);
+
   return;
 
   for (i=0;i<4;i++)
@@ -407,7 +409,7 @@ static void ST_drawWidgets(boolean refresh)
   for (i=0;i<6;i++)
     STlib_updateMultIcon(&_g->w_arms[i], refresh);
 
-  STlib_updateMultIcon(&_g->w_faces, refresh);
+
 
 
 }

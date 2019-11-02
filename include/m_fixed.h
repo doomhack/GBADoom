@@ -74,10 +74,6 @@ inline static fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
 	return (fixed_t)((int_64_t) a*b >> FRACBITS);
 }
 
-
-
-
-
 /*
  * Fixed Point Division
  */
@@ -87,8 +83,29 @@ inline static fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
 
 inline static fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
 {
-  return ((unsigned)D_abs(a)>>14) >= (unsigned)D_abs(b) ? ((a^b)>>31) ^ INT_MAX :
-    (fixed_t)(((int_64_t) a << FRACBITS) / b);
+#ifndef __arm__
+    return ((unsigned)D_abs(a)>>14) >= (unsigned)D_abs(b) ? ((a^b)>>31) ^ INT_MAX :
+                                                  (fixed_t)(((int_64_t) a << FRACBITS) / b);
+#else
+
+    unsigned int udiv64 (unsigned int a, unsigned int b, unsigned int c);
+
+    int q;
+    int sign = (a^b) < 0; /* different signs */
+    unsigned int l,h;
+
+    a = a<0 ? -a:a;
+    b = b<0 ? -b:b;
+
+    l = (a << 16);
+    h = (a >> 16);
+
+    q = udiv64 (l,h,b);
+    if (sign)
+        q = -q;
+
+    return q;
+#endif
 }
 
 /* CPhipps -
