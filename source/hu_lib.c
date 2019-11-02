@@ -124,47 +124,47 @@ void HUlib_drawTextLine
   boolean drawcursor )
 {
 
-  int     i;
-  int     w;
-  int     x;
-  unsigned char c;
-  int y = l->y;           // killough 1/18/98 -- support multiple lines
+    int     i;
+    int     w;
+    int     x;
+    unsigned char c;
+    int y = l->y;           // killough 1/18/98 -- support multiple lines
 
-  // draw the new stuff
-  x = l->x;
-  for (i=0;i<l->len;i++)
-  {
-    c = toupper(l->l[i]); //jff insure were not getting a cheap toupper conv.
-
-    if (c=='\n')         // killough 1/18/98 -- support multiple lines
-      x=0,y+=8;
-    else if (c=='\t')    // killough 1/23/98 -- support tab stops
-      x=x-x%80+80;
-    else  if (c != ' ' && c >= l->sc && c <= '_')
+    // draw the new stuff
+    x = l->x;
+    for (i=0;i<l->len;i++)
     {
-      w = l->f[c - l->sc]->width;
-      if (x+w > BASE_WIDTH)
-        break;
-      // killough 1/18/98 -- support multiple lines:
-      // CPhipps - patch drawing updated
-      V_DrawPatch(x, y, HU_FG, l->f[c - l->sc]);
-      x += w;
-    }
-    else
-    {
-      x += 4;
-      if (x >= BASE_WIDTH)
-      break;
-    }
-  }
+        c = toupper(l->l[i]); //jff insure were not getting a cheap toupper conv.
 
-  // draw the cursor if requested
-  if (drawcursor && x + l->f['_' - l->sc]->width <= BASE_WIDTH)
-  {
-    // killough 1/18/98 -- support multiple lines
-    // CPhipps - patch drawing updated
-    V_DrawPatch(x, y, HU_FG, l->f['_' - l->sc]);
-  }
+        if (c=='\n')         // killough 1/18/98 -- support multiple lines
+            x=0,y+=8;
+        else if (c=='\t')    // killough 1/23/98 -- support tab stops
+            x=x-x%80+80;
+        else  if (c != ' ' && c >= l->sc && c <= '_')
+        {
+            w = l->f[c - l->sc]->width;
+            if (x+w > 240)
+                break;
+            // killough 1/18/98 -- support multiple lines:
+            // CPhipps - patch drawing updated
+            V_DrawPatchNoScale(x, y, HU_FG, l->f[c - l->sc]);
+            x += w;
+        }
+        else
+        {
+            x += 4;
+            if (x >= 240)
+                break;
+        }
+    }
+
+    // draw the cursor if requested
+    if (drawcursor && x + l->f['_' - l->sc]->width <= BASE_WIDTH)
+    {
+        // killough 1/18/98 -- support multiple lines
+        // CPhipps - patch drawing updated
+        V_DrawPatch(x, y, HU_FG, l->f['_' - l->sc]);
+    }
 }
 
 //
