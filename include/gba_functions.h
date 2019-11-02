@@ -20,7 +20,7 @@
 //and the GPL that prBoom (and this as derived work) is under.
 //***********************************************************************
 
-CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
+static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 {
     unsigned        bit;
     unsigned        c;
@@ -51,7 +51,7 @@ CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
     return c;
 }
 
-CONSTFUNC int IDiv32 (int a, int b)
+inline static CONSTFUNC int IDiv32 (int a, int b)
 {
 
     //use bios divide on gba.
@@ -80,7 +80,7 @@ CONSTFUNC int IDiv32 (int a, int b)
 #endif
 }
 
-void BlockCopy(void* dest, const void* src, const unsigned int len)
+inline static void BlockCopy(void* dest, const void* src, const unsigned int len)
 {
 #ifdef __arm__
     const int words = len >> 2;
@@ -91,7 +91,7 @@ void BlockCopy(void* dest, const void* src, const unsigned int len)
 #endif
 }
 
-void BlockSet(void* dest, volatile unsigned int val, const unsigned int len)
+inline static void BlockSet(void* dest, volatile unsigned int val, const unsigned int len)
 {
 #ifdef __arm__
     const int words = len >> 2;
@@ -102,7 +102,7 @@ void BlockSet(void* dest, volatile unsigned int val, const unsigned int len)
 #endif
 }
 
-void ByteCopy(byte* dest, const byte* src, unsigned int count)
+inline static void ByteCopy(byte* dest, const byte* src, unsigned int count)
 {
     do
     {

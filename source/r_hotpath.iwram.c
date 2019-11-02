@@ -209,7 +209,7 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 //  tantoangle[] table.
 
 //
-angle_t R_PointToAngle(fixed_t x, fixed_t y)
+static PUREFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
 {
     x -= viewx;
     y -= viewy;
@@ -2448,7 +2448,7 @@ static void R_Subsector(int num)
 //  if some part of the bbox might be visible.
 //
 
-static const int checkcoord[12][4] = // killough -- static const
+static const byte checkcoord[12][4] = // killough -- static const
 {
   {3,0,2,1},
   {3,0,2,0},
@@ -2470,7 +2470,7 @@ static boolean R_CheckBBox(const short *bspcoord)
 
     {
         int        boxpos;
-        const int* check;
+        const byte* check;
 
         // Find the corners of the box
         // that define the edges from current viewpoint.
