@@ -73,6 +73,7 @@ void STlib_initNum
   n->num  = num;
   n->on = on;
   n->p  = pl;
+  n->need_refresh = true;
 }
 
 /*
@@ -259,6 +260,7 @@ void STlib_initMultIcon
   i->inum = inum;
   i->on = on;
   i->p  = il;
+  i->need_refresh = true;
 }
 
 //
@@ -283,8 +285,14 @@ void STlib_updateMultIcon
     if(!mi->p)
         return;
 
-    if (*mi->on && (mi->oldinum != *mi->inum || refresh))
+    if (*mi->on && (mi->oldinum != *mi->inum || refresh || mi->need_refresh))
     {
+        if(mi->oldinum != *mi->inum)
+            mi->need_refresh = true;
+        else
+            mi->need_refresh = false;
+
+        /*
         if (mi->oldinum != -1)
         {
             x = mi->x - mi->p[mi->oldinum]->leftoffset;
@@ -294,6 +302,7 @@ void STlib_updateMultIcon
 
             V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
         }
+        */
 
         if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
             V_DrawPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum]);

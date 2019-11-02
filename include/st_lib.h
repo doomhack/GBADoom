@@ -108,8 +108,7 @@ typedef struct
   // list of icons
   const patch_t**   p;
 
-  // user data
-  int     data;
+  boolean need_refresh;
 
 } st_multicon_t;
 
