@@ -462,7 +462,7 @@ int I_RegisterSong(const void *data, size_t len)
 void I_SetMusicVolume(int volume)
 {
 #ifdef __arm__
-    int mmvol = volume * 8;
+    int mmvol = volume * 64;
 
     mmSetModuleVolume(mmvol);
 #endif

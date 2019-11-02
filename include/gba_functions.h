@@ -5,7 +5,7 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
-#define __arm__
+//#define __arm__
 
 #ifdef __arm__
     #include <gba_systemcalls.h>
