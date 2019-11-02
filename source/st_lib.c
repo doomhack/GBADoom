@@ -275,34 +275,31 @@ void STlib_updateMultIcon
 ( st_multicon_t*  mi,
   boolean   refresh )
 {
-  int w;
-  int h;
-  int x;
-  int y;
+    int w;
+    int h;
+    int x;
+    int y;
 
     if(!mi->p)
         return;
 
-  if (*mi->on && (mi->oldinum != *mi->inum || refresh))
-  {
-    if (mi->oldinum != -1)
+    if (*mi->on && (mi->oldinum != *mi->inum || refresh))
     {
-      x = mi->x - mi->p[mi->oldinum]->leftoffset;
-      y = mi->y - mi->p[mi->oldinum]->topoffset;
-      w = mi->p[mi->oldinum]->width;
-      h = mi->p[mi->oldinum]->height;
+        if (mi->oldinum != -1)
+        {
+            x = mi->x - mi->p[mi->oldinum]->leftoffset;
+            y = mi->y - mi->p[mi->oldinum]->topoffset;
+            w = mi->p[mi->oldinum]->width;
+            h = mi->p[mi->oldinum]->height;
 
-#ifdef RANGECHECK
-      if (y - ST_Y < 0)
-        I_Error("STlib_updateMultIcon: y - ST_Y < 0");
-#endif
+            V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
+        }
 
-      V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
+        if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
+            V_DrawPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum]);
+
+        mi->oldinum = *mi->inum;
     }
-    if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-      V_DrawPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum]);
-    mi->oldinum = *mi->inum;
-  }
 }
 
 //

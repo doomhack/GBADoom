@@ -154,25 +154,25 @@
 // ARMOR number pos.
 #define ST_ARMORWIDTH           3
 // proff 08/18/98: Changed for high-res
-#define ST_ARMORX               (ST_X+221)
-#define ST_ARMORY               (ST_Y+3)
+#define ST_ARMORX               (ST_X+222)
+#define ST_ARMORY               (ST_Y+6)
 
 
 // Key icon positions.
 #define ST_KEY0WIDTH            8
 #define ST_KEY0HEIGHT           5
 // proff 08/18/98: Changed for high-res
-#define ST_KEY0X                (ST_X+239)
+#define ST_KEY0X                (ST_X+240)
 #define ST_KEY0Y                (ST_Y+3)
 
 #define ST_KEY1WIDTH            ST_KEY0WIDTH
 // proff 08/18/98: Changed for high-res
-#define ST_KEY1X                (ST_X+239)
+#define ST_KEY1X                (ST_X+240)
 #define ST_KEY1Y                (ST_Y+13)
 
 #define ST_KEY2WIDTH            ST_KEY0WIDTH
 // proff 08/18/98: Changed for high-res
-#define ST_KEY2X                (ST_X+239)
+#define ST_KEY2X                (ST_X+240)
 #define ST_KEY2Y                (ST_Y+23)
 
 

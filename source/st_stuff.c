@@ -305,29 +305,29 @@ static void ST_updateFaceWidget(void)
 
 static void ST_updateWidgets(void)
 {
-  static int  largeammo = 1994; // means "n/a"
-  int         i;
+    static int  largeammo = 1994; // means "n/a"
+    int         i;
 
-  if (weaponinfo[_g->plyr->readyweapon].ammo == am_noammo)
-    _g->w_ready.num = &largeammo;
-  else
-    _g->w_ready.num = &_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo];
+    if (weaponinfo[_g->plyr->readyweapon].ammo == am_noammo)
+        _g->w_ready.num = &largeammo;
+    else
+        _g->w_ready.num = &_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo];
 
 
-  // update keycard multiple widgets
-  for (i=0;i<3;i++)
+    // update keycard multiple widgets
+    for (i=0;i<3;i++)
     {
-      _g->keyboxes[i] = _g->plyr->cards[i] ? i : -1;
+        _g->keyboxes[i] = _g->plyr->cards[i] ? i : -1;
 
-      //jff 2/24/98 select double key
-      //killough 2/28/98: preserve traditional keys by config option
+        //jff 2/24/98 select double key
+        //killough 2/28/98: preserve traditional keys by config option
 
-      if (_g->plyr->cards[i+3])
-        _g->keyboxes[i] = i+3;
+        if (_g->plyr->cards[i+3])
+            _g->keyboxes[i] = i+3;
     }
 
-  // refresh everything if this is him coming back to life
-  ST_updateFaceWidget();
+    // refresh everything if this is him coming back to life
+    ST_updateFaceWidget();
 }
 
 void ST_Ticker(void)
@@ -390,34 +390,26 @@ static void ST_drawWidgets(boolean refresh)
 
   STlib_updatePercent(&_g->st_health, CR_RED, refresh);
 
+  STlib_updatePercent(&_g->st_armor, CR_RED, refresh);
+
+  for (i=0;i<3;i++)
+    STlib_updateMultIcon(&_g->w_keyboxes[i], refresh);
+
   return;
 
   for (i=0;i<4;i++)
-    {
+  {
       STlib_updateNum(&_g->st_ammo[i], CR_DEFAULT, refresh);   //jff 2/16/98 no xlation
       STlib_updateNum(&_g->w_maxammo[i], CR_DEFAULT, refresh);
-    }
+  }
 
-  //jff 2/16/98 make color of armor depend on amount
-  if (*_g->st_armor.n.num<armor_red)
-    STlib_updatePercent(&_g->st_armor, CR_RED, refresh);
-  else if (*_g->st_armor.n.num<armor_yellow)
-    STlib_updatePercent(&_g->st_armor, CR_GOLD, refresh);
-  else if (*_g->st_armor.n.num<=armor_green)
-    STlib_updatePercent(&_g->st_armor, CR_GREEN, refresh);
-  else
-    STlib_updatePercent(&_g->st_armor, CR_BLUE2, refresh); //killough 2/28/98
-
-  //e6y: moved to ST_refreshBackground() for correct single-pass stretching
-  //STlib_updateBinIcon(&w_armsbg, refresh);
 
   for (i=0;i<6;i++)
     STlib_updateMultIcon(&_g->w_arms[i], refresh);
 
   STlib_updateMultIcon(&_g->w_faces, refresh);
 
-  for (i=0;i<3;i++)
-    STlib_updateMultIcon(&_g->w_keyboxes[i], refresh);
+
 }
 
 static void ST_doRefresh(void)
@@ -628,21 +620,21 @@ static void ST_createWidgets(void)
   STlib_initMultIcon(&_g->w_keyboxes[0],
                      ST_KEY0X,
                      ST_KEY0Y,
-                     NULL,
+                     _g->keys,
                      &_g->keyboxes[0],
                      &_g->st_statusbaron);
 
   STlib_initMultIcon(&_g->w_keyboxes[1],
                      ST_KEY1X,
                      ST_KEY1Y,
-                     NULL,
+                     _g->keys,
                      &_g->keyboxes[1],
                      &_g->st_statusbaron);
 
   STlib_initMultIcon(&_g->w_keyboxes[2],
                      ST_KEY2X,
                      ST_KEY2Y,
-                     NULL,
+                     _g->keys,
                      &_g->keyboxes[2],
                      &_g->st_statusbaron);
 
