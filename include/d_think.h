@@ -84,11 +84,6 @@ typedef struct thinker_s
    */
 
   struct thinker_s *cnext, *cprev; /* Next, previous thinkers in same class */
-
-  /* killough 11/98: count of how many other objects reference
-   * this one using pointers. Used for garbage collection.
-   */
-  unsigned references;
 } thinker_t;
 
 #endif

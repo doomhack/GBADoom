@@ -312,8 +312,6 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
 {
   fixed_t tryx, tryy, deltax, deltay, origx, origy;
   boolean try_ok;
-  int movefactor = ORIG_FRICTION_FACTOR;    // killough 10/98
-  int friction = ORIG_FRICTION;
   int speed;
 
   if (actor->movedir == DI_NODIR)
@@ -324,32 +322,12 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
     I_Error ("P_Move: Weird actor->movedir!");
 #endif
 
-  // killough 10/98: make monsters get affected by ice and sludge too:
-  movefactor = P_GetMoveFactor(actor, &friction);
-
   speed = actor->info->speed;
-
-  if (friction < ORIG_FRICTION &&     // sludge
-      !(speed = ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)
-     * speed) / ORIG_FRICTION_FACTOR))
-    speed = 1;      // always give the monster a little bit of speed
 
   tryx = (origx = actor->x) + (deltax = speed * xspeed[actor->movedir]);
   tryy = (origy = actor->y) + (deltay = speed * yspeed[actor->movedir]);
 
   try_ok = P_TryMove(actor, tryx, tryy, dropoff);
-
-  // killough 10/98:
-  // Let normal momentum carry them, instead of steptoeing them across ice.
-
-  if (try_ok && friction > ORIG_FRICTION)
-    {
-      actor->x = origx;
-      actor->y = origy;
-      movefactor *= FRACUNIT / ORIG_FRICTION_FACTOR / 4;
-      actor->momx += FixedMul(deltax, movefactor);
-      actor->momy += FixedMul(deltay, movefactor);
-    }
 
   if (!try_ok)
     {      // open any specials

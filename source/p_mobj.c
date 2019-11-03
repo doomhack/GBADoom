@@ -165,8 +165,7 @@ static void P_XYMovement (mobj_t* mo)
         // to pass through walls.
         // CPhipps - compatibility optioned
 
-        if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2 ||
-                ((xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2)))
+        if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2 || ((xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2)))
         {
             ptryx = mo->x + xmove/2;
             ptryy = mo->y + ymove/2;
@@ -186,64 +185,32 @@ static void P_XYMovement (mobj_t* mo)
         {
             // blocked move
 
-            // killough 8/11/98: bouncing off walls
-            // killough 10/98:
-            // Add ability for objects other than players to bounce on ice
-
-            if (!(mo->flags & MF_MISSILE) &&
-                    ((!player && _g->blockline &&
-                      mo->z <= mo->floorz &&
-                      P_GetFriction(mo, NULL) > ORIG_FRICTION)))
-            {
-                if (_g->blockline)
-                {
-                    fixed_t r = ((_g->blockline->dx >> FRACBITS) * mo->momx +
-                                 (_g->blockline->dy >> FRACBITS) * mo->momy) /
-                            ((_g->blockline->dx >> FRACBITS)*(_g->blockline->dx >> FRACBITS)+
-                             (_g->blockline->dy >> FRACBITS)*(_g->blockline->dy >> FRACBITS));
-                    fixed_t x = FixedMul(r, _g->blockline->dx);
-                    fixed_t y = FixedMul(r, _g->blockline->dy);
-
-                    // reflect momentum away from wall
-
-                    mo->momx = x*2 - mo->momx;
-                    mo->momy = y*2 - mo->momy;
-
-                    // if under gravity, slow down in
-                    // direction perpendicular to wall.
-
-                    if (!(mo->flags & MF_NOGRAVITY))
-                    {
-                        mo->momx = (mo->momx + x)/2;
-                        mo->momy = (mo->momy + y)/2;
-                    }
-                }
-                else
-                    mo->momx = mo->momy = 0;
-            }
+            if (player)   // try to slide along it
+                P_SlideMove (mo);
             else
-                if (player)   // try to slide along it
-                    P_SlideMove (mo);
-                else
-                    if (mo->flags & MF_MISSILE)
-                    {
-                        // explode a missile
-                        if (_g->ceilingline &&
-                                LN_BACKSECTOR(_g->ceilingline) &&
-                                LN_BACKSECTOR(_g->ceilingline)->ceilingpic == _g->skyflatnum)
-                            if (mo->z > LN_BACKSECTOR(_g->ceilingline)->ceilingheight)
-                            {
-                                // Hack to prevent missiles exploding
-                                // against the sky.
-                                // Does not handle sky floors.
+            {
+                if (mo->flags & MF_MISSILE)
+                {
+                    // explode a missile
+                    if (_g->ceilingline &&
+                            LN_BACKSECTOR(_g->ceilingline) &&
+                            LN_BACKSECTOR(_g->ceilingline)->ceilingpic == _g->skyflatnum)
+                        if (mo->z > LN_BACKSECTOR(_g->ceilingline)->ceilingheight)
+                        {
+                            // Hack to prevent missiles exploding
+                            // against the sky.
+                            // Does not handle sky floors.
 
-                                P_RemoveMobj (mo);
-                                return;
-                            }
-                        P_ExplodeMissile (mo);
-                    }
-                    else // whatever else it is, it is now standing still in (x,y)
-                        mo->momx = mo->momy = 0;
+                            P_RemoveMobj (mo);
+                            return;
+                        }
+                    P_ExplodeMissile (mo);
+                }
+                else // whatever else it is, it is now standing still in (x,y)
+                {
+                    mo->momx = mo->momy = 0;
+                }
+            }
         }
     } while (xmove || ymove);
 
@@ -312,7 +279,7 @@ static void P_XYMovement (mobj_t* mo)
 
 
 
-        fixed_t friction = P_GetFriction(mo, NULL);
+        fixed_t friction = ORIG_FRICTION;
 
         mo->momx = FixedMul(mo->momx, friction);
         mo->momy = FixedMul(mo->momy, friction);
@@ -322,14 +289,12 @@ static void P_XYMovement (mobj_t* mo)
        * reduced fast enough, leading to all sorts of kludges being developed.
        */
 
+
         if (player && player->mo == mo)     /* Not voodoo dolls */
         {
             player->momx = FixedMul(player->momx, ORIG_FRICTION);
             player->momy = FixedMul(player->momy, ORIG_FRICTION);
         }
-
-
-
     }
 }
 
@@ -569,6 +534,7 @@ void P_MobjThinker (mobj_t* mobj)
             return;       // killough - mobj was removed
     }
     else
+    {
         if (!(mobj->momx | mobj->momy) && !sentient(mobj))
         {                                  // non-sentient objects at rest
             // killough 9/12/98: objects fall off ledges if they are hanging off
@@ -581,6 +547,7 @@ void P_MobjThinker (mobj_t* mobj)
             else
                 mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque
         }
+    }
 
     // cycle through states,
     // calling action functions at transitions

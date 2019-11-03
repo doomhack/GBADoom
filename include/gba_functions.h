@@ -110,4 +110,25 @@ inline static void ByteCopy(byte* dest, const byte* src, unsigned int count)
     } while(count--);
 }
 
+inline static void ByteSet(byte* dest, byte val, unsigned int count)
+{
+    while(count--)
+    {
+        *dest++ = val;
+    }
+}
+
+inline static void* ByteFind(byte* mem, byte val, unsigned int count)
+{
+    do
+    {
+        if(*mem == val)
+            return mem;
+
+        mem++;
+    } while(count--);
+
+    return NULL;
+}
+
 #endif // GBA_FUNCTIONS_H

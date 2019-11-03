@@ -194,24 +194,17 @@ void P_MovePlayer (player_t* player)
     {
       if (_g->onground) // killough 8/9/98
       {
-        int friction, movefactor = P_GetMoveFactor(mo, &friction);
-
-        // killough 11/98:
-        // On sludge, make bobbing depend on efficiency.
-        // On ice, make it depend on effort.
-
-        int bobfactor =
-          friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
+        int movefactor = ORIG_FRICTION_FACTOR;
 
         if (cmd->forwardmove)
         {
-          P_Bob(player,mo->angle,cmd->forwardmove*bobfactor);
+          P_Bob(player,mo->angle,cmd->forwardmove*movefactor);
           P_Thrust(player,mo->angle,cmd->forwardmove*movefactor);
         }
 
         if (cmd->sidemove)
         {
-          P_Bob(player,mo->angle-ANG90,cmd->sidemove*bobfactor);
+          P_Bob(player,mo->angle-ANG90,cmd->sidemove*movefactor);
           P_Thrust(player,mo->angle-ANG90,cmd->sidemove*movefactor);
         }
       }

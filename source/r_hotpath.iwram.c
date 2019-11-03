@@ -1202,7 +1202,6 @@ static vissprite_t *R_NewVisSprite(void)
         _g->vissprites = realloc(_g->vissprites,_g->num_vissprite_alloc*sizeof(*_g->vissprites));
 
         //e6y: set all fields to zero
-        //memset(_g->vissprites + num_vissprite_alloc_prev, 0, (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
         BlockSet(_g->vissprites + num_vissprite_alloc_prev, 0, (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
     }
     return _g->vissprites + _g->num_vissprite++;
@@ -1446,7 +1445,6 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
     check->maxx = -1;
 
     BlockSet(check->top, UINT_MAX, sizeof(check->top));
-    //memset (check->top, 0xff, sizeof check->top);
 
     return check;
 }
@@ -1471,7 +1469,6 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
 
     BlockSet(new_pl->top, UINT_MAX, sizeof(new_pl->top));
 
-    //memset(new_pl->top, 0xff, sizeof new_pl->top);
     return new_pl;
 }
 
@@ -2272,7 +2269,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
     {
         if (solidcol[first])
         {
-            if (!(p = memchr(solidcol+first, 0, last-first)))
+            if (!(p = ByteFind(solidcol+first, 0, last-first)))
                 return; // All solid
 
             first = p - solidcol;
@@ -2280,7 +2277,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
         else
         {
             int to;
-            if (!(p = memchr(solidcol+first, 1, last-first)))
+            if (!(p = ByteFind(solidcol+first, 1, last-first)))
                 to = last;
             else
                 to = p - solidcol;
@@ -2289,7 +2286,8 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
 
             if (solid)
             {
-                memset(solidcol+first,1,to-first);
+                //memset(solidcol+first,1,to-first);
+                ByteSet(solidcol+first, 1, to-first);
             }
 
             first = to;

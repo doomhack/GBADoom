@@ -89,61 +89,6 @@ boolean PIT_StompThing (mobj_t* thing)
   }
 
 
-/*
- * killough 8/28/98:
- *
- * P_GetFriction()
- *
- * Returns the friction associated with a particular mobj.
- */
-
-int P_GetFriction(const mobj_t *mo, int *frictionfactor)
-{
-    int friction = ORIG_FRICTION;
-    int movefactor = ORIG_FRICTION_FACTOR;
-
-    if (frictionfactor)
-        *frictionfactor = movefactor;
-
-    return friction;
-}
-
-/* phares 3/19/98
- * P_GetMoveFactor() returns the value by which the x,y
- * movements are multiplied to add to player movement.
- *
- * killough 8/28/98: rewritten
- */
-
-int P_GetMoveFactor(const mobj_t *mo, int *frictionp)
-{
-  int movefactor, friction;
-
-  // If the floor is icy or muddy, it's harder to get moving. This is where
-  // the different friction factors are applied to 'trying to move'. In
-  // p_mobj.c, the friction factors are applied as you coast and slow down.
-
-  if ((friction = P_GetFriction(mo, &movefactor)) < ORIG_FRICTION)
-    {
-      // phares 3/11/98: you start off slowly, then increase as
-      // you get better footing
-
-     int momentum = P_AproxDistance(mo->momx,mo->momy);
-
-     if (momentum > MORE_FRICTION_MOMENTUM<<2)
-       movefactor <<= 3;
-     else if (momentum > MORE_FRICTION_MOMENTUM<<1)
-       movefactor <<= 2;
-     else if (momentum > MORE_FRICTION_MOMENTUM)
-       movefactor <<= 1;
-    }
-
-  if (frictionp)
-    *frictionp = friction;
-
-  return movefactor;
-}
-
 //
 // P_TeleportMove
 //
@@ -915,90 +860,59 @@ boolean P_ThingHeightClip (mobj_t* thing)
 //
 
 void P_HitSlideLine (const line_t* ld)
-  {
-  int     side;
-  angle_t lineangle;
-  angle_t moveangle;
-  angle_t deltaangle;
-  fixed_t movelen;
-  fixed_t newlen;
-  boolean icyfloor;  // is floor icy?                               // phares
-                                                                    //   |
-  // Under icy conditions, if the angle of approach to the wall     //   V
-  // is more than 45 degrees, then you'll bounce and lose half
-  // your momentum. If less than 45 degrees, you'll slide along
-  // the wall. 45 is arbitrary and is believable.
+{
+    int     side;
+    angle_t lineangle;
+    angle_t moveangle;
+    angle_t deltaangle;
+    fixed_t movelen;
+    fixed_t newlen;
+    //   |
+    // Under icy conditions, if the angle of approach to the wall     //   V
+    // is more than 45 degrees, then you'll bounce and lose half
+    // your momentum. If less than 45 degrees, you'll slide along
+    // the wall. 45 is arbitrary and is believable.
 
-  // Check for the special cases of horz or vert walls.
+    // Check for the special cases of horz or vert walls.
 
-  /* killough 10/98: only bounce if hit hard (prevents wobbling)
+    /* killough 10/98: only bounce if hit hard (prevents wobbling)
    * cph - DEMOSYNC - should only affect players in Boom demos? */
 
-
-    icyfloor =
-    P_AproxDistance(_g->tmxmove, _g->tmymove) > 4*FRACUNIT &&
-    _g->slidemo->z <= _g->slidemo->floorz &&
-    P_GetFriction(_g->slidemo, NULL) > ORIG_FRICTION;
-
-
-
-  if (ld->slopetype == ST_HORIZONTAL)
+    if (ld->slopetype == ST_HORIZONTAL)
     {
-    if (icyfloor && (D_abs(_g->tmymove) > D_abs(_g->tmxmove)))
-      {
-      _g->tmxmove /= 2; // absorb half the momentum
-      _g->tmymove = -_g->tmymove/2;
-      S_StartSound(_g->slidemo,sfx_oof); // oooff!
-      }
-    else
-      _g->tmymove = 0; // no more movement in the Y direction
-    return;
+        _g->tmymove = 0; // no more movement in the Y direction
+        return;
     }
 
-  if (ld->slopetype == ST_VERTICAL)
-    {
-    if (icyfloor && (D_abs(_g->tmxmove) > D_abs(_g->tmymove)))
-      {
-      _g->tmxmove = -_g->tmxmove/2; // absorb half the momentum
-      _g->tmymove /= 2;
-      S_StartSound(_g->slidemo,sfx_oof); // oooff!                      //   ^
-      }                                                             //   |
-    else                                                            // phares
-      _g->tmxmove = 0; // no more movement in the X direction
-    return;
+    if (ld->slopetype == ST_VERTICAL)
+    {                                                          // phares
+        _g->tmxmove = 0; // no more movement in the X direction
+        return;
     }
 
-  // The wall is angled. Bounce if the angle of approach is         // phares
-  // less than 45 degrees.                                          // phares
+    // The wall is angled. Bounce if the angle of approach is         // phares
+    // less than 45 degrees.                                          // phares
 
-  side = P_PointOnLineSide (_g->slidemo->x, _g->slidemo->y, ld);
+    side = P_PointOnLineSide (_g->slidemo->x, _g->slidemo->y, ld);
 
-  lineangle = R_PointToAngle2 (0,0, ld->dx, ld->dy);
-  if (side == 1)
-    lineangle += ANG180;
-  moveangle = R_PointToAngle2 (0,0, _g->tmxmove, _g->tmymove);
+    lineangle = R_PointToAngle2 (0,0, ld->dx, ld->dy);
+    if (side == 1)
+        lineangle += ANG180;
 
-  // killough 3/2/98:
-  // The moveangle+=10 breaks v1.9 demo compatibility in
-  // some demos, so it needs demo_compatibility switch.
+    moveangle = R_PointToAngle2 (0,0, _g->tmxmove, _g->tmymove);
+
+    // killough 3/2/98:
+    // The moveangle+=10 breaks v1.9 demo compatibility in
+    // some demos, so it needs demo_compatibility switch.
 
     moveangle += 10; // prevents sudden path reversal due to        // phares
-                     // rounding error                              //   |
-  deltaangle = moveangle-lineangle;                                 //   V
-  movelen = P_AproxDistance (_g->tmxmove, _g->tmymove);
-  if (icyfloor && (deltaangle > ANG45) && (deltaangle < ANG90+ANG45))
-    {
-    moveangle = lineangle - deltaangle;
-    movelen /= 2; // absorb
-    S_StartSound(_g->slidemo,sfx_oof); // oooff!
-    moveangle >>= ANGLETOFINESHIFT;
-    _g->tmxmove = FixedMul (movelen, finecosine[moveangle]);
-    _g->tmymove = FixedMul (movelen, finesine[moveangle]);
-    }                                                               //   ^
-  else                                                              //   |
-    {                                                               // phares
+    // rounding error                              //   |
+    deltaangle = moveangle-lineangle;                                 //   V
+    movelen = P_AproxDistance (_g->tmxmove, _g->tmymove);
+    //   |
+    // phares
     if (deltaangle > ANG180)
-      deltaangle += ANG180;
+        deltaangle += ANG180;
 
     //  I_Error ("SlideLine: ang>ANG180");
 
@@ -1007,8 +921,8 @@ void P_HitSlideLine (const line_t* ld)
     newlen = FixedMul (movelen, finecosine[deltaangle]);
     _g->tmxmove = FixedMul (newlen, finecosine[lineangle]);
     _g->tmymove = FixedMul (newlen, finesine[lineangle]);
-    }                                                               // phares
-  }
+    // phares
+}
 
 
 //

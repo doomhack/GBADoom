@@ -111,8 +111,6 @@ void P_AddThinker(thinker_t* thinker)
   thinker->prev = thinkercap.prev;
   thinkercap.prev = thinker;
 
-  thinker->references = 0;    // killough 11/98: init reference counter to 0
-
   // killough 8/29/98: set sentinel pointers, and then add to appropriate list
   thinker->cnext = thinker->cprev = NULL;
   P_UpdateThinker(thinker);
@@ -138,23 +136,17 @@ void P_AddThinker(thinker_t* thinker)
 
 void P_RemoveThinkerDelayed(thinker_t *thinker)
 {
-  if (!thinker->references)
-    {
-      { /* Remove from main thinker list */
-        thinker_t *next = thinker->next;
-        /* Note that currentthinker is guaranteed to point to us,
+
+    thinker_t *next = thinker->next;
+    /* Note that currentthinker is guaranteed to point to us,
          * and since we're freeing our memory, we had better change that. So
          * point it to thinker->prev, so the iterator will correctly move on to
          * thinker->prev->next = thinker->next */
-        (next->prev = _g->currentthinker = thinker->prev)->next = next;
-      }
-      {
-        /* Remove from current thinker class list */
-        thinker_t *th = thinker->cnext;
-        (th->cprev = thinker->cprev)->cnext = th;
-      }
-      Z_Free(thinker);
-    }
+    (next->prev = _g->currentthinker = thinker->prev)->next = next;
+    /* Remove from current thinker class list */
+    thinker_t *th = thinker->cnext;
+    (th->cprev = thinker->cprev)->cnext = th;
+    Z_Free(thinker);
 }
 
 //
@@ -202,10 +194,7 @@ thinker_t* P_NextThinker(thinker_t* th, th_class cl)
 
 void P_SetTarget(mobj_t **mop, mobj_t *targ)
 {
-  if (*mop)             // If there was a target already, decrease its refcount
-    (*mop)->thinker.references--;
-  if ((*mop = targ))    // Set new target and if non-NULL, increase its counter
-    targ->thinker.references++;
+    *mop = targ;    // Set new target and if non-NULL, increase its counter
 }
 
 //
@@ -233,13 +222,18 @@ void P_SetTarget(mobj_t **mop, mobj_t *targ)
 
 static void P_RunThinkers (void)
 {
-  for (_g->currentthinker = thinkercap.next;
-       _g->currentthinker != &thinkercap;
-       _g->currentthinker = _g->currentthinker->next)
-  {
-    if (_g->currentthinker->function)
-      _g->currentthinker->function(_g->currentthinker);
-  }
+    int tcount = 0;
+
+    for (_g->currentthinker = thinkercap.next; _g->currentthinker != &thinkercap; _g->currentthinker = _g->currentthinker->next)
+    {
+        if (_g->currentthinker->function)
+        {
+            _g->currentthinker->function(_g->currentthinker);
+            tcount++;
+        }
+    }
+
+    int tx = tcount;
 }
 
 //
