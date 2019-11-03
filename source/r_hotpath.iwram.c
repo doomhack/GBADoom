@@ -1848,7 +1848,6 @@ static void R_StoreWallRange(const int start, const int stop)
     }
 
     _g->linedata[curline->linenum].r_flags |= ML_MAPPED;
-    //LN_RFLAGS(curline->linedef) |= ML_MAPPED;
     //curline->linedef->flags |= ML_MAPPED;
 
 #ifdef RANGECHECK
@@ -1859,9 +1858,10 @@ static void R_StoreWallRange(const int start, const int stop)
     sidedef = &_g->sides[curline->sidenum];
     linedef = &_g->lines[curline->linenum];
 
-    // mark the segment as visible for auto map
-    LN_RFLAGS(linedef) |= ML_MAPPED;
+    linedata_t* linedata = &_g->linedata[linedef->lineno];
 
+    // mark the segment as visible for auto map
+    linedata->r_flags |= ML_MAPPED;
     //linedef->flags |= ML_MAPPED;
 
     // calculate rw_distance for scale calculation
@@ -1963,7 +1963,7 @@ static void R_StoreWallRange(const int start, const int stop)
         ds_p->sprtopclip = ds_p->sprbottomclip = NULL;
         ds_p->silhouette = 0;
 
-        if (LN_RFLAGS(linedef) & RF_CLOSED)
+        if(linedata->r_flags & RF_CLOSED)
         { /* cph - closed 2S line e.g. door */
             // cph - killough's (outdated) comment follows - this deals with both
             // "automap fixes", his and mine
@@ -2188,7 +2188,6 @@ static void R_RecalcLineFlags(void)
 {
     linedata_t* linedata = &_g->linedata[linedef->lineno];
 
-    //LN_RVCOUNT(linedef) = (_g->gametic & 0xffff);
     linedata->r_validcount = (_g->gametic & 0xffff);
 
     /* First decide if the line is closed, normal, or invisible */
@@ -2211,8 +2210,7 @@ static void R_RecalcLineFlags(void)
                     frontsector->ceilingpic!=_g->skyflatnum)
                 )
             )
-        //LN_RFLAGS(linedef) = RF_CLOSED;
-        linedata->r_flags = RF_CLOSED;
+        linedata->r_flags = (RF_CLOSED | (linedata->r_flags & ML_MAPPED));
     else
     {
         // Reject empty lines used for triggers
@@ -2228,11 +2226,9 @@ static void R_RecalcLineFlags(void)
                 || backsector->floorpic != frontsector->floorpic
                 || backsector->lightlevel != frontsector->lightlevel)
         {
-            //LN_RFLAGS(linedef) &= 0xffe0; return;
-            linedata->r_flags &= 0xffe0; return;
+            linedata->r_flags = (linedata->r_flags & ML_MAPPED); return;
         } else
-            //LN_RFLAGS(linedef) = RF_IGNORE;
-            linedata->r_flags = RF_IGNORE;
+            linedata->r_flags = (RF_IGNORE | (linedata->r_flags & ML_MAPPED));
     }
 
     /* cph - I'm too lazy to try and work with offsets in this */
@@ -2246,20 +2242,17 @@ static void R_RecalcLineFlags(void)
         /* Does top texture need tiling */
         if ((c = frontsector->ceilingheight - backsector->ceilingheight) > 0 &&
                 (textureheight[texturetranslation[_g->sides[curline->sidenum].toptexture]] > c))
-            //LN_RFLAGS(linedef) |= RF_TOP_TILE;
             linedata->r_flags |= RF_TOP_TILE;
 
         /* Does bottom texture need tiling */
         if ((c = frontsector->floorheight - backsector->floorheight) > 0 &&
                 (textureheight[texturetranslation[_g->sides[curline->sidenum].bottomtexture]] > c))
-            //LN_RFLAGS(linedef) |= RF_BOT_TILE;
             linedata->r_flags |= RF_BOT_TILE;
     } else {
         int c;
         /* Does middle texture need tiling */
         if ((c = frontsector->ceilingheight - frontsector->floorheight) > 0 &&
                 (textureheight[texturetranslation[_g->sides[curline->sidenum].midtexture]] > c))
-            //LN_RFLAGS(linedef) |= RF_MID_TILE;
             linedata->r_flags |= RF_MID_TILE;
     }
 }
@@ -2381,16 +2374,17 @@ static void R_AddLine (const seg_t *line)
 
     /* cph - roll up linedef properties in flags */
     linedef = &_g->lines[curline->linenum];
+    linedata_t* linedata = &_g->linedata[linedef->lineno];
 
-    if (LN_RVCOUNT(linedef) != (_g->gametic & 0xffff))
+    if (linedata->r_validcount != (_g->gametic & 0xffff))
         R_RecalcLineFlags();
 
-    if (LN_RFLAGS(linedef) & RF_IGNORE)
+    if (linedata->r_flags & RF_IGNORE)
     {
         return;
     }
     else
-        R_ClipWallSegment (x1, x2, LN_RFLAGS(linedef) & RF_CLOSED);
+        R_ClipWallSegment (x1, x2, linedata->r_flags & RF_CLOSED);
 }
 
 //
