@@ -69,8 +69,6 @@ void    P_DelSeclist(msecnode_t*);                          // phares 3/16/98
 void    P_CreateSecNodeList(mobj_t*,fixed_t,fixed_t);       // phares 3/14/98
 boolean Check_Sides(mobj_t *, int, int);                    // phares
 
-void    P_ApplyTorque(mobj_t *mo);                          // killough 9/12/98
-
 /* cphipps 2004/08/30 */
 void	P_MapStart(void);
 void	P_MapEnd(void);

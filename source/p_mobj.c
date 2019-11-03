@@ -533,21 +533,6 @@ void P_MobjThinker (mobj_t* mobj)
         if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
             return;       // killough - mobj was removed
     }
-    else
-    {
-        if (!(mobj->momx | mobj->momy) && !sentient(mobj))
-        {                                  // non-sentient objects at rest
-            // killough 9/12/98: objects fall off ledges if they are hanging off
-            // slightly push off of ledge if hanging more than halfway off
-
-            if (mobj->z > mobj->dropoffz &&      // Only objects contacting dropoff
-                    !(mobj->flags & MF_NOGRAVITY) // Only objects which fall
-                    ) // Not in old demos
-                P_ApplyTorque(mobj);               // Apply torque
-            else
-                mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque
-        }
-    }
 
     // cycle through states,
     // calling action functions at transitions
