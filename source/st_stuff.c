@@ -129,177 +129,117 @@ static int ST_calcPainOffset(void)
 
 static void ST_updateFaceWidget(void)
 {
-  int         i;
-  angle_t     badguyangle;
-  angle_t     diffang;
-  static int  lastattackdown = -1;
-  static int  priority = 0;
-  boolean     doevilgrin;
+    int         i;
+    angle_t     badguyangle;
+    angle_t     diffang;
+    static int  lastattackdown = -1;
+    static int  priority = 0;
+    boolean     doevilgrin;
 
-  if (priority < 10)
+    if (priority < 10)
     {
-      // dead
-      if (!_g->plyr->health)
+        // dead
+        if (!_g->plyr->health)
         {
-          priority = 9;
-          _g->st_faceindex = ST_DEADFACE;
-          _g->st_facecount = 1;
+            priority = 9;
+            _g->st_faceindex = ST_DEADFACE;
+            _g->st_facecount = 1;
         }
     }
 
-  if (priority < 9)
+    if (priority < 9)
     {
-      if (_g->plyr->bonuscount)
+        if (_g->plyr->bonuscount)
         {
-          // picking up bonus
-          doevilgrin = false;
+            // picking up bonus
+            doevilgrin = false;
 
-          for (i=0;i<NUMWEAPONS;i++)
+            for (i=0;i<NUMWEAPONS;i++)
             {
-              if (_g->oldweaponsowned[i] != _g->plyr->weaponowned[i])
+                if (_g->oldweaponsowned[i] != _g->plyr->weaponowned[i])
                 {
-                  doevilgrin = true;
-                  _g->oldweaponsowned[i] = _g->plyr->weaponowned[i];
+                    doevilgrin = true;
+                    _g->oldweaponsowned[i] = _g->plyr->weaponowned[i];
                 }
             }
-          if (doevilgrin)
+            if (doevilgrin)
             {
-              // evil grin if just picked up weapon
-              priority = 8;
-              _g->st_facecount = ST_EVILGRINCOUNT;
-              _g->st_faceindex = ST_calcPainOffset() + ST_EVILGRINOFFSET;
+                // evil grin if just picked up weapon
+                priority = 8;
+                _g->st_facecount = ST_EVILGRINCOUNT;
+                _g->st_faceindex = ST_calcPainOffset() + ST_EVILGRINOFFSET;
             }
         }
 
     }
 
-  if (priority < 8)
+    if (priority < 7)
     {
-      if (_g->plyr->damagecount && _g->plyr->attacker && _g->plyr->attacker != _g->plyr->mo)
+        if (_g->plyr->damagecount)
         {
-          // being attacked
-          priority = 7;
-
-          // haleyjd 10/12/03: classic DOOM problem of missing OUCH face
-          // was due to inversion of this test:
-          // if(plyr->health - st_oldhealth > ST_MUCHPAIN)
-          if(_g->st_oldhealth - _g->plyr->health > ST_MUCHPAIN)
+            // haleyjd 10/12/03: classic DOOM problem of missing OUCH face
+            // was due to inversion of this test:
+            // if(plyr->health - st_oldhealth > ST_MUCHPAIN)
+            if(_g->st_oldhealth - _g->plyr->health > ST_MUCHPAIN)
             {
-              _g->st_facecount = ST_TURNCOUNT;
-              _g->st_faceindex = ST_calcPainOffset() + ST_OUCHOFFSET;
+                priority = 7;
+                _g->st_facecount = ST_TURNCOUNT;
+                _g->st_faceindex = ST_calcPainOffset() + ST_OUCHOFFSET;
             }
-          else
+            else
             {
-              badguyangle = R_PointToAngle2(_g->plyr->mo->x,
-                                            _g->plyr->mo->y,
-                                            _g->plyr->attacker->x,
-                                            _g->plyr->attacker->y);
-
-              if (badguyangle > _g->plyr->mo->angle)
-                {
-                  // whether right or left
-                  diffang = badguyangle - _g->plyr->mo->angle;
-                  i = diffang > ANG180;
-                }
-              else
-                {
-                  // whether left or right
-                  diffang = _g->plyr->mo->angle - badguyangle;
-                  i = diffang <= ANG180;
-                } // confusing, aint it?
-
-
-              _g->st_facecount = ST_TURNCOUNT;
-              _g->st_faceindex = ST_calcPainOffset();
-
-              if (diffang < ANG45)
-                {
-                  // head-on
-                  _g->st_faceindex += ST_RAMPAGEOFFSET;
-                }
-              else if (i)
-                {
-                  // turn face right
-                  _g->st_faceindex += ST_TURNOFFSET;
-                }
-              else
-                {
-                  // turn face left
-                  _g->st_faceindex += ST_TURNOFFSET+1;
-                }
+                priority = 6;
+                _g->st_facecount = ST_TURNCOUNT;
+                _g->st_faceindex = ST_calcPainOffset() + ST_RAMPAGEOFFSET;
             }
+
         }
     }
 
-  if (priority < 7)
+    if (priority < 6)
     {
-      // getting hurt because of your own damn stupidity
-      if (_g->plyr->damagecount)
+        // rapid firing
+        if (_g->plyr->attackdown)
         {
-          // haleyjd 10/12/03: classic DOOM problem of missing OUCH face
-          // was due to inversion of this test:
-          // if(plyr->health - st_oldhealth > ST_MUCHPAIN)
-          if(_g->st_oldhealth - _g->plyr->health > ST_MUCHPAIN)
+            if (lastattackdown==-1)
+                lastattackdown = ST_RAMPAGEDELAY;
+            else if (!--lastattackdown)
             {
-              priority = 7;
-              _g->st_facecount = ST_TURNCOUNT;
-              _g->st_faceindex = ST_calcPainOffset() + ST_OUCHOFFSET;
+                priority = 5;
+                _g->st_faceindex = ST_calcPainOffset() + ST_RAMPAGEOFFSET;
+                _g->st_facecount = 1;
+                lastattackdown = 1;
             }
-          else
-            {
-              priority = 6;
-              _g->st_facecount = ST_TURNCOUNT;
-              _g->st_faceindex = ST_calcPainOffset() + ST_RAMPAGEOFFSET;
-            }
-
         }
+        else
+            lastattackdown = -1;
 
     }
 
-  if (priority < 6)
+    if (priority < 5)
     {
-      // rapid firing
-      if (_g->plyr->attackdown)
+        // invulnerability
+        if ((_g->plyr->cheats & CF_GODMODE)
+                || _g->plyr->powers[pw_invulnerability])
         {
-          if (lastattackdown==-1)
-            lastattackdown = ST_RAMPAGEDELAY;
-          else if (!--lastattackdown)
-            {
-              priority = 5;
-              _g->st_faceindex = ST_calcPainOffset() + ST_RAMPAGEOFFSET;
-              _g->st_facecount = 1;
-              lastattackdown = 1;
-            }
-        }
-      else
-        lastattackdown = -1;
+            priority = 4;
 
-    }
-
-  if (priority < 5)
-    {
-      // invulnerability
-      if ((_g->plyr->cheats & CF_GODMODE)
-          || _g->plyr->powers[pw_invulnerability])
-        {
-          priority = 4;
-
-          _g->st_faceindex = ST_GODFACE;
-          _g->st_facecount = 1;
+            _g->st_faceindex = ST_GODFACE;
+            _g->st_facecount = 1;
 
         }
 
     }
 
-  // look left or look right if the facecount has timed out
-  if (!_g->st_facecount)
+    // look left or look right if the facecount has timed out
+    if (!_g->st_facecount)
     {
-      _g->st_faceindex = ST_calcPainOffset() + (_g->st_randomnumber % 3);
-      _g->st_facecount = ST_STRAIGHTFACECOUNT;
-      priority = 0;
+        _g->st_faceindex = ST_calcPainOffset() + (_g->st_randomnumber % 3);
+        _g->st_facecount = ST_STRAIGHTFACECOUNT;
+        priority = 0;
     }
 
-  _g->st_facecount--;
+    _g->st_facecount--;
 
 }
 
