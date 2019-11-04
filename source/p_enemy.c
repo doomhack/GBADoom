@@ -645,15 +645,15 @@ static void P_NewChaseDir(mobj_t *actor)
 
 static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
 {
-  if (!allaround)
+    if (!allaround)
     {
-      angle_t an = R_PointToAngle2(actor->x, actor->y,
-           mo->x, mo->y) - actor->angle;
-      if (an > ANG90 && an < ANG270 &&
-    P_AproxDistance(mo->x-actor->x, mo->y-actor->y) > MELEERANGE)
-  return false;
+        angle_t an = R_PointToAngle2(actor->x, actor->y,
+                                     mo->x, mo->y) - actor->angle;
+        if (an > ANG90 && an < ANG270 &&
+                P_AproxDistance(mo->x-actor->x, mo->y-actor->y) > MELEERANGE)
+            return false;
     }
-  return P_CheckSight(actor, mo);
+    return P_CheckSight(actor, mo);
 }
 
 //
@@ -713,7 +713,6 @@ static boolean PIT_FindTarget(mobj_t *mo)
 static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 {
     player_t *player;
-    int stop, stopc, c;
 
     if (actor->flags & MF_FRIEND)
     {  // killough 9/9/98: friendly monsters go about players differently
@@ -931,52 +930,75 @@ void A_KeenDie(mobj_t* mo)
 
 void A_Look(mobj_t *actor)
 {
-  mobj_t *targ = actor->subsector->sector->soundtarget;
-  actor->threshold = 0; // any shot will wake up
+    mobj_t *targ = actor->subsector->sector->soundtarget;
+    actor->threshold = 0; // any shot will wake up
 
-  /* killough 7/18/98:
+    /* killough 7/18/98:
    * Friendly monsters go after other monsters first, but
    * also return to player, without attacking them, if they
    * cannot find any targets. A marine's best friend :)
    */
-  actor->pursuecount = 0;
+    actor->pursuecount = 0;
 
-  if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false)) &&
-      !((targ = actor->subsector->sector->soundtarget) &&
-  targ->flags & MF_SHOOTABLE &&
-  (P_SetTarget(&actor->target, targ),
-   !(actor->flags & MF_AMBUSH) || P_CheckSight(actor, targ))) &&
-      (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
-    return;
+    /*
+    if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false))
+            && !((targ = actor->subsector->sector->soundtarget)
+                 && targ->flags & MF_SHOOTABLE
+                 && (P_SetTarget(&actor->target, targ),
+                     !(actor->flags & MF_AMBUSH) || P_CheckSight(actor, targ))) &&
+            (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
+        return;
+        */
 
-  // go into chase state
+    boolean seen = false;
 
-  if (actor->info->seesound)
+    if (targ && (targ->flags & MF_SHOOTABLE) )
     {
-      int sound;
-      switch (actor->info->seesound)
+        actor->target = targ;
+
+        if ( actor->flags & MF_AMBUSH )
+        {
+            if (P_CheckSight (actor, actor->target))
+                seen = true;
+        }
+        else
+            seen = true;
+    }
+
+
+    if ( (!seen) && (!P_LookForPlayers (actor, false)))
+        return;
+
+
+
+    // go into chase state
+
+    if (actor->info->seesound)
+    {
+        int sound;
+        switch (actor->info->seesound)
         {
         case sfx_posit1:
         case sfx_posit2:
         case sfx_posit3:
-          sound = sfx_posit1+P_Random()%3;
-          break;
+            sound = sfx_posit1+P_Random()%3;
+            break;
 
         case sfx_bgsit1:
         case sfx_bgsit2:
-          sound = sfx_bgsit1+P_Random()%2;
-          break;
+            sound = sfx_bgsit1+P_Random()%2;
+            break;
 
         default:
-          sound = actor->info->seesound;
-          break;
+            sound = actor->info->seesound;
+            break;
         }
-      if (actor->type==MT_SPIDER || actor->type == MT_CYBORG)
-        S_StartSound(NULL, sound);          // full volume
-      else
-        S_StartSound(actor, sound);
+        if (actor->type==MT_SPIDER || actor->type == MT_CYBORG)
+            S_StartSound(NULL, sound);          // full volume
+        else
+            S_StartSound(actor, sound);
     }
-  P_SetMobjState(actor, actor->info->seestate);
+    P_SetMobjState(actor, actor->info->seestate);
 }
 
 //
@@ -987,121 +1009,122 @@ void A_Look(mobj_t *actor)
 
 void A_Chase(mobj_t *actor)
 {
-  if (actor->reactiontime)
-    actor->reactiontime--;
+    if (actor->reactiontime)
+        actor->reactiontime--;
 
-  if (actor->threshold) { /* modify target threshold */
-    if (!actor->target || actor->target->health <= 0)
-      actor->threshold = 0;
-    else
-      actor->threshold--;
-  }
+    if (actor->threshold)
+    { /* modify target threshold */
+        if (!actor->target || actor->target->health <= 0)
+            actor->threshold = 0;
+        else
+            actor->threshold--;
+    }
 
-  /* turn towards movement direction if not there yet
+    /* turn towards movement direction if not there yet
    * killough 9/7/98: keep facing towards target if strafing or backing out
    */
 
-  if (actor->strafecount)
-    A_FaceTarget(actor);
-  else if (actor->movedir < 8)
+    if (actor->strafecount)
+        A_FaceTarget(actor);
+    else if (actor->movedir < 8)
     {
-      int delta = (actor->angle &= (7<<29)) - (actor->movedir << 29);
-      if (delta > 0)
-        actor->angle -= ANG90/2;
-      else
-        if (delta < 0)
-          actor->angle += ANG90/2;
+        int delta = (actor->angle &= (7<<29)) - (actor->movedir << 29);
+        if (delta > 0)
+            actor->angle -= ANG90/2;
+        else
+            if (delta < 0)
+                actor->angle += ANG90/2;
     }
 
-  if (!actor->target || !(actor->target->flags&MF_SHOOTABLE))
+    if (!actor->target || !(actor->target->flags&MF_SHOOTABLE))
     {
-      if (!P_LookForTargets(actor,true)) // look for a new target
-  P_SetMobjState(actor, actor->info->spawnstate); // no new target
-      return;
+        if (!P_LookForTargets(actor,true)) // look for a new target
+            P_SetMobjState(actor, actor->info->spawnstate); // no new target
+        return;
     }
 
-  // do not attack twice in a row
-  if (actor->flags & MF_JUSTATTACKED)
+    // do not attack twice in a row
+    if (actor->flags & MF_JUSTATTACKED)
     {
-      actor->flags &= ~MF_JUSTATTACKED;
-      if (_g->gameskill != sk_nightmare)
-        P_NewChaseDir(actor);
-      return;
+        actor->flags &= ~MF_JUSTATTACKED;
+        if (_g->gameskill != sk_nightmare)
+            P_NewChaseDir(actor);
+        return;
     }
 
-  // check for melee attack
-  if (actor->info->meleestate && P_CheckMeleeRange(actor))
+    // check for melee attack
+    if (actor->info->meleestate && P_CheckMeleeRange(actor))
     {
-      if (actor->info->attacksound)
-        S_StartSound(actor, actor->info->attacksound);
-      P_SetMobjState(actor, actor->info->meleestate);
-      /* killough 8/98: remember an attack
+        if (actor->info->attacksound)
+            S_StartSound(actor, actor->info->attacksound);
+        P_SetMobjState(actor, actor->info->meleestate);
+        /* killough 8/98: remember an attack
       * cph - DEMOSYNC? */
-      if (!actor->info->missilestate)
-  actor->flags |= MF_JUSTHIT;
-      return;
+        if (!actor->info->missilestate)
+            actor->flags |= MF_JUSTHIT;
+        return;
     }
 
-  // check for missile attack
-  if (actor->info->missilestate)
-    if (!(_g->gameskill < sk_nightmare && actor->movecount))
-      if (P_CheckMissileRange(actor))
-        {
-          P_SetMobjState(actor, actor->info->missilestate);
-          actor->flags |= MF_JUSTATTACKED;
-          return;
-        }
+    // check for missile attack
+    if (actor->info->missilestate)
+        if (!(_g->gameskill < sk_nightmare && actor->movecount))
+            if (P_CheckMissileRange(actor))
+            {
+                P_SetMobjState(actor, actor->info->missilestate);
+                actor->flags |= MF_JUSTATTACKED;
+                return;
+            }
 
-  if (!actor->threshold)
-  {
-    if (P_HelpFriend(actor))
-      return;      /* killough 9/8/98: Help friends in need */
-    /* Look for new targets if current one is bad or is out of view */
-    else if (actor->pursuecount)
-      actor->pursuecount--;
-    else {
-  /* Our pursuit time has expired. We're going to think about
+    if (!actor->threshold)
+    {
+        if (P_HelpFriend(actor))
+            return;      /* killough 9/8/98: Help friends in need */
+        /* Look for new targets if current one is bad or is out of view */
+        else if (actor->pursuecount)
+            actor->pursuecount--;
+        else {
+            /* Our pursuit time has expired. We're going to think about
    * changing targets */
-  actor->pursuecount = BASETHRESHOLD;
+            actor->pursuecount = BASETHRESHOLD;
 
-  /* Unless (we have a live target
+            /* Unless (we have a live target
    *         and it's not friendly
    *         and we can see it)
    *  try to find a new one; return if sucessful */
 
-  if (!(actor->target && actor->target->health > 0 &&
-        (
-         (((actor->target->flags ^ actor->flags) & MF_FRIEND ||
-     (!(actor->flags & MF_FRIEND))) &&
-    P_CheckSight(actor, actor->target))))
-      && P_LookForTargets(actor, true))
-        return;
+            if (!(actor->target && actor->target->health > 0 &&
+                  (
+                      (((actor->target->flags ^ actor->flags) & MF_FRIEND ||
+                        (!(actor->flags & MF_FRIEND))) &&
+                       P_CheckSight(actor, actor->target))))
+                    && P_LookForTargets(actor, true))
+                return;
 
-  /* (Current target was good, or no new target was found.)
+            /* (Current target was good, or no new target was found.)
    *
    * If monster is a missile-less friend, give up pursuit and
    * return to player, if no attacks have occurred recently.
    */
 
-  if (!actor->info->missilestate && actor->flags & MF_FRIEND) {
-    if (actor->flags & MF_JUSTHIT)          /* if recent action, */
-      actor->flags &= ~MF_JUSTHIT;          /* keep fighting */
-    else if (P_LookForPlayers(actor, true)) /* else return to player */
-      return;
-  }
+            if (!actor->info->missilestate && actor->flags & MF_FRIEND) {
+                if (actor->flags & MF_JUSTHIT)          /* if recent action, */
+                    actor->flags &= ~MF_JUSTHIT;          /* keep fighting */
+                else if (P_LookForPlayers(actor, true)) /* else return to player */
+                    return;
+            }
+        }
     }
-  }
 
-  if (actor->strafecount)
-    actor->strafecount--;
+    if (actor->strafecount)
+        actor->strafecount--;
 
-  // chase towards player
-  if (--actor->movecount<0 || !P_SmartMove(actor))
-    P_NewChaseDir(actor);
+    // chase towards player
+    if (--actor->movecount<0 || !P_SmartMove(actor))
+        P_NewChaseDir(actor);
 
-  // make active sound
-  if (actor->info->activesound && P_Random()<3)
-    S_StartSound(actor, actor->info->activesound);
+    // make active sound
+    if (actor->info->activesound && P_Random()<3)
+        S_StartSound(actor, actor->info->activesound);
 }
 
 //

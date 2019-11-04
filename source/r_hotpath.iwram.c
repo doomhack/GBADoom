@@ -209,7 +209,7 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 //  tantoangle[] table.
 
 //
-static PUREFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
+static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
 {
     x -= viewx;
     y -= viewy;
@@ -440,7 +440,7 @@ static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvar
 //  mfloorclip and mceilingclip should also be set.
 //
 // CPhipps - new wad lump handling, *'s to const*'s
-static void R_DrawVisSprite(vissprite_t *vis)
+static void R_DrawVisSprite(const vissprite_t *vis)
 {
     int      texturecolumn;
     fixed_t  frac;
@@ -656,7 +656,7 @@ static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 // R_DrawSprite
 //
 
-static void R_DrawSprite (vissprite_t* spr)
+static void R_DrawSprite (const vissprite_t* spr)
 {
     drawseg_t *ds;
     int* clipbot = floorclip;
@@ -2269,7 +2269,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
     {
         if (solidcol[first])
         {
-            if (!(p = ByteFind(solidcol+first, 0, last-first)))
+            if (!(p = memchr(solidcol+first, 0, last-first)))
                 return; // All solid
 
             first = p - solidcol;
@@ -2277,7 +2277,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
         else
         {
             int to;
-            if (!(p = ByteFind(solidcol+first, 1, last-first)))
+            if (!(p = memchr(solidcol+first, 1, last-first)))
                 to = last;
             else
                 to = p - solidcol;
@@ -2286,8 +2286,8 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
 
             if (solid)
             {
-                //memset(solidcol+first,1,to-first);
-                ByteSet(solidcol+first, 1, to-first);
+                memset(solidcol+first,1,to-first);
+                //ByteSet(solidcol+first, 1, to-first);
             }
 
             first = to;
