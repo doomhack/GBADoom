@@ -153,7 +153,6 @@ fixed_t PUREFUNC P_InterceptVector2(const divline_t *v2, const divline_t *v1)
 
 fixed_t PUREFUNC P_InterceptVector(const divline_t *v2, const divline_t *v1)
 {
-
     /* cph - This was introduced at prboom_4_compatibility - no precision/overflow problems */
     int_64_t den = (int_64_t)v1->dy * v2->dx - (int_64_t)v1->dx * v2->dy;
     den >>= 16;
@@ -444,7 +443,7 @@ boolean PIT_AddLineIntercepts(const line_t *ld)
 
   // hit the line
   P_MakeDivline(ld, &dl);
-  frac = P_InterceptVector(&_g->trace, &dl);
+  frac = P_InterceptVector2(&_g->trace, &dl);
 
   if (frac < 0)
     return true;        // behind source
@@ -499,7 +498,7 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
   dl.dx = x2-x1;
   dl.dy = y2-y1;
 
-  frac = P_InterceptVector (&_g->trace, &dl);
+  frac = P_InterceptVector2(&_g->trace, &dl);
 
   if (frac < 0)
     return true;                // behind source

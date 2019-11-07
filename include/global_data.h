@@ -564,9 +564,6 @@ int leveltime; // tics in game play for par
 // a special class of thinkers, to allow more efficient searches.
 thinker_t thinkerclasscap[th_all+1];
 
-thinker_t *currentthinker;
-
-
 //******************************************************************************
 //p_user.c
 //******************************************************************************

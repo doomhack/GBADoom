@@ -2269,7 +2269,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
     {
         if (solidcol[first])
         {
-            if (!(p = memchr(solidcol+first, 0, last-first)))
+            if (!(p = ByteFind(solidcol+first, 0, last-first)))
                 return; // All solid
 
             first = p - solidcol;
@@ -2277,7 +2277,7 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
         else
         {
             int to;
-            if (!(p = memchr(solidcol+first, 1, last-first)))
+            if (!(p = ByteFind(solidcol+first, 1, last-first)))
                 to = last;
             else
                 to = p - solidcol;
@@ -2286,8 +2286,8 @@ static void R_ClipWallSegment(int first, int last, boolean solid)
 
             if (solid)
             {
-                memset(solidcol+first,1,to-first);
-                //ByteSet(solidcol+first, 1, to-first);
+                //memset(solidcol+first,1,to-first);
+                ByteSet(solidcol+first, 1, to-first);
             }
 
             first = to;

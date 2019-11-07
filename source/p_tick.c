@@ -142,7 +142,7 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
          * and since we're freeing our memory, we had better change that. So
          * point it to thinker->prev, so the iterator will correctly move on to
          * thinker->prev->next = thinker->next */
-    (next->prev = _g->currentthinker = thinker->prev)->next = next;
+    (next->prev = thinker->prev)->next = next;
     /* Remove from current thinker class list */
     thinker_t *th = thinker->cnext;
     (th->cprev = thinker->cprev)->cnext = th;
@@ -222,18 +222,17 @@ void P_SetTarget(mobj_t **mop, mobj_t *targ)
 
 static void P_RunThinkers (void)
 {
-    int tcount = 0;
+    thinker_t* th = thinkercap.next;
+    thinker_t* th_end = &thinkercap;
 
-    for (_g->currentthinker = thinkercap.next; _g->currentthinker != &thinkercap; _g->currentthinker = _g->currentthinker->next)
+    while(th != th_end)
     {
-        if (_g->currentthinker->function)
-        {
-            _g->currentthinker->function(_g->currentthinker);
-            tcount++;
-        }
-    }
+        thinker_t* th_next = th->next;
+        if(th->function)
+            th->function(th);
 
-    int tx = tcount;
+        th = th_next;
+    }
 }
 
 //
@@ -242,8 +241,6 @@ static void P_RunThinkers (void)
 
 void P_Ticker (void)
 {
-  int i;
-
   /* pause if in menu and at least one tic has been run
    *
    * killough 9/29/98: note that this ties in with basetic,
@@ -253,14 +250,12 @@ void P_Ticker (void)
    * All of this complicated mess is used to preserve demo sync.
    */
 
-  if (_g->paused || (_g->menuactive && !_g->demoplayback &&
-     _g->player.viewz != 1))
+  if (_g->paused || (_g->menuactive && !_g->demoplayback && _g->player.viewz != 1))
     return;
 
   P_MapStart();
                // not if this is an intermission screen
   if(_g->gamestate==GS_LEVEL)
-
     if (_g->playeringame)
       P_PlayerThink(&_g->player);
 
