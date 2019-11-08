@@ -118,10 +118,6 @@ static void P_XYMovement (mobj_t* mo)
     player_t *player;
     fixed_t xmove, ymove;
 
-    //e6y
-    fixed_t   oldx,oldy; // phares 9/10/98: reducing bobbing/momentum on ice
-
-
     if (!(mo->momx | mo->momy)) // Any momentum?
     {
         if (mo->flags & MF_SKULLFLY)
@@ -151,10 +147,6 @@ static void P_XYMovement (mobj_t* mo)
 
     xmove = mo->momx;
     ymove = mo->momy;
-
-    oldx = mo->x; // phares 9/10/98: new code to reduce bobbing/momentum
-    oldy = mo->y; // when on ice & up against wall. These will be compared
-    // to your x,y values later to see if you were able to move
 
     do
     {
@@ -192,10 +184,11 @@ static void P_XYMovement (mobj_t* mo)
                 if (mo->flags & MF_MISSILE)
                 {
                     // explode a missile
-                    if (_g->ceilingline &&
-                            LN_BACKSECTOR(_g->ceilingline) &&
-                            LN_BACKSECTOR(_g->ceilingline)->ceilingpic == _g->skyflatnum)
-                        if (mo->z > LN_BACKSECTOR(_g->ceilingline)->ceilingheight)
+                    const sector_t* ceilingBackSector = LN_BACKSECTOR(_g->ceilingline);
+
+                    if (_g->ceilingline && ceilingBackSector && ceilingBackSector->ceilingpic == _g->skyflatnum)
+                    {
+                        if (mo->z > ceilingBackSector->ceilingheight)
                         {
                             // Hack to prevent missiles exploding
                             // against the sky.
@@ -204,6 +197,8 @@ static void P_XYMovement (mobj_t* mo)
                             P_RemoveMobj (mo);
                             return;
                         }
+                    }
+
                     P_ExplodeMissile (mo);
                 }
                 else // whatever else it is, it is now standing still in (x,y)
