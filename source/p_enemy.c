@@ -645,12 +645,16 @@ static void P_NewChaseDir(mobj_t *actor)
 
 static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
 {
+    fixed_t dist = P_AproxDistance(mo->x-actor->x, mo->y-actor->y);
+
+    if(dist > LOOKRANGE)
+        return false;
+
     if (!allaround)
     {
-        angle_t an = R_PointToAngle2(actor->x, actor->y,
-                                     mo->x, mo->y) - actor->angle;
-        if (an > ANG90 && an < ANG270 &&
-                P_AproxDistance(mo->x-actor->x, mo->y-actor->y) > MELEERANGE)
+        angle_t an = R_PointToAngle2(actor->x, actor->y, mo->x, mo->y) - actor->angle;
+
+        if (an > ANG90 && an < ANG270 && dist > MELEERANGE)
             return false;
     }
     return P_CheckSight(actor, mo);
