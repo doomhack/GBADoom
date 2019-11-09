@@ -184,18 +184,22 @@ static void P_XYMovement (mobj_t* mo)
                 if (mo->flags & MF_MISSILE)
                 {
                     // explode a missile
-                    const sector_t* ceilingBackSector = LN_BACKSECTOR(_g->ceilingline);
 
-                    if (_g->ceilingline && ceilingBackSector && ceilingBackSector->ceilingpic == _g->skyflatnum)
+                    if (_g->ceilingline)
                     {
-                        if (mo->z > ceilingBackSector->ceilingheight)
-                        {
-                            // Hack to prevent missiles exploding
-                            // against the sky.
-                            // Does not handle sky floors.
+                        const sector_t* ceilingBackSector = LN_BACKSECTOR(_g->ceilingline);
 
-                            P_RemoveMobj (mo);
-                            return;
+                        if(ceilingBackSector && ceilingBackSector->ceilingpic == _g->skyflatnum)
+                        {
+                            if (mo->z > ceilingBackSector->ceilingheight)
+                            {
+                                // Hack to prevent missiles exploding
+                                // against the sky.
+                                // Does not handle sky floors.
+
+                                P_RemoveMobj (mo);
+                                return;
+                            }
                         }
                     }
 
