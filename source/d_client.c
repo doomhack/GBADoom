@@ -81,7 +81,7 @@ void D_BuildNewTiccmds(void)
     while (newtics--)
     {
         I_StartTic();
-        if (_g->maketic - _g->gametic > 6)
+        if (_g->maketic - _g->gametic > 3)
             break;
 
         G_BuildTiccmd(&_g->localcmds[0]);

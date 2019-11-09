@@ -1415,10 +1415,6 @@ typedef enum {
   MT_PUSH,    /* controls push source - phares */
   MT_PULL,    /* controls pull source - phares 3/20/98 */
 
-#ifdef DOGS
-  MT_DOGS,    /* killough 7/19/98: Marine's best friend */
-#endif
-
   /* proff 11/22/98: Andy Baker's stealth monsters (next 12)
    * cph - moved below the MBF stuff, no need to displace them */
   MT_STEALTHBABY,
