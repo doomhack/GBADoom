@@ -429,7 +429,6 @@ static void P_NightmareRespawn(mobj_t* mobj)
     fixed_t      z;
     subsector_t* ss;
     mobj_t*      mo;
-    mapthing_t*  mthing;
 
     /* haleyjd: stupid nightmare respawning bug fix
    *
@@ -491,11 +490,7 @@ static void P_NightmareRespawn(mobj_t* mobj)
     // inherit attributes from deceased one
 
     mo = P_SpawnMobj (x,y,z, mobj->type);
-    //mo->spawnpoint = mobj->spawnpoint;
-    mo->angle = ANG45 * (mthing->angle/45);
-
-    if (mthing->options & MTF_AMBUSH)
-        mo->flags |= MF_AMBUSH;
+    mo->angle = mobj->angle;
 
     /* killough 11/98: transfer friendliness from deceased */
     mo->flags = (mo->flags & ~MF_FRIEND) | (mobj->flags & MF_FRIEND);
