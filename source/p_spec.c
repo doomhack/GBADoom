@@ -2247,57 +2247,49 @@ void P_UpdateSpecials (void)
     // Animate flats and textures globally
     for (anim = _g->anims ; anim < _g->lastanim ; anim++)
     {
-        if(anim->istexture)
+        for(i = anim->basepic; i<anim->basepic+anim->numpics; i++)
         {
-            if(textures[anim->basepic] != NULL)
-            {
-                for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
-                {
-                    pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
-                    texturetranslation[i] = pic;
-                }
-            }
-        }
-        else
-        {
-            for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
-            {
-                pic = anim->basepic + ( (_g->leveltime/anim->speed + i)%anim->numpics );
+            pic = anim->basepic + ((_g->leveltime / anim->speed + i) % anim->numpics);
+
+            if(anim->istexture)
+                texturetranslation[i] = pic;
+            else
                 flattranslation[i] = pic;
-            }
         }
     }
 
     // Check buttons (retriggerable switches) and change texture on timeout
     for (i = 0; i < MAXBUTTONS; i++)
+    {
         if (_g->buttonlist[i].btimer)
         {
             _g->buttonlist[i].btimer--;
+
             if (!_g->buttonlist[i].btimer)
             {
                 switch(_g->buttonlist[i].where)
                 {
-                case top:
-                    _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
-                            _g->buttonlist[i].btexture;
-                    break;
+                    case top:
+                        _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
+                                _g->buttonlist[i].btexture;
+                        break;
 
-                case middle:
-                    _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
-                            _g->buttonlist[i].btexture;
-                    break;
+                    case middle:
+                        _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
+                                _g->buttonlist[i].btexture;
+                        break;
 
-                case bottom:
-                    _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
-                            _g->buttonlist[i].btexture;
-                    break;
+                    case bottom:
+                        _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
+                                _g->buttonlist[i].btexture;
+                        break;
                 }
-                {
-                    S_StartSound2(_g->buttonlist[i].soundorg, sfx_swtchn);
-                }
+
+                S_StartSound2(_g->buttonlist[i].soundorg, sfx_swtchn);
                 memset(&_g->buttonlist[i],0,sizeof(button_t));
             }
         }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
