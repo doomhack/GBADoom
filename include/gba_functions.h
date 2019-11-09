@@ -111,15 +111,15 @@ inline static void ByteCopy(byte* dest, const byte* src, unsigned int count)
     do
     {
         *dest++ = *src++;
-    } while(count--);
+    } while(--count);
 }
 
 inline static void ByteSet(byte* dest, byte val, unsigned int count)
 {
-    while(count--)
+    do
     {
         *dest++ = val;
-    }
+    } while(--count);
 }
 
 inline static void* ByteFind(byte* mem, byte val, unsigned int count)
@@ -130,7 +130,7 @@ inline static void* ByteFind(byte* mem, byte val, unsigned int count)
             return mem;
 
         mem++;
-    } while(count--);
+    } while(--count);
 
     return NULL;
 }
