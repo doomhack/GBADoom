@@ -2249,7 +2249,8 @@ void P_UpdateSpecials (void)
     {
         for(i = anim->basepic; i<anim->basepic+anim->numpics; i++)
         {
-            pic = anim->basepic + ((_g->leveltime / anim->speed + i) % anim->numpics);
+            //pic = anim->basepic + ((_g->leveltime / anim->speed + i) % anim->numpics);
+            pic = anim->basepic + ((_g->leveltime / 8 + i) % anim->numpics);
 
             if(anim->istexture)
                 texturetranslation[i] = pic;
