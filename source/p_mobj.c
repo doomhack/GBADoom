@@ -502,6 +502,24 @@ static void P_NightmareRespawn(mobj_t* mobj)
     P_RemoveMobj (mobj);
 }
 
+//Thinker function for stuff that doesn't need to do anything
+//interesting.
+//Just cycles through the states. Allows sprite animation to work.
+void P_MobjBrainlessThinker(mobj_t* mobj)
+{
+    // cycle through states,
+    // calling action functions at transitions
+
+    if (mobj->tics != -1)
+    {
+        mobj->tics--;
+
+        // you can cycle through multiple states in a tic
+
+        if (!mobj->tics)
+            P_SetMobjState (mobj, mobj->state->nextstate);
+    }
+}
 
 //
 // P_MobjThinker
@@ -569,6 +587,20 @@ void P_MobjThinker (mobj_t* mobj)
 }
 
 
+static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)
+{
+    //Full thinking ability.
+    if(type < MT_MISC0)
+        return P_MobjThinker;
+
+    //Just state cycles.
+    if(mobj->tics != -1)
+        return P_MobjBrainlessThinker;
+
+    //No thinking at all.
+    return NULL;
+}
+
 //
 // P_SpawnMobj
 //
@@ -619,7 +651,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
     mobj->ceilingz - mobj->height : z;
 
-  mobj->thinker.function = P_MobjThinker;
+  mobj->thinker.function = P_ThinkerFunctionForType(type, mobj);
 
   mobj->target = mobj->tracer = mobj->lastenemy = NULL;
   P_AddThinker (&mobj->thinker);

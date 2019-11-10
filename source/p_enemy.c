@@ -718,6 +718,7 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 {
     player_t *player;
 
+    /*
     if (actor->flags & MF_FRIEND)
     {  // killough 9/9/98: friendly monsters go about players differently
         int anyone;
@@ -743,7 +744,7 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
         return false;
     }
-
+    */
 
     if(_g->playeringame)
     {
@@ -944,16 +945,6 @@ void A_Look(mobj_t *actor)
    */
     actor->pursuecount = 0;
 
-    /*
-    if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false))
-            && !((targ = actor->subsector->sector->soundtarget)
-                 && targ->flags & MF_SHOOTABLE
-                 && (P_SetTarget(&actor->target, targ),
-                     !(actor->flags & MF_AMBUSH) || P_CheckSight(actor, targ))) &&
-            (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
-        return;
-        */
-
     boolean seen = false;
 
     if (targ && (targ->flags & MF_SHOOTABLE) )
@@ -962,8 +953,17 @@ void A_Look(mobj_t *actor)
 
         if ( actor->flags & MF_AMBUSH )
         {
-            if (P_CheckSight (actor, actor->target))
-                seen = true;
+            fixed_t dist = P_AproxDistance(actor->x - targ->x, actor->y - targ->y);
+
+            if(dist <= LOOKRANGE)
+            {
+                if (P_CheckSight (actor, actor->target))
+                    seen = true;
+            }
+            else
+            {
+                return;
+            }
         }
         else
             seen = true;
@@ -1061,6 +1061,7 @@ void A_Chase(mobj_t *actor)
     {
         if (actor->info->attacksound)
             S_StartSound(actor, actor->info->attacksound);
+
         P_SetMobjState(actor, actor->info->meleestate);
         /* killough 8/98: remember an attack
       * cph - DEMOSYNC? */
@@ -1071,13 +1072,18 @@ void A_Chase(mobj_t *actor)
 
     // check for missile attack
     if (actor->info->missilestate)
+    {
         if (!(_g->gameskill < sk_nightmare && actor->movecount))
+        {
             if (P_CheckMissileRange(actor))
             {
                 P_SetMobjState(actor, actor->info->missilestate);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
+        }
+    }
+
 
     if (!actor->threshold)
     {
@@ -1086,15 +1092,16 @@ void A_Chase(mobj_t *actor)
         /* Look for new targets if current one is bad or is out of view */
         else if (actor->pursuecount)
             actor->pursuecount--;
-        else {
+        else
+        {
             /* Our pursuit time has expired. We're going to think about
-   * changing targets */
+             * changing targets */
             actor->pursuecount = BASETHRESHOLD;
 
-            /* Unless (we have a live target
-   *         and it's not friendly
-   *         and we can see it)
-   *  try to find a new one; return if sucessful */
+          /* Unless (we have a live target
+           *         and it's not friendly
+           *         and we can see it)
+           *  try to find a new one; return if sucessful */
 
             if (!(actor->target && actor->target->health > 0 &&
                   (
@@ -1105,12 +1112,13 @@ void A_Chase(mobj_t *actor)
                 return;
 
             /* (Current target was good, or no new target was found.)
-   *
-   * If monster is a missile-less friend, give up pursuit and
-   * return to player, if no attacks have occurred recently.
-   */
+           *
+           * If monster is a missile-less friend, give up pursuit and
+           * return to player, if no attacks have occurred recently.
+           */
 
-            if (!actor->info->missilestate && actor->flags & MF_FRIEND) {
+            if (!actor->info->missilestate && actor->flags & MF_FRIEND)
+            {
                 if (actor->flags & MF_JUSTHIT)          /* if recent action, */
                     actor->flags &= ~MF_JUSTHIT;          /* keep fighting */
                 else if (P_LookForPlayers(actor, true)) /* else return to player */
