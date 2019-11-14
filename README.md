@@ -15,7 +15,7 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 - Monster behaviour etc is all intact. (I.e sound propagation etc)
 
-- Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug along at about 5 FPS. It's running like SNES or 3DO Doom.
+- Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug along at about 5 FPS. It's running around the same as the original GBA Doom1 and Doom2 ports.
 
 - Sound and music support.
 
@@ -34,7 +34,9 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 - ~~Weapon-swith controls not implimented.~~
 
-- General optimisation. We're never going to get a perfect 35FPS but I think there is still another 50-100% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
+- General optimisation. We're never going to get a perfect 35FPS but I think there is still another 25% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
+
+- Sound is a bit glitchy because MaxMod doesn't have a function to tell if a sound is still playing. Channels get re-used sooner than they should. To fix this i'll have to store the lengths of all of the samples. Fun.
 
 - Probably a bunch of other stuff that's borked too...
 
