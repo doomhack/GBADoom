@@ -15,7 +15,7 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 - Monster behaviour etc is all intact. (I.e sound propagation etc)
 
-- Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug along at about 5 FPS. It's running around the same as the original GBA Doom1 and Doom2 ports.
+- Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug along at about 5 FPS. It's running around the same as the original GBA Doom1 and Doom2 ports. Doom1 Episodes 1-3 are all completely playable. Episode 4 chugs.
 
 - Sound and music support.
 
