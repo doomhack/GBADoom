@@ -251,11 +251,6 @@ void W_Init(void)
         I_Error ("W_Init: No files found");
 }
 
-void W_ReleaseAllWads(void)
-{
-    _g->numlumps = 0;
-}
-
 //
 // W_LumpLength
 // Returns the buffer size needed to load the given lump.
@@ -271,9 +266,11 @@ int PUREFUNC W_LumpLength(int lump)
     }
 
     I_Error ("W_LumpLength: %i >= numlumps",lump);
+
+    return 0;
 }
 
-const void* PUREFUNC W_GetLumpPtr(int lump)
+static const void* PUREFUNC W_GetLumpPtr(int lump)
 {
     const filelump_t* l = FindLumpByNum(lump);
 
