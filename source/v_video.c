@@ -86,14 +86,14 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
     I_Error ("V_CopyRect: Bad arguments");
 #endif
 
-  src = _g->screens[srcscrn].data+_g->screens[srcscrn].byte_pitch*srcy+srcx;
-  dest = _g->screens[destscrn].data+_g->screens[destscrn].byte_pitch*desty+destx;
+  src = _g->screens[srcscrn].data+SCREENPITCH*srcy+srcx;
+  dest = _g->screens[destscrn].data+SCREENPITCH*desty+destx;
 
   for ( ; height>0 ; height--)
     {
       memcpy (dest, src, width*2);
-      src += _g->screens[srcscrn].byte_pitch;
-      dest += _g->screens[destscrn].byte_pitch;
+      src += SCREENPITCH;
+      dest += SCREENPITCH;
     }
 }
 
@@ -125,7 +125,7 @@ void V_DrawBackground(const char* flatname, int scrn)
   {
       memcpy (dest, src, width * 2);
       src += width;
-      dest += _g->screens[scrn].byte_pitch;
+      dest += SCREENPITCH;
   }
 
   for (y=0 ; y<SCREENHEIGHT ; y+=64)
@@ -212,7 +212,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     const int   DYI = (200<<16) / SCREENHEIGHT;
 
     byte* byte_topleft = (byte*)_g->screens[scrn].data;
-    const int byte_pitch = (_g->screens[scrn].byte_pitch * 2);
+    const int byte_pitch = (SCREENPITCH * 2);
 
     const int left = ( x * DX ) >> FRACBITS;
     const int right =  ((x + patch->width) *  DX) >> FRACBITS;
@@ -324,11 +324,11 @@ void V_SetPalette(int pal)
 // CPhipps - New function to fill a rectangle with a given colour
 void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 {
-    unsigned short* dest = _g->screens[scrn].data + x + y*_g->screens[scrn].byte_pitch;
+    unsigned short* dest = _g->screens[scrn].data + x + y*SCREENPITCH;
     while (height--)
     {
         memset(dest, colour, width * 2);
-        dest += _g->screens[scrn].byte_pitch;
+        dest += SCREENPITCH;
     }
 }
 
@@ -337,8 +337,8 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 //
 void V_AllocScreen(screeninfo_t *scrn)
 {
-    if ((scrn->byte_pitch * scrn->height) > 0)
-      scrn->data = malloc( (scrn->byte_pitch*scrn->height) * 2);
+    if ((scrn->height) > 0)
+      scrn->data = malloc( (SCREENPITCH*scrn->height) * 2);
 }
 
 //
@@ -351,7 +351,7 @@ void V_AllocScreens(void)
 
 void V_PlotPixel(int scrn, int x, int y, byte color)
 {
-    _g->screens[scrn].data[x+_g->screens[scrn].byte_pitch*y] = (color | (color << 8));
+    _g->screens[scrn].data[x+SCREENPITCH*y] = (color | (color << 8));
 }
 
 //

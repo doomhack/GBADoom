@@ -368,7 +368,7 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     const byte *source = dcvars->source;
     const byte *colormap = dcvars->colormap;
 
-    unsigned short* dest = drawvars.byte_topleft + (dcvars->yl*drawvars.byte_pitch) + dcvars->x;
+    unsigned short* dest = drawvars.byte_topleft + (dcvars->yl*SCREENPITCH) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
     fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
@@ -981,7 +981,7 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
     const byte *source = dsvars->source;
     const byte *colormap = dsvars->colormap;
 
-    unsigned short* dest = drawvars.byte_topleft + dsvars->y*drawvars.byte_pitch + dsvars->x1;
+    unsigned short* dest = drawvars.byte_topleft + dsvars->y*SCREENPITCH + dsvars->x1;
 
     const unsigned int step = ((dsvars->xstep << 10) & 0xffff0000) | ((dsvars->ystep >> 6)  & 0x0000ffff);
 
@@ -2519,7 +2519,7 @@ static boolean R_CheckBBox(const short *bspcoord)
         if (sx1 == sx2)
             return false;
 
-        if (!memchr(solidcol+sx1, 0, sx2-sx1)) return false;
+        if (!ByteFind(solidcol+sx1, 0, sx2-sx1)) return false;
         // All columns it covers are already solidly covered
     }
 

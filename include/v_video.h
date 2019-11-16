@@ -74,9 +74,8 @@ typedef enum
 typedef struct
 {
   unsigned short *data;// pointer to the screen content
-  int width;           // the width of the surface
-  int height;          // the height of the surface, used when mallocing
-  int byte_pitch;      // tha actual width of one line, used when mallocing
+  short width;           // the width of the surface
+  short height;          // the height of the surface, used when mallocing
 } screeninfo_t;
 
 #define NUM_SCREENS 2

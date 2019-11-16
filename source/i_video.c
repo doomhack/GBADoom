@@ -84,11 +84,12 @@ void I_StartFrame (void)
 
 boolean I_StartDisplay(void)
 {
-    _g->screens[0].data = I_GetBackBuffer();
+    unsigned short* backbuffer = I_GetBackBuffer();
+
+    _g->screens[0].data = backbuffer;
 
     // Same with base row offset.
-    drawvars.byte_topleft = _g->screens[0].data;
-    drawvars.byte_pitch = _g->screens[0].byte_pitch;
+    drawvars.byte_topleft = backbuffer;
 
     return true;
 }
@@ -180,12 +181,10 @@ void I_SetRes(void)
     //backbuffer
     _g->screens[0].width = SCREENWIDTH;
     _g->screens[0].height = SCREENHEIGHT;
-    _g->screens[0].byte_pitch = SCREENPITCH;
 
     // statusbar
     _g->screens[1].width = SCREENWIDTH;
     _g->screens[1].height = (ST_SCALED_HEIGHT+1);
-    _g->screens[1].byte_pitch = SCREENPITCH;
 
     lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d", SCREENWIDTH, SCREENHEIGHT);
 }
