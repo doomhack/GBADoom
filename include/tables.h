@@ -95,9 +95,9 @@ extern const fixed_t yslope[160];
 
 extern const fixed_t distscale[120];
 
-extern const fixed_t screenheightarray[120];
+extern const short screenheightarray[120];
 
-extern const fixed_t negonearray[120];
+extern const short negonearray[120];
 
 extern const unsigned char translationtables[1023];
 

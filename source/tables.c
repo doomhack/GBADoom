@@ -2427,7 +2427,7 @@ const fixed_t distscale[120] =
 };
 
 //This seems terribly wasteful.
-const fixed_t screenheightarray[120] =
+const short screenheightarray[120] =
 {
     135,
     135,135,135,135,135,135,135,135,135,135,135,135,135,135,135,135,
@@ -2440,7 +2440,7 @@ const fixed_t screenheightarray[120] =
     135,135,135,135,135,135,135,
 };
 
-const fixed_t negonearray[120] =
+const short negonearray[120] =
 {
     -1,
     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
