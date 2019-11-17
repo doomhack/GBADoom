@@ -100,9 +100,9 @@ extern sector_t  *frontsector;
 extern sector_t  *backsector;
 extern drawseg_t *ds_p;
 
-extern int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH];
+extern short floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH];
 
-extern int *openings,*lastopening; // dropoff overflow
+extern short *openings,*lastopening; // dropoff overflow
 extern size_t maxopenings;
 
 extern const lighttable_t *fullcolormap;

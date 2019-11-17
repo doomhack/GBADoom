@@ -89,10 +89,10 @@ static fixed_t         rw_distance;
 static int      rw_x;
 static int      rw_stopx;
 
-int floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
+short floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
 
 size_t maxopenings;
-int *openings,*lastopening; // dropoff overflow
+short *openings,*lastopening; // dropoff overflow
 
 static fixed_t  rw_scale;
 static fixed_t  rw_scalestep;
@@ -121,8 +121,8 @@ const lighttable_t* fixedcolormap;
 int extralight;                           // bumped light from gun blasts
 draw_vars_t drawvars;
 
-static int   *mfloorclip;   // dropoff overflow
-static int   *mceilingclip; // dropoff overflow
+static short   *mfloorclip;   // dropoff overflow
+static short   *mceilingclip; // dropoff overflow
 static fixed_t spryscale;
 static fixed_t sprtopscreen;
 
@@ -130,7 +130,7 @@ static angle_t  rw_centerangle;
 static fixed_t  rw_offset;
 static int      rw_lightlevel;
 
-static int      *maskedtexturecol; // dropoff overflow
+static short      *maskedtexturecol; // dropoff overflow
 
 const texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
 fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
@@ -597,7 +597,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     // draw the columns
     for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
     {
-        if (maskedtexturecol[dcvars.x] != INT_MAX) // dropoff overflow
+        if (maskedtexturecol[dcvars.x] != SHRT_MAX) // dropoff overflow
         {
             dcvars.colormap = R_LoadColorMap(rw_lightlevel);
 
@@ -615,7 +615,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
             R_DrawMaskedColumn(R_DrawColumn, &dcvars, column);
 
-            maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
+            maskedtexturecol[dcvars.x] = SHRT_MAX; // dropoff overflow
         }
     }
 
@@ -655,8 +655,8 @@ static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 static void R_DrawSprite (const vissprite_t* spr)
 {
     drawseg_t *ds;
-    int* clipbot = floorclip;
-    int* cliptop = ceilingclip;
+    short* clipbot = floorclip;
+    short* cliptop = ceilingclip;
 
     drawseg_t* drawsegs  =_g->drawsegs;
 
@@ -1830,8 +1830,8 @@ static void R_CheckOpenings(const int start)
     drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
     drawseg_t* drawsegs = _g->drawsegs;
 
-    int *oldopenings = openings; // dropoff overflow
-    int *oldlast = lastopening; // dropoff overflow
+    short *oldopenings = openings; // dropoff overflow
+    short *oldlast = lastopening; // dropoff overflow
 
     if (need > maxopenings)
     {
@@ -2142,16 +2142,14 @@ static void R_StoreWallRange(const int start, const int stop)
     // save sprite clipping info
     if ((ds_p->silhouette & SIL_TOP || maskedtexture) && !ds_p->sprtopclip)
     {
-        BlockCopy(lastopening, ceilingclip+start, sizeof(int)*(rw_stopx-start));
-        //memcpy (lastopening, ceilingclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
+        ByteCopy(lastopening, ceilingclip+start, sizeof(short)*(rw_stopx-start));
         ds_p->sprtopclip = lastopening - start;
         lastopening += rw_stopx - start;
     }
 
     if ((ds_p->silhouette & SIL_BOTTOM || maskedtexture) && !ds_p->sprbottomclip)
     {
-        BlockCopy(lastopening, floorclip+start, sizeof(int)*(rw_stopx-start));
-        //memcpy (lastopening, floorclip+start, sizeof(int)*(rw_stopx-start)); // dropoff overflow
+        ByteCopy(lastopening, floorclip+start, sizeof(short)*(rw_stopx-start));
         ds_p->sprbottomclip = lastopening - start;
         lastopening += rw_stopx - start;
     }
