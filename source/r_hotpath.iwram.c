@@ -1822,16 +1822,41 @@ static void R_RenderSegLoop (void)
     }
 }
 
-//
-// R_StoreWallRange
-// A wall segment will be drawn
-//  between start and stop pixels (inclusive).
-//
-static void R_StoreWallRange(const int start, const int stop)
+static void R_CheckOpenings(const int start)
 {
-    fixed_t hyp;
-    angle_t offsetangle;
+    size_t pos = lastopening - openings;
+    size_t need = (rw_stopx - start)*4 + pos;
 
+    drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
+    int *oldopenings = openings; // dropoff overflow
+    int *oldlast = lastopening; // dropoff overflow
+
+    if (need > maxopenings)
+    {
+        do
+            maxopenings += 32;
+        while (need > maxopenings);
+
+        openings = realloc(openings, maxopenings * sizeof(*openings));
+
+        lastopening = openings + pos;
+
+        // jff 8/9/98 borrowed fix for openings from ZDOOM1.14
+        // [RH] We also need to adjust the openings pointers that
+        //    were already stored in drawsegs.
+        for (ds = drawsegs; ds < ds_p; ds++)
+        {
+            #define ADJUST(p) if (ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast) ds->p = ds->p - oldopenings + openings;
+                    ADJUST (maskedtexturecol)
+                    ADJUST (sprtopclip)
+                    ADJUST (sprbottomclip)
+            #undef ADJUST
+        }
+    }
+}
+
+static void R_CheckDrawSegs()
+{
     if (ds_p == drawsegs+maxdrawsegs)   // killough 1/98 -- fix 2s line HOM
     {
         unsigned pos = ds_p - drawsegs; // jff 8/9/98 fix from ZDOOM1.14a
@@ -1843,9 +1868,23 @@ static void R_StoreWallRange(const int start, const int stop)
         ds_p = drawsegs + pos;          // jff 8/9/98 fix from ZDOOM1.14a
         maxdrawsegs = newmax;
     }
+}
 
-    _g->linedata[curline->linenum].r_flags |= ML_MAPPED;
-    //curline->linedef->flags |= ML_MAPPED;
+//
+// R_StoreWallRange
+// A wall segment will be drawn
+//  between start and stop pixels (inclusive).
+//
+static void R_StoreWallRange(const int start, const int stop)
+{
+    fixed_t hyp;
+    angle_t offsetangle;
+
+    R_CheckDrawSegs();
+
+    linedata_t* linedata = &_g->linedata[curline->linenum];
+
+    linedata->r_flags |= ML_MAPPED;
 
 #ifdef RANGECHECK
     if (start >=viewwidth || start > stop)
@@ -1855,7 +1894,6 @@ static void R_StoreWallRange(const int start, const int stop)
     sidedef = &_g->sides[curline->sidenum];
     linedef = &_g->lines[curline->linenum];
 
-    linedata_t* linedata = &_g->linedata[linedef->lineno];
 
     // mark the segment as visible for auto map
     linedata->r_flags |= ML_MAPPED;
@@ -1879,37 +1917,7 @@ static void R_StoreWallRange(const int start, const int stop)
     ds_p->curline = curline;
     rw_stopx = stop+1;
 
-    {     // killough 1/6/98, 2/1/98: remove limit on openings
-        size_t pos = lastopening - openings;
-        size_t need = (rw_stopx - start)*4 + pos;
-
-        drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
-        int *oldopenings = openings; // dropoff overflow
-        int *oldlast = lastopening; // dropoff overflow
-
-        if (need > maxopenings)
-        {
-            do
-                maxopenings = maxopenings ? maxopenings + 32 : 32;
-            while (need > maxopenings);
-
-            openings = realloc(openings, maxopenings * sizeof(*openings));
-
-            lastopening = openings + pos;
-
-            // jff 8/9/98 borrowed fix for openings from ZDOOM1.14
-            // [RH] We also need to adjust the openings pointers that
-            //    were already stored in drawsegs.
-            for (ds = drawsegs; ds < ds_p; ds++)
-            {
-                #define ADJUST(p) if (ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast) ds->p = ds->p - oldopenings + openings;
-                ADJUST (maskedtexturecol)
-                ADJUST (sprtopclip)
-                ADJUST (sprbottomclip)
-                #undef ADJUST
-            }
-        }
-    }  // killough: end of code to remove limits on openings
+    R_CheckOpenings(start);
 
     // calculate scale at both ends and step
     ds_p->scale1 = rw_scale = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[start]);
@@ -2050,7 +2058,7 @@ static void R_StoreWallRange(const int start, const int stop)
     }
 
     // calculate rw_offset (only needed for textured lines)
-    segtextured = (midtexture || toptexture || bottomtexture || maskedtexture);
+    segtextured = ((midtexture | toptexture | bottomtexture | maskedtexture) > 0);
 
     if (segtextured)
     {
