@@ -130,8 +130,6 @@ static int ST_calcPainOffset(void)
 static void ST_updateFaceWidget(void)
 {
     int         i;
-    angle_t     badguyangle;
-    angle_t     diffang;
     static int  lastattackdown = -1;
     static int  priority = 0;
     boolean     doevilgrin;
@@ -339,19 +337,14 @@ static void ST_drawWidgets(boolean refresh)
 
   return;
 
+  for (i=0;i<6;i++)
+      STlib_updateMultIcon(&_g->w_arms[i], refresh);
+
   for (i=0;i<4;i++)
   {
       STlib_updateNum(&_g->st_ammo[i], CR_DEFAULT, refresh);   //jff 2/16/98 no xlation
       STlib_updateNum(&_g->w_maxammo[i], CR_DEFAULT, refresh);
   }
-
-
-  for (i=0;i<6;i++)
-    STlib_updateMultIcon(&_g->w_arms[i], refresh);
-
-
-
-
 }
 
 static void ST_doRefresh(void)

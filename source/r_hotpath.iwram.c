@@ -2185,6 +2185,8 @@ static void R_RecalcLineFlags(void)
 {
     linedata_t* linedata = &_g->linedata[linedef->lineno];
 
+    const side_t* side = &_g->sides[curline->sidenum];
+
     linedata->r_validcount = (_g->gametic & 0xffff);
 
     /* First decide if the line is closed, normal, or invisible */
@@ -2197,10 +2199,10 @@ static void R_RecalcLineFlags(void)
 
                 // preserve a kind of transparent door/lift special effect:
                 && (backsector->ceilingheight >= frontsector->ceilingheight ||
-                    _g->sides[curline->sidenum].toptexture)
+                    side->toptexture)
 
                 && (backsector->floorheight <= frontsector->floorheight ||
-                    _g->sides[curline->sidenum].bottomtexture)
+                    side->bottomtexture)
 
                 // properly render skies (consider door "open" if both ceilings are sky):
                 && (backsector->ceilingpic !=_g->skyflatnum ||
@@ -2218,7 +2220,7 @@ static void R_RecalcLineFlags(void)
         // CPhipps - recode for speed, not certain if this is portable though
         if (backsector->ceilingheight != frontsector->ceilingheight
                 || backsector->floorheight != frontsector->floorheight
-                || _g->sides[curline->sidenum].midtexture
+                || side->midtexture
                 || backsector->ceilingpic != frontsector->ceilingpic
                 || backsector->floorpic != frontsector->floorpic
                 || backsector->lightlevel != frontsector->lightlevel)
@@ -2229,7 +2231,7 @@ static void R_RecalcLineFlags(void)
     }
 
     /* cph - I'm too lazy to try and work with offsets in this */
-    if (_g->sides[curline->sidenum].rowoffset) return;
+    if (side->rowoffset) return;
 
     /* Now decide on texture tiling */
     if (linedef->flags & ML_TWOSIDED)
@@ -2238,18 +2240,18 @@ static void R_RecalcLineFlags(void)
 
         /* Does top texture need tiling */
         if ((c = frontsector->ceilingheight - backsector->ceilingheight) > 0 &&
-                (textureheight[texturetranslation[_g->sides[curline->sidenum].toptexture]] > c))
+                (textureheight[texturetranslation[side->toptexture]] > c))
             linedata->r_flags |= RF_TOP_TILE;
 
         /* Does bottom texture need tiling */
         if ((c = frontsector->floorheight - backsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[_g->sides[curline->sidenum].bottomtexture]] > c))
+                (textureheight[texturetranslation[side->bottomtexture]] > c))
             linedata->r_flags |= RF_BOT_TILE;
     } else {
         int c;
         /* Does middle texture need tiling */
         if ((c = frontsector->ceilingheight - frontsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[_g->sides[curline->sidenum].midtexture]] > c))
+                (textureheight[texturetranslation[side->midtexture]] > c))
             linedata->r_flags |= RF_MID_TILE;
     }
 }
