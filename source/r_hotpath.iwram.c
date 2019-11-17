@@ -91,9 +91,6 @@ static int      rw_stopx;
 
 short floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
 
-size_t maxopenings;
-short *openings,*lastopening; // dropoff overflow
-
 static fixed_t  rw_scale;
 static fixed_t  rw_scalestep;
 
@@ -905,23 +902,11 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
 
 static void R_SortVisSprites (void)
 {
-    if (_g->num_vissprite)
+
+    int i = _g->num_vissprite;
+
+    if (i)
     {
-        int i = _g->num_vissprite;
-
-        // If we need to allocate more pointers for the vissprites,
-        // allocate as many as were allocated for sprites -- killough
-        // killough 9/22/98: allocate twice as many
-
-        if (_g->num_vissprite_ptrs < _g->num_vissprite*2)
-        {
-            Z_Free(_g->vissprite_ptrs);
-
-            _g->num_vissprite_ptrs = (_g->num_vissprite_alloc*2);
-
-            _g->vissprite_ptrs = Z_Malloc(_g->num_vissprite_ptrs * sizeof(*_g->vissprite_ptrs), PU_LEVEL, &_g->vissprite_ptrs);
-        }
-
         while (--i>=0)
             _g->vissprite_ptrs[i] = _g->vissprites+i;
 
@@ -1194,16 +1179,9 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 
 static vissprite_t *R_NewVisSprite(void)
 {
-    if (_g->num_vissprite >= _g->num_vissprite_alloc)             // killough
-    {
-        size_t num_vissprite_alloc_prev = _g->num_vissprite_alloc;
+    if (_g->num_vissprite >= MAXVISSPRITES)
+        return NULL;
 
-        _g->num_vissprite_alloc = _g->num_vissprite_alloc ? _g->num_vissprite_alloc+32 : 32;
-        _g->vissprites = realloc(_g->vissprites,_g->num_vissprite_alloc*sizeof(*_g->vissprites));
-
-        //e6y: set all fields to zero
-        BlockSet(_g->vissprites + num_vissprite_alloc_prev, 0, (_g->num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*_g->vissprites));
-    }
     return _g->vissprites + _g->num_vissprite++;
 }
 
@@ -1330,6 +1308,10 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     // store information in a vissprite
     vis = R_NewVisSprite ();
+
+    //No more vissprites.
+    if(!vis)
+        return;
 
     vis->mobjflags = thing->flags;
     // proff 11/06/98: Changed for high-res
@@ -1822,39 +1804,12 @@ static void R_RenderSegLoop (void)
     }
 }
 
-static void R_CheckOpenings(const int start)
+static boolean R_CheckOpenings(const int start)
 {
-    size_t pos = lastopening - openings;
-    size_t need = (rw_stopx - start)*4 + pos;
+    int pos = _g->lastopening - _g->openings;
+    int need = (rw_stopx - start)*4 + pos;
 
-    drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
-    drawseg_t* drawsegs = _g->drawsegs;
-
-    short *oldopenings = openings; // dropoff overflow
-    short *oldlast = lastopening; // dropoff overflow
-
-    if (need > maxopenings)
-    {
-        do
-            maxopenings += 32;
-        while (need > maxopenings);
-
-        openings = realloc(openings, maxopenings * sizeof(*openings));
-
-        lastopening = openings + pos;
-
-        // jff 8/9/98 borrowed fix for openings from ZDOOM1.14
-        // [RH] We also need to adjust the openings pointers that
-        //    were already stored in drawsegs.
-        for (ds = drawsegs; ds < ds_p; ds++)
-        {
-            #define ADJUST(p) if (ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast) ds->p = ds->p - oldopenings + openings;
-                    ADJUST (maskedtexturecol)
-                    ADJUST (sprtopclip)
-                    ADJUST (sprbottomclip)
-            #undef ADJUST
-        }
-    }
+    return need <= MAXOPENINGS;
 }
 
 //
@@ -1906,7 +1861,9 @@ static void R_StoreWallRange(const int start, const int stop)
     ds_p->curline = curline;
     rw_stopx = stop+1;
 
-    R_CheckOpenings(start);
+    //Openings overflow. Nevermind.
+    if(!R_CheckOpenings(start))
+        return;
 
     // calculate scale at both ends and step
     ds_p->scale1 = rw_scale = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[start]);
@@ -2041,8 +1998,8 @@ static void R_StoreWallRange(const int start, const int stop)
         if (sidedef->midtexture)    // masked midtexture
         {
             maskedtexture = true;
-            ds_p->maskedtexturecol = maskedtexturecol = lastopening - rw_x;
-            lastopening += rw_stopx - rw_x;
+            ds_p->maskedtexturecol = maskedtexturecol = _g->lastopening - rw_x;
+            _g->lastopening += rw_stopx - rw_x;
         }
     }
 
@@ -2142,16 +2099,16 @@ static void R_StoreWallRange(const int start, const int stop)
     // save sprite clipping info
     if ((ds_p->silhouette & SIL_TOP || maskedtexture) && !ds_p->sprtopclip)
     {
-        ByteCopy(lastopening, ceilingclip+start, sizeof(short)*(rw_stopx-start));
-        ds_p->sprtopclip = lastopening - start;
-        lastopening += rw_stopx - start;
+        ByteCopy(_g->lastopening, ceilingclip+start, sizeof(short)*(rw_stopx-start));
+        ds_p->sprtopclip = _g->lastopening - start;
+        _g->lastopening += rw_stopx - start;
     }
 
     if ((ds_p->silhouette & SIL_BOTTOM || maskedtexture) && !ds_p->sprbottomclip)
     {
-        ByteCopy(lastopening, floorclip+start, sizeof(short)*(rw_stopx-start));
-        ds_p->sprbottomclip = lastopening - start;
-        lastopening += rw_stopx - start;
+        ByteCopy(_g->lastopening, floorclip+start, sizeof(short)*(rw_stopx-start));
+        ds_p->sprbottomclip = _g->lastopening - start;
+        _g->lastopening += rw_stopx - start;
     }
 
     if (maskedtexture && !(ds_p->silhouette & SIL_TOP))

@@ -102,9 +102,6 @@ extern drawseg_t *ds_p;
 
 extern short floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH];
 
-extern short *openings,*lastopening; // dropoff overflow
-extern size_t maxopenings;
-
 extern const lighttable_t *fullcolormap;
 extern const lighttable_t *colormaps;
 extern const lighttable_t* fixedcolormap;

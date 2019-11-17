@@ -396,15 +396,11 @@ boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t*))
 //
 
 // Check for limit and double size if necessary -- killough
-static void check_intercept(void)
+static boolean check_intercept(void)
 {
     size_t offset = _g->intercept_p - _g->intercepts;
-    if (offset >= _g->num_intercepts)
-    {
-        _g->num_intercepts = _g->num_intercepts ? _g->num_intercepts + 32 : 32;
-        _g->intercepts = realloc(_g->intercepts, sizeof(*_g->intercepts)*_g->num_intercepts);
-        _g->intercept_p = _g->intercepts + offset;
-    }
+
+    return (offset < MAXINTERCEPTS);
 }
 
 
@@ -448,7 +444,8 @@ boolean PIT_AddLineIntercepts(const line_t *ld)
   if (frac < 0)
     return true;        // behind source
 
-  check_intercept();    // killough
+  if(!check_intercept())
+    return false;
 
   _g->intercept_p->frac = frac;
   _g->intercept_p->isaline = true;
@@ -503,7 +500,8 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
   if (frac < 0)
     return true;                // behind source
 
-  check_intercept();            // killough
+  if(!check_intercept())
+      return false;
 
   _g->intercept_p->frac = frac;
   _g->intercept_p->isaline = false;

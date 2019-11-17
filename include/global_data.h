@@ -431,8 +431,8 @@ divline_t trace;
 
 
 // 1/11/98 killough: Intercept limit removed
-intercept_t *intercepts, *intercept_p;
-size_t num_intercepts;
+intercept_t intercepts[MAXINTERCEPTS];
+intercept_t* intercept_p;
 
 //******************************************************************************
 //p_mobj.c
@@ -647,7 +647,8 @@ int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 //
 drawseg_t drawsegs[MAXDRAWSEGS];
 
-
+short openings[MAXOPENINGS];
+short* lastopening;
 
 
 int didsolidcol; /* True if at least one column was marked solid */
@@ -676,8 +677,9 @@ int numsprites;
 spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
 int maxframe;
 
-vissprite_t *vissprites, **vissprite_ptrs;  // killough
-size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
+vissprite_t vissprites[MAXVISSPRITES];
+vissprite_t* vissprite_ptrs[MAXVISSPRITES*2];  // killough
+size_t num_vissprite;
 
 
 

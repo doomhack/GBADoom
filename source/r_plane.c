@@ -88,7 +88,7 @@ void R_ClearPlanes(void)
     for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
       _g->freehead = &(*_g->freehead)->next;
 
-  lastopening = openings;
+  _g->lastopening = _g->openings;
 
   // scale will be unit scale at SCREENWIDTH/2 distance
   basexscale = FixedDiv (viewsin,projection);

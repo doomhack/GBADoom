@@ -47,6 +47,8 @@
 #define PT_ADDTHINGS    2
 #define PT_EARLYOUT     4
 
+#define MAXINTERCEPTS 64
+
 typedef struct
 {
   fixed_t     x;
