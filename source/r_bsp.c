@@ -49,7 +49,7 @@
 
 void R_ClearDrawSegs(void)
 {
-  ds_p = drawsegs;
+  ds_p = _g->drawsegs;
 }
 
 

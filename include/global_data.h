@@ -645,7 +645,7 @@ int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 //
 // regular wall
 //
-
+drawseg_t drawsegs[MAXDRAWSEGS];
 
 
 

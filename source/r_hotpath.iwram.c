@@ -86,10 +86,6 @@ static int             rw_angle1;
 static angle_t         rw_normalangle; // angle to line origin
 static fixed_t         rw_distance;
 
-// killough: New code which removes 2s linedef limit
-drawseg_t *drawsegs;
-unsigned  maxdrawsegs;
-
 static int      rw_x;
 static int      rw_stopx;
 
@@ -662,6 +658,8 @@ static void R_DrawSprite (const vissprite_t* spr)
     int* clipbot = floorclip;
     int* cliptop = ceilingclip;
 
+    drawseg_t* drawsegs  =_g->drawsegs;
+
     //int     clipbot[MAX_SCREENWIDTH]; // killough 2/8/98: // dropoff overflow
     //int     cliptop[MAX_SCREENWIDTH]; // change to MAX_*  // dropoff overflow
     int     x;
@@ -942,6 +940,8 @@ void R_DrawMasked(void)
 {
     int i;
     drawseg_t *ds;
+    drawseg_t* drawsegs = _g->drawsegs;
+
 
     R_SortVisSprites();
 
@@ -1828,6 +1828,8 @@ static void R_CheckOpenings(const int start)
     size_t need = (rw_stopx - start)*4 + pos;
 
     drawseg_t *ds;                //jff 8/9/98 needed for fix from ZDoom
+    drawseg_t* drawsegs = _g->drawsegs;
+
     int *oldopenings = openings; // dropoff overflow
     int *oldlast = lastopening; // dropoff overflow
 
@@ -1855,21 +1857,6 @@ static void R_CheckOpenings(const int start)
     }
 }
 
-static void R_CheckDrawSegs()
-{
-    if (ds_p == drawsegs+maxdrawsegs)   // killough 1/98 -- fix 2s line HOM
-    {
-        unsigned pos = ds_p - drawsegs; // jff 8/9/98 fix from ZDOOM1.14a
-
-        unsigned newmax =maxdrawsegs + 32;
-
-        drawsegs = realloc(drawsegs,newmax*sizeof(*drawsegs));
-
-        ds_p = drawsegs + pos;          // jff 8/9/98 fix from ZDOOM1.14a
-        maxdrawsegs = newmax;
-    }
-}
-
 //
 // R_StoreWallRange
 // A wall segment will be drawn
@@ -1880,7 +1867,9 @@ static void R_StoreWallRange(const int start, const int stop)
     fixed_t hyp;
     angle_t offsetangle;
 
-    R_CheckDrawSegs();
+    // don't overflow and crash
+    if (ds_p == &_g->drawsegs[MAXDRAWSEGS])
+        return;
 
     linedata_t* linedata = &_g->linedata[curline->linenum];
 

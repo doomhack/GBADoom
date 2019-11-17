@@ -500,10 +500,6 @@ void P_FreeLevelData()
     _g->vissprites = NULL;
     _g->num_vissprite_alloc = 0;
 
-    free(drawsegs);
-    ds_p = drawsegs = NULL;
-    maxdrawsegs = 0;
-
     free(openings);
     lastopening = openings = NULL;
     maxopenings = 0;
