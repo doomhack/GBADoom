@@ -698,10 +698,6 @@ boolean P_ThingHeightClip (mobj_t* thing)
     // walking monsters rise and fall with the floor
 
     thing->z = thing->floorz;
-
-    /* killough 11/98: Possibly upset balance of objects hanging off ledges */
-      if (thing->intflags & MIF_FALLING && thing->gear >= MAXGEAR)
-  thing->gear = 0;
     }
   else
     {

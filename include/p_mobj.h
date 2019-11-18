@@ -311,8 +311,6 @@ typedef struct mobj_s
     // killough 9/9/98: How long a monster pursues a target.
     short               pursuecount;
 
-    short               gear; // killough 11/98: used in torque simulation
-
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
     struct player_s*    player;
