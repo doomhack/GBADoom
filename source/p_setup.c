@@ -485,6 +485,8 @@ static int P_GroupLines (void)
 
 void P_FreeLevelData()
 {
+    R_ResetPlanes();
+
     Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
 
     free(_g->braintargets);

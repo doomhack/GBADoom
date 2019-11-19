@@ -1390,15 +1390,20 @@ static void R_AddSprites(subsector_t* subsec, int lightlevel)
 
 static visplane_t *new_visplane(unsigned hash)
 {
-  visplane_t *check = _g->freetail;
-  if (!check)
-    check = calloc(1, sizeof *check);
-  else
-    if (!(_g->freetail = _g->freetail->next))
-      _g->freehead = &_g->freetail;
-  check->next = _g->visplanes[hash];
-  _g->visplanes[hash] = check;
-  return check;
+    visplane_t *check = _g->freetail;
+
+    if (!check)
+        check = Z_Calloc(1, sizeof(visplane_t), PU_LEVEL, NULL);
+    else
+    {
+        if (!(_g->freetail = _g->freetail->next))
+            _g->freehead = &_g->freetail;
+    }
+
+    check->next = _g->visplanes[hash];
+    _g->visplanes[hash] = check;
+
+    return check;
 }
 
 static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)

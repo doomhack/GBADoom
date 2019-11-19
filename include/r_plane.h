@@ -44,6 +44,8 @@
 void R_InitPlanes(void);
 void R_ClearPlanes(void);
 void R_DrawPlanes (void);
+void R_ResetPlanes();
+
 
 
 #define MAXVISPLANES 128    /* must be a power of 2 */
