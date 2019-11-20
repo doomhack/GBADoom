@@ -182,10 +182,6 @@ void I_SetRes(void)
     _g->screens[0].width = SCREENWIDTH;
     _g->screens[0].height = SCREENHEIGHT;
 
-    // statusbar
-    _g->screens[1].width = SCREENWIDTH;
-    _g->screens[1].height = (ST_SCALED_HEIGHT+1);
-
     lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d", SCREENWIDTH, SCREENHEIGHT);
 }
 

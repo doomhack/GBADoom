@@ -346,7 +346,7 @@ void V_AllocScreen(screeninfo_t *scrn)
 //
 void V_AllocScreens(void)
 {
-  V_AllocScreen(&_g->screens[1]);
+  //V_AllocScreen(&_g->screens[1]);
 }
 
 void V_PlotPixel(int scrn, int x, int y, byte color)
