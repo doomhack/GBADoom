@@ -356,11 +356,6 @@ void STlib_updateBinIcon
     w = bi->p->width;
     h = bi->p->height;
 
-#ifdef RANGECHECK
-    if (y - ST_Y < 0)
-      I_Error("STlib_updateBinIcon: y - ST_Y < 0");
-#endif
-
     if (*bi->val)
       V_DrawPatch(bi->x, bi->y, ST_FG, bi->p);
     else

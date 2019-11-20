@@ -72,11 +72,6 @@ static boolean P_CrossSubsector(int num)
   fixed_t opentop = 0, openbottom = 0;
   const sector_t *front = NULL, *back = NULL;
 
-#ifdef RANGECHECK
-  if (num >= numsubsectors)
-    I_Error("P_CrossSubsector: ss %i with numss = %i", num, numsubsectors);
-#endif
-
   for (count = _g->subsectors[num].numlines; --count >= 0; seg++)
   { // check lines
       int linenum = seg->linenum;

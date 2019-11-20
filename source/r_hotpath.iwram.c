@@ -751,19 +751,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     fixed_t       topoffset;
 
     // decide which patch to use
-
-#ifdef RANGECHECK
-    if ( (unsigned)psp->state->sprite >= (unsigned)numsprites)
-        I_Error ("R_ProjectSprite: Invalid sprite number %i", psp->state->sprite);
-#endif
-
     sprdef = &_g->sprites[psp->state->sprite];
-
-#ifdef RANGECHECK
-    if ( (psp->state->frame & FF_FRAMEMASK)  >= sprdef->numframes)
-        I_Error ("R_ProjectSprite: Invalid sprite frame %i : %li",
-                 psp->state->sprite, psp->state->frame);
-#endif
 
     sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
@@ -999,11 +987,6 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
     angle_t angle;
     fixed_t distance, length;
 
-#ifdef RANGECHECK
-    if (x2 < x1 || x1<0 || x2>=viewwidth || (unsigned)y>(unsigned)viewheight)
-        I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
-#endif
-
     distance = FixedMul(planeheight, yslope[y]);
     dsvars->xstep = FixedMul(distance,basexscale);
     dsvars->ystep = FixedMul(distance,baseyscale);
@@ -1032,9 +1015,7 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 // R_MakeSpans
 //
 
-static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
-                        unsigned int t2, unsigned int b2,
-                        draw_span_vars_t *dsvars)
+static void R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2, unsigned int b2, draw_span_vars_t *dsvars)
 {
     for (; t1 < t2 && t1 <= b1; t1++)
         R_MapPlane(t1, _g->spanstart[t1], x-1, dsvars);
@@ -1181,7 +1162,13 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 static vissprite_t *R_NewVisSprite(void)
 {
     if (_g->num_vissprite >= MAXVISSPRITES)
+    {
+#ifdef RANGECHECK
+        I_Error("Vissprite overflow.");
+#endif
         return NULL;
+    }
+
 
     return _g->vissprites + _g->num_vissprite++;
 }
@@ -1240,26 +1227,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         return;
 
     // decide which patch to use for sprite relative to player
-#ifdef RANGECHECK
-    if ((unsigned) thing->sprite >= (unsigned)numsprites)
-        I_Error ("R_ProjectSprite: Invalid sprite number %i", thing->sprite);
-#endif
-
     sprdef = &_g->sprites[thing->sprite];
-
-#ifdef RANGECHECK
-    if ((thing->frame&FF_FRAMEMASK) >= sprdef->numframes)
-        I_Error ("R_ProjectSprite: Invalid sprite frame %i : %i", thing->sprite,
-                 thing->frame);
-
-
-    if (!sprdef->spriteframes)
-    {
-        I_Error ("R_ProjectSprite: Missing spriteframes %i : %i", thing->sprite,
-                 thing->frame);
-    }
-#endif
-
     sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
 
     if (sprframe->rotate)
@@ -1815,6 +1783,11 @@ static boolean R_CheckOpenings(const int start)
     int pos = _g->lastopening - _g->openings;
     int need = (rw_stopx - start)*4 + pos;
 
+#ifdef RANGECHECK
+    if(need > MAXOPENINGS)
+        I_Error("Openings overflow. Need = %d", need);
+#endif
+
     return need <= MAXOPENINGS;
 }
 
@@ -1830,16 +1803,17 @@ static void R_StoreWallRange(const int start, const int stop)
 
     // don't overflow and crash
     if (ds_p == &_g->drawsegs[MAXDRAWSEGS])
+    {
+#ifdef RANGECHECK
+        I_Error("Drawsegs overflow.");
+#endif
         return;
+    }
+
 
     linedata_t* linedata = &_g->linedata[curline->linenum];
 
     linedata->r_flags |= ML_MAPPED;
-
-#ifdef RANGECHECK
-    if (start >=viewwidth || start > stop)
-        I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
-#endif
 
     sidedef = &_g->sides[curline->sidenum];
     linedef = &_g->lines[curline->linenum];
@@ -2358,11 +2332,6 @@ static void R_Subsector(int num)
     int         count;
     const seg_t       *line;
     subsector_t *sub;
-
-#ifdef RANGECHECK
-    if (num>=numsubsectors)
-        I_Error ("R_Subsector: ss %i with numss = %i", num, numsubsectors);
-#endif
 
     sub = &_g->subsectors[num];
     frontsector = sub->sector;

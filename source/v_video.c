@@ -75,17 +75,6 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
     desty=desty*SCREENHEIGHT/200;
   }
 
-#ifdef RANGECHECK
-  if (srcx<0
-      ||srcx+width >SCREENWIDTH
-      || srcy<0
-      || srcy+height>SCREENHEIGHT
-      ||destx<0||destx+width >SCREENWIDTH
-      || desty<0
-      || desty+height>SCREENHEIGHT)
-    I_Error ("V_CopyRect: Bad arguments");
-#endif
-
   src = _g->screens[srcscrn].data+SCREENPITCH*srcy+srcx;
   dest = _g->screens[destscrn].data+SCREENPITCH*desty+destx;
 
@@ -374,24 +363,6 @@ void V_DrawLine(fline_t* fl, int color)
   register int ax;
   register int ay;
   register int d;
-
-#ifdef RANGECHECK         // killough 2/22/98
-  static int fuck = 0;
-
-  // For debugging only
-  if
-  (
-       fl->a.x < 0 || fl->a.x >= SCREENWIDTH
-    || fl->a.y < 0 || fl->a.y >= SCREENHEIGHT
-    || fl->b.x < 0 || fl->b.x >= SCREENWIDTH
-    || fl->b.y < 0 || fl->b.y >= SCREENHEIGHT
-  )
-  {
-    //jff 8/3/98 use logical output routine
-    lprintf(LO_DEBUG, "fuck %d \r", fuck++);
-    return;
-  }
-#endif
 
 #define PUTDOT(xx,yy,cc) V_PlotPixel(0,xx,yy,(byte)cc)
 

@@ -60,7 +60,8 @@ typedef struct
 typedef struct {
   fixed_t     frac;           /* along trace line */
   boolean     isaline;
-  union {
+  union
+  {
     mobj_t* thing;
     const line_t* line;
   } d;

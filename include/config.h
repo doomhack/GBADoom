@@ -144,17 +144,6 @@
 #endif
 /* Define to enable internal range checking */
 
-#ifndef DEBUG
-	#undef RANGECHECK
-#endif
-
-/* Define if you have an old SDL_net, such that the UDPpacket structure has a
-   src member instead of an address member */
-/* #undef SDL_NET_UDP_PACKET_SRC */
-
-/* When defined this causes quick checks which only impose significant
-   overhead if a posible error is detected. */
-#define SIMPLECHECKS 1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
