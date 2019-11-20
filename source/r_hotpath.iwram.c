@@ -54,6 +54,7 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "g_game.h"
+#include "m_random.h"
 
 #include "global_data.h"
 
@@ -1548,7 +1549,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
     } while(i < 128);
 
     //No space. Random eviction.
-    return ((rand() & 7) * 16) + key;
+    return ((P_Random() & 7) * 16) + key;
 }
 
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)

@@ -48,7 +48,7 @@ void R_ResetPlanes();
 
 
 
-#define MAXVISPLANES 128    /* must be a power of 2 */
+#define MAXVISPLANES 32    /* must be a power of 2 */
 
 // killough -- hash function for visplanes
 // Empirically verified to be fairly uniform:
