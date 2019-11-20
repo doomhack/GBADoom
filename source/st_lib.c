@@ -39,6 +39,7 @@
 #include "st_lib.h"
 #include "r_main.h"
 #include "lprintf.h"
+#include "global_data.h"
 
 //
 // STlib_init()
@@ -136,7 +137,7 @@ static void STlib_drawNum
   // clear the area
   x = n->x - numdigits*w;
 
-  V_CopyRect((x-2), (n->y-2) - ST_Y, ST_BG, w*numdigits+4, h+4, x-2, n->y-2, ST_FG, VPT_STRETCH);
+  //V_CopyRect((x-2), (n->y-2) - ST_Y, ST_BG, w*numdigits+4, h+4, x-2, n->y-2, ST_FG, VPT_STRETCH);
 
   // if non-number, do not draw it
   if (num == 1994)
@@ -287,18 +288,6 @@ void STlib_updateMultIcon
 
     if (*mi->on && (mi->oldinum != *mi->inum || refresh || mi->need_refresh))
     {
-        /*
-        if (mi->oldinum != -1)
-        {
-            x = mi->x - mi->p[mi->oldinum]->leftoffset;
-            y = mi->y - mi->p[mi->oldinum]->topoffset;
-            w = mi->p[mi->oldinum]->width;
-            h = mi->p[mi->oldinum]->height;
-
-            V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
-        }
-        */
-
         if(mi->oldinum != *mi->inum)
             mi->need_refresh = true;
         else
@@ -379,4 +368,16 @@ void STlib_updateBinIcon
 
     bi->oldval = *bi->val;
   }
+}
+
+void ST_refreshBackground(void)
+{
+    int y=BASE_HEIGHT-ST_HEIGHT;
+
+    if (_g->st_statusbaron)
+    {
+        V_DrawPatch(ST_X, y, ST_FG, _g->stbarbg);
+
+        V_DrawPatch(ST_ARMSBGX, y, ST_FG, _g->armsbg);
+    }
 }

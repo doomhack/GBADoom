@@ -70,21 +70,6 @@ const int armor_green = 100;   // armor amount above is blue, below is green
 
 static void ST_Stop(void);
 
-static void ST_refreshBackground(void)
-{
-	int y=0;
-	
-    if (_g->st_statusbaron)
-	{
-        V_DrawPatch(ST_X, y, ST_BG, _g->stbarbg);
-		
-        V_DrawPatch(ST_ARMSBGX, y, ST_BG, _g->armsbg);
-		
-        V_CopyRect(ST_X, y, ST_BG, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, ST_X, ST_SCALED_Y, ST_FG, VPT_NONE);
-	}
-}
-
-
 // Respond to keyboard input events,
 //  intercept cheats.
 boolean ST_Responder(const event_t *ev)

@@ -205,4 +205,7 @@ void STlib_updateBinIcon
 ( st_binicon_t* bi,
   boolean refresh );
 
+void ST_refreshBackground(void);
+
+
 #endif

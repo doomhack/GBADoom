@@ -94,6 +94,8 @@ typedef enum {
 //
 
 #define BASE_WIDTH 320
+#define BASE_HEIGHT 200
+
 
 // It is educational but futile to change this
 //  scaling e.g. to 2. Drawing of status bar,
