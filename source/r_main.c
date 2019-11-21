@@ -96,71 +96,34 @@ void R_Init (void)
 }
 
 //
-// R_PointInSubsector
-//
-// killough 5/2/98: reformatted, cleaned up
-
-subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
-{
-  int nodenum = numnodes-1;
-
-  // special case for trivial maps (single subsector, no nodes)
-  if (numnodes == 0)
-    return _g->subsectors;
-
-  while (!(nodenum & NF_SUBSECTOR))
-    nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
-  return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
-}
-
-//
 // R_SetupFrame
 //
 
 void R_SetupFrame (player_t *player)
 {
-  _g->viewplayer = player;
+    _g->viewplayer = player;
 
-  viewx = player->mo->x;
-  viewy = player->mo->y;
-  viewz = player->viewz;
-  viewangle = player->mo->angle;
+    viewx = player->mo->x;
+    viewy = player->mo->y;
+    viewz = player->viewz;
+    viewangle = player->mo->angle;
 
-  extralight = player->extralight;
+    extralight = player->extralight;
 
-  viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
-  viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
+    viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
+    viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
-  fullcolormap = &colormaps[0];
+    fullcolormap = &colormaps[0];
 
-  if (player->fixedcolormap)
+    if (player->fixedcolormap)
     {
-      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
-        + player->fixedcolormap*256*sizeof(lighttable_t);
+        fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
+                + player->fixedcolormap*256*sizeof(lighttable_t);
     }
-  else
-    fixedcolormap = 0;
+    else
+        fixedcolormap = 0;
 
-  _g->validcount++;
+    _g->validcount++;
 }
 
-//
-// R_RenderView
-//
-void R_RenderPlayerView (player_t* player)
-{
-    R_SetupFrame (player);
 
-    // Clear buffers.
-    R_ClearClipSegs ();
-    R_ClearDrawSegs ();
-    R_ClearPlanes ();
-    R_ClearSprites ();
-
-    // The head node is the last node output.
-    R_RenderBSPNode (numnodes-1);
-
-    R_DrawPlanes ();
-
-    R_DrawMasked ();
-}

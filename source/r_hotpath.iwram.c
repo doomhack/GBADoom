@@ -179,10 +179,14 @@ const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACB
 
 const angle_t clipangle = 537395200; //xtoviewangle[0];
 
-
-
-
-
+//********************************************
+// This goes here as we want the Thumb code
+// to BX to ARM as Thumb long mul is very slow.
+//********************************************
+fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
+{
+    return (fixed_t)((int_64_t) a*b >> FRACBITS);
+}
 
 //*****************************************
 //Column cache stuff.
@@ -215,6 +219,25 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
   ans = IDiv32(num<<3, den>>8);
 
   return ans <= SLOPERANGE ? ans : SLOPERANGE;
+}
+
+
+//
+// R_PointInSubsector
+//
+// killough 5/2/98: reformatted, cleaned up
+
+subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
+{
+    int nodenum = numnodes-1;
+
+    // special case for trivial maps (single subsector, no nodes)
+    if (numnodes == 0)
+        return _g->subsectors;
+
+    while (!(nodenum & NF_SUBSECTOR))
+        nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
+    return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
 //
@@ -1905,8 +1928,7 @@ static void R_StoreWallRange(const int start, const int stop)
         else        // top of texture at top
             rw_midtexturemid = worldtop;
 
-        if(sidedef->rowoffset)
-            rw_midtexturemid += FixedMod(sidedef->rowoffset, textureheight[midtexture]);
+        rw_midtexturemid += FixedMod(sidedef->rowoffset, textureheight[midtexture]);
 
         ds_p->silhouette = SIL_BOTH;
         ds_p->sprtopclip = screenheightarray;
@@ -1989,9 +2011,7 @@ static void R_StoreWallRange(const int start, const int stop)
             toptexture = texturetranslation[sidedef->toptexture];
             rw_toptexturemid = linedef->flags & ML_DONTPEGTOP ? worldtop :
                                                                         backsector->ceilingheight+textureheight[sidedef->toptexture]-viewz;
-
-            if(sidedef->rowoffset)
-                rw_toptexturemid += FixedMod(sidedef->rowoffset, textureheight[toptexture]);
+            rw_toptexturemid += FixedMod(sidedef->rowoffset, textureheight[toptexture]);
         }
 
         if (worldlow > worldbottom) // bottom texture
@@ -1999,8 +2019,7 @@ static void R_StoreWallRange(const int start, const int stop)
             bottomtexture = texturetranslation[sidedef->bottomtexture];
             rw_bottomtexturemid = linedef->flags & ML_DONTPEGBOTTOM ? worldtop : worldlow;
 
-            if(sidedef->rowoffset)
-                rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
+            rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
         }
 
         // allocate space for masked texture tables
@@ -2603,4 +2622,25 @@ void R_RenderBSPNode(int bspnum)
 
         bspnum = bsp->children[side^1];
     }
+}
+
+//
+// R_RenderView
+//
+void R_RenderPlayerView (player_t* player)
+{
+    R_SetupFrame (player);
+
+    // Clear buffers.
+    R_ClearClipSegs ();
+    R_ClearDrawSegs ();
+    R_ClearPlanes ();
+    R_ClearSprites ();
+
+    // The head node is the last node output.
+    R_RenderBSPNode (numnodes-1);
+
+    R_DrawPlanes ();
+
+    R_DrawMasked ();
 }

@@ -2247,7 +2247,13 @@ void P_UpdateSpecials (void)
     // Animate flats and textures globally
     for (anim = _g->anims ; anim < _g->lastanim ; anim++)
     {
-        pic = anim->basepic + ((_g->leveltime / 8) % anim->numpics);
+        unsigned int t = (_g->leveltime >> 3);
+        unsigned int n = anim->numpics;
+
+        if((n & (n - 1)) == 0)
+            pic = anim->basepic + (t & (n - 1));
+        else
+            pic = anim->basepic + (t % n);
 
         for(i = anim->basepic; i<anim->basepic+anim->numpics; i++)
         {
