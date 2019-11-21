@@ -161,6 +161,30 @@ static const lighttable_t* current_colormap_ptr;
 static fixed_t planeheight;
 
 //*****************************************
+// Constants
+//*****************************************
+
+const int viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
+const int centery = (SCREENHEIGHT-ST_SCALED_HEIGHT)/2;
+const int centerxfrac = (SCREENWIDTH/2) << FRACBITS;
+const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
+
+const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
+const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
+
+const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
+const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
+
+const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
+
+const angle_t clipangle = 537395200; //xtoviewangle[0];
+
+
+
+
+
+
+//*****************************************
 //Column cache stuff.
 //GBA has 16kb of Video Memory for columns
 //*****************************************
@@ -1881,7 +1905,8 @@ static void R_StoreWallRange(const int start, const int stop)
         else        // top of texture at top
             rw_midtexturemid = worldtop;
 
-        rw_midtexturemid += FixedMod(sidedef->rowoffset, textureheight[midtexture]);
+        if(sidedef->rowoffset)
+            rw_midtexturemid += FixedMod(sidedef->rowoffset, textureheight[midtexture]);
 
         ds_p->silhouette = SIL_BOTH;
         ds_p->sprtopclip = screenheightarray;
@@ -1964,14 +1989,18 @@ static void R_StoreWallRange(const int start, const int stop)
             toptexture = texturetranslation[sidedef->toptexture];
             rw_toptexturemid = linedef->flags & ML_DONTPEGTOP ? worldtop :
                                                                         backsector->ceilingheight+textureheight[sidedef->toptexture]-viewz;
-            rw_toptexturemid += FixedMod(sidedef->rowoffset, textureheight[toptexture]);
+
+            if(sidedef->rowoffset)
+                rw_toptexturemid += FixedMod(sidedef->rowoffset, textureheight[toptexture]);
         }
 
         if (worldlow > worldbottom) // bottom texture
         {
             bottomtexture = texturetranslation[sidedef->bottomtexture];
             rw_bottomtexturemid = linedef->flags & ML_DONTPEGBOTTOM ? worldtop : worldlow;
-            rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
+
+            if(sidedef->rowoffset)
+                rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
         }
 
         // allocate space for masked texture tables

@@ -60,24 +60,6 @@
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
 
-const int viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
-const int viewheightfrac = (SCREENHEIGHT-ST_SCALED_HEIGHT)<<FRACBITS;
-const int centery = (SCREENHEIGHT-ST_SCALED_HEIGHT)/2;
-const int centerx = SCREENWIDTH/2;
-const int centerxfrac = (SCREENWIDTH/2) << FRACBITS;
-const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
-
-const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
-const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
-
-const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
-const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
-
-const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
-
-const angle_t clipangle = 537395200; //xtoviewangle[0];
-
-
 angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
   return (y -= viewy, (x -= viewx) || y) ?
