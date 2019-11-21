@@ -632,7 +632,7 @@ visplane_t **freehead;     // killough
 
 // spanstart holds the start of a plane span; initialized to 0 at start
 
-int spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
+short spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 
 // killough 2/8/98: make variables static
 

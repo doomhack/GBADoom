@@ -20,8 +20,6 @@
 //and the GPL that prBoom (and this as derived work) is under.
 //***********************************************************************
 
-#ifndef __arm__
-
 static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 {
     unsigned        bit;
@@ -52,8 +50,6 @@ static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 
     return c;
 }
-
-#endif
 
 inline static CONSTFUNC int IDiv32 (int a, int b)
 {

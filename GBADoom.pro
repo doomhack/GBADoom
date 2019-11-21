@@ -11,6 +11,8 @@ CONFIG += force_debug_info
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
+DEFINES += RANGECHECK
+
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
@@ -67,15 +69,12 @@ SOURCES += \
         source/p_telept.c \
         source/p_tick.c \
         source/p_user.c \
-        source/r_bsp.c \
         source/r_data.c \
         source/r_draw.c \
         source/r_hotpath.iwram.c \
         source/r_main.c \
         source/r_patch.c \
         source/r_plane.c \
-        source/r_segs.c \
-        source/r_sky.c \
         source/r_things.c \
         source/s_sound.c \
         source/sounds.c \
@@ -147,7 +146,6 @@ HEADERS += \
     include/p_tick.h \
     include/p_user.h \
     include/protocol.h \
-    include/r_bsp.h \
     include/r_data.h \
     include/r_defs.h \
     include/r_draw.h \

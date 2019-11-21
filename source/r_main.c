@@ -44,7 +44,6 @@
 #include "r_main.h"
 #include "r_things.h"
 #include "r_plane.h"
-#include "r_bsp.h"
 #include "r_draw.h"
 #include "m_bbox.h"
 #include "r_sky.h"
@@ -60,41 +59,6 @@
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
 
-const int viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
-const int viewheightfrac = (SCREENHEIGHT-ST_SCALED_HEIGHT)<<FRACBITS;
-const int centery = (SCREENHEIGHT-ST_SCALED_HEIGHT)/2;
-const int centerx = SCREENWIDTH/2;
-const int centerxfrac = (SCREENWIDTH/2) << FRACBITS;
-const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
-
-const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
-const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
-
-const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
-const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
-
-const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
-
-const angle_t clipangle = 537395200; //xtoviewangle[0];
-
-
-angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
-{
-  return (y -= viewy, (x -= viewx) || y) ?
-    x >= 0 ?
-      y >= 0 ?
-        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0
-                ANG90-1-tantoangle[SlopeDiv(x,y)] :                // octant 1
-        x > (y = -y) ? 0-tantoangle[SlopeDiv(y,x)] :                // octant 8
-                       ANG270+tantoangle[SlopeDiv(x,y)] :          // octant 7
-      y >= 0 ? (x = -x) > y ? ANG180-1-tantoangle[SlopeDiv(y,x)] : // octant 3
-                            ANG90 + tantoangle[SlopeDiv(x,y)] :    // octant 2
-        (x = -x) > (y = -y) ? ANG180+tantoangle[ SlopeDiv(y,x)] :  // octant 4
-                              ANG270-1-tantoangle[SlopeDiv(x,y)] : // octant 5
-    0;
-}
-
-
 //
 // R_Init
 //
@@ -107,28 +71,8 @@ void R_Init (void)
   R_InitData();
   lprintf(LO_INFO, "R_InitPlanes");
   R_InitPlanes();
-  lprintf(LO_INFO, "R_InitSkyMap");
-  R_InitSkyMap();
   lprintf(LO_INFO, "R_InitBuffer");
   R_InitBuffer();
-}
-
-//
-// R_PointInSubsector
-//
-// killough 5/2/98: reformatted, cleaned up
-
-subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
-{
-  int nodenum = numnodes-1;
-
-  // special case for trivial maps (single subsector, no nodes)
-  if (numnodes == 0)
-    return _g->subsectors;
-
-  while (!(nodenum & NF_SUBSECTOR))
-    nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
-  return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
 //
@@ -137,48 +81,29 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 
 void R_SetupFrame (player_t *player)
 {
-  _g->viewplayer = player;
+    _g->viewplayer = player;
 
-  viewx = player->mo->x;
-  viewy = player->mo->y;
-  viewz = player->viewz;
-  viewangle = player->mo->angle;
+    viewx = player->mo->x;
+    viewy = player->mo->y;
+    viewz = player->viewz;
+    viewangle = player->mo->angle;
 
-  extralight = player->extralight;
+    extralight = player->extralight;
 
-  viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
-  viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
+    viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
+    viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
-  fullcolormap = &colormaps[0];
+    fullcolormap = &colormaps[0];
 
-  if (player->fixedcolormap)
+    if (player->fixedcolormap)
     {
-      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
-        + player->fixedcolormap*256*sizeof(lighttable_t);
+        fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
+                + player->fixedcolormap*256*sizeof(lighttable_t);
     }
-  else
-    fixedcolormap = 0;
+    else
+        fixedcolormap = 0;
 
-  _g->validcount++;
+    _g->validcount++;
 }
 
-//
-// R_RenderView
-//
-void R_RenderPlayerView (player_t* player)
-{
-    R_SetupFrame (player);
 
-    // Clear buffers.
-    R_ClearClipSegs ();
-    R_ClearDrawSegs ();
-    R_ClearPlanes ();
-    R_ClearSprites ();
-
-    // The head node is the last node output.
-    R_RenderBSPNode (numnodes-1);
-
-    R_DrawPlanes ();
-
-    R_DrawMasked ();
-}

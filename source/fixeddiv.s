@@ -7,9 +7,11 @@
 .arm
 .align
 
-.global udiv64
+.global udiv64_arm
+.global udiv32_arm
 
-udiv64:
+
+udiv64_arm:
     adds      r0,r0,r0
     adc       r1,r1,r1
 

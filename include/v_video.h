@@ -78,7 +78,7 @@ typedef struct
   short height;          // the height of the surface, used when mallocing
 } screeninfo_t;
 
-#define NUM_SCREENS 2
+#define NUM_SCREENS 1
 
 // V_CopyRect
 void V_CopyRect(int srcx,  int srcy,  int srcscrn,

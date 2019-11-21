@@ -62,23 +62,11 @@
 #define NUMCOLORMAPS 32
 
 extern const int viewheight;
-extern const int viewheightfrac;
 
 extern const int centery;
-extern const int centerx;
-
-extern const int centerxfrac;
-extern const int centeryfrac;
 
 extern const fixed_t projection;
-extern const fixed_t projectiony;
-
-extern const fixed_t pspritescale;
-extern const fixed_t pspriteiscale;
-
-extern const fixed_t pspriteyscale;
-
-extern const angle_t clipangle;
+extern const fixed_t iprojection;
 
 
 
@@ -90,15 +78,6 @@ extern const mapnode_t *nodes;
 extern fixed_t  viewx, viewy, viewz;
 
 extern angle_t  viewangle;
-
-extern byte solidcol[MAX_SCREENWIDTH];
-
-extern const seg_t     *curline;
-extern side_t    *sidedef;
-extern const line_t    *linedef;
-extern sector_t  *frontsector;
-extern sector_t  *backsector;
-extern drawseg_t *ds_p;
 
 extern short floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH];
 

@@ -59,11 +59,11 @@
 #define SIL_TOP     2
 #define SIL_BOTH    3
 
-#define MAXDRAWSEGS   160
+#define MAXDRAWSEGS   192
 
-#define MAXOPENINGS (SCREENWIDTH*48)
+#define MAXOPENINGS (SCREENWIDTH*16)
 
-#define MAXVISSPRITES 64
+#define MAXVISSPRITES 96
 
 //
 // INTERNAL MAP TYPES
@@ -435,7 +435,6 @@ typedef struct visplane
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
-  fixed_t xoffs, yoffs;         // killough 2/28/98: Support scrolling flats
 
   //byte		pad1;
   // Here lies the rub for all

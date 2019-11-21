@@ -143,35 +143,35 @@ void P_InitPicAnims (void)
     _g->lastanim = _g->anims;
     for (i=0 ; animdefs[i].istexture != -1 ; i++)
     {
-    if (animdefs[i].istexture)
-    {
-        // different episode ?
-        if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
-            continue;
+        if (animdefs[i].istexture)
+        {
+            // different episode ?
+            if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
+                continue;
 
-        _g->lastanim->picnum = R_CheckTextureNumForName (animdefs[i].endname);
-        _g->lastanim->basepic = R_CheckTextureNumForName (animdefs[i].startname);
-    }
-    else
-    {
-        if (W_CheckNumForName(animdefs[i].startname) == -1)
-            continue;
+            _g->lastanim->picnum = R_CheckTextureNumForName (animdefs[i].endname);
+            _g->lastanim->basepic = R_CheckTextureNumForName (animdefs[i].startname);
+        }
+        else
+        {
+            if (W_CheckNumForName(animdefs[i].startname) == -1)
+                continue;
 
-        _g->lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
-        _g->lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
-    }
+            _g->lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
+            _g->lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
+        }
 
-    _g->lastanim->istexture = animdefs[i].istexture;
-    _g->lastanim->numpics = _g->lastanim->picnum - _g->lastanim->basepic + 1;
+        _g->lastanim->istexture = animdefs[i].istexture;
+        _g->lastanim->numpics = _g->lastanim->picnum - _g->lastanim->basepic + 1;
 
-    if (_g->lastanim->numpics < 2)
-        I_Error ("P_InitPicAnims: bad cycle from %s to %s",
-             animdefs[i].startname,
-             animdefs[i].endname);
+        if (_g->lastanim->numpics < 2)
+            I_Error ("P_InitPicAnims: bad cycle from %s to %s",
+                     animdefs[i].startname,
+                     animdefs[i].endname);
 
-    _g->lastanim->speed = animdefs[i].speed;
+        _g->lastanim->speed = animdefs[i].speed;
 
-    _g->lastanim++;
+        _g->lastanim++;
     }
 
 }
@@ -2247,11 +2247,16 @@ void P_UpdateSpecials (void)
     // Animate flats and textures globally
     for (anim = _g->anims ; anim < _g->lastanim ; anim++)
     {
+        unsigned int t = (_g->leveltime >> 3);
+        unsigned int n = anim->numpics;
+
+        if((n & (n - 1)) == 0)
+            pic = anim->basepic + (t & (n - 1));
+        else
+            pic = anim->basepic + (t % n);
+
         for(i = anim->basepic; i<anim->basepic+anim->numpics; i++)
         {
-            //pic = anim->basepic + ((_g->leveltime / anim->speed + i) % anim->numpics);
-            pic = anim->basepic + ((_g->leveltime / 8 + i) % anim->numpics);
-
             if(anim->istexture)
                 texturetranslation[i] = pic;
             else

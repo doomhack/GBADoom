@@ -44,7 +44,6 @@
 #include "r_main.h"
 #include "r_things.h"
 #include "r_plane.h"
-#include "r_bsp.h"
 #include "r_draw.h"
 #include "m_bbox.h"
 #include "r_sky.h"
@@ -72,14 +71,14 @@ fixed_t  viewx, viewy, viewz;
 
 angle_t  viewangle;
 
-byte solidcol[MAX_SCREENWIDTH];
+static byte solidcol[MAX_SCREENWIDTH];
 
-const seg_t     *curline;
-side_t    *sidedef;
-const line_t    *linedef;
-sector_t  *frontsector;
-sector_t  *backsector;
-drawseg_t *ds_p;
+static const seg_t     *curline;
+static side_t    *sidedef;
+static const line_t    *linedef;
+static sector_t  *frontsector;
+static sector_t  *backsector;
+static drawseg_t *ds_p;
 
 static visplane_t *floorplane, *ceilingplane;
 static int             rw_angle1;
@@ -137,7 +136,6 @@ short       *flattranslation;             // for global animation
 short       *texturetranslation;
 
 fixed_t basexscale, baseyscale;
-static fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
 
 fixed_t  viewcos, viewsin;
 
@@ -159,6 +157,38 @@ static lighttable_t current_colormap[256];
 static const lighttable_t* current_colormap_ptr;
 
 static fixed_t planeheight;
+
+//*****************************************
+// Constants
+//*****************************************
+
+const int viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
+const int centery = (SCREENHEIGHT-ST_SCALED_HEIGHT)/2;
+static const int centerxfrac = (SCREENWIDTH/2) << FRACBITS;
+static const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
+
+const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
+
+static const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
+
+static const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
+static const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
+
+static const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
+
+static const angle_t clipangle = 537395200; //xtoviewangle[0];
+
+static const int skytexturemid = 100*FRACUNIT;
+
+
+//********************************************
+// This goes here as we want the Thumb code
+// to BX to ARM as Thumb long mul is very slow.
+//********************************************
+fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
+{
+    return (fixed_t)((int_64_t) a*b >> FRACBITS);
+}
 
 //*****************************************
 //Column cache stuff.
@@ -193,6 +223,25 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
   return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
+
+//
+// R_PointInSubsector
+//
+// killough 5/2/98: reformatted, cleaned up
+
+subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
+{
+    int nodenum = numnodes-1;
+
+    // special case for trivial maps (single subsector, no nodes)
+    if (numnodes == 0)
+        return _g->subsectors;
+
+    while (!(nodenum & NF_SUBSECTOR))
+        nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
+    return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
+}
+
 //
 // R_PointToAngle
 // To get a global angle from cartesian coordinates,
@@ -201,12 +250,13 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 //  the y (<=x) is scaled and divided by x to get a
 //  tangent (slope) value which is looked up in the
 //  tantoangle[] table.
-
 //
-static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
+
+
+CONSTFUNC angle_t R_PointToAngle2(fixed_t vx, fixed_t vy, fixed_t x, fixed_t y)
 {
-    x -= viewx;
-    y -= viewy;
+    x -= vx;
+    y -= vy;
 
     if ( (!x) && (!y) )
         return 0;
@@ -282,6 +332,11 @@ static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
             }
         }
     }
+}
+
+static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
+{
+    return R_PointToAngle2(viewx, viewy, x, y);
 }
 
 
@@ -751,19 +806,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     fixed_t       topoffset;
 
     // decide which patch to use
-
-#ifdef RANGECHECK
-    if ( (unsigned)psp->state->sprite >= (unsigned)numsprites)
-        I_Error ("R_ProjectSprite: Invalid sprite number %i", psp->state->sprite);
-#endif
-
     sprdef = &_g->sprites[psp->state->sprite];
-
-#ifdef RANGECHECK
-    if ( (psp->state->frame & FF_FRAMEMASK)  >= sprdef->numframes)
-        I_Error ("R_ProjectSprite: Invalid sprite frame %i : %li",
-                 psp->state->sprite, psp->state->frame);
-#endif
 
     sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
@@ -922,7 +965,7 @@ static void R_SortVisSprites (void)
 // R_DrawMasked
 //
 
-void R_DrawMasked(void)
+static void R_DrawMasked(void)
 {
     int i;
     drawseg_t *ds;
@@ -999,11 +1042,6 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
     angle_t angle;
     fixed_t distance, length;
 
-#ifdef RANGECHECK
-    if (x2 < x1 || x1<0 || x2>=viewwidth || (unsigned)y>(unsigned)viewheight)
-        I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
-#endif
-
     distance = FixedMul(planeheight, yslope[y]);
     dsvars->xstep = FixedMul(distance,basexscale);
     dsvars->ystep = FixedMul(distance,baseyscale);
@@ -1012,9 +1050,8 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
     angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
     // killough 2/28/98: Add offsets
-    dsvars->xfrac =  viewx + FixedMul(finecosine[angle], length) + xoffs;
-    dsvars->yfrac = -viewy - FixedMul(finesine[angle],   length) + yoffs;
-
+    dsvars->xfrac =  viewx + FixedMul(finecosine[angle], length);
+    dsvars->yfrac = -viewy - FixedMul(finesine[angle],   length);
 
     if(fixedcolormap)
     {
@@ -1032,9 +1069,7 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 // R_MakeSpans
 //
 
-static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
-                        unsigned int t2, unsigned int b2,
-                        draw_span_vars_t *dsvars)
+static void R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2, unsigned int b2, draw_span_vars_t *dsvars)
 {
     for (; t1 < t2 && t1 <= b1; t1++)
         R_MapPlane(t1, _g->spanstart[t1], x-1, dsvars);
@@ -1112,9 +1147,6 @@ static void R_DoDrawPlane(visplane_t *pl)
 
             dsvars.source = W_CacheLumpNum(_g->firstflat + flattranslation[pl->picnum]);
 
-            xoffs = pl->xoffs;  // killough 2/28/98: Add offsets
-            yoffs = pl->yoffs;
-
             planeheight = D_abs(pl->height-viewz);
 
             dsvars.colormap = R_LoadColorMap(pl->lightlevel);
@@ -1181,7 +1213,13 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 static vissprite_t *R_NewVisSprite(void)
 {
     if (_g->num_vissprite >= MAXVISSPRITES)
+    {
+#ifdef RANGECHECK
+        I_Error("Vissprite overflow.");
+#endif
         return NULL;
+    }
+
 
     return _g->vissprites + _g->num_vissprite++;
 }
@@ -1240,26 +1278,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         return;
 
     // decide which patch to use for sprite relative to player
-#ifdef RANGECHECK
-    if ((unsigned) thing->sprite >= (unsigned)numsprites)
-        I_Error ("R_ProjectSprite: Invalid sprite number %i", thing->sprite);
-#endif
-
     sprdef = &_g->sprites[thing->sprite];
-
-#ifdef RANGECHECK
-    if ((thing->frame&FF_FRAMEMASK) >= sprdef->numframes)
-        I_Error ("R_ProjectSprite: Invalid sprite frame %i : %i", thing->sprite,
-                 thing->frame);
-
-
-    if (!sprdef->spriteframes)
-    {
-        I_Error ("R_ProjectSprite: Missing spriteframes %i : %i", thing->sprite,
-                 thing->frame);
-    }
-#endif
-
     sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
 
     if (sprframe->rotate)
@@ -1450,8 +1469,6 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->height = pl->height;
     new_pl->picnum = pl->picnum;
     new_pl->lightlevel = pl->lightlevel;
-    new_pl->xoffs = pl->xoffs;           // killough 2/28/98
-    new_pl->yoffs = pl->yoffs;
     new_pl->minx = start;
     new_pl->maxx = stop;
 
@@ -1815,6 +1832,11 @@ static boolean R_CheckOpenings(const int start)
     int pos = _g->lastopening - _g->openings;
     int need = (rw_stopx - start)*4 + pos;
 
+#ifdef RANGECHECK
+    if(need > MAXOPENINGS)
+        I_Error("Openings overflow. Need = %d", need);
+#endif
+
     return need <= MAXOPENINGS;
 }
 
@@ -1830,16 +1852,17 @@ static void R_StoreWallRange(const int start, const int stop)
 
     // don't overflow and crash
     if (ds_p == &_g->drawsegs[MAXDRAWSEGS])
+    {
+#ifdef RANGECHECK
+        I_Error("Drawsegs overflow.");
+#endif
         return;
+    }
+
 
     linedata_t* linedata = &_g->linedata[curline->linenum];
 
     linedata->r_flags |= ML_MAPPED;
-
-#ifdef RANGECHECK
-    if (start >=viewwidth || start > stop)
-        I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
-#endif
 
     sidedef = &_g->sides[curline->sidenum];
     linedef = &_g->lines[curline->linenum];
@@ -1997,6 +2020,7 @@ static void R_StoreWallRange(const int start, const int stop)
         {
             bottomtexture = texturetranslation[sidedef->bottomtexture];
             rw_bottomtexturemid = linedef->flags & ML_DONTPEGBOTTOM ? worldtop : worldlow;
+
             rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
         }
 
@@ -2359,11 +2383,6 @@ static void R_Subsector(int num)
     const seg_t       *line;
     subsector_t *sub;
 
-#ifdef RANGECHECK
-    if (num>=numsubsectors)
-        I_Error ("R_Subsector: ss %i with numss = %i", num, numsubsectors);
-#endif
-
     sub = &_g->subsectors[num];
     frontsector = sub->sector;
     count = sub->numlines;
@@ -2549,7 +2568,7 @@ PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
 //performance profile.
 #define MAX_BSP_DEPTH 128
 
-void R_RenderBSPNode(int bspnum)
+static void R_RenderBSPNode(int bspnum)
 {
     int stack[MAX_BSP_DEPTH];
     int sp = 0;
@@ -2605,4 +2624,46 @@ void R_RenderBSPNode(int bspnum)
 
         bspnum = bsp->children[side^1];
     }
+}
+
+
+static void R_ClearDrawSegs(void)
+{
+    ds_p = _g->drawsegs;
+}
+
+static void R_ClearClipSegs (void)
+{
+    BlockSet(solidcol, 0, SCREENWIDTH);
+}
+
+//
+// R_ClearSprites
+// Called at frame start.
+//
+
+static void R_ClearSprites(void)
+{
+  _g->num_vissprite = 0;            // killough
+}
+
+//
+// R_RenderView
+//
+void R_RenderPlayerView (player_t* player)
+{
+    R_SetupFrame (player);
+
+    // Clear buffers.
+    R_ClearClipSegs ();
+    R_ClearDrawSegs ();
+    R_ClearPlanes ();
+    R_ClearSprites ();
+
+    // The head node is the last node output.
+    R_RenderBSPNode (numnodes-1);
+
+    R_DrawPlanes ();
+
+    R_DrawMasked ();
 }
