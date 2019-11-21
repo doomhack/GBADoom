@@ -44,7 +44,6 @@
 #include "r_main.h"
 #include "r_things.h"
 #include "r_plane.h"
-#include "r_bsp.h"
 #include "r_draw.h"
 #include "m_bbox.h"
 #include "r_sky.h"
@@ -60,23 +59,6 @@
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
 
-angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
-{
-  return (y -= viewy, (x -= viewx) || y) ?
-    x >= 0 ?
-      y >= 0 ?
-        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0
-                ANG90-1-tantoangle[SlopeDiv(x,y)] :                // octant 1
-        x > (y = -y) ? 0-tantoangle[SlopeDiv(y,x)] :                // octant 8
-                       ANG270+tantoangle[SlopeDiv(x,y)] :          // octant 7
-      y >= 0 ? (x = -x) > y ? ANG180-1-tantoangle[SlopeDiv(y,x)] : // octant 3
-                            ANG90 + tantoangle[SlopeDiv(x,y)] :    // octant 2
-        (x = -x) > (y = -y) ? ANG180+tantoangle[ SlopeDiv(y,x)] :  // octant 4
-                              ANG270-1-tantoangle[SlopeDiv(x,y)] : // octant 5
-    0;
-}
-
-
 //
 // R_Init
 //
@@ -89,8 +71,6 @@ void R_Init (void)
   R_InitData();
   lprintf(LO_INFO, "R_InitPlanes");
   R_InitPlanes();
-  lprintf(LO_INFO, "R_InitSkyMap");
-  R_InitSkyMap();
   lprintf(LO_INFO, "R_InitBuffer");
   R_InitBuffer();
 }

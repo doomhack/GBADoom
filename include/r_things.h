@@ -43,8 +43,6 @@
 /* Constant arrays used for psprite clipping and initializing clipping. */
 
 void R_InitSprites(const char * const * namelist);
-void R_ClearSprites(void);
-void R_DrawMasked(void);
 
 #define MAX_SPRITE_FRAMES 29          /* Macroized -- killough 1/25/98 */
 

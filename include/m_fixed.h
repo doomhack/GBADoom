@@ -84,7 +84,7 @@ inline static fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
                                                   (fixed_t)(((int_64_t) a << FRACBITS) / b);
 #else
 
-    unsigned int udiv64 (unsigned int a, unsigned int b, unsigned int c);
+    unsigned int udiv64_arm (unsigned int a, unsigned int b, unsigned int c);
 
     int q;
     int sign = (a^b) < 0; /* different signs */
@@ -96,7 +96,7 @@ inline static fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
     l = (a << 16);
     h = (a >> 16);
 
-    q = udiv64 (l,h,b);
+    q = udiv64_arm (l,h,b);
     if (sign)
         q = -q;
 

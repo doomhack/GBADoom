@@ -34,7 +34,6 @@
 #include "doomstat.h"
 #include "w_wad.h"
 #include "r_main.h"
-#include "r_bsp.h"
 #include "r_segs.h"
 #include "r_draw.h"
 #include "r_things.h"
@@ -250,15 +249,7 @@ void R_InitSprites(const char * const *namelist)
   R_InitSpriteDefs(namelist);
 }
 
-//
-// R_ClearSprites
-// Called at frame start.
-//
 
-void R_ClearSprites (void)
-{
-  _g->num_vissprite = 0;            // killough
-}
 
 
 

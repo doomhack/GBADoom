@@ -44,7 +44,6 @@
 #include "r_main.h"
 #include "r_things.h"
 #include "r_plane.h"
-#include "r_bsp.h"
 #include "r_draw.h"
 #include "m_bbox.h"
 #include "r_sky.h"
@@ -72,14 +71,14 @@ fixed_t  viewx, viewy, viewz;
 
 angle_t  viewangle;
 
-byte solidcol[MAX_SCREENWIDTH];
+static byte solidcol[MAX_SCREENWIDTH];
 
-const seg_t     *curline;
-side_t    *sidedef;
-const line_t    *linedef;
-sector_t  *frontsector;
-sector_t  *backsector;
-drawseg_t *ds_p;
+static const seg_t     *curline;
+static side_t    *sidedef;
+static const line_t    *linedef;
+static sector_t  *frontsector;
+static sector_t  *backsector;
+static drawseg_t *ds_p;
 
 static visplane_t *floorplane, *ceilingplane;
 static int             rw_angle1;
@@ -166,18 +165,22 @@ static fixed_t planeheight;
 
 const int viewheight = SCREENHEIGHT-ST_SCALED_HEIGHT;
 const int centery = (SCREENHEIGHT-ST_SCALED_HEIGHT)/2;
-const int centerxfrac = (SCREENWIDTH/2) << FRACBITS;
-const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
+static const int centerxfrac = (SCREENWIDTH/2) << FRACBITS;
+static const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
 
 const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
-const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
 
-const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
-const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
+static const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
 
-const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
+static const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
+static const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
 
-const angle_t clipangle = 537395200; //xtoviewangle[0];
+static const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
+
+static const angle_t clipangle = 537395200; //xtoviewangle[0];
+
+static const int skytexturemid = 100*FRACUNIT;
+
 
 //********************************************
 // This goes here as we want the Thumb code
@@ -248,12 +251,13 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 //  the y (<=x) is scaled and divided by x to get a
 //  tangent (slope) value which is looked up in the
 //  tantoangle[] table.
-
 //
-static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
+
+
+CONSTFUNC angle_t R_PointToAngle2(fixed_t vx, fixed_t vy, fixed_t x, fixed_t y)
 {
-    x -= viewx;
-    y -= viewy;
+    x -= vx;
+    y -= vy;
 
     if ( (!x) && (!y) )
         return 0;
@@ -329,6 +333,11 @@ static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
             }
         }
     }
+}
+
+static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
+{
+    return R_PointToAngle2(viewx, viewy, x, y);
 }
 
 
@@ -957,7 +966,7 @@ static void R_SortVisSprites (void)
 // R_DrawMasked
 //
 
-void R_DrawMasked(void)
+static void R_DrawMasked(void)
 {
     int i;
     drawseg_t *ds;
@@ -2566,7 +2575,7 @@ PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
 //performance profile.
 #define MAX_BSP_DEPTH 128
 
-void R_RenderBSPNode(int bspnum)
+static void R_RenderBSPNode(int bspnum)
 {
     int stack[MAX_BSP_DEPTH];
     int sp = 0;
@@ -2622,6 +2631,27 @@ void R_RenderBSPNode(int bspnum)
 
         bspnum = bsp->children[side^1];
     }
+}
+
+
+static void R_ClearDrawSegs(void)
+{
+    ds_p = _g->drawsegs;
+}
+
+static void R_ClearClipSegs (void)
+{
+    BlockSet(solidcol, 0, SCREENWIDTH);
+}
+
+//
+// R_ClearSprites
+// Called at frame start.
+//
+
+static void R_ClearSprites(void)
+{
+  _g->num_vissprite = 0;            // killough
 }
 
 //

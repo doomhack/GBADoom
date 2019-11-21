@@ -62,6 +62,10 @@
 
 #include "global_data.h"
 
+#include "gba_functions.h"
+
+const fixed_t iprojection = 1092; //( (1 << FRACUNIT) / (SCREENWIDTH / 2))
+
 
 //
 // R_InitPlanes
@@ -84,6 +88,7 @@ void R_ClearPlanes(void)
     for (i=0 ; i<SCREENWIDTH ; i++)
         floorclip[i] = viewheight, ceilingclip[i] = -1;
 
+
     for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
         for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
             _g->freehead = &(*_g->freehead)->next;
@@ -91,8 +96,11 @@ void R_ClearPlanes(void)
     _g->lastopening = _g->openings;
 
     // scale will be unit scale at SCREENWIDTH/2 distance
-    basexscale = FixedDiv (viewsin,projection);
-    baseyscale = FixedDiv (viewcos,projection);
+    //basexscale = FixedDiv (viewsin,projection);
+    //baseyscale = FixedDiv (viewcos,projection);
+
+    basexscale = FixedMul(viewsin,iprojection);
+    baseyscale = FixedMul(viewcos,iprojection);
 }
 
 //Planes are alloc'd with PU_LEVEL tag so are dumped at level
