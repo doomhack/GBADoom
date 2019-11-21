@@ -435,7 +435,6 @@ typedef struct visplane
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
-  fixed_t xoffs, yoffs;         // killough 2/28/98: Support scrolling flats
 
   //byte		pad1;
   // Here lies the rub for all

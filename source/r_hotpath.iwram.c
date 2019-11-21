@@ -136,7 +136,6 @@ short       *flattranslation;             // for global animation
 short       *texturetranslation;
 
 fixed_t basexscale, baseyscale;
-static fixed_t xoffs,yoffs;    // killough 2/28/98: flat offsets
 
 fixed_t  viewcos, viewsin;
 
@@ -1051,9 +1050,8 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
     angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
     // killough 2/28/98: Add offsets
-    dsvars->xfrac =  viewx + FixedMul(finecosine[angle], length) + xoffs;
-    dsvars->yfrac = -viewy - FixedMul(finesine[angle],   length) + yoffs;
-
+    dsvars->xfrac =  viewx + FixedMul(finecosine[angle], length);
+    dsvars->yfrac = -viewy - FixedMul(finesine[angle],   length);
 
     if(fixedcolormap)
     {
@@ -1148,9 +1146,6 @@ static void R_DoDrawPlane(visplane_t *pl)
             draw_span_vars_t dsvars;
 
             dsvars.source = W_CacheLumpNum(_g->firstflat + flattranslation[pl->picnum]);
-
-            xoffs = pl->xoffs;  // killough 2/28/98: Add offsets
-            yoffs = pl->yoffs;
 
             planeheight = D_abs(pl->height-viewz);
 
@@ -1474,8 +1469,6 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->height = pl->height;
     new_pl->picnum = pl->picnum;
     new_pl->lightlevel = pl->lightlevel;
-    new_pl->xoffs = pl->xoffs;           // killough 2/28/98
-    new_pl->yoffs = pl->yoffs;
     new_pl->minx = start;
     new_pl->maxx = stop;
 
