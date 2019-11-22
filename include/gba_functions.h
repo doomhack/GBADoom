@@ -104,10 +104,25 @@ inline static void BlockSet(void* dest, volatile unsigned int val, const unsigne
 
 inline static void ByteCopy(byte* dest, const byte* src, unsigned int count)
 {
-    do
+    unsigned int l = (count >> 3);
+    unsigned int r = (count & 7);
+
+    while(l--)
     {
         *dest++ = *src++;
-    } while(--count);
+        *dest++ = *src++;
+        *dest++ = *src++;
+        *dest++ = *src++;
+        *dest++ = *src++;
+        *dest++ = *src++;
+        *dest++ = *src++;
+        *dest++ = *src++;
+    }
+
+    while(r--)
+    {
+        *dest++ = *src++;
+    }
 }
 
 inline static void ByteSet(byte* dest, byte val, unsigned int count)
