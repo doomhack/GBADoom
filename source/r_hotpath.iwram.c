@@ -182,6 +182,17 @@ static const int skytexturemid = 100*FRACUNIT;
 
 
 //********************************************
+// On the GBA we exploit that an 8 bit write
+// will mirror to the upper 8 bits too.
+// it saves an OR and Shift per pixel.
+//********************************************
+#ifdef __arm__
+    typedef byte pixel;
+#else
+    typedef unsigned short pixel;
+#endif
+
+//********************************************
 // This goes here as we want the Thumb code
 // to BX to ARM as Thumb long mul is very slow.
 //********************************************
@@ -201,13 +212,7 @@ static byte columnCache[128*128];
 extern byte* columnCache;
 #endif
 
-typedef struct column_cache_entry_t
-{
-    unsigned short texture;
-    unsigned short column;
-}column_cache_entry_t;
-
-static column_cache_entry_t columnCacheEntries[128];
+static unsigned int columnCacheEntries[128];
 
 // killough 5/3/98: reformatted
 
@@ -464,49 +469,49 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     while(l--)
     {
         //P1
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
 
         //P2
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
 
         //P3
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
 
         //P4
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
 
         //P5
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
 
         //P6
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
 
         //P7
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
 
         //P8
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
@@ -517,7 +522,7 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     {
         // Re-map color indices from wall texture column
         //  using a lighting/special effects LUT.
-        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
@@ -1111,49 +1116,49 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
     while(l--)
     {
         //P1
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
 
         //P2
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
 
         //P3
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
 
         //P4
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
 
         //P5
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
 
         //P6
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
 
         //P7
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
 
         //P8
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
     }
 
     while(r--)
     {
-        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
         dest++;
         position += step;
     }
@@ -1650,18 +1655,20 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
  * straight from const patch_t*.
 */
 
-#define CACHE_WAYS 16
+#define CACHE_WAYS 32
 
 #define CACHE_MASK (CACHE_WAYS-1)
 #define CACHE_STRIDE (128 / CACHE_WAYS)
 #define CACHE_KEY_MASK (CACHE_STRIDE-1)
+
+#define CACHE_ENTRY(c, t) ((c << 16 | t))
 
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
     //static unsigned int looks, peeks;
     //looks++;
 
-    unsigned int cx = (column << 16 | texture);
+    unsigned int cx = CACHE_ENTRY(column, texture);
 
     unsigned int key = ((column >> 4) ^ texture) & CACHE_KEY_MASK;
 
@@ -1721,18 +1728,17 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
         unsigned int cachekey = FindColumnCacheItem(texture, xc);
 
         byte* colcache = &columnCache[cachekey*128];
-        column_cache_entry_t* cacheEntry = &columnCacheEntries[cachekey];
+        unsigned int cacheEntry = columnCacheEntries[cachekey];
 
         //total++;
 
-        if((cacheEntry->texture != texture) || cacheEntry->column != xc)
+        if(cacheEntry != CACHE_ENTRY(xc, texture))
         {
             //misses++;
 
             byte tmpCache[128];
 
-            cacheEntry->texture = texture & 0xffff;
-            cacheEntry->column = xc;
+            columnCacheEntries[cachekey] = CACHE_ENTRY(xc, texture);
 
             for(int i=0; i<tex->patchcount; i++)
             {
