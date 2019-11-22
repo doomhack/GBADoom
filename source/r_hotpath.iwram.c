@@ -440,10 +440,10 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 //
 static void R_DrawColumn (draw_column_vars_t *dcvars)
 {
-    int count = dcvars->yh - dcvars->yl;
+    int count = (dcvars->yh - dcvars->yl) + 1;
 
     // Zero length, column does not exceed a pixel.
-    if (count < 0)
+    if (count <= 0)
         return;
 
     const byte *source = dcvars->source;
@@ -457,17 +457,71 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
     // This is as fast as it gets.
-    do
-    {
-        // Re-map color indices from wall texture column
-        //  using a lighting/special effects LUT.
-        unsigned short color = colormap[source[(frac>>FRACBITS)&127]];
 
-        *dest = (color | (color << 8));
+    unsigned int l = (count >> 3);
+    unsigned int r = (count & 7);
+
+    while(l--)
+    {
+        //P1
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
 
         dest += SCREENWIDTH;
         frac += fracstep;
-    } while (count--);
+
+        //P2
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+
+        //P3
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+
+        //P4
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+
+        //P5
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+
+        //P6
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+
+        //P7
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+
+        //P8
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+    }
+
+
+    while(r--)
+    {
+        // Re-map color indices from wall texture column
+        //  using a lighting/special effects LUT.
+        *((byte*)dest) = colormap[source[(frac>>FRACBITS)&127]];
+
+        dest += SCREENWIDTH;
+        frac += fracstep;
+    }
 }
 
 
@@ -1037,7 +1091,10 @@ static void R_DrawMasked(void)
 //
 static void R_DrawSpan(draw_span_vars_t *dsvars)
 {
-    int count = (dsvars->x2 - dsvars->x1);
+    int count = (dsvars->x2 - dsvars->x1) + 1;
+
+    if(count <= 0)
+        return;
 
     const byte *source = dsvars->source;
     const byte *colormap = dsvars->colormap;
@@ -1048,24 +1105,58 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
 
     unsigned int position = ((dsvars->xfrac << 10) & 0xffff0000) | ((dsvars->yfrac >> 6)  & 0x0000ffff);
 
-    unsigned int xtemp, ytemp, spot;
+    unsigned int l = count >> 3;
+    unsigned int r = count & 7;
 
-    do
+    while(l--)
     {
-        // Calculate current texture index in u,v.
-        ytemp = (position >> 4) & 0x0fc0;
-        xtemp = (position >> 26);
-        spot = xtemp | ytemp;
-
-        // Lookup pixel from flat texture tile,
-        //  re-index using light/colormap.
-        unsigned short color = colormap[source[spot]];
-
-
-        *dest++ = (color | (color << 8));
+        //P1
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
         position += step;
 
-    } while (count--);
+        //P2
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+
+        //P3
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+
+        //P4
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+
+        //P5
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+
+        //P6
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+
+        //P7
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+
+        //P8
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+    }
+
+    while(r--)
+    {
+        *((byte*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+        dest++;
+        position += step;
+    }
 }
 
 
