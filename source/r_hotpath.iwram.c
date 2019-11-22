@@ -185,7 +185,7 @@ static const int skytexturemid = 100*FRACUNIT;
 // This goes here as we want the Thumb code
 // to BX to ARM as Thumb long mul is very slow.
 //********************************************
-fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
+inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
 {
     return (fixed_t)((int_64_t) a*b >> FRACBITS);
 }
@@ -211,7 +211,7 @@ static column_cache_entry_t columnCacheEntries[128];
 
 // killough 5/3/98: reformatted
 
-CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
+static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 {
   unsigned ans;
 
@@ -223,6 +223,38 @@ CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
   return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
+//
+// R_PointOnSide
+// Traverse BSP (sub) tree,
+//  check point against partition plane.
+// Returns side 0 (front) or 1 (back).
+//
+// killough 5/2/98: reformatted
+//
+
+static PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
+{
+    fixed_t dx = (fixed_t)node->dx << FRACBITS;
+    fixed_t dy = (fixed_t)node->dy << FRACBITS;
+
+    fixed_t nx = (fixed_t)node->x << FRACBITS;
+    fixed_t ny = (fixed_t)node->y << FRACBITS;
+
+    if (!dx)
+        return x <= nx ? node->dy > 0 : node->dy < 0;
+
+    if (!dy)
+        return y <= ny ? node->dx < 0 : node->dx > 0;
+
+    x -= nx;
+    y -= ny;
+
+    // Try to quickly decide by looking at sign bits.
+    if ((dy ^ dx ^ x ^ y) < 0)
+        return (dy ^ x) < 0;  // (left is negative)
+
+    return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
+}
 
 //
 // R_PointInSubsector
@@ -1164,19 +1196,7 @@ static void R_DoDrawPlane(visplane_t *pl)
     }
 }
 
-//
-// RDrawPlanes
-// At the end of each frame.
-//
 
-void R_DrawPlanes (void)
-{
-    visplane_t *pl;
-    int i;
-    for (i=0;i<MAXVISPLANES;i++)
-        for (pl=_g->visplanes[i]; pl; pl=pl->next)
-            R_DoDrawPlane(pl);
-}
 
 
 //*******************************************
@@ -2524,40 +2544,6 @@ static boolean R_RenderBspSubsector(int bspnum)
     return false;
 }
 
-//
-// R_PointOnSide
-// Traverse BSP (sub) tree,
-//  check point against partition plane.
-// Returns side 0 (front) or 1 (back).
-//
-// killough 5/2/98: reformatted
-//
-
-PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
-{
-    fixed_t dx = (fixed_t)node->dx << FRACBITS;
-    fixed_t dy = (fixed_t)node->dy << FRACBITS;
-
-    fixed_t nx = (fixed_t)node->x << FRACBITS;
-    fixed_t ny = (fixed_t)node->y << FRACBITS;
-
-    if (!dx)
-        return x <= nx ? node->dy > 0 : node->dy < 0;
-
-    if (!dy)
-        return y <= ny ? node->dx < 0 : node->dx > 0;
-
-    x -= nx;
-    y -= ny;
-
-    // Try to quickly decide by looking at sign bits.
-    if ((dy ^ dx ^ x ^ y) < 0)
-        return (dy ^ x) < 0;  // (left is negative)
-
-    return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
-}
-
-
 // RenderBSPNode
 // Renders all subsectors below a given node,
 //  traversing subtree recursively.
@@ -2645,6 +2631,20 @@ static void R_ClearClipSegs (void)
 static void R_ClearSprites(void)
 {
   _g->num_vissprite = 0;            // killough
+}
+
+//
+// RDrawPlanes
+// At the end of each frame.
+//
+
+static void R_DrawPlanes (void)
+{
+    visplane_t *pl;
+    int i;
+    for (i=0;i<MAXVISPLANES;i++)
+        for (pl=_g->visplanes[i]; pl; pl=pl->next)
+            R_DoDrawPlane(pl);
 }
 
 //

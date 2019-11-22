@@ -101,9 +101,4 @@ extern const short negonearray[120];
 
 extern const unsigned char translationtables[1023];
 
-
-
-// Utility function, called by R_PointToAngle.
-int SlopeDiv(unsigned num, unsigned den);
-
 #endif

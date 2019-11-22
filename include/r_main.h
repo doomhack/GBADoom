@@ -101,7 +101,6 @@ extern fixed_t  viewcos, viewsin;
 // Utility functions.
 //
 
-int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node);
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y);
 
