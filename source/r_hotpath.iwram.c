@@ -1623,7 +1623,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
         //peeks++;
         unsigned int cy = *cc;
 
-        if( (cy == 0) || (cy == cx) )
+        if((cy == cx) || (cy == 0))
             return i;
 
         cc+=CACHE_STRIDE;
