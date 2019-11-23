@@ -1569,15 +1569,11 @@ static visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
 
 static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int cacheheight)
 {
-    int     count;
-    int		position;
-    const byte*	source;
-
     while (patch->topdelta != 0xff)
     {
-        source = (const byte *)patch + 3;
-        count = patch->length;
-        position = originy + patch->topdelta;
+        const byte* source = (const byte *)patch + 3;
+        int count = patch->length;
+        int position = originy + patch->topdelta;
 
         if (position < 0)
         {
@@ -1710,7 +1706,8 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
                 }
             }
 
-            BlockCopy(colcache, tmpCache, 128);
+            //Block copy will drop low 2 bits of len.
+            BlockCopy(colcache, tmpCache, (tex->height + 3));
         }
 
         dcvars->source = colcache;
