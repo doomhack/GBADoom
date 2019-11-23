@@ -443,6 +443,18 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 // Thus a special case loop for very fast rendering can
 //  be used. It has also been used with Wolfenstein 3D.
 //
+
+inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int frac)
+{
+#ifdef __arm__
+    *dest = colormap[source[(frac>>FRACBITS)&127]];
+#else
+    unsigned int color = colormap[source[(frac>>FRACBITS)&127]];
+
+    *dest = (color | (color << 8));
+#endif
+}
+
 static void R_DrawColumn (draw_column_vars_t *dcvars)
 {
     int count = (dcvars->yh - dcvars->yl) + 1;
@@ -468,64 +480,19 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
 
     while(l--)
     {
-        //P1
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
-
-        //P2
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
-
-        //P3
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
-
-        //P4
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
-
-        //P5
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
-
-        //P6
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
-
-        //P7
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
-
-        //P8
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
     }
-
 
     while(r--)
     {
-        // Re-map color indices from wall texture column
-        //  using a lighting/special effects LUT.
-        *((pixel*)dest) = colormap[source[(frac>>FRACBITS)&127]];
-
-        dest += SCREENWIDTH;
-        frac += fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
     }
 }
 
@@ -1094,6 +1061,18 @@ static void R_DrawMasked(void)
 // In consequence, flats are not stored by column (like walls),
 //  and the inner loop has to step in texture space u and v.
 //
+
+inline static void R_DrawSpanPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int position)
+{
+#ifdef __arm__
+    *dest = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+#else
+    unsigned int color = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+
+    *dest = (color | (color << 8));
+#endif
+}
+
 static void R_DrawSpan(draw_span_vars_t *dsvars)
 {
     int count = (dsvars->x2 - dsvars->x1) + 1;
@@ -1115,52 +1094,19 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
 
     while(l--)
     {
-        //P1
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
-
-        //P2
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
-
-        //P3
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
-
-        //P4
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
-
-        //P5
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
-
-        //P6
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
-
-        //P7
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
-
-        //P8
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
     }
 
     while(r--)
     {
-        *((pixel*)dest) = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-        dest++;
-        position += step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
     }
 }
 
