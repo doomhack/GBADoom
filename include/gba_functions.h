@@ -87,7 +87,7 @@ inline static void BlockCopy(void* dest, const void* src, const unsigned int len
 
     DMA3COPY(src, dest, DMA_DST_INC | DMA_SRC_INC | DMA32 | DMA_IMMEDIATE | words)
 #else
-    memcpy(dest, src, len);
+    memcpy(dest, src, len & 0xfffffffc);
 #endif
 }
 
@@ -98,31 +98,16 @@ inline static void BlockSet(void* dest, volatile unsigned int val, const unsigne
 
     DMA3COPY(&val, dest, DMA_SRC_FIXED | DMA_DST_INC | DMA32 | DMA_IMMEDIATE | words)
 #else
-    memset(dest, val, len);
+    memset(dest, val, len & 0xfffffffc);
 #endif
 }
 
 inline static void ByteCopy(byte* dest, const byte* src, unsigned int count)
 {
-    unsigned int l = (count >> 3);
-    unsigned int r = (count & 7);
-
-    while(l--)
+    do
     {
         *dest++ = *src++;
-        *dest++ = *src++;
-        *dest++ = *src++;
-        *dest++ = *src++;
-        *dest++ = *src++;
-        *dest++ = *src++;
-        *dest++ = *src++;
-        *dest++ = *src++;
-    }
-
-    while(r--)
-    {
-        *dest++ = *src++;
-    }
+    } while(--count);
 }
 
 inline static void ByteSet(byte* dest, byte val, unsigned int count)
