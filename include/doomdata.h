@@ -79,9 +79,9 @@ typedef struct {
 typedef struct {
   short textureoffset;
   short rowoffset;
-  char  toptexture[8];
-  char  bottomtexture[8];
-  char  midtexture[8];
+  short toptexture;
+  short bottomtexture;
+  short midtexture;
   short sector;  // Front sector, towards viewer.
 } PACKEDATTR mapsidedef_t;
 

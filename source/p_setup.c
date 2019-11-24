@@ -262,30 +262,35 @@ static void P_LoadSideDefs (int lump)
 
 static void P_LoadSideDefs2(int lump)
 {
-  const byte *data = W_CacheLumpNum(lump); // cph - const*, wad lump handling updated
-  int  i;
+    const byte *data = W_CacheLumpNum(lump); // cph - const*, wad lump handling updated
+    int  i;
 
-  for (i=0; i<_g->numsides; i++)
+    for (i=0; i<_g->numsides; i++)
     {
-      register const mapsidedef_t *msd = (const mapsidedef_t *) data + i;
-      register side_t *sd = _g->sides + i;
-      register sector_t *sec;
+        register const mapsidedef_t *msd = (const mapsidedef_t *) data + i;
+        register side_t *sd = _g->sides + i;
+        register sector_t *sec;
 
-      sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
-      sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
+        sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
+        sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
 
-      { /* cph 2006/09/30 - catch out-of-range sector numbers; use sector 0 instead */
-        unsigned short sector_num = SHORT(msd->sector);
-        if (sector_num >= _g->numsectors) {
-          lprintf(LO_WARN,"P_LoadSideDefs2: sidedef %i has out-of-range sector num %u\n", i, sector_num);
-          sector_num = 0;
+        { /* cph 2006/09/30 - catch out-of-range sector numbers; use sector 0 instead */
+            unsigned short sector_num = SHORT(msd->sector);
+            if (sector_num >= _g->numsectors)
+            {
+                lprintf(LO_WARN,"P_LoadSideDefs2: sidedef %i has out-of-range sector num %u\n", i, sector_num);
+                sector_num = 0;
+            }
+            sd->sector = sec = &_g->sectors[sector_num];
         }
-        sd->sector = sec = &_g->sectors[sector_num];
-      }
 
-      sd->midtexture = R_LoadTextureByName(msd->midtexture);
-      sd->toptexture = R_LoadTextureByName(msd->toptexture);
-      sd->bottomtexture = R_LoadTextureByName(msd->bottomtexture);
+        sd->midtexture = msd->midtexture;
+        sd->toptexture = msd->toptexture;
+        sd->bottomtexture = msd->bottomtexture;
+
+        R_GetTexture(sd->midtexture);
+        R_GetTexture(sd->toptexture);
+        R_GetTexture(sd->bottomtexture);
     }
 }
 
