@@ -1067,7 +1067,8 @@ void G_DoLoadGame(void)
 void G_SaveGame(int slot, const char *description)
 {
   strcpy(_g->savedescription, description);
-  if (_g->demoplayback) {
+  if (_g->demoplayback)
+  {
     /* cph - We're doing a user-initiated save game while a demo is
      * running so, go outside normal mechanisms
      */
@@ -1075,8 +1076,7 @@ void G_SaveGame(int slot, const char *description)
     G_DoSaveGame(true);
   }
   // CPhipps - store info in special_event
-  _g->special_event = BT_SPECIAL | (BTS_SAVEGAME & BT_SPECIALMASK) |
-    ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
+  _g->special_event = BT_SPECIAL | (BTS_SAVEGAME & BT_SPECIALMASK) | ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
 
 }
 

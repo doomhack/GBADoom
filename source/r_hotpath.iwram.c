@@ -444,6 +444,9 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 //  be used. It has also been used with Wolfenstein 3D.
 //
 
+#pragma GCC push_options
+#pragma GCC optimize ("O3")
+
 inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int frac)
 {
 #ifdef __arm__
@@ -496,6 +499,7 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     }
 }
 
+#pragma GCC pop_options
 
 //
 // R_DrawMaskedColumn
@@ -1062,6 +1066,9 @@ static void R_DrawMasked(void)
 //  and the inner loop has to step in texture space u and v.
 //
 
+#pragma GCC push_options
+#pragma GCC optimize ("O3")
+
 inline static void R_DrawSpanPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int position)
 {
 #ifdef __arm__
@@ -1110,6 +1117,7 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
     }
 }
 
+#pragma GCC pop_options
 
 static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 {

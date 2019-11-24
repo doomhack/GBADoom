@@ -40,7 +40,7 @@
 #define USERANGE        (64*FRACUNIT)
 #define MELEERANGE      (64*FRACUNIT)
 #define MISSILERANGE    (32*64*FRACUNIT)
-#define LOOKRANGE       (512*FRACUNIT)
+#define LOOKRANGE       (768*FRACUNIT)
 
 // MAXRADIUS is for precalculated sector block boxes the spider demon
 // is larger, but we do not have any moving sectors nearby
