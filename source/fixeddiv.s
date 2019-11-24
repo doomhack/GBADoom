@@ -8,8 +8,6 @@
 .align
 
 .global udiv64_arm
-.global udiv32_arm
-
 
 udiv64_arm:
     adds      r0,r0,r0
