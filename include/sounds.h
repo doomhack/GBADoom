@@ -58,6 +58,9 @@ struct sfxinfo_struct {
 
   // volume if a link
   int volume;
+
+  //Length of clip
+  int ticks;
 };
 
 //
