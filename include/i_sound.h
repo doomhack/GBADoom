@@ -47,27 +47,12 @@ void I_ShutdownSound(void);
 //  SFX I/O
 //
 
-// Initialize channels?
-void I_SetChannels(void);
 
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id, int channel, int vol, int sep);
 
 // Stops a sound channel.
 void I_StopSound(int handle);
-
-// Called by S_*() functions
-//  to see if a channel is still playing.
-// Returns 0 if no longer playing, 1 if playing.
-boolean I_SoundIsPlaying(int handle);
-
-// Called by m_menu.c to let the quit sound play and quit right after it stops
-boolean I_AnySoundStillPlaying(void);
-
-// Updates the volume, separation,
-//  and pitch of a sound channel.
-void I_UpdateSoundParams(int handle, int vol, int sep);
-
 
 //
 //  MUSIC I/O

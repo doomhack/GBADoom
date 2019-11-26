@@ -96,9 +96,6 @@ void S_Init(int sfxVolume, int musicVolume)
 
         lprintf(LO_CONFIRM, "S_Init: default sfx volume %d", sfxVolume);
 
-        // Whatever these did with DMX, these are rather dummies now.
-        I_SetChannels();
-
         S_SetSfxVolume(sfxVolume);
 
         // Allocating the internal channels for mixing

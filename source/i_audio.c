@@ -312,33 +312,6 @@ static int addsfx(int sfxid, int channel, int volume, int sep)
 	return channel;
 }
 
-static void updateSoundParams(int slot, int volume, int sep)
-{
-#ifdef __arm__
-    //mmEffectVolume(slot + 1, volume);
-    //mmEffectPanning(slot + 1, sep);
-#endif
-}
-
-void I_UpdateSoundParams(int handle, int volume, int sep)
-{
-  //updateSoundParams(handle, volume, sep);
-}
-
-//
-// SFX API
-// Note: this was called by S_Init.
-// However, whatever they did in the
-// old DPMS based DOS version, this
-// were simply dummies in the Linux
-// version.
-// See soundserver initdata().
-//
-void I_SetChannels(void)
-{
-
-}
-
 //
 // Starting a sound means adding it
 //  to the current list of active sounds
@@ -362,23 +335,9 @@ int I_StartSound(int id, int channel, int vol, int sep)
 	return channel;
 }
 
-
-
 void I_StopSound (int handle)
 {
 	stopchan(handle);
-}
-
-
-boolean I_SoundIsPlaying(int handle)
-{
-    return false;
-}
-
-
-boolean I_AnySoundStillPlaying(void)
-{
-    return false;
 }
 
 void I_ShutdownSound(void)
@@ -399,8 +358,6 @@ void I_InitSound(void)
 #ifdef __arm__
     mmInitDefault(soundbank_bin, 8);
 #endif
-
-	I_SetChannels();
 
 	if (!nomusicparm)
 		I_InitMusic();
