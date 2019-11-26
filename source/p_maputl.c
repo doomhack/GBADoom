@@ -151,17 +151,6 @@ fixed_t PUREFUNC P_InterceptVector2(const divline_t *v2, const divline_t *v1)
              FixedMul((v2->y - v1->y)>>8, v1->dx), den) : 0;
 }
 
-fixed_t PUREFUNC P_InterceptVector(const divline_t *v2, const divline_t *v1)
-{
-    /* cph - This was introduced at prboom_4_compatibility - no precision/overflow problems */
-    int_64_t den = (int_64_t)v1->dy * v2->dx - (int_64_t)v1->dx * v2->dy;
-    den >>= 16;
-    if (!den)
-        return 0;
-    return (fixed_t)(((int_64_t)(v1->x - v2->x) * v1->dy - (int_64_t)(v1->y - v2->y) * v1->dx) / den);
-
-}
-
 //
 // P_LineOpening
 // Sets opentop and openbottom to the window

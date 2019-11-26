@@ -972,93 +972,94 @@ void P_SlideMove(mobj_t *mo)
 // Sets linetaget and aimslope when a target is aimed at.
 //
 boolean PTR_AimTraverse (intercept_t* in)
-  {
-  const line_t* li;
-  mobj_t* th;
-  fixed_t slope;
-  fixed_t thingtopslope;
-  fixed_t thingbottomslope;
-  fixed_t dist;
+{
+    const line_t* li;
+    mobj_t* th;
+    fixed_t slope;
+    fixed_t thingtopslope;
+    fixed_t thingbottomslope;
+    fixed_t dist;
 
-  if (in->isaline)
+    if (in->isaline)
     {
-    li = in->d.line;
+        li = in->d.line;
 
-    if ( !(li->flags & ML_TWOSIDED) )
-      return false;   // stop
+        if ( !(li->flags & ML_TWOSIDED) )
+            return false;   // stop
 
-    // Crosses a two sided line.
-    // A two sided line will restrict
-    // the possible target ranges.
+        // Crosses a two sided line.
+        // A two sided line will restrict
+        // the possible target ranges.
 
-    P_LineOpening (li);
+        P_LineOpening (li);
 
-    if (_g->openbottom >= _g->opentop)
-      return false;   // stop
+        if (_g->openbottom >= _g->opentop)
+            return false;   // stop
 
-    dist = FixedMul (_g->attackrange, in->frac);
+        dist = FixedMul(_g->attackrange, in->frac);
 
-    if (LN_FRONTSECTOR(li)->floorheight != LN_BACKSECTOR(li)->floorheight)
-      {
-      slope = FixedDiv (_g->openbottom - _g->shootz , dist);
-      if (slope > _g->bottomslope)
-        _g->bottomslope = slope;
-      }
+        if (LN_FRONTSECTOR(li)->floorheight != LN_BACKSECTOR(li)->floorheight)
+        {
+            slope = FixedDiv (_g->openbottom - _g->shootz , dist);
 
-    if (LN_FRONTSECTOR(li)->ceilingheight != LN_BACKSECTOR(li)->ceilingheight)
-      {
-      slope = FixedDiv (_g->opentop - _g->shootz , dist);
-      if (slope < _g->topslope)
-        _g->topslope = slope;
-      }
+            if (slope > _g->bottomslope)
+                _g->bottomslope = slope;
+        }
 
-    if (_g->topslope <= _g->bottomslope)
-      return false;   // stop
+        if (LN_FRONTSECTOR(li)->ceilingheight != LN_BACKSECTOR(li)->ceilingheight)
+        {
+            slope = FixedDiv (_g->opentop - _g->shootz , dist);
+            if (slope < _g->topslope)
+                _g->topslope = slope;
+        }
 
-    return true;    // shot continues
+        if (_g->topslope <= _g->bottomslope)
+            return false;   // stop
+
+        return true;    // shot continues
     }
 
-  // shoot a thing
+    // shoot a thing
 
-  th = in->d.thing;
-  if (th == _g->shootthing)
-    return true;    // can't shoot self
+    th = in->d.thing;
+    if (th == _g->shootthing)
+        return true;    // can't shoot self
 
-  if (!(th->flags&MF_SHOOTABLE))
-    return true;    // corpse or something
+    if (!(th->flags&MF_SHOOTABLE))
+        return true;    // corpse or something
 
-  /* killough 7/19/98, 8/2/98:
+    /* killough 7/19/98, 8/2/98:
    * friends don't aim at friends (except players), at least not first
    */
-  if (th->flags & _g->shootthing->flags & _g->aim_flags_mask && !th->player)
-    return true;
+    if (th->flags & _g->shootthing->flags & _g->aim_flags_mask && !th->player)
+        return true;
 
-  // check angles to see if the thing can be aimed at
+    // check angles to see if the thing can be aimed at
 
-  dist = FixedMul (_g->attackrange, in->frac);
-  thingtopslope = FixedDiv (th->z+th->height - _g->shootz , dist);
+    dist = FixedMul (_g->attackrange, in->frac);
+    thingtopslope = FixedDiv (th->z+th->height - _g->shootz , dist);
 
-  if (thingtopslope < _g->bottomslope)
-    return true;    // shot over the thing
+    if (thingtopslope < _g->bottomslope)
+        return true;    // shot over the thing
 
-  thingbottomslope = FixedDiv (th->z - _g->shootz, dist);
+    thingbottomslope = FixedDiv (th->z - _g->shootz, dist);
 
-  if (thingbottomslope > _g->topslope)
-    return true;    // shot under the thing
+    if (thingbottomslope > _g->topslope)
+        return true;    // shot under the thing
 
-  // this thing can be hit!
+    // this thing can be hit!
 
-  if (thingtopslope > _g->topslope)
-    thingtopslope = _g->topslope;
+    if (thingtopslope > _g->topslope)
+        thingtopslope = _g->topslope;
 
-  if (thingbottomslope < _g->bottomslope)
-    thingbottomslope = _g->bottomslope;
+    if (thingbottomslope < _g->bottomslope)
+        thingbottomslope = _g->bottomslope;
 
-  _g->aimslope = (thingtopslope+thingbottomslope)/2;
-  _g->linetarget = th;
+    _g->aimslope = (thingtopslope+thingbottomslope)/2;
+    _g->linetarget = th;
 
-  return false;   // don't go any farther
-  }
+    return false;   // don't go any farther
+}
 
 
 //
