@@ -447,7 +447,7 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
 
-inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int frac)
+inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, int frac)
 {
 #ifdef __arm__
     *dest = colormap[source[(frac>>FRACBITS)&127]];
@@ -478,15 +478,11 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     //  e.g. a DDA-lile scaling.
     // This is as fast as it gets.
 
-    unsigned int l = (count >> 3);
-    unsigned int r = (count & 7);
+    unsigned int l = (count >> 2);
+    unsigned int r = (count & 3);
 
     while(l--)
     {
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
@@ -1096,15 +1092,11 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
 
     unsigned int position = ((dsvars->xfrac << 10) & 0xffff0000) | ((dsvars->yfrac >> 6)  & 0x0000ffff);
 
-    unsigned int l = count >> 3;
-    unsigned int r = count & 7;
+    unsigned int l = count >> 2;
+    unsigned int r = count & 3;
 
     while(l--)
     {
-        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
-        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
-        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
-        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
