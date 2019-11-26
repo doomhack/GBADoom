@@ -429,11 +429,11 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 
     if(current_colormap_ptr != lm)
     {
-        BlockCopy(&current_colormap[0], lm, 256);
+        BlockCopy(current_colormap, lm, 256);
         current_colormap_ptr = lm;
     }
 
-    return &current_colormap[0];
+    return current_colormap;
 }
 
 //
@@ -446,6 +446,12 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
+
+//Cheap mul by 120. Not sure if faster.
+inline static unsigned int ScreenYToOffset(unsigned int x)
+{
+    return (x << 7) - (x << 3);
+}
 
 inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, int frac)
 {
@@ -469,7 +475,7 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     const byte *source = dcvars->source;
     const byte *colormap = dcvars->colormap;
 
-    unsigned short* dest = drawvars.byte_topleft + (dcvars->yl*SCREENPITCH) + dcvars->x;
+    unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dcvars->yl) + dcvars->x;
 
     const fixed_t		fracstep = dcvars->iscale;
     fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
@@ -1086,7 +1092,7 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
     const byte *source = dsvars->source;
     const byte *colormap = dsvars->colormap;
 
-    unsigned short* dest = drawvars.byte_topleft + dsvars->y*SCREENPITCH + dsvars->x1;
+    unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dsvars->y) + dsvars->x1;
 
     const unsigned int step = ((dsvars->xstep << 10) & 0xffff0000) | ((dsvars->ystep >> 6)  & 0x0000ffff);
 
