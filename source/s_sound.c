@@ -89,44 +89,44 @@ static int S_getChannel(void *origin, const sfxinfo_t *sfxinfo, int is_pickup);
 
 void S_Init(int sfxVolume, int musicVolume)
 {
-  //jff 1/22/98 skip sound init if sound not enabled
-  if (!nosfxparm)
-  {
-    int i;
+    //jff 1/22/98 skip sound init if sound not enabled
+    if (!nosfxparm)
+    {
+        int i;
 
-    lprintf(LO_CONFIRM, "S_Init: default sfx volume %d", sfxVolume);
+        lprintf(LO_CONFIRM, "S_Init: default sfx volume %d", sfxVolume);
 
-    // Whatever these did with DMX, these are rather dummies now.
-    I_SetChannels();
+        // Whatever these did with DMX, these are rather dummies now.
+        I_SetChannels();
 
-    S_SetSfxVolume(sfxVolume);
+        S_SetSfxVolume(sfxVolume);
 
-    // Allocating the internal channels for mixing
-    // (the maximum numer of sounds rendered
-    // simultaneously) within zone memory.
-    // CPhipps - calloc
-    _g->channels =
-      (channel_t *) calloc(numChannels,sizeof(channel_t));
-  }
+        // Allocating the internal channels for mixing
+        // (the maximum numer of sounds rendered
+        // simultaneously) within zone memory.
+        // CPhipps - calloc
+        _g->channels =
+                (channel_t *) calloc(numChannels,sizeof(channel_t));
+    }
 
-  // CPhipps - music init reformatted
-  if (!nomusicparm) {
-    S_SetMusicVolume(musicVolume);
+    // CPhipps - music init reformatted
+    if (!nomusicparm) {
+        S_SetMusicVolume(musicVolume);
 
-    // no sounds are playing, and they are not mus_paused
-    _g->mus_paused = 0;
-  }
+        // no sounds are playing, and they are not mus_paused
+        _g->mus_paused = 0;
+    }
 }
 
 void S_Stop(void)
 {
-  unsigned int cnum;
+    unsigned int cnum;
 
-  //jff 1/22/98 skip sound init if sound not enabled
-  if (!nosfxparm)
-    for (cnum=0 ; cnum<numChannels ; cnum++)
-      if (_g->channels[cnum].sfxinfo)
-        S_StopChannel(cnum);
+    //jff 1/22/98 skip sound init if sound not enabled
+    if (!nosfxparm)
+        for (cnum=0 ; cnum<numChannels ; cnum++)
+            if (_g->channels[cnum].sfxinfo)
+                S_StopChannel(cnum);
 }
 
 //
@@ -136,46 +136,46 @@ void S_Stop(void)
 //
 void S_Start(void)
 {
-  int mnum;
+    int mnum;
 
-  // kill all playing sounds at start of level
-  //  (trust me - a good idea)
+    // kill all playing sounds at start of level
+    //  (trust me - a good idea)
 
-  S_Stop();
+    S_Stop();
 
-  //jff 1/22/98 return if music is not enabled
-  if (nomusicparm)
-    return;
+    //jff 1/22/98 return if music is not enabled
+    if (nomusicparm)
+        return;
 
-  // start new music for the level
-  _g->mus_paused = 0;
+    // start new music for the level
+    _g->mus_paused = 0;
 
-  if (_g->idmusnum!=-1)
-    mnum = _g->idmusnum; //jff 3/17/98 reload IDMUS music if not -1
-  else
-    if (_g->gamemode == commercial)
-      mnum = mus_runnin + _g->gamemap - 1;
+    if (_g->idmusnum!=-1)
+        mnum = _g->idmusnum; //jff 3/17/98 reload IDMUS music if not -1
     else
-      {
-        static const int spmus[] =     // Song - Who? - Where?
+        if (_g->gamemode == commercial)
+            mnum = mus_runnin + _g->gamemap - 1;
+        else
         {
-          mus_e3m4,     // American     e4m1
-          mus_e3m2,     // Romero       e4m2
-          mus_e3m3,     // Shawn        e4m3
-          mus_e1m5,     // American     e4m4
-          mus_e2m7,     // Tim  e4m5
-          mus_e2m4,     // Romero       e4m6
-          mus_e2m6,     // J.Anderson   e4m7 CHIRON.WAD
-          mus_e2m5,     // Shawn        e4m8
-          mus_e1m9      // Tim          e4m9
+            static const int spmus[] =     // Song - Who? - Where?
+            {
+                    mus_e3m4,     // American     e4m1
+                    mus_e3m2,     // Romero       e4m2
+                    mus_e3m3,     // Shawn        e4m3
+                    mus_e1m5,     // American     e4m4
+                    mus_e2m7,     // Tim  e4m5
+                    mus_e2m4,     // Romero       e4m6
+                    mus_e2m6,     // J.Anderson   e4m7 CHIRON.WAD
+                    mus_e2m5,     // Shawn        e4m8
+                    mus_e1m9      // Tim          e4m9
         };
 
-        if (_g->gameepisode < 4)
-          mnum = mus_e1m1 + (_g->gameepisode-1)*9 + _g->gamemap-1;
-        else
-          mnum = spmus[_g->gamemap-1];
-      }
-  S_ChangeMusic(mnum, true);
+            if (_g->gameepisode < 4)
+                mnum = mus_e1m1 + (_g->gameepisode-1)*9 + _g->gamemap-1;
+            else
+                mnum = spmus[_g->gamemap-1];
+        }
+    S_ChangeMusic(mnum, true);
 }
 
 void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume)
@@ -287,18 +287,18 @@ void S_StartSound2(degenmobj_t* origin, int sfx_id)
 
 void S_StopSound(void *origin)
 {
-  int cnum;
+    int cnum;
 
-  //jff 1/22/98 return if sound is not enabled
-  if (nosfxparm)
-    return;
+    //jff 1/22/98 return if sound is not enabled
+    if (nosfxparm)
+        return;
 
-  for (cnum=0 ; cnum<numChannels ; cnum++)
-    if (_g->channels[cnum].sfxinfo && _g->channels[cnum].origin == origin)
-      {
-        S_StopChannel(cnum);
-        break;
-      }
+    for (cnum=0 ; cnum<numChannels ; cnum++)
+        if (_g->channels[cnum].sfxinfo && _g->channels[cnum].origin == origin)
+        {
+            S_StopChannel(cnum);
+            break;
+        }
 }
 
 
@@ -307,27 +307,27 @@ void S_StopSound(void *origin)
 //
 void S_PauseSound(void)
 {
-  //jff 1/22/98 return if music is not enabled
-  if (nomusicparm)
-    return;
+    //jff 1/22/98 return if music is not enabled
+    if (nomusicparm)
+        return;
 
-  if (_g->mus_playing && !_g->mus_paused)
+    if (_g->mus_playing && !_g->mus_paused)
     {
-      I_PauseSong(0);
-      _g->mus_paused = true;
+        I_PauseSong(0);
+        _g->mus_paused = true;
     }
 }
 
 void S_ResumeSound(void)
 {
-  //jff 1/22/98 return if music is not enabled
-  if (nomusicparm)
-    return;
+    //jff 1/22/98 return if music is not enabled
+    if (nomusicparm)
+        return;
 
-  if (_g->mus_playing && _g->mus_paused)
+    if (_g->mus_playing && _g->mus_paused)
     {
-      I_ResumeSong(0);
-      _g->mus_paused = false;
+        I_ResumeSong(0);
+        _g->mus_paused = false;
     }
 }
 
@@ -386,17 +386,6 @@ void S_UpdateSounds(void* listener_p)
 
 					}
 				}
-				
-				// check non-local sounds for distance clipping
-				// or modify their params
-				
-				if (c->origin && listener_p != c->origin)
-				{ // killough 3/20/98
-                    if (!S_AdjustSoundParams(listener, c->origin, &volume, &sep))
-						S_StopChannel(cnum);
-					else
-                        I_UpdateSoundParams(c->handle, volume, sep);
-				}
 			}
 			else   // if channel is allocated but sound has stopped, free it
 				S_StopChannel(cnum);
@@ -406,25 +395,25 @@ void S_UpdateSounds(void* listener_p)
 
 void S_SetMusicVolume(int volume)
 {
-  //jff 1/22/98 return if music is not enabled
-  if (nomusicparm)
-    return;
-  if (volume < 0 || volume > 15)
-    I_Error("S_SetMusicVolume: Attempt to set music volume at %d", volume);
-  I_SetMusicVolume(volume);
-  _g->snd_MusicVolume = volume;
+    //jff 1/22/98 return if music is not enabled
+    if (nomusicparm)
+        return;
+    if (volume < 0 || volume > 15)
+        I_Error("S_SetMusicVolume: Attempt to set music volume at %d", volume);
+    I_SetMusicVolume(volume);
+    _g->snd_MusicVolume = volume;
 }
 
 
 
 void S_SetSfxVolume(int volume)
 {
-  //jff 1/22/98 return if sound is not enabled
-  if (nosfxparm)
-    return;
-  if (volume < 0 || volume > 127)
-    I_Error("S_SetSfxVolume: Attempt to set sfx volume at %d", volume);
-  _g->snd_SfxVolume = volume;
+    //jff 1/22/98 return if sound is not enabled
+    if (nosfxparm)
+        return;
+    if (volume < 0 || volume > 127)
+        I_Error("S_SetSfxVolume: Attempt to set sfx volume at %d", volume);
+    _g->snd_SfxVolume = volume;
 }
 
 
@@ -433,10 +422,10 @@ void S_SetSfxVolume(int volume)
 //
 void S_StartMusic(int m_id)
 {
-  //jff 1/22/98 return if music is not enabled
-  if (nomusicparm)
-    return;
-  S_ChangeMusic(m_id, false);
+    //jff 1/22/98 return if music is not enabled
+    if (nomusicparm)
+        return;
+    S_ChangeMusic(m_id, false);
 }
 
 void S_ChangeMusic(int musicnum, int looping)
@@ -463,19 +452,19 @@ void S_ChangeMusic(int musicnum, int looping)
 
 void S_StopMusic(void)
 {
-  //jff 1/22/98 return if music is not enabled
-  if (nomusicparm)
-    return;
+    //jff 1/22/98 return if music is not enabled
+    if (nomusicparm)
+        return;
 
-  if (_g->mus_playing)
+    if (_g->mus_playing)
     {
-      if (_g->mus_paused)
-        I_ResumeSong(0);
+        if (_g->mus_paused)
+            I_ResumeSong(0);
 
-      I_StopSong(0);
-      I_UnRegisterSong(0);
+        I_StopSong(0);
+        I_UnRegisterSong(0);
 
-      _g->mus_playing = 0;
+        _g->mus_playing = 0;
     }
 }
 
