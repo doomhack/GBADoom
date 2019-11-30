@@ -14,6 +14,8 @@ extern "C"
     #include "d_event.h"
 
     #include "global_data.h"
+
+    #include "tables.h"
 }
 
 #include "i_system_e32.h"
@@ -292,16 +294,20 @@ void I_SetPallete_e32(const byte* pallete)
 {
     unsigned short* pal_ram = (unsigned short*)0x5000000;
 
-    unsigned short pal_temp[256];
+    unsigned int gamma = _g->gamma;
 
     for(int i = 0; i< 256; i++)
     {
-        pal_temp[i] = RGB8(pallete[3*i],pallete[(3*i)+1], pallete[(3*i)+2]);
+        unsigned int r = *pallete++;
+        unsigned int g = *pallete++;
+        unsigned int b = *pallete++;
+
+        r = gammatable[gamma][r >> 3];
+        g = gammatable[gamma][g >> 3];
+        b = gammatable[gamma][b >> 3];
+
+        pal_ram[i] = RGB5(r,g,b);
     }
-
-    VBlankIntrWait();
-
-    memcpy(pal_ram, pal_temp, 256*2);
 }
 
 //**************************************************************************************

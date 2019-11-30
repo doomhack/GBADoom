@@ -821,6 +821,17 @@ boolean M_Responder (event_t* ev)
     if (ch == -1)
         return false; // we can't use the event here
 
+
+    if(ev->data1 == key_map && _g->gamekeydown[key_use])
+    {
+        //Use + Select to toggle brightness.
+
+        _g->gamma = 1 - _g->gamma;
+        V_SetPalette(0);
+
+        return true;
+    }
+
     // Save Game string input
 
     if (_g->saveStringEnter)

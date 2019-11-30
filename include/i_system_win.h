@@ -7,8 +7,11 @@
 #include <QWidget>
 
 
+
 extern "C"
 {
+
+extern const byte gammatable[2][32];
 
 typedef enum
 {
@@ -45,8 +48,15 @@ class DoomWindow : public QWidget
 
         for(int p = 0; p < 256; p++)
         {
+            int r = pl[3*p];
+            int g = pl[(3*p)+1];
+            int b = pl[(3*p)+2];
 
-            i.setColor(p, qRgb(pl[3*p],pl[(3*p)+1], pl[(3*p)+2]));
+            r = gammatable[0][r >> 3] << 3;
+            g = gammatable[0][g >> 3] << 3;
+            b = gammatable[0][b >> 3] << 3;
+
+            i.setColor(p, qRgb(r, g, b));
         }
 
         p.drawImage(this->rect(), i, i.rect());

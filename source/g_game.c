@@ -432,63 +432,64 @@ static void G_DoLoadLevel (void)
 
 boolean G_Responder (event_t* ev)
 {
-  // any other key pops up menu if in demos
-  //
-  // killough 8/2/98: enable automap in -timedemo demos
-  //
-  // killough 9/29/98: make any key pop up menu regardless of
-  // which kind of demo, and allow other events during playback
+    // any other key pops up menu if in demos
+    //
+    // killough 8/2/98: enable automap in -timedemo demos
+    //
+    // killough 9/29/98: make any key pop up menu regardless of
+    // which kind of demo, and allow other events during playback
 
-  if (_g->gameaction == ga_nothing && (_g->demoplayback || _g->gamestate == GS_DEMOSCREEN))
+    if (_g->gameaction == ga_nothing && (_g->demoplayback || _g->gamestate == GS_DEMOSCREEN))
     {
-      // killough 9/29/98: allow user to pause demos during playback
-      if (ev->type == ev_keydown && ev->data1 == key_pause)
-  {
-    if (_g->paused ^= 2)
-      S_PauseSound();
-    else
-      S_ResumeSound();
-    return true;
-  }
-
-      // killough 10/98:
-      // Don't pop up menu, if paused in middle
-      // of demo playback, or if automap active.
-      // Don't suck up keys, which may be cheats
-
-      return _g->gamestate == GS_DEMOSCREEN &&
-  !(_g->paused & 2) && !(_g->automapmode & am_active) &&
-  ((ev->type == ev_keydown) ||
-   (ev->type == ev_mouse && ev->data1) ||
-   (ev->type == ev_joystick && ev->data1)) ?
-  M_StartControlPanel(), true : false;
-    }
-
-  if (_g->gamestate == GS_FINALE && F_Responder(ev))
-    return true;  // finale ate the event
-
-  switch (ev->type)
-    {
-    case ev_keydown:
-      if (ev->data1 == key_pause)           // phares
+        // killough 9/29/98: allow user to pause demos during playback
+        if (ev->type == ev_keydown && ev->data1 == key_pause)
         {
-          _g->special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
-          return true;
+            if (_g->paused ^= 2)
+                S_PauseSound();
+            else
+                S_ResumeSound();
+            return true;
         }
-      if (ev->data1 <NUMKEYS)
-        _g->gamekeydown[ev->data1] = true;
-      return true;    // eat key down events
 
-    case ev_keyup:
-      if (ev->data1 <NUMKEYS)
-        _g->gamekeydown[ev->data1] = false;
-      return false;   // always let key up events filter down
+        // killough 10/98:
+        // Don't pop up menu, if paused in middle
+        // of demo playback, or if automap active.
+        // Don't suck up keys, which may be cheats
 
-    default:
-      break;
+        return _g->gamestate == GS_DEMOSCREEN &&
+                !(_g->paused & 2) && !(_g->automapmode & am_active) &&
+                ((ev->type == ev_keydown) ||
+                 (ev->type == ev_mouse && ev->data1) ||
+                 (ev->type == ev_joystick && ev->data1)) ?
+                    M_StartControlPanel(), true : false;
+        }
+
+        if (_g->gamestate == GS_FINALE && F_Responder(ev))
+        return true;  // finale ate the event
+
+        switch (ev->type)
+        {
+            case ev_keydown:
+                if (ev->data1 == key_pause)           // phares
+                {
+                    _g->special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
+                    return true;
+                }
+
+                if (ev->data1 <NUMKEYS)
+                    _g->gamekeydown[ev->data1] = true;
+                return true;    // eat key down events
+
+            case ev_keyup:
+                if (ev->data1 <NUMKEYS)
+                    _g->gamekeydown[ev->data1] = false;
+                return false;   // always let key up events filter down
+
+            default:
+                break;
+        }
+        return false;
     }
-  return false;
-}
 
 //
 // G_Ticker

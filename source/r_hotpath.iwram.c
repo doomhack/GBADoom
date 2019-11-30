@@ -73,6 +73,9 @@ angle_t  viewangle;
 
 static byte solidcol[MAX_SCREENWIDTH];
 
+static short spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
+
+
 static const seg_t     *curline;
 static side_t    *sidedef;
 static const line_t    *linedef;
@@ -1152,16 +1155,16 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 static void R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2, unsigned int b2, draw_span_vars_t *dsvars)
 {
     for (; t1 < t2 && t1 <= b1; t1++)
-        R_MapPlane(t1, _g->spanstart[t1], x-1, dsvars);
+        R_MapPlane(t1, spanstart[t1], x-1, dsvars);
 
     for (; b1 > b2 && b1 >= t1; b1--)
-        R_MapPlane(b1, _g->spanstart[b1] ,x-1, dsvars);
+        R_MapPlane(b1, spanstart[b1] ,x-1, dsvars);
 
     while (t2 < t1 && t2 <= b2)
-        _g->spanstart[t2++] = x;
+        spanstart[t2++] = x;
 
     while (b2 > b1 && b2 >= t2)
-        _g->spanstart[b2--] = x;
+        spanstart[b2--] = x;
 }
 
 
@@ -1610,6 +1613,10 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
 #define CACHE_KEY_MASK (CACHE_STRIDE-1)
 
 #define CACHE_ENTRY(c, t) ((c << 16 | t))
+#define CACHE_HASH(c, t) (((c >> 4) ^ t) & CACHE_KEY_MASK)
+
+#define CACHE_HASH2(c, t) ((((unsigned int)t | (unsigned int)c << 16)*2654435761u) & CACHE_KEY_MASK)
+
 
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
@@ -1618,7 +1625,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
 
     unsigned int cx = CACHE_ENTRY(column, texture);
 
-    unsigned int key = ((column >> 4) ^ texture) & CACHE_KEY_MASK;
+    unsigned int key = CACHE_HASH(column, texture);
 
     unsigned int* cc = (unsigned int*)&columnCacheEntries[key];
 

@@ -118,6 +118,8 @@ int pagelump; // CPhipps - const
 boolean singletics; // debug flag to cancel adaptiveness
 boolean advancedemo;
 
+unsigned int gamma;
+
 //******************************************************************************
 //doomstat.c
 //******************************************************************************
@@ -629,10 +631,6 @@ visplane_t **freehead;     // killough
 //  floorclip starts out SCREENHEIGHT
 //  ceilingclip starts out -1
 
-
-// spanstart holds the start of a plane span; initialized to 0 at start
-
-short spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 
 // killough 2/8/98: make variables static
 
