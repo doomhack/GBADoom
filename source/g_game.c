@@ -167,166 +167,173 @@ static inline signed short fudgea(signed short b)
 
 void G_BuildTiccmd(ticcmd_t* cmd)
 {
-  boolean strafe;
-  int speed;
-  int tspeed;
-  int forward;
-  int side;
-  int newweapon;                                          // phares
-  /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
-  memset(cmd,0,sizeof*cmd);
+    boolean strafe;
+    int speed;
+    int tspeed;
+    int forward;
+    int side;
+    int newweapon;                                          // phares
+    /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
+    memset(cmd,0,sizeof*cmd);
 
-  strafe = _g->gamekeydown[key_strafe];
+    strafe = _g->gamekeydown[key_strafe];
 
-  speed = (_g->gamekeydown[key_strafeleft] && _g->gamekeydown[key_straferight]);
+    speed = (_g->gamekeydown[key_use]);
 
-  forward = side = 0;
+    forward = side = 0;
 
     // use two stage accelerative turning
     // on the keyboard and joystick
-  if (_g->gamekeydown[key_right] || _g->gamekeydown[key_left])
-    _g->turnheld ++;
-  else
-    _g->turnheld = 0;
+    if (_g->gamekeydown[key_right] || _g->gamekeydown[key_left])
+        _g->turnheld ++;
+    else
+        _g->turnheld = 0;
 
-  if (_g->turnheld < SLOWTURNTICS)
-    tspeed = 2;             // slow turn
-  else
-    tspeed = speed;
+    if (_g->turnheld < SLOWTURNTICS)
+        tspeed = 2;             // slow turn
+    else
+        tspeed = speed;
 
-  // let movement keys cancel each other out
+    // let movement keys cancel each other out
 
-  if (strafe)
+    if (strafe)
     {
-      if (_g->gamekeydown[key_right])
+        if (_g->gamekeydown[key_right])
+            side += sidemove[speed];
+        if (_g->gamekeydown[key_left])
+            side -= sidemove[speed];
+    }
+    else
+    {
+        if (_g->gamekeydown[key_right])
+            cmd->angleturn -= angleturn[tspeed];
+        if (_g->gamekeydown[key_left])
+            cmd->angleturn += angleturn[tspeed];
+    }
+
+    if (_g->gamekeydown[key_up])
+        forward += forwardmove[speed];
+    if (_g->gamekeydown[key_down])
+        forward -= forwardmove[speed];
+
+    if (_g->gamekeydown[key_straferight])
         side += sidemove[speed];
-      if (_g->gamekeydown[key_left])
+
+    if (_g->gamekeydown[key_strafeleft])
         side -= sidemove[speed];
-    }
-  else
+
+    if (_g->gamekeydown[key_fire])
+        cmd->buttons |= BT_ATTACK;
+
+    if (_g->gamekeydown[key_use])
     {
-      if (_g->gamekeydown[key_right])
-        cmd->angleturn -= angleturn[tspeed];
-      if (_g->gamekeydown[key_left])
-        cmd->angleturn += angleturn[tspeed];
+        cmd->buttons |= BT_USE;
     }
 
-  if (_g->gamekeydown[key_up])
-    forward += forwardmove[speed];
-  if (_g->gamekeydown[key_down])
-    forward -= forwardmove[speed];
+    // Toggle between the top 2 favorite weapons.                   // phares
+    // If not currently aiming one of these, switch to              // phares
+    // the favorite. Only switch if you possess the weapon.         // phares
 
-  if (_g->gamekeydown[key_straferight])
-    side += sidemove[speed];
+    // killough 3/22/98:
+    //
+    // Perform automatic weapons switch here rather than in p_pspr.c,
+    // except in demo_compatibility mode.
+    //
+    // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
-  if (_g->gamekeydown[key_strafeleft])
-    side -= sidemove[speed];
-
-  if (_g->gamekeydown[key_fire])
-    cmd->buttons |= BT_ATTACK;
-
-  if (_g->gamekeydown[key_use])
+    if(_g->gamekeydown[key_use] && _g->gamekeydown[key_straferight])
     {
-      cmd->buttons |= BT_USE;
+        newweapon = P_WeaponCycleUp(&_g->player);
+        side -= sidemove[speed]; //Hack cancel strafe.
     }
 
-  // Toggle between the top 2 favorite weapons.                   // phares
-  // If not currently aiming one of these, switch to              // phares
-  // the favorite. Only switch if you possess the weapon.         // phares
-
-  // killough 3/22/98:
-  //
-  // Perform automatic weapons switch here rather than in p_pspr.c,
-  // except in demo_compatibility mode.
-  //
-  // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
-
-  if(_g->gamekeydown[key_use] && _g->gamekeydown[key_straferight])
-      newweapon = P_WeaponCycleUp(&_g->player);
-  else if(_g->gamekeydown[key_use] && _g->gamekeydown[key_strafeleft])
-      newweapon = P_WeaponCycleDown(&_g->player);
-  else if ((_g->player.attackdown && !P_CheckAmmo(&_g->player)) || _g->gamekeydown[key_weapontoggle])
-    newweapon = P_SwitchWeapon(&_g->player);           // phares
-  else
+    else if(_g->gamekeydown[key_use] && _g->gamekeydown[key_strafeleft])
+    {
+        newweapon = P_WeaponCycleDown(&_g->player);
+        side += sidemove[speed]; //Hack cancel strafe.
+    }
+    else if ((_g->player.attackdown && !P_CheckAmmo(&_g->player)) || _g->gamekeydown[key_weapontoggle])
+        newweapon = P_SwitchWeapon(&_g->player);           // phares
+    else
     {                                 // phares 02/26/98: Added gamemode checks
-      newweapon =
-        _g->gamekeydown[key_weapon1] ? wp_fist :    // killough 5/2/98: reformatted
-        _g->gamekeydown[key_weapon2] ? wp_pistol :
-        _g->gamekeydown[key_weapon3] ? wp_shotgun :
-        _g->gamekeydown[key_weapon4] ? wp_chaingun :
-        _g->gamekeydown[key_weapon5] ? wp_missile :
-        _g->gamekeydown[key_weapon6] && _g->gamemode != shareware ? wp_plasma :
-        _g->gamekeydown[key_weapon7] && _g->gamemode != shareware ? wp_bfg :
-        _g->gamekeydown[key_weapon8] ? wp_chainsaw :
-        (_g->gamekeydown[key_weapon9] && _g->gamemode == commercial) ? wp_supershotgun :
-        wp_nochange;
+        newweapon =
+                _g->gamekeydown[key_weapon1] ? wp_fist :    // killough 5/2/98: reformatted
+                                               _g->gamekeydown[key_weapon2] ? wp_pistol :
+                                                                              _g->gamekeydown[key_weapon3] ? wp_shotgun :
+                                                                                                             _g->gamekeydown[key_weapon4] ? wp_chaingun :
+                                                                                                                                            _g->gamekeydown[key_weapon5] ? wp_missile :
+                                                                                                                                                                           _g->gamekeydown[key_weapon6] && _g->gamemode != shareware ? wp_plasma :
+                                                                                                                                                                                                                                       _g->gamekeydown[key_weapon7] && _g->gamemode != shareware ? wp_bfg :
+                                                                                                                                                                                                                                                                                                   _g->gamekeydown[key_weapon8] ? wp_chainsaw :
+                                                                                                                                                                                                                                                                                                                                  (_g->gamekeydown[key_weapon9] && _g->gamemode == commercial) ? wp_supershotgun :
+                                                                                                                                                                                                                                                                                                                                                                                                 wp_nochange;
 
-      // killough 3/22/98: For network and demo consistency with the
-      // new weapons preferences, we must do the weapons switches here
-      // instead of in p_user.c. But for old demos we must do it in
-      // p_user.c according to the old rules. Therefore demo_compatibility
-      // determines where the weapons switch is made.
+        // killough 3/22/98: For network and demo consistency with the
+        // new weapons preferences, we must do the weapons switches here
+        // instead of in p_user.c. But for old demos we must do it in
+        // p_user.c according to the old rules. Therefore demo_compatibility
+        // determines where the weapons switch is made.
 
-      // killough 2/8/98:
-      // Allow user to switch to fist even if they have chainsaw.
-      // Switch to fist or chainsaw based on preferences.
-      // Switch to shotgun or SSG based on preferences.
+        // killough 2/8/98:
+        // Allow user to switch to fist even if they have chainsaw.
+        // Switch to fist or chainsaw based on preferences.
+        // Switch to shotgun or SSG based on preferences.
 
         {
-          const player_t *player = &_g->player;
+            const player_t *player = &_g->player;
 
-          // only select chainsaw from '1' if it's owned, it's
-          // not already in use, and the player prefers it or
-          // the fist is already in use, or the player does not
-          // have the berserker strength.
+            // only select chainsaw from '1' if it's owned, it's
+            // not already in use, and the player prefers it or
+            // the fist is already in use, or the player does not
+            // have the berserker strength.
 
-          if (newweapon==wp_fist && player->weaponowned[wp_chainsaw] &&
-              player->readyweapon!=wp_chainsaw &&
-              (player->readyweapon==wp_fist ||
-               !player->powers[pw_strength] ||
-               P_WeaponPreferred(wp_chainsaw, wp_fist)))
-            newweapon = wp_chainsaw;
+            if (newweapon==wp_fist && player->weaponowned[wp_chainsaw] &&
+                    player->readyweapon!=wp_chainsaw &&
+                    (player->readyweapon==wp_fist ||
+                     !player->powers[pw_strength] ||
+                     P_WeaponPreferred(wp_chainsaw, wp_fist)))
+                newweapon = wp_chainsaw;
 
-          // Select SSG from '3' only if it's owned and the player
-          // does not have a shotgun, or if the shotgun is already
-          // in use, or if the SSG is not already in use and the
-          // player prefers it.
+            // Select SSG from '3' only if it's owned and the player
+            // does not have a shotgun, or if the shotgun is already
+            // in use, or if the SSG is not already in use and the
+            // player prefers it.
 
-          if (newweapon == wp_shotgun && _g->gamemode == commercial &&
-              player->weaponowned[wp_supershotgun] &&
-              (!player->weaponowned[wp_shotgun] ||
-               player->readyweapon == wp_shotgun ||
-               (player->readyweapon != wp_supershotgun &&
-                P_WeaponPreferred(wp_supershotgun, wp_shotgun))))
-            newweapon = wp_supershotgun;
+            if (newweapon == wp_shotgun && _g->gamemode == commercial &&
+                    player->weaponowned[wp_supershotgun] &&
+                    (!player->weaponowned[wp_shotgun] ||
+                     player->readyweapon == wp_shotgun ||
+                     (player->readyweapon != wp_supershotgun &&
+                      P_WeaponPreferred(wp_supershotgun, wp_shotgun))))
+                newweapon = wp_supershotgun;
         }
-      // killough 2/8/98, 3/22/98 -- end of weapon selection changes
+        // killough 2/8/98, 3/22/98 -- end of weapon selection changes
     }
 
-  if (newweapon != wp_nochange)
+    if (newweapon != wp_nochange)
     {
-      cmd->buttons |= BT_CHANGE;
-      cmd->buttons |= newweapon<<BT_WEAPONSHIFT;
+        cmd->buttons |= BT_CHANGE;
+        cmd->buttons |= newweapon<<BT_WEAPONSHIFT;
     }
 
-  if (forward > MAXPLMOVE)
-    forward = MAXPLMOVE;
-  else if (forward < -MAXPLMOVE)
-    forward = -MAXPLMOVE;
-  if (side > MAXPLMOVE)
-    side = MAXPLMOVE;
-  else if (side < -MAXPLMOVE)
-    side = -MAXPLMOVE;
+    if (forward > MAXPLMOVE)
+        forward = MAXPLMOVE;
+    else if (forward < -MAXPLMOVE)
+        forward = -MAXPLMOVE;
+    if (side > MAXPLMOVE)
+        side = MAXPLMOVE;
+    else if (side < -MAXPLMOVE)
+        side = -MAXPLMOVE;
 
-  cmd->forwardmove += fudgef((signed char)forward);
-  cmd->sidemove += side;
-  cmd->angleturn = fudgea(cmd->angleturn);
+    cmd->forwardmove += fudgef((signed char)forward);
+    cmd->sidemove += side;
+    cmd->angleturn = fudgea(cmd->angleturn);
 
-  // CPhipps - special events (game new/load/save/pause)
-  if (_g->special_event & BT_SPECIAL) {
-    cmd->buttons = _g->special_event;
-    _g->special_event = 0;
-  }
+    // CPhipps - special events (game new/load/save/pause)
+    if (_g->special_event & BT_SPECIAL) {
+        cmd->buttons = _g->special_event;
+        _g->special_event = 0;
+    }
 }
 
 //
@@ -464,8 +471,10 @@ boolean G_Responder (event_t* ev)
                     M_StartControlPanel(), true : false;
         }
 
+
+
         if (_g->gamestate == GS_FINALE && F_Responder(ev))
-        return true;  // finale ate the event
+            return true;  // finale ate the event
 
         switch (ev->type)
         {
