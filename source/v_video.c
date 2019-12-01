@@ -94,33 +94,33 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
  */
 void V_DrawBackground(const char* flatname, int scrn)
 {
-  /* erase the entire screen to a tiled background */
-  const byte *src;
-  int         x,y;
-  int         width,height;
-  int         lump;
+    /* erase the entire screen to a tiled background */
+    const byte *src;
+    int         x,y;
+    int         width,height;
+    int         lump;
 
-  unsigned short *dest = _g->screens[scrn].data;
+    unsigned short *dest = _g->screens[scrn].data;
 
-  // killough 4/17/98:
-  src = W_CacheLumpNum(lump = _g->firstflat + R_FlatNumForName(flatname));
+    // killough 4/17/98:
+    src = W_CacheLumpNum(lump = _g->firstflat + R_FlatNumForName(flatname));
 
-  /* V_DrawBlock(0, 0, scrn, 64, 64, src, 0); */
-  width = height = 64;
-  
+    /* V_DrawBlock(0, 0, scrn, 64, 64, src, 0); */
+    width = height = 64;
 
-  
-  while (height--)
-  {
-      memcpy (dest, src, width * 2);
-      src += width;
-      dest += SCREENPITCH;
-  }
 
-  for (y=0 ; y<SCREENHEIGHT ; y+=64)
-    for (x=y ? 0 : 64; x<SCREENWIDTH ; x+=64)
-      V_CopyRect(0, 0, scrn, ((SCREENWIDTH-x) < 64) ? (SCREENWIDTH-x) : 64,
-     ((SCREENHEIGHT-y) < 64) ? (SCREENHEIGHT-y) : 64, x, y, scrn, VPT_NONE);
+
+    while (height--)
+    {
+        memcpy (dest, src, width * 2);
+        src += width;
+        dest += SCREENPITCH;
+    }
+
+    for (y=0 ; y<SCREENHEIGHT ; y+=64)
+        for (x=y ? 0 : 64; x<SCREENWIDTH ; x+=64)
+            V_CopyRect(0, 0, scrn, ((SCREENWIDTH-x) < 64) ? (SCREENWIDTH-x) : 64,
+                       ((SCREENHEIGHT-y) < 64) ? (SCREENHEIGHT-y) : 64, x, y, scrn, VPT_NONE);
 }
 
 void V_DrawPatchNoScale(int x, int y, int scrn, const patch_t* patch)

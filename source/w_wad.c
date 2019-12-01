@@ -147,14 +147,13 @@ static int PUREFUNC FindLumpByName(const char* name, const filelump_t** lump)
             //doesn't have a 64bit load, the compiler will generate
             //32 bit loads. These vars are 32 aligned.
 
-            int_64_t* nameint2 = (int_64_t*)fileinfo[i].name;
+            int_64_t nameint2 = *(int_64_t*)fileinfo[i].name;
 
-            if(nameint == *nameint2)
+            if(nameint == nameint2)
             {
                 *lump = &fileinfo[i];
                 return i;
             }
-
         }
     }
 
@@ -217,8 +216,10 @@ int PUREFUNC W_CheckNumForName(const char *name)
 int PUREFUNC W_GetNumForName(const char* name)     // killough -- const added
 {
     int i = W_CheckNumForName (name);
+
     if (i == -1)
         I_Error("W_GetNumForName: %.8s not found", name);
+
     return i;
 }
 

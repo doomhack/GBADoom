@@ -121,26 +121,26 @@
 // AMMO number pos.
 #define ST_AMMOWIDTH            3
 // proff 08/18/98: Changed for high-res
-#define ST_AMMOX                (ST_X+46)
-#define ST_AMMOY                (ST_Y+6)
+#define ST_AMMOX                (ST_X+43)
+#define ST_AMMOY                (ST_SCALED_Y+2)
 //#define ST_AMMOX                44
 //#define ST_AMMOY                171
 
 // HEALTH number pos.
 #define ST_HEALTHWIDTH          3
 // proff 08/18/98: Changed for high-res
-#define ST_HEALTHX              (ST_X+90)
-#define ST_HEALTHY              (ST_Y+6)
+#define ST_HEALTHX              (ST_X+92)
+#define ST_HEALTHY              (ST_SCALED_Y+2)
 
 
 // Weapon pos.
 // proff 08/18/98: Changed for high-res
-#define ST_ARMSX                (ST_X+111)
+#define ST_ARMSX                (ST_X+268)
 #define ST_ARMSY                (ST_Y+4)
 #define ST_ARMSBGX              (ST_X+104)
 #define ST_ARMSBGY              (ST_Y)
 
-#define ST_ARMSXSPACE           12
+#define ST_ARMSXSPACE           14
 #define ST_ARMSYSPACE           10
 
 // Frags pos.
@@ -154,25 +154,25 @@
 // ARMOR number pos.
 #define ST_ARMORWIDTH           3
 // proff 08/18/98: Changed for high-res
-#define ST_ARMORX               (ST_X+222)
-#define ST_ARMORY               (ST_Y+6)
+#define ST_ARMORX               (ST_X+180)
+#define ST_ARMORY               (ST_SCALED_Y+2)
 
 
 // Key icon positions.
 #define ST_KEY0WIDTH            8
 #define ST_KEY0HEIGHT           5
 // proff 08/18/98: Changed for high-res
-#define ST_KEY0X                (ST_X+240)
+#define ST_KEY0X                (ST_X+309)
 #define ST_KEY0Y                (ST_Y+3)
 
 #define ST_KEY1WIDTH            ST_KEY0WIDTH
 // proff 08/18/98: Changed for high-res
-#define ST_KEY1X                (ST_X+240)
+#define ST_KEY1X                (ST_X+309)
 #define ST_KEY1Y                (ST_Y+13)
 
 #define ST_KEY2WIDTH            ST_KEY0WIDTH
 // proff 08/18/98: Changed for high-res
-#define ST_KEY2X                (ST_X+240)
+#define ST_KEY2X                (ST_X+309)
 #define ST_KEY2Y                (ST_Y+23)
 
 

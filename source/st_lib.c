@@ -149,7 +149,7 @@ static void STlib_drawNum
   // in the special case of 0, you draw 0
   if (!num)
     // CPhipps - patch drawing updated, reformatted
-    V_DrawPatch(x - w, n->y, ST_FG, n->p[0]);
+    V_DrawPatchNoScale(x - w, n->y, ST_FG, n->p[0]);
 
   // draw the new number
   //jff 2/16/98 add color translation to digit output
@@ -157,15 +157,9 @@ static void STlib_drawNum
   {
     // CPhipps - patch drawing updated, reformatted
     x -= w;
-    V_DrawPatch(x, n->y, ST_FG, n->p[num % 10]);
+    V_DrawPatchNoScale(x, n->y, ST_FG, n->p[num % 10]);
     num /= 10;
   }
-
-  // draw a minus sign if necessary
-  //jff 2/16/98 add color translation to digit output
-  // cph - patch drawing updated, load by name instead of acquiring pointer earlier
-  if (neg)
-    V_DrawNamePatch(x - w, n->y, ST_FG, "STTMINUS", cm, VPT_STRETCH);
 }
 
 /*
@@ -233,7 +227,7 @@ void STlib_updatePercent(st_percent_t* per, int cm, int refresh)
         // killough 2/21/98: fix percents not updated;
         /* CPhipps - make %'s only be updated if number changed */
         // CPhipps - patch drawing updated
-        V_DrawPatch(per->n.x, per->n.y, ST_FG, per->p);
+        V_DrawPatchNoScale(per->n.x, per->n.y, ST_FG, per->p);
     }
 }
 
@@ -367,12 +361,10 @@ void STlib_updateBinIcon
 
 void ST_refreshBackground(void)
 {
-    int y=BASE_HEIGHT-ST_HEIGHT;
+    int y=SCREENHEIGHT-ST_SCALED_HEIGHT;
 
     if (_g->st_statusbaron)
     {
-        V_DrawPatch(ST_X, y, ST_FG, _g->stbarbg);
-
-        V_DrawPatch(ST_ARMSBGX, y, ST_FG, _g->armsbg);
+        V_DrawPatchNoScale(0, y, ST_FG, _g->stbarbg);
     }
 }

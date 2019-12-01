@@ -78,6 +78,7 @@ SOURCES += \
         source/r_things.c \
         source/s_sound.c \
         source/sounds.c \
+        source/st_gfx.c \
         source/st_lib.c \
         source/st_stuff.c \
         source/tables.c \
@@ -158,6 +159,7 @@ HEADERS += \
     include/r_things.h \
     include/s_sound.h \
     include/sounds.h \
+    include/st_gfx.h \
     include/st_lib.h \
     include/st_stuff.h \
     include/tables.h \

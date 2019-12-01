@@ -713,7 +713,7 @@ boolean mus_paused;
 player_t *plyr;
 
 
-
+boolean st_needrefresh;
 
 // 0-9, tall numbers
 const patch_t* tallnum[10];
@@ -735,9 +735,6 @@ const patch_t* faceback; // CPhipps - single background, translated for differen
 //e6y: status bar background
 const patch_t* stbarbg;
 
-// main bar right
-const patch_t* armsbg;
-
 // weapon ownership patches
 const patch_t* arms[6][2];
 
@@ -746,9 +743,6 @@ st_number_t w_ready;
 
 // health widget
 st_percent_t st_health;
-
-// arms background
-st_binicon_t  w_armsbg;
 
 // weapon ownership widgets
 st_multicon_t w_arms[6];
@@ -761,12 +755,6 @@ st_multicon_t w_keyboxes[3];
 
 // armor widget
 st_percent_t  st_armor;
-
-// ammo widgets
-st_number_t   st_ammo[4];
-
-// max ammo widgets
-st_number_t   w_maxammo[4];
 
 // used to use appopriately pained face
 int      st_oldhealth;
@@ -787,9 +775,6 @@ int      keyboxes[3];
 int      st_randomnumber;
 
 int st_palette;
-
-// ST_Start() has just been called
-byte st_firsttime;
 
 // whether left-side main status bar is active
 boolean st_statusbaron;
