@@ -73,7 +73,7 @@ angle_t  viewangle;
 
 static byte solidcol[MAX_SCREENWIDTH];
 
-static short spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
+static byte spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 
 
 static const seg_t     *curline;
