@@ -341,6 +341,36 @@ static void ST_diffDraw(void)
   ST_drawWidgets(false);
 }
 
+static boolean ST_NeedUpdate()
+{
+    if(_g->w_ready.oldnum != *_g->w_ready.num)
+        return true;
+
+    if(_g->st_health.n.oldnum != *_g->st_health.n.num)
+        return true;
+
+    if(_g->st_armor.n.oldnum != *_g->st_armor.n.num)
+        return true;
+
+    if(_g->w_faces.oldinum != *_g->w_faces.inum)
+        return true;
+
+    // weapons owned
+    for(int i=0; i<6; i++)
+    {
+        if(_g->w_arms[i].oldinum != *_g->w_arms[i].inum)
+            return true;
+    }
+
+    for(int i = 0; i < 3; i++)
+    {
+        if(_g->w_keyboxes[i].oldinum != *_g->w_keyboxes[i].inum)
+            return true;
+    }
+
+    return false;
+}
+
 void ST_Drawer(boolean statusbaron, boolean refresh)
 {
     /* cph - let status bar on be controlled
@@ -352,11 +382,28 @@ void ST_Drawer(boolean statusbaron, boolean refresh)
 
     if (statusbaron)
     {
-        if(refresh || ((_g->gametic & 31) == 0) || _g->st_needrefresh)
-        {
-            ST_doRefresh();     /* If just after ST_Start(), refresh all */
+        boolean needupdate = false;
 
-            _g->st_needrefresh = (!_g->st_needrefresh | refresh);
+        if(refresh)
+        {
+            needupdate = true;
+            _g->st_needrefresh = 2;
+        }
+        else if(_g->st_needrefresh)
+        {
+            needupdate = true;
+        }
+        else if(ST_NeedUpdate())
+        {
+            needupdate = true;
+            _g->st_needrefresh = 2;
+        }
+
+        if(needupdate)
+        {
+            ST_doRefresh();
+
+            _g->st_needrefresh--;
         }
     }
 }

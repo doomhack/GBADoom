@@ -713,7 +713,7 @@ boolean mus_paused;
 player_t *plyr;
 
 
-boolean st_needrefresh;
+unsigned int st_needrefresh;
 
 // 0-9, tall numbers
 const patch_t* tallnum[10];
