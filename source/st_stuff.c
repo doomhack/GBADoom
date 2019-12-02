@@ -51,21 +51,6 @@
 
 #include "st_gfx.h"
 
-
-// killough 2/8/98: weapon info position macros UNUSED, removed here
-
-//jff 2/16/98 status color change levels
-const int ammo_red = 25;      // ammo percent less than which status is red
-const int ammo_yellow = 50;   // ammo percent less is yellow more green
-const int health_red = 25;    // health amount less than which status is red
-const int health_yellow = 50; // health amount less than which status is yellow
-const int health_green = 100;  // health amount above is blue, below is green
-const int armor_red = 25;     // armor amount less than which status is red
-const int armor_yellow = 50;  // armor amount less than which status is yellow
-const int armor_green = 100;   // armor amount above is blue, below is green
-
-
-
 //
 // STATUS BAR CODE
 //
@@ -264,52 +249,50 @@ void ST_Ticker(void)
 
 static void ST_doPaletteStuff(void)
 {
-  int         palette;
-  int cnt = _g->plyr->damagecount;
+    int         palette;
+    int cnt = _g->plyr->damagecount;
 
-  if (_g->plyr->powers[pw_strength])
+    if (_g->plyr->powers[pw_strength])
     {
-      // slowly fade the berzerk out
-      int bzc = 12 - (_g->plyr->powers[pw_strength]>>6);
-      if (bzc > cnt)
-        cnt = bzc;
+        // slowly fade the berzerk out
+        int bzc = 12 - (_g->plyr->powers[pw_strength]>>6);
+        if (bzc > cnt)
+            cnt = bzc;
     }
 
-  if (cnt)
+    if (cnt)
     {
-      palette = (cnt+7)>>3;
-      if (palette >= NUMREDPALS)
-        palette = NUMREDPALS-1;
+        palette = (cnt+7)>>3;
+        if (palette >= NUMREDPALS)
+            palette = NUMREDPALS-1;
 
-      /* cph 2006/08/06 - if in the menu, reduce the red tint - navigating to
+        /* cph 2006/08/06 - if in the menu, reduce the red tint - navigating to
        * load a game can be tricky if the screen is all red */
-      if (_g->menuactive) palette >>=1;
+        if (_g->menuactive) palette >>=1;
 
-      palette += STARTREDPALS;
+        palette += STARTREDPALS;
     }
-  else
-    if (_g->plyr->bonuscount)
-      {
-        palette = (_g->plyr->bonuscount+7)>>3;
-        if (palette >= NUMBONUSPALS)
-          palette = NUMBONUSPALS-1;
-        palette += STARTBONUSPALS;
-      }
     else
-      if (_g->plyr->powers[pw_ironfeet] > 4*32 || _g->plyr->powers[pw_ironfeet] & 8)
-        palette = RADIATIONPAL;
-      else
-        palette = 0;
+        if (_g->plyr->bonuscount)
+        {
+            palette = (_g->plyr->bonuscount+7)>>3;
+            if (palette >= NUMBONUSPALS)
+                palette = NUMBONUSPALS-1;
+            palette += STARTBONUSPALS;
+        }
+        else
+            if (_g->plyr->powers[pw_ironfeet] > 4*32 || _g->plyr->powers[pw_ironfeet] & 8)
+                palette = RADIATIONPAL;
+            else
+                palette = 0;
 
-  if (palette != _g->st_palette) {
-    V_SetPalette(_g->st_palette = palette); // CPhipps - use new palette function
-  }
+    if (palette != _g->st_palette) {
+        V_SetPalette(_g->st_palette = palette); // CPhipps - use new palette function
+    }
 }
 
 static void ST_drawWidgets(boolean refresh)
 {
-    int i;
-
     STlib_updateNum(&_g->w_ready, CR_RED, refresh);
 
     STlib_updatePercent(&_g->st_health, CR_RED, refresh);
@@ -318,10 +301,10 @@ static void ST_drawWidgets(boolean refresh)
 
     STlib_updateMultIcon(&_g->w_faces, refresh);
 
-    for (i=0;i<3;i++)
+    for (int i=0;i<3;i++)
         STlib_updateMultIcon(&_g->w_keyboxes[i], refresh);
 
-    for (i=0;i<6;i++)
+    for (int i=0;i<6;i++)
         STlib_updateMultIcon(&_g->w_arms[i], refresh);
 }
 
@@ -333,12 +316,6 @@ static void ST_doRefresh(void)
   // and refresh all widgets
   ST_drawWidgets(true);
 
-}
-
-static void ST_diffDraw(void)
-{
-  // update all widgets
-  ST_drawWidgets(false);
 }
 
 static boolean ST_NeedUpdate()
@@ -389,14 +366,14 @@ void ST_Drawer(boolean statusbaron, boolean refresh)
             needupdate = true;
             _g->st_needrefresh = 2;
         }
-        else if(_g->st_needrefresh)
-        {
-            needupdate = true;
-        }
         else if(ST_NeedUpdate())
         {
             needupdate = true;
             _g->st_needrefresh = 2;
+        }
+        else if(_g->st_needrefresh)
+        {
+            needupdate = true;
         }
 
         if(needupdate)
@@ -454,12 +431,9 @@ static void ST_loadGraphics(boolean doload)
         _g->arms[i][1] = (const patch_t *) _g->shortnum[i+2];
     }
 
-    // face backgrounds for different color players
-    sprintf(namebuf, "STFB%d", consoleplayer);
-    _g->faceback = (const patch_t *) W_CacheLumpName(namebuf);
-
     // status bar background bits
     _g->stbarbg = (const patch_t *) gfx_stbar;
+    _g->stbar_len = gfx_stbar_len;
 
     // face states
     facenum = 0;

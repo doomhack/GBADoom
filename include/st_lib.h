@@ -73,8 +73,6 @@ typedef struct
   // list of patches for 0-9
   const patch_t** p;
 
-  boolean need_refresh;
-
 } st_number_t;
 
 // Percent widget ("child" of number widget,
@@ -107,8 +105,6 @@ typedef struct
 
   // list of icons
   const patch_t**   p;
-
-  boolean need_refresh;
 
 } st_multicon_t;
 

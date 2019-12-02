@@ -729,11 +729,10 @@ const patch_t* keys[NUMCARDS];
 // face status patches
 const patch_t* faces[ST_NUMFACES];
 
-// face background
-const patch_t* faceback; // CPhipps - single background, translated for different players
-
 //e6y: status bar background
 const patch_t* stbarbg;
+unsigned int stbar_len;
+
 
 // weapon ownership patches
 const patch_t* arms[6][2];

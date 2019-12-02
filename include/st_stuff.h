@@ -102,7 +102,7 @@
 #define ST_FACESY               (ST_Y)
 
 #define ST_EVILGRINCOUNT        (2*TICRATE)
-#define ST_STRAIGHTFACECOUNT    (TICRATE/2)
+#define ST_STRAIGHTFACECOUNT    (TICRATE*2)
 #define ST_TURNCOUNT            (1*TICRATE)
 #define ST_OUCHCOUNT            (1*TICRATE)
 #define ST_RAMPAGEDELAY         (2*TICRATE)
@@ -252,14 +252,5 @@ typedef enum
 } st_stateenum_t;
 
 // killough 5/2/98: moved from m_misc.c:
-
-extern const int health_red;    // health amount less than which status is red
-extern const int health_yellow; // health amount less than which status is yellow
-extern const int health_green;  // health amount above is blue, below is green
-extern const int armor_red;     // armor amount less than which status is red
-extern const int armor_yellow;  // armor amount less than which status is yellow
-extern const int armor_green;   // armor amount above is blue, below is green
-extern const int ammo_red;      // ammo percent less than which status is red
-extern const int ammo_yellow;   // ammo percent less is yellow more green
 
 #endif

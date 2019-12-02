@@ -125,10 +125,10 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
         return;
 
     //dump the _g->viewangletox var
-    QFile f("C:\\temp\\table.c");
+    QFile f("C:\\temp\\gfx_stbar.c");
     f.open(QIODevice::ReadWrite);
 
-    f.write("const fixed_t yslope[");
+    f.write("const byte gfx_stbar[");
     f.write(QString::number(arrayCount).toLatin1().constData());
 
     f.write("] =\n{\n");

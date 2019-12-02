@@ -41,6 +41,8 @@
 #include "lprintf.h"
 #include "global_data.h"
 
+#include "gba_functions.h"
+
 //
 // STlib_init()
 //
@@ -74,7 +76,6 @@ void STlib_initNum
   n->num  = num;
   n->on = on;
   n->p  = pl;
-  n->need_refresh = true;
 }
 
 /*
@@ -100,28 +101,9 @@ static void STlib_drawNum
   int   num = *n->num;
 
   int   w = n->p[0]->width;
-  int   h = n->p[0]->height;
   int   x = n->x;
 
   int   neg;
-
-  if(n->need_refresh)
-      refresh = true;
-
-  // leban 1/20/99:
-  // strange that somebody went through all the work to draw only the
-  // differences, and then went and constantly redrew all the numbers.
-  // return without drawing if the number didn't change and the bar
-  // isn't refreshing.
-  if(n->oldnum == num && !refresh)
-    return;
-
-  //Since we are page-flipping, we need to refresh widgets twice.
-  //otherwise the st-bar flickers.
-  if(n->oldnum != num)
-      n->need_refresh = true;
-  else
-      n->need_refresh = false;
 
   // CPhipps - compact some code, use num instead of *n->num
   if ((neg = (n->oldnum = num) < 0))
@@ -218,17 +200,8 @@ void STlib_initPercent
 
 void STlib_updatePercent(st_percent_t* per, int cm, int refresh)
 {
-    boolean needupdate = (*per->n.on && (refresh || (per->n.oldnum != *per->n.num) || per->n.need_refresh));
-
     STlib_updateNum(&per->n, cm, refresh);
-
-    if(needupdate)
-    {
-        // killough 2/21/98: fix percents not updated;
-        /* CPhipps - make %'s only be updated if number changed */
-        // CPhipps - patch drawing updated
-        V_DrawPatchNoScale(per->n.x, per->n.y, ST_FG, per->p);
-    }
+    V_DrawPatchNoScale(per->n.x, per->n.y, ST_FG, per->p);
 }
 
 //
@@ -255,7 +228,6 @@ void STlib_initMultIcon
   i->inum = inum;
   i->on = on;
   i->p  = il;
-  i->need_refresh = true;
 }
 
 //
@@ -280,19 +252,11 @@ void STlib_updateMultIcon
     if(!mi->p)
         return;
 
-    if (*mi->on && (mi->oldinum != *mi->inum || refresh || mi->need_refresh))
-    {
-        if(mi->oldinum != *mi->inum)
-            mi->need_refresh = true;
-        else
-            mi->need_refresh = false;
+    if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
+        V_DrawPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum]);
 
+    mi->oldinum = *mi->inum;
 
-        if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-            V_DrawPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum]);
-
-        mi->oldinum = *mi->inum;
-    }
 }
 
 //
@@ -352,8 +316,6 @@ void STlib_updateBinIcon
 
     if (*bi->val)
       V_DrawPatch(bi->x, bi->y, ST_FG, bi->p);
-    else
-      V_CopyRect(x, y-ST_Y, ST_BG, w, h, x, y, ST_FG, VPT_STRETCH);
 
     bi->oldval = *bi->val;
   }
@@ -361,10 +323,10 @@ void STlib_updateBinIcon
 
 void ST_refreshBackground(void)
 {
-    int y=SCREENHEIGHT-ST_SCALED_HEIGHT;
-
     if (_g->st_statusbaron)
     {
-        V_DrawPatchNoScale(0, y, ST_FG, _g->stbarbg);
+        const unsigned int st_offset = ((SCREENHEIGHT-ST_SCALED_HEIGHT)*120);
+
+        BlockCopy(&_g->screens[0].data[st_offset], _g->stbarbg, _g->stbar_len);
     }
 }
