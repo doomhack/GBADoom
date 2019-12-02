@@ -132,7 +132,7 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
     byte* desttop = (byte*)_g->screens[0].data;
     desttop += (ScreenYToOffset(y) << 1) + x;
 
-    for (int col = 0; col < patch->width; x++, col++, desttop++)
+    for (int col = 0; col < patch->width; col++, desttop++)
     {
         const column_t* column = (const column_t*)((const byte*)patch + patch->columnofs[col]);
 
