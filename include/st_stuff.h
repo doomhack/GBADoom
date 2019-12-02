@@ -121,7 +121,7 @@
 // AMMO number pos.
 #define ST_AMMOWIDTH            3
 // proff 08/18/98: Changed for high-res
-#define ST_AMMOX                (ST_X+43)
+#define ST_AMMOX                (ST_X+42)
 #define ST_AMMOY                (ST_SCALED_Y+2)
 //#define ST_AMMOX                44
 //#define ST_AMMOY                171

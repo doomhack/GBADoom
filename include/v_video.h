@@ -80,12 +80,6 @@ typedef struct
 
 #define NUM_SCREENS 1
 
-// V_CopyRect
-void V_CopyRect(int srcx,  int srcy,  int srcscrn,
-                             int width, int height,
-                             int destx, int desty, int destscrn,
-                             enum patch_translation_e flags);
-
 // V_FillRect
 void V_FillRect(int scrn, int x, int y,
                              int width, int height, byte colour);
@@ -102,7 +96,7 @@ void V_DrawNumPatch(int x, int y, int scrn,
 
 void V_DrawPatch(int x, int y, int scrn, const patch_t* patch);
 
-void V_DrawPatchNoScale(int x, int y, int scrn, const patch_t* patch);
+void V_DrawPatchNoScale(int x, int y, const patch_t* patch);
 
 
 // V_DrawNamePatch - Draws the patch from lump "name"
@@ -140,7 +134,5 @@ typedef struct
 // V_DrawLine
 void V_DrawLine(fline_t* fl, int color);
 
-void V_AllocScreen(screeninfo_t *scrn);
-void V_AllocScreens();
 
 #endif

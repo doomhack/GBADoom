@@ -210,9 +210,6 @@ void I_UpdateVideoMode(void)
   lprintf(LO_INFO, "I_SetRes: %dx%d", SCREENWIDTH, SCREENHEIGHT);
   I_SetRes();
 
-  lprintf(LO_INFO, "V_AllocScreens:");
-  V_AllocScreens();
-
   lprintf(LO_INFO, "R_InitBuffer:");
   R_InitBuffer();
 }

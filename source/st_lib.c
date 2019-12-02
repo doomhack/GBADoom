@@ -119,8 +119,6 @@ static void STlib_drawNum
   // clear the area
   x = n->x - numdigits*w;
 
-  //V_CopyRect((x-2), (n->y-2) - ST_Y, ST_BG, w*numdigits+4, h+4, x-2, n->y-2, ST_FG, VPT_STRETCH);
-
   // if non-number, do not draw it
   if (num == 1994)
     return;
@@ -131,7 +129,7 @@ static void STlib_drawNum
   // in the special case of 0, you draw 0
   if (!num)
     // CPhipps - patch drawing updated, reformatted
-    V_DrawPatchNoScale(x - w, n->y, ST_FG, n->p[0]);
+    V_DrawPatchNoScale(x - w, n->y, n->p[0]);
 
   // draw the new number
   //jff 2/16/98 add color translation to digit output
@@ -139,7 +137,7 @@ static void STlib_drawNum
   {
     // CPhipps - patch drawing updated, reformatted
     x -= w;
-    V_DrawPatchNoScale(x, n->y, ST_FG, n->p[num % 10]);
+    V_DrawPatchNoScale(x, n->y, n->p[num % 10]);
     num /= 10;
   }
 }
@@ -201,7 +199,7 @@ void STlib_initPercent
 void STlib_updatePercent(st_percent_t* per, int cm, int refresh)
 {
     STlib_updateNum(&per->n, cm, refresh);
-    V_DrawPatchNoScale(per->n.x, per->n.y, ST_FG, per->p);
+    V_DrawPatchNoScale(per->n.x, per->n.y, per->p);
 }
 
 //

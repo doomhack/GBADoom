@@ -45,6 +45,7 @@
 #include "lprintf.h"
 
 #include "global_data.h"
+#include "gba_functions.h"
 
 //
 // V_CopyRect
@@ -58,7 +59,7 @@
 //
 // No return.
 //
-void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
+static void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
                 int height, int destx, int desty, int destscrn,
                 enum patch_translation_e flags)
 {
@@ -123,35 +124,24 @@ void V_DrawBackground(const char* flatname, int scrn)
                        ((SCREENHEIGHT-y) < 64) ? (SCREENHEIGHT-y) : 64, x, y, scrn, VPT_NONE);
 }
 
-void V_DrawPatchNoScale(int x, int y, int scrn, const patch_t* patch)
+void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
 {
-    int		count;
-    int		col;
-    const column_t*	column;
-    byte*	desttop;
-    byte*	dest;
-    const byte*	source;
-    int		w;
-
     y -= patch->topoffset;
     x -= patch->leftoffset;
 
-    col = 0;
-    desttop = (byte*)_g->screens[scrn].data;
-    desttop += (y*240)+x;
+    byte* desttop = (byte*)_g->screens[0].data;
+    desttop += (ScreenYToOffset(y) << 1) + x;
 
-    w = patch->width;
-
-    for ( ; col<w ; x++, col++, desttop++)
+    for (int col = 0; col < patch->width; x++, col++, desttop++)
     {
-        column = (const column_t*)((const byte*)patch + patch->columnofs[col]);
+        const column_t* column = (const column_t*)((const byte*)patch + patch->columnofs[col]);
 
         // step through the posts in a column
         while (column->topdelta != 0xff )
         {
-            source = (const byte*)column + 3;
-            dest = desttop + column->topdelta*240;
-            count = column->length;
+            const byte* source = (const byte*)column + 3;
+            byte* dest = desttop + (ScreenYToOffset(column->topdelta) << 1);
+            unsigned int count = column->length;
 
             while (count--)
             {
@@ -184,7 +174,6 @@ void V_DrawPatchNoScale(int x, int y, int scrn, const patch_t* patch)
         }
     }
 }
-
 
 /*
  * This function draws at GBA resoulution (ie. not pixel doubled)
@@ -321,26 +310,11 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
     }
 }
 
-//
-// V_AllocScreen
-//
-void V_AllocScreen(screeninfo_t *scrn)
-{
-    if ((scrn->height) > 0)
-      scrn->data = malloc( (SCREENPITCH*scrn->height) * 2);
-}
 
-//
-// V_AllocScreens
-//
-void V_AllocScreens(void)
-{
-  //V_AllocScreen(&_g->screens[1]);
-}
 
 void V_PlotPixel(int scrn, int x, int y, byte color)
 {
-    _g->screens[scrn].data[x+SCREENPITCH*y] = (color | (color << 8));
+    _g->screens[scrn].data[ScreenYToOffset(y)+x] = (color | (color << 8));
 }
 
 //

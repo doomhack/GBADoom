@@ -450,12 +450,6 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
 
-//Cheap mul by 120. Not sure if faster.
-inline static unsigned int ScreenYToOffset(unsigned int x)
-{
-    return (x << 7) - (x << 3);
-}
-
 inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, int frac)
 {
 #ifdef __arm__

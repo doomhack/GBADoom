@@ -147,7 +147,7 @@ void HUlib_drawTextLine
                 break;
             // killough 1/18/98 -- support multiple lines:
             // CPhipps - patch drawing updated
-            V_DrawPatchNoScale(x, y, HU_FG, l->f[c - l->sc]);
+            V_DrawPatchNoScale(x, y, l->f[c - l->sc]);
             x += w;
         }
         else
