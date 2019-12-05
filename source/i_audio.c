@@ -302,7 +302,7 @@ static int addsfx(int sfxid, int channel, int volume, int sep)
     mm_sound_effect sound;
     sound.id      = soundMap[sfxid].mm_num;
     sound.rate    = 1024;
-    sound.handle  = channel + 1;
+    sound.handle  = 0;//channel + 1;
     sound.volume  = mmvol;
     sound.panning = sep;
 
