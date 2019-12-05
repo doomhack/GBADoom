@@ -459,7 +459,6 @@ void S_StopMusic(void)
             I_ResumeSong(0);
 
         I_StopSong(0);
-        I_UnRegisterSong(0);
 
         _g->mus_playing = 0;
     }
@@ -478,10 +477,6 @@ void S_StopChannel(int cnum)
 
     if (c->sfxinfo)
     {
-        // stop the sound playing
-        if (S_SoundIsPlaying(c->handle))
-            I_StopSound(c->handle);
-
         // check to see
         //  if other channels are playing the sound
         for (i=0 ; i<numChannels ; i++)

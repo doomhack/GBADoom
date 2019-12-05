@@ -271,18 +271,6 @@ static const audio_map_t soundMap[NUMSFX] =
 
 #endif
 
-/* cph
- * stopchan
- * Stops a sound, unlocks the data
- */
-
-static void stopchan(int i)
-{
-#ifdef __arm__
-    mmEffectCancel(i + 1);
-#endif
-}
-
 //
 // This function adds a sound to the
 //  list of currently active sounds,
@@ -302,7 +290,7 @@ static int addsfx(int sfxid, int channel, int volume, int sep)
     mm_sound_effect sound;
     sound.id      = soundMap[sfxid].mm_num;
     sound.rate    = 1024;
-    sound.handle  = 0;//channel + 1;
+    sound.handle  = 0;
     sound.volume  = mmvol;
     sound.panning = sep;
 
@@ -333,11 +321,6 @@ int I_StartSound(int id, int channel, int vol, int sep)
     addsfx(id, channel, vol, sep);
 
 	return channel;
-}
-
-void I_StopSound (int handle)
-{
-	stopchan(handle);
 }
 
 void I_ShutdownSound(void)
@@ -404,16 +387,6 @@ void I_StopSong(int handle)
 #ifdef __arm__
     mmStop();
 #endif
-}
-
-void I_UnRegisterSong(int handle)
-{
-
-}
-
-int I_RegisterSong(const void *data, size_t len)
-{
-	return 0;
 }
 
 void I_SetMusicVolume(int volume)

@@ -51,8 +51,6 @@ void I_ShutdownSound(void);
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id, int channel, int vol, int sep);
 
-// Stops a sound channel.
-void I_StopSound(int handle);
 
 //
 //  MUSIC I/O
@@ -74,9 +72,6 @@ void I_PlaySong(int handle, int looping);
 
 // Stops a song over 3 seconds.
 void I_StopSong(int handle);
-
-// See above (register), then think backwards
-void I_UnRegisterSong(int handle);
 
 // CPhipps - put these in config file
 extern const int snd_samplerate;
