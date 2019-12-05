@@ -540,7 +540,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // find map name
   if (_g->gamemode == commercial)
   {
-    sprintf(lumpname, "map%02d", map);           // killough 1/24/98: simplify
+    sprintf(lumpname, "MAP%02d", map);           // killough 1/24/98: simplify
   }
   else
   {
