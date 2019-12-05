@@ -100,6 +100,8 @@ static fixed_t  rw_scalestep;
 static int      worldtop;
 static int      worldbottom;
 
+static int didsolidcol; /* True if at least one column was marked solid */
+
 // True if any of the segs textures might be visible.
 static boolean  segtextured;
 static boolean  markfloor;      // False if the back side is the same plane.
@@ -160,6 +162,9 @@ static lighttable_t current_colormap[256];
 static const lighttable_t* current_colormap_ptr;
 
 static fixed_t planeheight;
+
+size_t num_vissprite;
+
 
 //*****************************************
 // Constants
@@ -412,6 +417,9 @@ static const lighttable_t* R_ColourMap(int lightlevel)
         }
 
         lightlevel += extralight << LIGHTSEGSHIFT;
+
+        if(_g->gamma)
+            lightlevel += 2 << LIGHTSEGSHIFT;
 
         int cm = ((256-lightlevel)>>2) - 24;
 
@@ -702,21 +710,16 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
     dcvars.texturemid += _g->sides[curline->sidenum].rowoffset;
 
-    if (fixedcolormap) {
-        dcvars.colormap = fixedcolormap;
-    }
-
     const texture_t* texture = R_GetOrLoadTexture(texnum);
+
+    dcvars.colormap = R_LoadColorMap(rw_lightlevel);
 
     // draw the columns
     for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
     {
         if (maskedtexturecol[dcvars.x] != SHRT_MAX) // dropoff overflow
         {
-            dcvars.colormap = R_LoadColorMap(rw_lightlevel);
-
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
-
 
             dcvars.iscale = IDiv32(INT_MAX, spryscale >> 1);
             //dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
@@ -922,8 +925,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     vis->patch = lump;
 
-    if (_g->viewplayer->powers[pw_invisibility] > 4*32
-            || _g->viewplayer->powers[pw_invisibility] & 8)
+    if (_g->viewplayer->powers[pw_invisibility] > 4*32 || _g->viewplayer->powers[pw_invisibility] & 8)
         vis->colormap = NULL;                    // shadow draw
     else if (fixedcolormap)
         vis->colormap = fixedcolormap;           // fixed color
@@ -1008,7 +1010,7 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
 static void R_SortVisSprites (void)
 {
 
-    int i = _g->num_vissprite;
+    int i = num_vissprite;
 
     if (i)
     {
@@ -1018,7 +1020,7 @@ static void R_SortVisSprites (void)
         // killough 9/22/98: replace qsort with merge sort, since the keys
         // are roughly in order to begin with, due to BSP rendering.
 
-        msort(_g->vissprite_ptrs, _g->vissprite_ptrs + _g->num_vissprite, _g->num_vissprite);
+        msort(_g->vissprite_ptrs, _g->vissprite_ptrs + num_vissprite, num_vissprite);
     }
 }
 
@@ -1036,7 +1038,7 @@ static void R_DrawMasked(void)
     R_SortVisSprites();
 
     // draw all vissprites back to front
-    for (i = _g->num_vissprite ;--i>=0; )
+    for (i = num_vissprite ;--i>=0; )
         R_DrawSprite(_g->vissprite_ptrs[i]);         // killough
 
     // render any remaining masked mid textures
@@ -1116,24 +1118,16 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
 
 static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 {
-    angle_t angle;
-    fixed_t distance, length;
-
-    distance = FixedMul(planeheight, yslope[y]);
+    fixed_t distance = FixedMul(planeheight, yslope[y]);
     dsvars->xstep = FixedMul(distance,basexscale);
     dsvars->ystep = FixedMul(distance,baseyscale);
 
-    length = FixedMul (distance, distscale[x1]);
-    angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
+    fixed_t length = FixedMul (distance, distscale[x1]);
+    angle_t angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
     // killough 2/28/98: Add offsets
     dsvars->xfrac =  viewx + FixedMul(finecosine[angle], length);
     dsvars->yfrac = -viewy - FixedMul(finesine[angle],   length);
-
-    if(fixedcolormap)
-    {
-        dsvars->colormap = fixedcolormap;
-    }
 
     dsvars->y = y;
     dsvars->x1 = x1;
@@ -1277,7 +1271,7 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 
 static vissprite_t *R_NewVisSprite(void)
 {
-    if (_g->num_vissprite >= MAXVISSPRITES)
+    if (num_vissprite >= MAXVISSPRITES)
     {
 #ifdef RANGECHECK
         I_Error("Vissprite overflow.");
@@ -1286,7 +1280,7 @@ static vissprite_t *R_NewVisSprite(void)
     }
 
 
-    return _g->vissprites + _g->num_vissprite++;
+    return _g->vissprites + num_vissprite++;
 }
 
 
@@ -1740,6 +1734,9 @@ static void R_RenderSegLoop (void)
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
+    dcvars.colormap = R_LoadColorMap(rw_lightlevel);
+
+
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
 
@@ -1797,8 +1794,6 @@ static void R_RenderSegLoop (void)
             texturecolumn = rw_offset-FixedMul(finetangent[angle],rw_distance);
 
             texturecolumn >>= FRACBITS;
-
-            dcvars.colormap = R_LoadColorMap(rw_lightlevel);
 
             dcvars.x = rw_x;
 
@@ -1886,7 +1881,8 @@ static void R_RenderSegLoop (void)
             // add this info to the solid columns array for r_bsp.c
             if ((markceiling || markfloor) && (floorclip[rw_x] <= ceilingclip[rw_x] + 1))
             {
-                solidcol[rw_x] = 1; _g->didsolidcol = 1;
+                solidcol[rw_x] = 1;
+                didsolidcol = 1;
             }
 
             // save texturecol for backdrawing of masked mid texture
@@ -2181,11 +2177,11 @@ static void R_StoreWallRange(const int start, const int stop)
             markfloor = 0;
     }
 
-    _g->didsolidcol = 0;
+    didsolidcol = 0;
     R_RenderSegLoop();
 
     /* cph - if a column was made solid by this wall, we _must_ save full clipping info */
-    if (backsector && _g->didsolidcol)
+    if (backsector && didsolidcol)
     {
         if (!(ds_p->silhouette & SIL_BOTTOM))
         {
@@ -2683,7 +2679,7 @@ static void R_ClearClipSegs (void)
 
 static void R_ClearSprites(void)
 {
-  _g->num_vissprite = 0;            // killough
+    num_vissprite = 0;            // killough
 }
 
 //
@@ -2693,11 +2689,17 @@ static void R_ClearSprites(void)
 
 static void R_DrawPlanes (void)
 {
-    visplane_t *pl;
-    int i;
-    for (i=0;i<MAXVISPLANES;i++)
-        for (pl=_g->visplanes[i]; pl; pl=pl->next)
+    for (int i=0; i<MAXVISPLANES; i++)
+    {
+        visplane_t *pl = _g->visplanes[i];
+
+        while(pl)
+        {
             R_DoDrawPlane(pl);
+
+            pl = pl->next;
+        }
+    }
 }
 
 //
@@ -2719,4 +2721,53 @@ void R_RenderPlayerView (player_t* player)
     R_DrawPlanes ();
 
     R_DrawMasked ();
+}
+
+
+void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
+{
+    y -= patch->topoffset;
+    x -= patch->leftoffset;
+
+    byte* desttop = (byte*)_g->screens[0].data;
+    desttop += (ScreenYToOffset(y) << 1) + x;
+
+    unsigned int width = patch->width;
+
+    for (unsigned int col = 0; col < width; col++, desttop++)
+    {
+        const column_t* column = (const column_t*)((const byte*)patch + patch->columnofs[col]);
+
+        unsigned int odd_addr = (unsigned int)desttop & 1;
+
+        byte* desttop_even = (byte*)((unsigned int)desttop & 0xfffffffe);
+
+        // step through the posts in a column
+        while (column->topdelta != 0xff)
+        {
+            const byte* source = (const byte*)column + 3;
+            byte* dest = desttop_even + (ScreenYToOffset(column->topdelta) << 1);
+
+            unsigned int count = column->length;
+
+
+            while (count--)
+            {
+                unsigned int color = *source++;
+                unsigned short* dest16 = (unsigned short*)dest;
+
+                unsigned int old = *dest16;
+
+                //The GBA must write in 16bits.
+                if(odd_addr)
+                    *dest16 = (old & 0xff) | (color << 8);
+                else
+                    *dest16 = ((color & 0xff) | (old << 8));
+
+                dest += 240;
+            }
+
+            column = (const column_t*)((const byte*)column + column->length + 4);
+        }
+    }
 }

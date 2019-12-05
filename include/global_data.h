@@ -649,7 +649,6 @@ short openings[MAXOPENINGS];
 short* lastopening;
 
 
-int didsolidcol; /* True if at least one column was marked solid */
 
 //******************************************************************************
 //r_sky.c
@@ -677,7 +676,6 @@ int maxframe;
 
 vissprite_t vissprites[MAXVISSPRITES];
 vissprite_t* vissprite_ptrs[MAXVISSPRITES*2];  // killough
-size_t num_vissprite;
 
 
 

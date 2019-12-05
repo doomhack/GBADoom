@@ -124,56 +124,7 @@ void V_DrawBackground(const char* flatname, int scrn)
                        ((SCREENHEIGHT-y) < 64) ? (SCREENHEIGHT-y) : 64, x, y, scrn, VPT_NONE);
 }
 
-void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
-{
-    y -= patch->topoffset;
-    x -= patch->leftoffset;
 
-    byte* desttop = (byte*)_g->screens[0].data;
-    desttop += (ScreenYToOffset(y) << 1) + x;
-
-    for (int col = 0; col < patch->width; col++, desttop++)
-    {
-        const column_t* column = (const column_t*)((const byte*)patch + patch->columnofs[col]);
-
-        // step through the posts in a column
-        while (column->topdelta != 0xff )
-        {
-            const byte* source = (const byte*)column + 3;
-            byte* dest = desttop + (ScreenYToOffset(column->topdelta) << 1);
-            unsigned int count = column->length;
-
-            while (count--)
-            {
-                unsigned short color = *source++;
-
-                //The GBA must write in 16bits.
-                if((unsigned int)dest & 1)
-                {
-                    //Odd addreses, we combine existing pixel with new one.
-                    unsigned short* dest16 = (unsigned short*)(dest - 1);
-
-
-                    unsigned short old = *dest16;
-
-                    *dest16 = (old & 0xff) | (color << 8);
-                }
-                else
-                {
-                    unsigned short* dest16 = (unsigned short*)dest;
-
-                    unsigned short old = *dest16;
-
-                    *dest16 = ((color & 0xff) | (old << 8));
-                }
-
-                dest += 240;
-            }
-
-            column = (const column_t*)((const byte*)column + column->length + 4);
-        }
-    }
-}
 
 /*
  * This function draws at GBA resoulution (ie. not pixel doubled)
