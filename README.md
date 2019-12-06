@@ -28,7 +28,7 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 - ~Too dark on real hardware. It either needs a non-linear RGB24 -> RGB15 mapping or a custom palette.~
 
-- Save-load are stubbed out.
+- ~Save-load are stubbed out.~
 
 - Demo compatability is broken.
 
@@ -36,7 +36,7 @@ This project is currently a WIP but we're getting to the point where there is a 
 
 - General optimisation. We're never going to get a perfect 35FPS but I think there is still another 25% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
 
-- Sound is a bit glitchy because MaxMod doesn't have a function to tell if a sound is still playing. Channels get re-used sooner than they should. To fix this i'll have to store the lengths of all of the samples. Fun.
+- ~Sound is a bit glitchy because MaxMod doesn't have a function to tell if a sound is still playing. Channels get re-used sooner than they should. To fix this i'll have to store the lengths of all of the samples. Fun.~
 
 - Probably a bunch of other stuff that's borked too...
 
