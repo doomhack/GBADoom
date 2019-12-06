@@ -565,43 +565,48 @@ static const char pfub1[] = { "PFUB1" };
 
 static void F_BunnyScroll (void)
 {
-  char        name[10];
-  int         stage;
+    char        name[10];
+    int         stage;
 
-  {
-    int scrolled = 320 - (_g->finalecount-230)/2;
-    if (scrolled <= 0) {
-      V_DrawNamePatch(0, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
-    } else if (scrolled >= 320) {
-      V_DrawNamePatch(0, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
-    } else {
-      V_DrawNamePatch(320-scrolled, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
-      V_DrawNamePatch(-scrolled, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
+    {
+        int scrolled = 320 - (_g->finalecount-230)/2;
+        if (scrolled <= 0)
+        {
+            V_DrawNamePatch(0, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
+        }
+        else if (scrolled >= 320)
+        {
+            V_DrawNamePatch(0, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
+        }
+        else
+        {
+            V_DrawNamePatch(320-scrolled, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
+            V_DrawNamePatch(-scrolled, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
+        }
     }
-  }
 
-  if (_g->finalecount < 1130)
-    return;
-  if (_g->finalecount < 1180)
-  {
+    if (_g->finalecount < 1130)
+        return;
+    if (_g->finalecount < 1180)
+    {
+        // CPhipps - patch drawing updated
+        V_DrawNamePatch((320-13*8)/2, (200-8*8)/2,0, "END0", CR_DEFAULT, VPT_STRETCH);
+        _g->laststage = 0;
+        return;
+    }
+
+    stage = (_g->finalecount-1180) / 5;
+    if (stage > 6)
+        stage = 6;
+    if (stage > _g->laststage)
+    {
+        S_StartSound (NULL, sfx_pistol);
+        _g->laststage = stage;
+    }
+
+    sprintf (name,"END%i",stage);
     // CPhipps - patch drawing updated
-    V_DrawNamePatch((320-13*8)/2, (200-8*8)/2,0, "END0", CR_DEFAULT, VPT_STRETCH);
-    _g->laststage = 0;
-    return;
-  }
-
-  stage = (_g->finalecount-1180) / 5;
-  if (stage > 6)
-    stage = 6;
-  if (stage > _g->laststage)
-  {
-    S_StartSound (NULL, sfx_pistol);
-    _g->laststage = stage;
-  }
-
-  sprintf (name,"END%i",stage);
-  // CPhipps - patch drawing updated
-  V_DrawNamePatch((320-13*8)/2, (200-8*8)/2, 0, name, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatch((320-13*8)/2, (200-8*8)/2, 0, name, CR_DEFAULT, VPT_STRETCH);
 }
 
 

@@ -92,6 +92,8 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     y -= patch->topoffset;
     x -= patch->leftoffset;
 
+    int   col = 0;
+
     const int   DX  = (240<<16) / 320;
     const int   DXI = (320<<16) / 240;
     const int   DY  = ((SCREENHEIGHT<<16)+(FRACUNIT-1)) / 200;
@@ -104,11 +106,13 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     const int right =  ((x + patch->width) *  DX) >> FRACBITS;
     const int bottom = ((y + patch->height) * DY) >> FRACBITS;
 
-    int   col = 0;
 
     for (int dc_x=left; dc_x<right; dc_x++, col+=DXI)
     {
         int colindex = (col>>16);
+
+        if(dc_x < 0)
+            continue;
 
         //Messy hack to compensate accumulated rounding errors.
         if(dc_x == right-1)
@@ -150,7 +154,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
                     frac = (column->length-1) << FRACBITS;
 
 
-                unsigned short color = source[(frac>>FRACBITS)&127];
+                unsigned short color = source[frac>>FRACBITS];
 
                 //The GBA must write in 16bits.
                 if((unsigned int)dest & 1)

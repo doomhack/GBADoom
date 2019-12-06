@@ -383,44 +383,33 @@
   "The only way out is through."
 
 #define E2TEXT \
-  "You've done it! The hideous cyber-\n"\
-  "demon lord that ruled the lost Deimos\n"\
-  "moon base has been slain and you\n"\
-  "are triumphant! But ... where are\n"\
-  "you? You clamber to the edge of the\n"\
-  "moon and look down to see the awful\n"\
-  "truth.\n" \
+  "You've done it! The hideous\n"\
+  "cyber-demon that ruled the\n"\
+  "lost Deimos moon base has been\n"\
+  "slain and you are triumphant!\n"\
+  "But...where are you?\n"\
+  "You clamber to the edge of the\n"\
+  "moon and see the awful truth.\n" \
   "\n"\
   "Deimos floats above Hell itself!\n"\
-  "You've never heard of anyone escaping\n"\
-  "from Hell, but you'll make the bastards\n"\
-  "sorry they ever heard of you! Quickly,\n"\
-  "you rappel down to  the surface of\n"\
-  "Hell.\n"\
-  "\n" \
-  "Now, it's on to the final chapter of\n"\
-  "DOOM! -- Inferno."
+  "You've never heard of anyone\n"\
+  "escaping from Hell, but you'll\n"\
+  "make the bastards sorry they\n"\
+  "ever heard of you!"
 
 
 #define E3TEXT \
   "The loathsome spiderdemon that\n"\
-  "masterminded the invasion of the moon\n"\
-  "bases and caused so much death has had\n"\
-  "its ass kicked for all time.\n"\
+  "masterminded the invasion of the\n"\
+  "moon bases and caused so much\n"\
+  "death has had its ass kicked.\n"\
   "\n"\
-  "A hidden doorway opens and you enter.\n"\
-  "You've proven too tough for Hell to\n"\
-  "contain, and now Hell at last plays\n"\
-  "fair -- for you emerge from the door\n"\
-  "to see the green fields of Earth!\n"\
-  "Home at last.\n" \
-  "\n"\
-  "You wonder what's been happening on\n"\
-  "Earth while you were battling evil\n"\
-  "unleashed. It's good that no Hell-\n"\
-  "spawn could have come through that\n"\
-  "door with you ..."
-
+  "A hidden doorway opens.\n"\
+  "You've proven too tough for\n"\
+  "Hell to contain, and now Hell at\n"\
+  "last plays fair -- you emerge\n"\
+  "from the door to see the green\n"\
+  "fields of Earth! Home at last.\n"
 
 #define E4TEXT \
   "the spider mastermind must have sent forth\n"\
