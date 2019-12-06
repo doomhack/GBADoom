@@ -75,6 +75,8 @@
 
 #include "global_data.h"
 
+#include "gba_functions.h"
+
 #define SAVEGAMESIZE  0x20000
 
 static const size_t savegamesize = SAVEGAMESIZE; // killough
@@ -141,6 +143,15 @@ static const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
 static void G_DoSaveGame (boolean menu);
 static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, boolean failonerror);
+
+
+typedef struct gba_save_data_t
+{
+    skill_t gameskill;
+    int gameepisode;
+    int gamemap;
+    int totalleveltimes;
+} gbasavedata_t;
 
 //
 // G_BuildTiccmd
@@ -961,111 +972,34 @@ void G_ForcedLoadGame(void)
 // killough 3/16/98: add slot info
 // killough 5/15/98: add command-line
 void G_LoadGame(int slot, boolean command)
-{
-  if (!_g->demoplayback && !command) {
-    // CPhipps - handle savegame filename in G_DoLoadGame
-    //         - Delay load so it can be communicated in net game
-    //         - store info in special_event
-    _g->special_event = BT_SPECIAL | (BTS_LOADGAME & BT_SPECIALMASK) |
-      ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
-  } else {
-    // Do the old thing, immediate load
-    _g->gameaction = ga_loadgame;
+{  
     _g->savegameslot = slot;
     _g->demoplayback = false;
-  }
-  _g->command_loadgame = command;
+
+    G_DoLoadGame();
 }
 
 // CPhipps - size of version header
 #define VERSIONSIZE   16
 
-void G_DoLoadGame(void)
+void G_DoLoadGame()
 {
-  int  length;
-  // CPhipps - do savegame filename stuff here
-  char name[PATH_MAX+1];     // killough 3/22/98
+    byte* loadbuffer = Z_Malloc(512, PU_STATIC, NULL);
 
-  G_SaveGameName(name,sizeof(name),_g->savegameslot, _g->demoplayback);
+    LoadSRAM(loadbuffer);
 
-  _g->gameaction = ga_nothing;
+    gbasavedata_t* saveslots = (gbasavedata_t*)loadbuffer;
 
-  length = M_ReadFile(name, &_g->savebuffer);
-  if (length<=0)
-    I_Error("Couldn't read file %s: %s", name, "(Unknown Error)");
-  _g->save_p = _g->savebuffer + SAVESTRINGSIZE;
+    gbasavedata_t* savedata = &saveslots[_g->savegameslot];
 
+    _g->gameskill = savedata->gameskill;
+    _g->gameepisode = savedata->gameepisode;
+    _g->gamemap = savedata->gamemap;
+    _g->totalleveltimes = savedata->totalleveltimes;
 
-  _g->save_p += VERSIONSIZE;
+    Z_Free(loadbuffer);
 
-  // CPhipps - always check savegames even when forced,
-  //  only print a warning if forced
-  {  // killough 3/16/98: check lump name checksum (independent of order)
-    uint_64_t checksum = 0;
-
-    checksum = 0;
-
-    _g->save_p += sizeof checksum;
-   }
-
-  _g->save_p += strlen(_g->save_p)+1;
-
-  _g->save_p++;
-
-  _g->gameskill = *_g->save_p++;
-  _g->gameepisode = *_g->save_p++;
-  _g->gamemap = *_g->save_p++;
-
-    _g->playeringame = *_g->save_p++;
-  _g->save_p += MIN_MAXPLAYERS-MAXPLAYERS;         // killough 2/28/98
-
-  _g->idmusnum = *_g->save_p++;           // jff 3/17/98 restore idmus music
-  if (_g->idmusnum==255) _g->idmusnum=-1; // jff 3/18/98 account for unsigned byte
-
-  /* killough 3/1/98: Read game options
-   * killough 11/98: move down to here
-   */
-  _g->save_p = (const char*)G_ReadOptions(_g->save_p);
-
-  // load a base level
-  G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
-
-  /* get the times - killough 11/98: save entire word */
-  memcpy(&_g->leveltime, _g->save_p, sizeof _g->leveltime);
-  _g->save_p += sizeof _g->leveltime;
-
-
-    memcpy(&_g->totalleveltimes, _g->save_p, sizeof _g->totalleveltimes);
-    _g->save_p += sizeof _g->totalleveltimes;
-
-
-  // killough 11/98: load revenant tracer state
-  _g->basetic = _g->gametic - *_g->save_p++;
-
-  // dearchive all the modifications
-  P_MapStart();
-  P_UnArchivePlayers ();
-  P_UnArchiveWorld ();
-  P_UnArchiveThinkers ();
-  P_UnArchiveSpecials ();
-  P_UnArchiveRNG ();    // killough 1/18/98: load RNG information
-  P_UnArchiveMap ();    // killough 1/22/98: load automap information
-  P_MapEnd();
-
-  if (*_g->save_p != 0xe6)
-    I_Error ("G_DoLoadGame: Bad savegame");
-
-  // done
-  Z_Free (_g->savebuffer);
-
-  /* killough 12/98: support -recordfrom and -loadgame -playdemo */
-  if (!_g->command_loadgame)
-    _g->singledemo = false;  /* Clear singledemo flag if loading from menu */
-  else
-    if (_g->singledemo) {
-      _g->gameaction = ga_loadgame; /* Mark that we're loading a game before demo */
-      G_DoPlayDemo();           /* This will detect it and won't reinit level */
-    }
+    G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
 }
 
 //
@@ -1077,140 +1011,32 @@ void G_DoLoadGame(void)
 void G_SaveGame(int slot, const char *description)
 {
   strcpy(_g->savedescription, description);
-  if (_g->demoplayback)
-  {
-    /* cph - We're doing a user-initiated save game while a demo is
-     * running so, go outside normal mechanisms
-     */
-    _g->savegameslot = slot;
-    G_DoSaveGame(true);
-  }
-  // CPhipps - store info in special_event
-  _g->special_event = BT_SPECIAL | (BTS_SAVEGAME & BT_SPECIALMASK) | ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
 
+  _g->savegameslot = slot;
+  G_DoSaveGame(true);
 }
 
-// Check for overrun and realloc if necessary -- Lee Killough 1/22/98
-void (CheckSaveGame)(size_t size, const char* file, int line)
+static void G_DoSaveGame(boolean menu)
 {
+    byte* savebuffer = Z_Malloc(512, PU_STATIC, NULL);
 
+    LoadSRAM(savebuffer);
+
+    gbasavedata_t* saveslots = (gbasavedata_t*)savebuffer;
+
+    gbasavedata_t* savedata = &saveslots[_g->savegameslot];
+
+    savedata->gameskill = _g->gameskill;
+    savedata->gameepisode = _g->gameepisode;
+    savedata->gamemap = _g->gamemap;
+    savedata->totalleveltimes = _g->totalleveltimes;
+
+    SaveSRAM(savebuffer);
+
+    Z_Free(savebuffer);
+
+    _g->player.message = GGSAVED;
 }
-
-/* killough 3/22/98: form savegame name in one location
- * (previously code was scattered around in multiple places)
- * cph - Avoid possible buffer overflow problems by passing
- * size to this function and using snprintf */
-
-void G_SaveGameName(char *name, size_t size, int slot, boolean demoplayback)
-{
-
-}
-
-static void G_DoSaveGame (boolean menu)
-{
-  char name[PATH_MAX+1];
-  char name2[VERSIONSIZE];
-  char *description;
-  int  length, i;
-
-  _g->gameaction = ga_nothing; // cph - cancel savegame at top of this function,
-    // in case later problems cause a premature exit
-
-  G_SaveGameName(name,sizeof(name),_g->savegameslot, _g->demoplayback && !menu);
-
-  description = _g->savedescription;
-
-  _g->save_p = _g->savebuffer = malloc(savegamesize);
-
-  CheckSaveGame(SAVESTRINGSIZE+VERSIONSIZE+sizeof(uint_64_t));
-  memcpy (_g->save_p, description, SAVESTRINGSIZE);
-  _g->save_p += SAVESTRINGSIZE;
-  memset (name2,0,sizeof(name2));
-
-  _g->save_p += VERSIONSIZE;
-
-  { /* killough 3/16/98, 12/98: store lump name checksum */
-    uint_64_t checksum = 0;
-    memcpy(_g->save_p, &checksum, sizeof checksum);
-    _g->save_p += sizeof checksum;
-  }
-
-  // killough 3/16/98: store pwad filenames in savegame
-  {
-    // CPhipps - changed for new wadfiles handling
-    *_g->save_p++ = 0;
-  }
-
-  CheckSaveGame(GAME_OPTION_SIZE+MIN_MAXPLAYERS+14);
-
-  *_g->save_p++ = -1;
-
-  *_g->save_p++ = _g->gameskill;
-  *_g->save_p++ = _g->gameepisode;
-  *_g->save_p++ = _g->gamemap;
-
-    *_g->save_p++ = _g->playeringame;
-
-  for (i = 0; i<MIN_MAXPLAYERS; i++)         // killough 2/28/98
-    *_g->save_p++ = 0;
-
-  *_g->save_p++ = _g->idmusnum;               // jff 3/17/98 save idmus state
-
-  _g->save_p = G_WriteOptions(_g->save_p);    // killough 3/1/98: save game options
-
-  /* cph - FIXME - endianness? */
-  /* killough 11/98: save entire word */
-  memcpy(_g->save_p, &_g->leveltime, sizeof _g->leveltime);
-  _g->save_p += sizeof _g->leveltime;
-
-    memcpy(_g->save_p, &_g->totalleveltimes, sizeof _g->totalleveltimes);
-    _g->save_p += sizeof _g->totalleveltimes;
-
-  // killough 11/98: save revenant tracer state
-  *_g->save_p++ = (_g->gametic-_g->basetic) & 255;
-
-  // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
-  Z_CheckHeap();
-  P_ArchivePlayers();
-  Z_CheckHeap();
-
-  // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
-  // indices can be used by P_ArchiveWorld when the sectors are saved.
-  // This is so we can save the index of the mobj_t of the thinker that
-  // caused a sound, referenced by sector_t->soundtarget.
-  P_ThinkerToIndex();
-
-  P_ArchiveWorld();
-  Z_CheckHeap();
-  P_ArchiveThinkers();
-
-  // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply
-  // for symmetry with the P_ThinkerToIndex call above.
-
-  P_IndexToThinker();
-
-  Z_CheckHeap();
-  P_ArchiveSpecials();
-  P_ArchiveRNG();    // killough 1/18/98: save RNG information
-  Z_CheckHeap();
-  P_ArchiveMap();    // killough 1/22/98: save automap information
-
-  *_g->save_p++ = 0xe6;   // consistancy marker
-
-  length = _g->save_p - _g->savebuffer;
-
-  Z_CheckHeap();
-  doom_printf( "%s", M_WriteFile(name, _g->savebuffer, length)
-         ? GGSAVED /* Ty - externalised */
-         : "Game save failed!"); // CPhipps - not externalised
-
-  free(_g->savebuffer);  // killough
-  _g->savebuffer = _g->save_p = NULL;
-
-  _g->savedescription[0] = 0;
-}
-
-
 
 void G_DeferedInitNew(skill_t skill, int episode, int map)
 {

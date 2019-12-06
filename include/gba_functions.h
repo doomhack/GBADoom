@@ -131,6 +131,20 @@ inline static void* ByteFind(byte* mem, byte val, unsigned int count)
     return NULL;
 }
 
+inline static void SaveSRAM(const byte* eeprom)
+{
+#ifdef __arm__
+    ByteCopy(0xE000000, eeprom, 512);
+#endif
+}
+
+inline static void LoadSRAM(byte* eeprom)
+{
+#ifdef __arm__
+    ByteCopy(eeprom, 0xE000000, 512);
+#endif
+}
+
 //Cheap mul by 120. Not sure if faster.
 #define ScreenYToOffset(x) ((x << 7) - (x << 3))
 

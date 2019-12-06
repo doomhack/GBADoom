@@ -59,7 +59,6 @@ void P_UnArchiveRNG(void);
 void P_ArchiveMap(void);
 void P_UnArchiveMap(void);
 
-void CheckSaveGame(size_t,const char*, int);              /* killough */
-#define CheckSaveGame(a) (CheckSaveGame)(a, __FILE__, __LINE__)
+
 
 #endif

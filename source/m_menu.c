@@ -424,18 +424,6 @@ void M_DrawSaveLoadBorder(int x,int y)
     }
 
     V_DrawPatchNoScale(x, y+7, rpatch);
-
-    /*
-    V_DrawNamePatch(x-8, y+7, 0, "M_LSLEFT", CR_DEFAULT, VPT_STRETCH);
-
-    for (i = 0 ; i < 24 ; i++)
-    {
-        V_DrawNamePatch(x, y+7, 0, "M_LSCNTR", CR_DEFAULT, VPT_STRETCH);
-        x += 8;
-    }
-
-    V_DrawNamePatch(x, y+7, 0, "M_LSRGHT", CR_DEFAULT, VPT_STRETCH);
-    */
 }
 
 //
