@@ -335,7 +335,7 @@ void M_NewGame(int choice)
 // CPhipps - static
 static void M_VerifyNightmare(int ch)
 {
-  if (ch != 'y')
+  if (ch != key_fire)
     return;
 
   G_DeferedInitNew(nightmare,_g->epi+1,1);
@@ -855,7 +855,7 @@ boolean M_Responder (event_t* ev)
     if (_g->messageToPrint)
     {
         if (_g->messageNeedsInput == true &&
-                !(ch == ' ' || ch == 'n' || ch == 'y' || ch == key_escape)) // phares
+                !(ch == ' ' || ch == 'n' || ch == 'y' || ch == key_escape || ch == key_fire)) // phares
             return false;
 
         _g->menuactive = _g->messageLastMenuActive;
@@ -1006,56 +1006,56 @@ void M_StartControlPanel (void)
 
 void M_Drawer (void)
 {
-  // Horiz. & Vertically center string and print it.
-  // killough 9/29/98: simplified code, removed 40-character width limit
-  if (_g->messageToPrint)
+    // Horiz. & Vertically center string and print it.
+    // killough 9/29/98: simplified code, removed 40-character width limit
+    if (_g->messageToPrint)
     {
-      /* cph - strdup string to writable memory */
-      char *ms = strdup(_g->messageString);
-      char *p = ms;
+        /* cph - strdup string to writable memory */
+        char *ms = strdup(_g->messageString);
+        char *p = ms;
 
-      int y = 100 - M_StringHeight(_g->messageString)/2;
-      while (*p)
-      {
-        char *string = p, c;
-        while ((c = *p) && *p != '\n')
-          p++;
-        *p = 0;
-        M_WriteText(160 - M_StringWidth(string)/2, y, string);
-        y += _g->hu_font[0]->height;
-        if ((*p = c))
-          p++;
-      }
-      free(ms);
+        int y = 80 - M_StringHeight(_g->messageString)/2;
+        while (*p)
+        {
+            char *string = p, c;
+            while ((c = *p) && *p != '\n')
+                p++;
+            *p = 0;
+            M_WriteText(120 - M_StringWidth(string)/2, y, string);
+            y += _g->hu_font[0]->height;
+            if ((*p = c))
+                p++;
+        }
+        free(ms);
     }
-  else
-    if (_g->menuactive)
-      {
-  int x,y,max,i;
+    else
+        if (_g->menuactive)
+        {
+            int x,y,max,i;
 
-  if (_g->currentMenu->routine)
-    _g->currentMenu->routine();     // call Draw routine
+            if (_g->currentMenu->routine)
+                _g->currentMenu->routine();     // call Draw routine
 
-  // DRAW MENU
+            // DRAW MENU
 
-  x = _g->currentMenu->x;
-  y = _g->currentMenu->y;
-  max = _g->currentMenu->numitems;
+            x = _g->currentMenu->x;
+            y = _g->currentMenu->y;
+            max = _g->currentMenu->numitems;
 
-  for (i=0;i<max;i++)
-    {
-      if (_g->currentMenu->menuitems[i].name[0])
-        V_DrawNamePatch(x,y,0,_g->currentMenu->menuitems[i].name,
-            CR_DEFAULT, VPT_STRETCH);
-      y += LINEHEIGHT;
-    }
+            for (i=0;i<max;i++)
+            {
+                if (_g->currentMenu->menuitems[i].name[0])
+                    V_DrawNamePatch(x,y,0,_g->currentMenu->menuitems[i].name,
+                                    CR_DEFAULT, VPT_STRETCH);
+                y += LINEHEIGHT;
+            }
 
-  // DRAW SKULL
+            // DRAW SKULL
 
-  // CPhipps - patch drawing updated
-  V_DrawNamePatch(x + SKULLXOFF, _g->currentMenu->y - 5 + _g->itemOn*LINEHEIGHT,0,
-      skullName[_g->whichSkull], CR_DEFAULT, VPT_STRETCH);
-      }
+            // CPhipps - patch drawing updated
+            V_DrawNamePatch(x + SKULLXOFF, _g->currentMenu->y - 5 + _g->itemOn*LINEHEIGHT,0,
+                            skullName[_g->whichSkull], CR_DEFAULT, VPT_STRETCH);
+        }
 }
 
 //
@@ -1188,40 +1188,37 @@ int M_StringHeight(const char* string)
 //
 void M_WriteText (int x,int y,const char* string)
 {
-  int   w;
-  const char* ch;
-  int   c;
-  int   cx;
-  int   cy;
+    int   w;
+    const char* ch;
+    int   c;
+    int   cx;
+    int   cy;
 
-  ch = string;
-  cx = x;
-  cy = y;
+    ch = string;
+    cx = x;
+    cy = y;
 
-  while(1) {
-    c = *ch++;
-    if (!c)
-      break;
-    if (c == '\n') {
-      cx = x;
-      cy += 12;
-      continue;
+    while(1) {
+        c = *ch++;
+        if (!c)
+            break;
+        if (c == '\n') {
+            cx = x;
+            cy += 12;
+            continue;
+        }
+
+        c = toupper(c) - HU_FONTSTART;
+        if (c < 0 || c>= HU_FONTSIZE)
+        {
+            cx += 4;
+            continue;
+        }
+
+        w = _g->hu_font[c]->width;
+        V_DrawPatchNoScale(cx, cy, _g->hu_font[c]);
+        cx+=w;
     }
-
-    c = toupper(c) - HU_FONTSTART;
-    if (c < 0 || c>= HU_FONTSIZE) {
-      cx += 4;
-      continue;
-    }
-
-    w = _g->hu_font[c]->width;
-    //if (cx+w > SCREENWIDTH*2)
-      //break;
-    // proff/nicolas 09/20/98 -- changed for hi-res
-    // CPhipps - patch drawing updated
-    V_DrawPatch(cx, cy, 0, _g->hu_font[c]);
-    cx+=w;
-  }
 }
 
 /////////////////////////////
