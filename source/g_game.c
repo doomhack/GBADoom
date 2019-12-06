@@ -147,6 +147,7 @@ static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, boolean fai
 
 typedef struct gba_save_data_t
 {
+    int save_present;
     skill_t gameskill;
     int gameepisode;
     int gamemap;
@@ -988,13 +989,19 @@ void G_LoadGame(int slot, boolean command)
 
 void G_DoLoadGame()
 {
-    byte* loadbuffer = Z_Malloc(512, PU_STATIC, NULL);
+    unsigned int savebuffersize = sizeof(gba_save_data_t) * 8;
 
-    LoadSRAM(loadbuffer);
+
+    byte* loadbuffer = Z_Malloc(savebuffersize, PU_STATIC, NULL);
+
+    LoadSRAM(loadbuffer, savebuffersize);
 
     gba_save_data_t* saveslots = (gba_save_data_t*)loadbuffer;
 
     gba_save_data_t* savedata = &saveslots[_g->savegameslot];
+
+    if(!savedata->save_present)
+        return;
 
     _g->gameskill = savedata->gameskill;
     _g->gameepisode = savedata->gameepisode;
@@ -1026,13 +1033,17 @@ void G_SaveGame(int slot, const char *description)
 
 static void G_DoSaveGame(boolean menu)
 {
-    byte* savebuffer = Z_Malloc(512, PU_STATIC, NULL);
+    unsigned int savebuffersize = sizeof(gba_save_data_t) * 8;
 
-    LoadSRAM(savebuffer);
+    byte* savebuffer = Z_Malloc(savebuffersize, PU_STATIC, NULL);
+
+    LoadSRAM(savebuffer, savebuffersize);
 
     gba_save_data_t* saveslots = (gba_save_data_t*)savebuffer;
 
     gba_save_data_t* savedata = &saveslots[_g->savegameslot];
+
+    savedata->save_present = 1;
 
     savedata->gameskill = _g->gameskill;
     savedata->gameepisode = _g->gameepisode;
@@ -1043,7 +1054,7 @@ static void G_DoSaveGame(boolean menu)
     memcpy(savedata->ammo, _g->player.ammo, sizeof(savedata->ammo));
     memcpy(savedata->maxammo, _g->player.maxammo, sizeof(savedata->maxammo));
 
-    SaveSRAM(savebuffer);
+    SaveSRAM(savebuffer, savebuffersize);
 
     Z_Free(savebuffer);
 

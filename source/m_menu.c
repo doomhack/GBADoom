@@ -72,12 +72,16 @@ static void (*messageRoutine)(int response);
 static const char skullName[2][9] = {"M_SKULL1","M_SKULL2"};
 
 
-static const char savegamestrings[4][SAVESTRINGSIZE] =
+static const char savegamestrings[8][SAVESTRINGSIZE] =
 {
-    "SLOT1",
-    "SLOT2",
-    "SLOT3",
-    "SLOT4",
+    "SLOT 1",
+    "SLOT 2",
+    "SLOT 3",
+    "SLOT 4",
+    "SLOT 5",
+    "SLOT 6",
+    "SLOT 7",
+    "SLOT 8",
 };
 
 
@@ -357,21 +361,29 @@ void M_ChooseSkill(int choice)
 
 enum
 {
-  load1,
-  load2,
-  load3,
-  load4,
-  load_end
+    load1,
+    load2,
+    load3,
+    load4,
+    load5,
+    load6,
+    load7,
+    load8,
+    load_end
 };
 
 // The definitions of the Load Game screen
 
 static const menuitem_t LoadMenue[]=
 {
-  {1,"", M_LoadSelect},
-  {1,"", M_LoadSelect},
-  {1,"", M_LoadSelect},
-  {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
+    {1,"", M_LoadSelect},
 };
 
 static const menu_t LoadDef =

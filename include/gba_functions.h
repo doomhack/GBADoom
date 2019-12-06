@@ -131,17 +131,17 @@ inline static void* ByteFind(byte* mem, byte val, unsigned int count)
     return NULL;
 }
 
-inline static void SaveSRAM(const byte* eeprom)
+inline static void SaveSRAM(const byte* eeprom, unsigned int size)
 {
 #ifdef __arm__
-    ByteCopy(0xE000000, eeprom, 512);
+    ByteCopy(0xE000000, eeprom, size);
 #endif
 }
 
-inline static void LoadSRAM(byte* eeprom)
+inline static void LoadSRAM(byte* eeprom, unsigned int size)
 {
 #ifdef __arm__
-    ByteCopy(eeprom, 0xE000000, 512);
+    ByteCopy(eeprom, 0xE000000, size);
 #endif
 }
 
