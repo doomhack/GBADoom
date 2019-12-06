@@ -72,18 +72,12 @@ static void (*messageRoutine)(int response);
 static const char skullName[2][9] = {"M_SKULL1","M_SKULL2"};
 
 
-static const char savegamestrings[10][SAVESTRINGSIZE] =
+static const char savegamestrings[4][SAVESTRINGSIZE] =
 {
     "SLOT1",
     "SLOT2",
     "SLOT3",
     "SLOT4",
-    "SLOT5",
-    "SLOT6",
-    "SLOT7",
-    "SLOT8",
-    "SLOT9",
-    "SLOT10"
 };
 
 
@@ -367,10 +361,6 @@ enum
   load2,
   load3,
   load4,
-  load5,
-  load6,
-  load7, //jff 3/15/98 extend number of slots
-  load8,
   load_end
 };
 
@@ -382,10 +372,6 @@ static const menuitem_t LoadMenue[]=
   {1,"", M_LoadSelect},
   {1,"", M_LoadSelect},
   {1,"", M_LoadSelect},
-  {1,"", M_LoadSelect},
-  {1,"", M_LoadSelect},
-  {1,"", M_LoadSelect}, //jff 3/15/98 extend number of slots
-  {1,"", M_LoadSelect},
 };
 
 static const menu_t LoadDef =
@@ -393,7 +379,7 @@ static const menu_t LoadDef =
   load_end,
   LoadMenue,
   M_DrawLoad,
-  80,34, //jff 3/15/98 move menu up
+  64,34, //jff 3/15/98 move menu up
 };
 
 #define LOADGRAPHIC_Y 8
@@ -404,15 +390,17 @@ static const menu_t LoadDef =
 
 void M_DrawLoad(void)
 {
-  int i;
+    int i;
 
-  //jff 3/15/98 use symbolic load position
-  // CPhipps - patch drawing updated
-  V_DrawNamePatch(72 ,LOADGRAPHIC_Y, 0, "M_LOADG", CR_DEFAULT, VPT_STRETCH);
-  for (i = 0 ; i < load_end ; i++) {
-    M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
-  }
+    //jff 3/15/98 use symbolic load position
+    // CPhipps - patch drawing updated
+    V_DrawNamePatch(72 ,LOADGRAPHIC_Y, 0, "M_LOADG", CR_DEFAULT, VPT_STRETCH);
+
+    for (i = 0 ; i < load_end ; i++)
+    {
+        M_DrawSaveLoadBorder(LoadDef.x,27+13*i);
+        M_WriteText(LoadDef.x,27+13*i,savegamestrings[i]);
+    }
 }
 
 //
@@ -421,17 +409,33 @@ void M_DrawLoad(void)
 
 void M_DrawSaveLoadBorder(int x,int y)
 {
-  int i;
+    int i;
 
-  V_DrawNamePatch(x-8, y+7, 0, "M_LSLEFT", CR_DEFAULT, VPT_STRETCH);
+    const patch_t* lpatch = W_CacheLumpName("M_LSLEFT");
+    const patch_t* mpatch = W_CacheLumpName("M_LSCNTR");
+    const patch_t* rpatch = W_CacheLumpName("M_LSRGHT");
 
-  for (i = 0 ; i < 24 ; i++)
+    V_DrawPatchNoScale(x-8, y+7, lpatch);
+
+    for (i = 0 ; i < 12 ; i++)
     {
-      V_DrawNamePatch(x, y+7, 0, "M_LSCNTR", CR_DEFAULT, VPT_STRETCH);
-      x += 8;
+        V_DrawPatchNoScale(x, y+7, mpatch);
+        x += 8;
     }
 
-  V_DrawNamePatch(x, y+7, 0, "M_LSRGHT", CR_DEFAULT, VPT_STRETCH);
+    V_DrawPatchNoScale(x, y+7, rpatch);
+
+    /*
+    V_DrawNamePatch(x-8, y+7, 0, "M_LSLEFT", CR_DEFAULT, VPT_STRETCH);
+
+    for (i = 0 ; i < 24 ; i++)
+    {
+        V_DrawNamePatch(x, y+7, 0, "M_LSCNTR", CR_DEFAULT, VPT_STRETCH);
+        x += 8;
+    }
+
+    V_DrawNamePatch(x, y+7, 0, "M_LSRGHT", CR_DEFAULT, VPT_STRETCH);
+    */
 }
 
 //
@@ -524,16 +528,11 @@ void M_DrawSave(void)
     //jff 3/15/98 use symbolic load position
     // CPhipps - patch drawing updated
     V_DrawNamePatch(72, LOADGRAPHIC_Y, 0, "M_SAVEG", CR_DEFAULT, VPT_STRETCH);
+
     for (i = 0 ; i < load_end ; i++)
     {
-        M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-        M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
-    }
-
-    if (_g->saveStringEnter)
-    {
-        i = M_StringWidth(savegamestrings[_g->saveSlot]);
-        M_WriteText(LoadDef.x + i,LoadDef.y+LINEHEIGHT*_g->saveSlot,"_");
+        M_DrawSaveLoadBorder(LoadDef.x,27+13*i);
+        M_WriteText(LoadDef.x,27+13*i,savegamestrings[i]);
     }
 }
 
@@ -551,12 +550,9 @@ static void M_DoSave(int slot)
 //
 void M_SaveSelect(int choice)
 {
-    // we are going to be intercepting all chars
-    _g->saveStringEnter = 1;
-
     _g->saveSlot = choice;
 
-    _g->saveCharIndex = strlen(savegamestrings[choice]);
+    M_DoSave(_g->saveSlot);
 }
 
 //
@@ -832,23 +828,6 @@ boolean M_Responder (event_t* ev)
         return true;
     }
 
-    // Save Game string input
-
-    if (_g->saveStringEnter)
-    {
-        if (ch == key_menu_escape)                    // phares 3/7/98
-        {
-            _g->saveStringEnter = 0;
-        }
-        else if (ch == key_menu_enter)                     // phares 3/7/98
-        {
-            _g->saveStringEnter = 0;
-            if (savegamestrings[_g->saveSlot][0])
-                M_DoSave(_g->saveSlot);
-        }
-
-        return true;
-    }
 
     // Take care of any messages that need input
 

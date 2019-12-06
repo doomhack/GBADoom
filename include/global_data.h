@@ -277,9 +277,7 @@ const char* messageString; // ...and here is the message string!
 
 int messageLastMenuActive;
 
-int saveStringEnter;
 int saveSlot;        // which slot to save in
-int saveCharIndex;   // which char we're editing
 // old save description before edit
 
 const menu_t* currentMenu; // current menudef
