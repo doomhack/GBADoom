@@ -412,21 +412,18 @@
   "fields of Earth! Home at last.\n"
 
 #define E4TEXT \
-  "the spider mastermind must have sent forth\n"\
-  "its legions of hellspawn before your\n"\
-  "final confrontation with that terrible\n"\
-  "beast from hell.  but you stepped forward\n"\
-  "and brought forth eternal damnation and\n"\
-  "suffering upon the horde as a true hero\n"\
-  "would in the face of something so evil.\n"\
-  "\n"\
-  "besides, someone was gonna pay for what\n"\
-  "happened to daisy, your pet rabbit.\n"\
-  "\n"\
-  "but now, you see spread before you more\n"\
-  "potential pain and gibbitude as a nation\n"\
-  "of demons run amok among our cities.\n"\
-  "\n"\
+  "the spider mastermind must have\n"\
+  "sent forth its legions of\n"\
+  "hellspawn before your final\n"\
+  "confrontation with that\n"\
+  "terrible beast from hell.\n"\
+  "but you stepped forward and\n"\
+  "brought eternal damnation\n"\
+  "and suffering upon the horde as\n"\
+  "a true hero would in the face\n"\
+  "of evil.\n"\
+  "besides, someone is gonna pay for\n"\
+  "what happened to daisy.\n"\
   "next stop, hell on earth!"
 
 
