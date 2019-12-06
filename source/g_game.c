@@ -77,13 +77,8 @@
 
 #include "gba_functions.h"
 
-#define SAVEGAMESIZE  0x20000
-
-static const size_t savegamesize = SAVEGAMESIZE; // killough
-
 const int       consoleplayer = 0; // player taking events and displaying
 const int       displayplayer = 0; // view being displayed
-
 
 //
 // controls (have defaults)
@@ -536,9 +531,7 @@ boolean G_Responder (event_t* ev)
           switch (_g->gameaction)
           {
           case ga_loadlevel:
-              // force players to be initialized on level reload
-              for (i=0 ; i<MAXPLAYERS ; i++)
-                  _g->player.playerstate = PST_REBORN;
+              _g->player.playerstate = PST_REBORN;
               G_DoLoadLevel ();
               break;
           case ga_newgame:
@@ -693,18 +686,6 @@ static void G_PlayerFinishLevel(int player)
   p->fixedcolormap = 0;   // cancel ir gogles
   p->damagecount = 0;     // no palette changes
   p->bonuscount = 0;
-}
-
-// CPhipps - G_SetPlayerColour
-// Player colours stuff
-//
-// G_SetPlayerColour
-
-#include "r_draw.h"
-
-void G_ChangedPlayerColour(int pn, int cl)
-{
-
 }
 
 //
@@ -1092,14 +1073,6 @@ void G_DoNewGame (void)
   ST_Start();
 }
 
-// killough 4/10/98: New function to fix bug which caused Doom
-// lockups when idclev was used in conjunction with -fast.
-
-void G_SetFastParms(int fast_pending)
-{
-
-}
-
 //
 // G_InitNew
 // Can be called by the startup code or the menu task,
@@ -1139,8 +1112,6 @@ void G_InitNew(skill_t skill, int episode, int map)
     map = 1;
   if (map > 9 && _g->gamemode != commercial)
     map = 9;
-
-  G_SetFastParms(skill == sk_nightmare);  // killough 4/10/98
 
   M_ClearRandom();
 
@@ -1191,100 +1162,6 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd)
     }
 }
 
-/* Demo limits removed -- killough
- * cph - record straight to file
- */
-void G_WriteDemoTiccmd (ticcmd_t* cmd)
-{
-
-}
-
-//
-// G_RecordDemo
-//
-
-void G_RecordDemo (const char* name)
-{
-
-}
-
-// These functions are used to read and write game-specific options in demos
-// and savegames so that demo sync is preserved and savegame restoration is
-// complete. Not all options (for example "compatibility"), however, should
-// be loaded and saved here. It is extremely important to use the same
-// positions as before for the variables, so if one becomes obsolete, the
-// byte(s) should still be skipped over or padded with 0's.
-// Lee Killough 3/1/98
-
-byte *G_WriteOptions(byte *demo_p)
-{
-  byte *target = demo_p + GAME_OPTION_SIZE;
-
-  *demo_p++ = 1;  // part of monster AI
-
-  *demo_p++ = 1;  // ice & mud
-
-  *demo_p++ = 0;      // weapon recoil
-
-  *demo_p++ = 1;      // MT_PUSH Things
-
-  *demo_p++ = 0;
-
-  *demo_p++ = 1;  // whether player bobs or not
-
-  // killough 3/6/98: add parameters to savegame, move around some in demos
-  *demo_p++ = 0;
-  *demo_p++ = 0;
-  *demo_p++ = 0;
-
-  *demo_p++ = 0;        // killough 3/31/98
-
-  // killough 3/26/98: Added rngseed. 3/31/98: moved here
-  *demo_p++ = (byte)((0 >> 24) & 0xff);
-  *demo_p++ = (byte)((0 >> 16) & 0xff);
-  *demo_p++ = (byte)((0 >>  8) & 0xff);
-  *demo_p++ = (byte)( 0        & 0xff);
-
-  // Options new to v2.03 begin here
-
-  *demo_p++ = 1;   // killough 7/19/98
-
-  *demo_p++ = 0;
-
-
-  *demo_p++ = 0;
-  *demo_p++ = 0;
-
-  *demo_p++ = (distfriend >> 8) & 0xff;  // killough 8/8/98
-  *demo_p++ =  distfriend       & 0xff;  // killough 8/8/98
-
-  *demo_p++ = 0;         // killough 9/8/98
-
-  *demo_p++ = 1;    // killough 9/9/98
-
-  *demo_p++ = 1;         // killough 10/98
-
-  *demo_p++ = 1;             // killough 9/9/98
-
-
-  *demo_p++ = 0;
-
-
-  *demo_p++ = 0;
-
-  *demo_p++ = 0; // cph 2002/07/20
-
-  //----------------
-  // Padding at end
-  //----------------
-  while (demo_p < target)
-    *demo_p++ = 0;
-
-  if (demo_p != target)
-    I_Error("G_WriteOptions: GAME_OPTION_SIZE is too small");
-
-  return target;
-}
 
 /* Same, but read instead of write
  * cph - const byte*'s
@@ -1294,65 +1171,7 @@ const byte *G_ReadOptions(const byte *demo_p)
 {
   const byte *target = demo_p + GAME_OPTION_SIZE;
 
-  demo_p++;
-
-  demo_p++;
-
-  demo_p++;
-
-  demo_p++;
-
-  demo_p++;
-
-  demo_p++;
-
-  // killough 3/6/98: add parameters to savegame, move from demo
-  demo_p++;
-  demo_p++;
-  demo_p++;
-
-  demo_p++;              // killough 3/31/98
-
-  // killough 3/26/98: Added rngseed to demos; 3/31/98: moved here
-
-  demo_p++;
-  demo_p++;
-  demo_p++;
-  demo_p++;
-
-
-
-      demo_p++;   // killough 7/19/98
-
-      demo_p++;
-
-      demo_p += 2;
-
-      demo_p++;      // killough 8/8/98
-      demo_p++;
-
-      demo_p++;     // killough 9/8/98
-
-      demo_p++; // killough 9/9/98
-
-      demo_p++;      // killough 10/98
-
-      demo_p++;          // killough 9/9/98
-
-
-      demo_p++;
-
-
-      demo_p++;
-
-      demo_p++; // cph 2002/07/20
-
   return target;
-}
-
-void G_BeginRecording (void)
-{
-
 }
 
 //
@@ -1590,25 +1409,3 @@ boolean G_CheckDemoStatus (void)
   return false;
 }
 
-// killough 1/22/98: this is a "Doom printf" for messages. I've gotten
-// tired of using players->message=... and so I've added this dprintf.
-//
-// killough 3/6/98: Made limit static to allow z_zone functions to call
-// this function, without calling realloc(), which seems to cause problems.
-
-#define MAX_MESSAGE_SIZE 1024
-
-// CPhipps - renamed to doom_printf to avoid name collision with glibc
-void doom_printf(const char *s, ...)
-{
-  char msg[MAX_MESSAGE_SIZE];
-  va_list v;
-  va_start(v,s);
-#ifdef HAVE_VSNPRINTF
-  vsnprintf(msg,sizeof(msg),s,v);        /* print message in buffer */
-#else
-  vsprintf(msg,s,v);
-#endif
-  va_end(v);
-  _g->player.message = msg;  // set new message
-}

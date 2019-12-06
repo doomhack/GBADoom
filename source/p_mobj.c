@@ -903,7 +903,6 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 
   if (i == NUMMOBJTYPES)
     {
-        //doom_printf("Unknown Thing type %i at (%i, %i)",mthing->type,mthing->x,mthing->y);
         return;
     }
 
