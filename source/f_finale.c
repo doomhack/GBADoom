@@ -287,10 +287,8 @@ static void F_TextWrite (void)
       }
 
       w = _g->hu_font[c]->width;
-      if (cx+w > SCREENWIDTH)
-            break;
       // CPhipps - patch drawing updated      
-      V_DrawPatch(cx, cy, 0, _g->hu_font[c]);
+      V_DrawPatchNoScale(cx, cy, _g->hu_font[c]);
       cx+=w;
     }
   }

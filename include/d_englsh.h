@@ -369,22 +369,18 @@
 /* f_finale.c */
 
 #define E1TEXT \
-  "Once you beat the big badasses and\n"\
-  "clean out the moon base you're supposed\n"\
-  "to win, aren't you? Aren't you? Where's\n"\
-  "your fat reward and ticket home? What\n"\
-  "the hell is this? It's not supposed to\n"\
-  "end this way!\n"\
+  "Once you beat the big badasses\n"\
+  "and clean out the moon base\n"\
+  "you're supposed to win?\n"\
+  "Where's your ticket home?\n"\
+  "What the hell is this? It's not\n"\
+  "supposed to end this way!\n"\
   "\n" \
-  "It stinks like rotten meat, but looks\n"\
-  "like the lost Deimos base.  Looks like\n"\
-  "you're stuck on The Shores of Hell.\n"\
-  "The only way out is through.\n"\
-  "\n"\
-  "To continue the DOOM experience, play\n"\
-  "The Shores of Hell and its amazing\n"\
-  "sequel, Inferno!\n"
-
+  "It stinks like rotten meat, but\n"\
+  "looks like the lost Deimos base.\n"\
+  "You're stuck on The Shores of\n"\
+  "Hell.\n"\
+  "The only way out is through."
 
 #define E2TEXT \
   "You've done it! The hideous cyber-\n"\

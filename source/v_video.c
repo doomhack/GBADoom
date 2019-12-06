@@ -47,46 +47,6 @@
 #include "global_data.h"
 #include "gba_functions.h"
 
-//
-// V_CopyRect
-//
-// Copies a source rectangle in a screen buffer to a destination
-// rectangle in another screen buffer. Source origin in srcx,srcy,
-// destination origin in destx,desty, common size in width and height.
-// Source buffer specfified by srcscrn, destination buffer by destscrn.
-//
-// Marks the destination rectangle on the screen dirty.
-//
-// No return.
-//
-static void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
-                int height, int destx, int desty, int destscrn,
-                enum patch_translation_e flags)
-{
-  unsigned short *src;
-  unsigned short *dest;
-
-  if (flags & VPT_STRETCH)
-  {
-    srcx=srcx*SCREENWIDTH/320;
-    srcy=srcy*SCREENHEIGHT/200;
-    width=width*SCREENWIDTH/320;
-    height=height*SCREENHEIGHT/200;
-    destx=destx*SCREENWIDTH/320;
-    desty=desty*SCREENHEIGHT/200;
-  }
-
-  src = _g->screens[srcscrn].data+SCREENPITCH*srcy+srcx;
-  dest = _g->screens[destscrn].data+SCREENPITCH*desty+destx;
-
-  for ( ; height>0 ; height--)
-    {
-      memcpy (dest, src, width*2);
-      src += SCREENPITCH;
-      dest += SCREENPITCH;
-    }
-}
-
 /*
  * V_DrawBackground tiles a 64x64 patch over the entire screen, providing the
  * background for the Help and Setup screens, and plot text betwen levels.
@@ -97,31 +57,28 @@ void V_DrawBackground(const char* flatname, int scrn)
 {
     /* erase the entire screen to a tiled background */
     const byte *src;
-    int         x,y;
-    int         width,height;
     int         lump;
 
-    unsigned short *dest = _g->screens[scrn].data;
+    unsigned short *dest = _g->screens[0].data;
 
     // killough 4/17/98:
     src = W_CacheLumpNum(lump = _g->firstflat + R_FlatNumForName(flatname));
 
-    /* V_DrawBlock(0, 0, scrn, 64, 64, src, 0); */
-    width = height = 64;
-
-
-
-    while (height--)
+    for(unsigned int y = 0; y < SCREENHEIGHT; y++)
     {
-        memcpy (dest, src, width * 2);
-        src += width;
-        dest += SCREENPITCH;
-    }
+        for(unsigned int x = 0; x < 240; x+=64)
+        {
+            unsigned short* d = &dest[ ScreenYToOffset(y) + (x >> 1)];
+            const byte* s = &src[((y&63) * 64) + (x&63)];
 
-    for (y=0 ; y<SCREENHEIGHT ; y+=64)
-        for (x=y ? 0 : 64; x<SCREENWIDTH ; x+=64)
-            V_CopyRect(0, 0, scrn, ((SCREENWIDTH-x) < 64) ? (SCREENWIDTH-x) : 64,
-                       ((SCREENHEIGHT-y) < 64) ? (SCREENHEIGHT-y) : 64, x, y, scrn, VPT_NONE);
+            unsigned int len = 64;
+
+            if( (240-x) < 64)
+                len = 240-x;
+
+            BlockCopy(d, s, len);
+        }
+    }
 }
 
 
