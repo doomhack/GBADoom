@@ -151,7 +151,11 @@ typedef struct gba_save_data_t
     int gameepisode;
     int gamemap;
     int totalleveltimes;
-} gbasavedata_t;
+
+    int weaponowned[NUMWEAPONS];
+    int ammo[NUMAMMO];
+    int maxammo[NUMAMMO];
+} gba_save_data_t;
 
 //
 // G_BuildTiccmd
@@ -988,18 +992,22 @@ void G_DoLoadGame()
 
     LoadSRAM(loadbuffer);
 
-    gbasavedata_t* saveslots = (gbasavedata_t*)loadbuffer;
+    gba_save_data_t* saveslots = (gba_save_data_t*)loadbuffer;
 
-    gbasavedata_t* savedata = &saveslots[_g->savegameslot];
+    gba_save_data_t* savedata = &saveslots[_g->savegameslot];
 
     _g->gameskill = savedata->gameskill;
     _g->gameepisode = savedata->gameepisode;
     _g->gamemap = savedata->gamemap;
-    _g->totalleveltimes = savedata->totalleveltimes;
-
-    Z_Free(loadbuffer);
 
     G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
+
+    _g->totalleveltimes = savedata->totalleveltimes;
+    memcpy(_g->player.weaponowned, savedata->weaponowned, sizeof(savedata->weaponowned));
+    memcpy(_g->player.ammo, savedata->ammo, sizeof(savedata->ammo));
+    memcpy(_g->player.maxammo, savedata->maxammo, sizeof(savedata->maxammo));
+
+    Z_Free(loadbuffer);
 }
 
 //
@@ -1022,14 +1030,18 @@ static void G_DoSaveGame(boolean menu)
 
     LoadSRAM(savebuffer);
 
-    gbasavedata_t* saveslots = (gbasavedata_t*)savebuffer;
+    gba_save_data_t* saveslots = (gba_save_data_t*)savebuffer;
 
-    gbasavedata_t* savedata = &saveslots[_g->savegameslot];
+    gba_save_data_t* savedata = &saveslots[_g->savegameslot];
 
     savedata->gameskill = _g->gameskill;
     savedata->gameepisode = _g->gameepisode;
     savedata->gamemap = _g->gamemap;
     savedata->totalleveltimes = _g->totalleveltimes;
+
+    memcpy(savedata->weaponowned, _g->player.weaponowned, sizeof(savedata->weaponowned));
+    memcpy(savedata->ammo, _g->player.ammo, sizeof(savedata->ammo));
+    memcpy(savedata->maxammo, _g->player.maxammo, sizeof(savedata->maxammo));
 
     SaveSRAM(savebuffer);
 
