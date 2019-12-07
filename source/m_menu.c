@@ -348,7 +348,7 @@ void M_ChooseSkill(int choice)
       return;
     }
 
-  G_DeferedInitNew(choice,_g->epi+1,30);
+  G_DeferedInitNew(choice,_g->epi+1,31);
   M_ClearMenus ();
 }
 
