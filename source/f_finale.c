@@ -507,7 +507,7 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
   }
 
   // draw it
-  cx = 160-width/2;
+  cx = 120-width/2;
   ch = text;
   while (ch)
   {
@@ -523,7 +523,7 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
 
     w = _g->hu_font[c]->width;
     // CPhipps - patch drawing updated
-    V_DrawPatch(cx, 180, 0, _g->hu_font[c]);
+    V_DrawPatchNoScale(cx, 144, _g->hu_font[c]);
     cx+=w;
   }
 }
