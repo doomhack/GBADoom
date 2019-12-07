@@ -491,12 +491,6 @@ boolean G_Responder (event_t* ev)
         {
             case ev_keydown:
 
-                if(ev->data1 == key_fire)
-                {
-                    _g->gameaction = ga_victory;
-                    return true;
-                }
-
                 if (ev->data1 == key_pause)           // phares
                 {
                     _g->special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
