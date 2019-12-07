@@ -70,6 +70,7 @@
 #include "d_main.h"
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "am_map.h"
+#include "m_cheat.h"
 
 #include "doom_iwad.h"
 #include "global_data.h"
@@ -110,12 +111,14 @@ void D_PostEvent(event_t *ev)
 
   M_Responder(ev) ||
       (_g->gamestate == GS_LEVEL && (
+                     C_Responder(ev) ||
 				     HU_Responder(ev) ||
 				     ST_Responder(ev) ||
-				     AM_Responder(ev)
+                     AM_Responder(ev)
 				     )
 	  ) ||
 	G_Responder(ev);
+
 }
 
 //
