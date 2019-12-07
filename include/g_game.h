@@ -82,7 +82,6 @@ extern const int  key_menu_right;                                  // phares 3/7
 extern const int  key_menu_left;                                   //     |
 extern const int  key_menu_up;                                     //     V
 extern const int  key_menu_down;
-extern const int  key_menu_backspace;                              //     ^
 extern const int  key_menu_escape;                                 //     |
 extern const int  key_menu_enter;                                  // phares 3/7/98
 extern const int  key_strafeleft;
@@ -116,17 +115,6 @@ extern const int  key_forward;
 extern const int  key_leftturn;
 extern const int  key_rightturn;
 extern const int  key_backward;
-extern const int  key_weapontoggle;
-extern const int  key_weapon1;
-extern const int  key_weapon2;
-extern const int  key_weapon3;
-extern const int  key_weapon4;
-extern const int  key_weapon5;
-extern const int  key_weapon6;
-extern const int  key_weapon7;
-extern const int  key_weapon8;
-extern const int  key_weapon9;
-extern const int  destination_keys[MAXPLAYERS];
 extern const int  key_map_right;
 extern const int  key_map_left;
 extern const int  key_map_up;
@@ -141,9 +129,7 @@ extern const int  key_map_clear;                                          //    
 extern const int  key_map_grid;                                           // phares
 extern const int  key_map_rotate; // cph - map rotation
 extern const int  key_map_overlay;// cph - map overlay
-extern const int  key_screenshot;    // killough 2/22/98 -- add key for screenshot
 
-extern const int  bodyquesize;       // killough 2/8/98: adustable corpse limit
 
 // killough 5/2/98: moved from d_deh.c:
 // Par times (new item with BOOM) - from g_game.c

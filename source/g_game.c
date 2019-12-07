@@ -84,48 +84,34 @@ const int       displayplayer = 0; // view being displayed
 // controls (have defaults)
 //
 
-const int     key_right = KEYD_RIGHTARROW;
-const int     key_left = KEYD_LEFTARROW;
-const int     key_up = KEYD_UPARROW;
-const int     key_down = KEYD_DOWNARROW;
-const int     key_menu_right = KEYD_RIGHTARROW;                                      // phares 3/7/98
-const int     key_menu_left = KEYD_LEFTARROW;                                       //     |
-const int     key_menu_up = KEYD_UPARROW;                                         //     V
-const int     key_menu_down = KEYD_DOWNARROW;
-const int     key_menu_backspace = KEYD_BACKSPACE;                                  //     ^
-const int     key_menu_escape = KEYD_ESCAPE;                                     //     |
-const int     key_menu_enter = KEYD_RCTRL;                                      // phares 3/7/98
-const int     key_strafeleft = ',';
-const int     key_straferight = '.';
-const int     key_fire = KEYD_RCTRL;
-const int     key_use = KEYD_SPACEBAR;
-const int     key_strafe = KEYD_RALT;
-const int     key_speed = KEYD_RSHIFT;
-const int     key_escape = KEYD_ESCAPE;                           // phares 4/13/98
-const int     key_backspace = KEYD_BACKSPACE;
-const int     key_enter = KEYD_ENTER;
-const int     key_map_right = KEYD_RIGHTARROW;
-const int     key_map_left = KEYD_LEFTARROW;
-const int     key_map_up = KEYD_UPARROW;
-const int     key_map_down = KEYD_DOWNARROW;
-const int     key_map = KEYD_TAB;
+const int     key_right = KEYD_RIGHT;
+const int     key_left = KEYD_LEFT;
+const int     key_up = KEYD_UP;
+const int     key_down = KEYD_DOWN;
+const int     key_menu_right = KEYD_RIGHT;                                      // phares 3/7/98
+const int     key_menu_left = KEYD_LEFT;                                       //     |
+const int     key_menu_up = KEYD_UP;                                         //     V
+const int     key_menu_down = KEYD_DOWN;
+const int     key_menu_escape = KEYD_START;                                     //     |
+const int     key_menu_enter = KEYD_A;                                      // phares 3/7/98
+const int     key_strafeleft = KEYD_L;
+const int     key_straferight = KEYD_R;
+const int     key_fire = KEYD_A;
+const int     key_use = KEYD_B;
+const int     key_speed = KEYD_B;
+const int     key_escape = KEYD_START;                           // phares 4/13/98
+const int     key_enter = KEYD_A;
+const int     key_map_right = KEYD_RIGHT;
+const int     key_map_left = KEYD_LEFT;
+const int     key_map_up = KEYD_UP;
+const int     key_map_down = KEYD_DOWN;
+const int     key_map = KEYD_SELECT;
 const int     key_map_follow = 'f';
 const int     key_map_overlay = 'o'; // cph - map overlay
 const int     key_map_rotate = 'r';  // cph - map rotation
 const int     key_map_zoomin = '.';
 const int     key_map_zoomout = ',';
-const int     key_pause = KEYD_PAUSE;
-const int     destination_keys[MAXPLAYERS];
-const int     key_weapontoggle = '0';
-const int     key_weapon1 = '1';
-const int     key_weapon2 = '2';
-const int     key_weapon3 = '3';
-const int     key_weapon4 = '4';
-const int     key_weapon5 = '5';
-const int     key_weapon6 = '6';
-const int     key_weapon7 = '7';                                                //    ^
-const int     key_weapon8 = '8';                                                //    |
-const int     key_weapon9 = '9';                                                // phares
+                                          // phares
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -187,8 +173,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
     memset(cmd,0,sizeof*cmd);
 
-    strafe = _g->gamekeydown[key_strafe];
-
     speed = (_g->gamekeydown[key_use]);
 
     forward = side = 0;
@@ -207,20 +191,10 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
     // let movement keys cancel each other out
 
-    if (strafe)
-    {
-        if (_g->gamekeydown[key_right])
-            side += sidemove[speed];
-        if (_g->gamekeydown[key_left])
-            side -= sidemove[speed];
-    }
-    else
-    {
-        if (_g->gamekeydown[key_right])
-            cmd->angleturn -= angleturn[tspeed];
-        if (_g->gamekeydown[key_left])
-            cmd->angleturn += angleturn[tspeed];
-    }
+    if (_g->gamekeydown[key_right])
+        cmd->angleturn -= angleturn[tspeed];
+    if (_g->gamekeydown[key_left])
+        cmd->angleturn += angleturn[tspeed];
 
     if (_g->gamekeydown[key_up])
         forward += forwardmove[speed];
@@ -263,21 +237,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         newweapon = P_WeaponCycleDown(&_g->player);
         side += sidemove[speed]; //Hack cancel strafe.
     }
-    else if ((_g->player.attackdown && !P_CheckAmmo(&_g->player)) || _g->gamekeydown[key_weapontoggle])
+    else if ((_g->player.attackdown && !P_CheckAmmo(&_g->player)))
         newweapon = P_SwitchWeapon(&_g->player);           // phares
     else
     {                                 // phares 02/26/98: Added gamemode checks
-        newweapon =
-                _g->gamekeydown[key_weapon1] ? wp_fist :    // killough 5/2/98: reformatted
-                                               _g->gamekeydown[key_weapon2] ? wp_pistol :
-                                                                              _g->gamekeydown[key_weapon3] ? wp_shotgun :
-                                                                                                             _g->gamekeydown[key_weapon4] ? wp_chaingun :
-                                                                                                                                            _g->gamekeydown[key_weapon5] ? wp_missile :
-                                                                                                                                                                           _g->gamekeydown[key_weapon6] && _g->gamemode != shareware ? wp_plasma :
-                                                                                                                                                                                                                                       _g->gamekeydown[key_weapon7] && _g->gamemode != shareware ? wp_bfg :
-                                                                                                                                                                                                                                                                                                   _g->gamekeydown[key_weapon8] ? wp_chainsaw :
-                                                                                                                                                                                                                                                                                                                                  (_g->gamekeydown[key_weapon9] && _g->gamemode == commercial) ? wp_supershotgun :
-                                                                                                                                                                                                                                                                                                                                                                                                 wp_nochange;
+        newweapon = wp_nochange;
 
         // killough 3/22/98: For network and demo consistency with the
         // new weapons preferences, we must do the weapons switches here
@@ -459,15 +423,6 @@ boolean G_Responder (event_t* ev)
 
     if (_g->gameaction == ga_nothing && (_g->demoplayback || _g->gamestate == GS_DEMOSCREEN))
     {
-        // killough 9/29/98: allow user to pause demos during playback
-        if (ev->type == ev_keydown && ev->data1 == key_pause)
-        {
-            if (_g->paused ^= 2)
-                S_PauseSound();
-            else
-                S_ResumeSound();
-            return true;
-        }
 
         // killough 10/98:
         // Don't pop up menu, if paused in middle
@@ -490,12 +445,6 @@ boolean G_Responder (event_t* ev)
         switch (ev->type)
         {
             case ev_keydown:
-
-                if (ev->data1 == key_pause)           // phares
-                {
-                    _g->special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
-                    return true;
-                }
 
                 if (ev->data1 <NUMKEYS)
                     _g->gamekeydown[ev->data1] = true;

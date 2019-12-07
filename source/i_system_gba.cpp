@@ -110,61 +110,61 @@ void I_PollWServEvents_e32()
 
         if(key_down & KEY_SELECT)
         {
-            ev.data1 = KEYD_TAB;
+            ev.data1 = KEYD_SELECT;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_UP)
         {
-            ev.data1 = KEYD_UPARROW;
+            ev.data1 = KEYD_UP;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_DOWN)
         {
-            ev.data1 = KEYD_DOWNARROW;
+            ev.data1 = KEYD_DOWN;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_LEFT)
         {
-            ev.data1 = KEYD_LEFTARROW;
+            ev.data1 = KEYD_LEFT;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_RIGHT)
         {
-            ev.data1 = KEYD_RIGHTARROW;
+            ev.data1 = KEYD_RIGHT;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_START)
         {
-            ev.data1 = KEYD_ESCAPE;
+            ev.data1 = KEYD_START;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_A)
         {
-            ev.data1 = KEYD_RCTRL;
+            ev.data1 = KEYD_A;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_B)
         {
-            ev.data1 = KEYD_SPACEBAR;
+            ev.data1 = KEYD_B;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_L)
         {
-            ev.data1 = ',';
+            ev.data1 = KEYD_L;
             D_PostEvent(&ev);
         }
 
         if(key_down & KEY_R)
         {
-            ev.data1 = '.';
+            ev.data1 = KEYD_R;
             D_PostEvent(&ev);
         }
     }
@@ -177,61 +177,61 @@ void I_PollWServEvents_e32()
 
         if(key_up & KEY_SELECT)
         {
-            ev.data1 = KEYD_TAB;
+            ev.data1 = KEYD_SELECT;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_UP)
         {
-            ev.data1 = KEYD_UPARROW;
+            ev.data1 = KEYD_UP;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_DOWN)
         {
-            ev.data1 = KEYD_DOWNARROW;
+            ev.data1 = KEYD_DOWN;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_LEFT)
         {
-            ev.data1 = KEYD_LEFTARROW;
+            ev.data1 = KEYD_LEFT;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_RIGHT)
         {
-            ev.data1 = KEYD_RIGHTARROW;
+            ev.data1 = KEYD_RIGHT;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_START)
         {
-            ev.data1 = KEYD_ESCAPE;
+            ev.data1 = KEYD_START;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_A)
         {
-            ev.data1 = KEYD_RCTRL;
+            ev.data1 = KEYD_A;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_B)
         {
-            ev.data1 = KEYD_SPACEBAR;
+            ev.data1 = KEYD_B;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_L)
         {
-            ev.data1 = ',';
+            ev.data1 = KEYD_L;
             D_PostEvent(&ev);
         }
 
         if(key_up & KEY_R)
         {
-            ev.data1 = '.';
+            ev.data1 = KEYD_R;
             D_PostEvent(&ev);
         }
     }
