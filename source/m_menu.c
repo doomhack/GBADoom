@@ -723,7 +723,7 @@ void M_MusicVol(int choice)
 
 static void M_EndGameResponse(int ch)
 {
-  if (ch != 'y')
+  if (ch != key_fire)
     return;
 
   // killough 5/26/98: make endgame quit if recording or playing back demo
