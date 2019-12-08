@@ -366,6 +366,9 @@
 #define STSTR_COMPON    "Compatibility Mode On"            /* phares */
 #define STSTR_COMPOFF   "Compatibility Mode Off"           /* phares */
 
+#define STSTR_ROCKETON    "Enemy Rockets On"
+#define STSTR_ROCKETOFF   "Enemy Rockets Off"
+
 /* f_finale.c */
 
 #define E1TEXT \

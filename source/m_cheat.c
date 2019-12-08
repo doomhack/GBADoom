@@ -9,6 +9,15 @@
 static void cheat_god(void);
 static void cheat_choppers(void);
 static void cheat_idkfa(void);
+static void cheat_ammo(void);
+static void cheat_noclip(void);
+static void cheat_invincibility(void);
+static void cheat_beserk(void);
+static void cheat_invisibility(void);
+static void cheat_map(void);
+static void cheat_goggles(void);
+static void cheat_exit(void);
+static void cheat_rockets(void);
 
 
 
@@ -29,17 +38,17 @@ static const c_cheat cheat_def[] =
     {"Chainsaw",        CHEAT_SEQ(KEYD_L,   KEYD_UP,    KEYD_UP,    KEYD_LEFT,  KEYD_L,     KEYD_SELECT,    KEYD_SELECT,    KEYD_UP),       cheat_choppers},
     {"God mode",        CHEAT_SEQ(KEYD_UP,  KEYD_UP,    KEYD_DOWN,  KEYD_DOWN,  KEYD_LEFT,  KEYD_LEFT,      KEYD_RIGHT,     KEYD_RIGHT),    cheat_god},
     {"Ammo & Keys",     CHEAT_SEQ(KEYD_L,   KEYD_LEFT,  KEYD_R,     KEYD_RIGHT, KEYD_SELECT,KEYD_UP,        KEYD_SELECT,    KEYD_UP),       cheat_idkfa},
-    {"Ammo",            CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
-    {"No Clipping",     CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
-    {"Invincibility",   CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
-    {"Berserk",         CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
-    {"Invisibility",    CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
-    {"Auto-map",        CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
-    {"Lite-Amp Goggles",CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
-    {"Exit Level",      CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
+    {"Ammo",            CHEAT_SEQ(KEYD_R,   KEYD_R,     KEYD_SELECT,KEYD_R,     KEYD_SELECT,KEYD_UP,        KEYD_UP,        KEYD_LEFT),     cheat_ammo},
+    {"No Clipping",     CHEAT_SEQ(KEYD_UP,  KEYD_DOWN,  KEYD_LEFT,  KEYD_RIGHT, KEYD_UP,    KEYD_DOWN,      KEYD_LEFT,      KEYD_RIGHT),    cheat_noclip},
+    {"Invincibility",   CHEAT_SEQ(KEYD_A,   KEYD_B,     KEYD_L,     KEYD_R,     KEYD_L,     KEYD_R,         KEYD_SELECT,    KEYD_SELECT),   cheat_invincibility},
+    {"Berserk",         CHEAT_SEQ(KEYD_B,   KEYD_B,     KEYD_R,     KEYD_UP,    KEYD_A,     KEYD_A,         KEYD_R,         KEYD_B),        cheat_beserk},
+    {"Invisibility",    CHEAT_SEQ(KEYD_A,   KEYD_A,     KEYD_SELECT,KEYD_B,     KEYD_A,     KEYD_SELECT,    KEYD_L,         KEYD_B),        cheat_invisibility},
+    {"Auto-map",        CHEAT_SEQ(KEYD_L,   KEYD_SELECT,KEYD_R,     KEYD_B,     KEYD_A,     KEYD_R,         KEYD_L,         KEYD_UP),       cheat_map},
+    {"Lite-Amp Goggles",CHEAT_SEQ(KEYD_DOWN,KEYD_LEFT,  KEYD_R,     KEYD_LEFT,  KEYD_R,     KEYD_L,         KEYD_L,         KEYD_SELECT),   cheat_goggles},
+    {"Exit Level",      CHEAT_SEQ(KEYD_LEFT,KEYD_R,     KEYD_LEFT,  KEYD_L,     KEYD_B,     KEYD_LEFT,      KEYD_RIGHT,     KEYD_A),        cheat_exit},
 
     //Because Goldeneye!
-    {"Enemy Rockets",   CHEAT_SEQ(1,2,3,4,5,6,7,8), NULL},
+    {"Enemy Rockets",   CHEAT_SEQ(KEYD_A,   KEYD_B,     KEYD_L,     KEYD_R,     KEYD_R,     KEYD_L,         KEYD_B,         KEYD_A),        cheat_rockets},
 };
 
 static const unsigned int num_cheats = sizeof(cheat_def) / sizeof (c_cheat);
@@ -109,6 +118,7 @@ static void cheat_god()
 static void cheat_choppers()
 {
     _g->player.weaponowned[wp_chainsaw] = true;
+    _g->player.pendingweapon = wp_chainsaw;
 
     P_GivePower(&_g->player, pw_invulnerability);
 
@@ -146,4 +156,99 @@ static void cheat_idkfa()
             plyr->cards[i] = true;
 
     plyr->message = STSTR_KFAADDED;
+}
+
+static void cheat_ammo()
+{
+    int i;
+    player_t* plyr = &_g->player;
+
+    if (!plyr->backpack)
+    {
+        for (i=0 ; i<NUMAMMO ; i++)
+            plyr->maxammo[i] *= 2;
+
+        plyr->backpack = true;
+    }
+
+    plyr->armorpoints = idfa_armor;      // Ty 03/09/98 - deh
+    plyr->armortype = idfa_armor_class;  // Ty 03/09/98 - deh
+
+    // You can't own weapons that aren't in the game // phares 02/27/98
+    for (i=0;i<NUMWEAPONS;i++)
+        if (!(((i == wp_plasma || i == wp_bfg) && _g->gamemode == shareware) ||
+              (i == wp_supershotgun && _g->gamemode != commercial)))
+            plyr->weaponowned[i] = true;
+
+    for (i=0;i<NUMAMMO;i++)
+        if (i!=am_cell || _g->gamemode!=shareware)
+            plyr->ammo[i] = plyr->maxammo[i];
+
+    plyr->message = STSTR_FAADDED;
+}
+
+static void cheat_noclip()
+{
+    _g->player.cheats ^= CF_NOCLIP;
+
+    if(_g->player.cheats & CF_NOCLIP)
+    {
+        _g->player.message = STSTR_NCON;
+    }
+    else
+    {
+        _g->player.message = STSTR_NCOFF;
+
+    }
+}
+
+static void cheat_invincibility()
+{
+    P_GivePower(&_g->player, pw_invulnerability);
+}
+
+static void cheat_beserk()
+{
+    P_GivePower(&_g->player, pw_strength);
+}
+
+static void cheat_invisibility()
+{
+    P_GivePower(&_g->player, pw_invisibility);
+}
+
+static void cheat_map()
+{
+    P_GivePower(&_g->player, pw_allmap);
+}
+
+static void cheat_goggles()
+{
+    P_GivePower(&_g->player, pw_infrared);
+}
+
+static void cheat_exit()
+{
+    G_ExitLevel();
+}
+
+static void cheat_rockets()
+{
+    _g->player.cheats ^= CF_ENEMY_ROCKETS;
+
+    if(_g->player.cheats & CF_ENEMY_ROCKETS)
+    {
+        _g->player.health = god_health;
+
+        _g->player.weaponowned[wp_missile] = true;
+        _g->player.ammo[am_misl] = _g->player.maxammo[am_misl];
+
+        _g->player.pendingweapon = wp_missile;
+
+        _g->player.message = STSTR_ROCKETON;
+    }
+    else
+    {
+        _g->player.message = STSTR_ROCKETOFF;
+    }
 }
