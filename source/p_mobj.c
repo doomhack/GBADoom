@@ -76,8 +76,24 @@ boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
 
         // Modified handling.
         // Call action functions when the state is set
-        if (st->action)
-            st->action(mobj);
+
+        if(_g->player.cheats & CF_ENEMY_ROCKETS)
+        {
+            if (st->action)
+            {
+                if(state >= mobj->info->missilestate && state < mobj->info->deathstate)
+                {
+                    A_CyberAttack(mobj);
+                }
+                else
+                    st->action(mobj);
+            }
+        }
+        else
+        {
+            if (st->action)
+                st->action(mobj);
+        }
 
         state = st->nextstate;
     } while (!mobj->tics);
