@@ -1116,7 +1116,7 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
 
 #pragma GCC pop_options
 
-static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
+static void R_MapPlane(int y, int x1, draw_span_vars_t *dsvars)
 {
     fixed_t distance = FixedMul(planeheight, yslope[y]);
     dsvars->xstep = FixedMul(distance,basexscale);
@@ -1131,7 +1131,6 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 
     dsvars->y = y;
     dsvars->x1 = x1;
-    dsvars->x2 = x2;
 
     R_DrawSpan(dsvars);
 }
@@ -1142,11 +1141,13 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 
 static void R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2, unsigned int b2, draw_span_vars_t *dsvars)
 {
+    dsvars->x2 = x-1;
+
     for (; t1 < t2 && t1 <= b1; t1++)
-        R_MapPlane(t1, spanstart[t1], x-1, dsvars);
+        R_MapPlane(t1, spanstart[t1], dsvars);
 
     for (; b1 > b2 && b1 >= t1; b1--)
-        R_MapPlane(b1, spanstart[b1] ,x-1, dsvars);
+        R_MapPlane(b1, spanstart[b1] , dsvars);
 
     while (t2 < t1 && t2 <= b2)
         spanstart[t2++] = x;
