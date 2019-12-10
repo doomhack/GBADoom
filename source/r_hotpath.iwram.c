@@ -1081,21 +1081,17 @@ inline static void R_DrawSpanPixel(pixel* dest, const byte* source, const byte* 
 #endif
 }
 
-static void R_DrawSpan(draw_span_vars_t *dsvars)
+static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {
-    int count = (dsvars->x2 - dsvars->x1) + 1;
-
-    if(count <= 0)
-        return;
+    unsigned int count = (x2 - x1);
 
     const byte *source = dsvars->source;
     const byte *colormap = dsvars->colormap;
 
-    unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dsvars->y) + dsvars->x1;
+    unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(y) + x1;
 
-    const unsigned int step = ((dsvars->xstep << 10) & 0xffff0000) | ((dsvars->ystep >> 6)  & 0x0000ffff);
-
-    unsigned int position = ((dsvars->xfrac << 10) & 0xffff0000) | ((dsvars->yfrac >> 6)  & 0x0000ffff);
+    const unsigned int step = dsvars->step;
+    unsigned int position = dsvars->position;
 
     unsigned int l = count >> 2;
     unsigned int r = count & 3;
@@ -1116,23 +1112,27 @@ static void R_DrawSpan(draw_span_vars_t *dsvars)
 
 #pragma GCC pop_options
 
-static void R_MapPlane(int y, int x1, draw_span_vars_t *dsvars)
+static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {
+    if(x2 <= x1)
+        return;
+
     fixed_t distance = FixedMul(planeheight, yslope[y]);
-    dsvars->xstep = FixedMul(distance,basexscale);
-    dsvars->ystep = FixedMul(distance,baseyscale);
+    unsigned int xstep = FixedMul(distance,basexscale);
+    unsigned int ystep = FixedMul(distance,baseyscale);
+
+    dsvars->step = ((xstep << 10) & 0xffff0000) | ((ystep >> 6) & 0x0000ffff);
 
     fixed_t length = FixedMul (distance, distscale[x1]);
     angle_t angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
 
     // killough 2/28/98: Add offsets
-    dsvars->xfrac =  viewx + FixedMul(finecosine[angle], length);
-    dsvars->yfrac = -viewy - FixedMul(finesine[angle],   length);
+    unsigned int xfrac =  viewx + FixedMul(finecosine[angle], length);
+    unsigned int yfrac = -viewy - FixedMul(finesine[angle],   length);
 
-    dsvars->y = y;
-    dsvars->x1 = x1;
+    dsvars->position = ((xfrac << 10) & 0xffff0000) | ((yfrac >> 6)  & 0x0000ffff);
 
-    R_DrawSpan(dsvars);
+    R_DrawSpan(y, x1, x2, dsvars);
 }
 
 //
@@ -1141,13 +1141,11 @@ static void R_MapPlane(int y, int x1, draw_span_vars_t *dsvars)
 
 static void R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2, unsigned int b2, draw_span_vars_t *dsvars)
 {
-    dsvars->x2 = x-1;
-
     for (; t1 < t2 && t1 <= b1; t1++)
-        R_MapPlane(t1, spanstart[t1], dsvars);
+        R_MapPlane(t1, spanstart[t1], x, dsvars);
 
     for (; b1 > b2 && b1 >= t1; b1--)
-        R_MapPlane(b1, spanstart[b1] , dsvars);
+        R_MapPlane(b1, spanstart[b1], x, dsvars);
 
     while (t2 < t1 && t2 <= b2)
         spanstart[t2++] = x;

@@ -59,14 +59,8 @@ typedef struct {
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars);
 
 typedef struct {
-  int                 y;
-  int                 x1;
-  int                 x2;
-  //fixed_t             z; // the current span z coord
-  fixed_t             xfrac;
-  fixed_t             yfrac;
-  fixed_t             xstep;
-  fixed_t             ystep;
+  unsigned int        position;
+  unsigned int        step;
   const byte          *source; // start of a 64*64 tile image
   const lighttable_t  *colormap;
 } draw_span_vars_t;
