@@ -2,10 +2,6 @@
 
 A port of prBoom to the GBA. The objective of this project is to get full-fat PC Doom running on the GBA.
 
-This project is currently a WIP but we're getting to the point where there is a playable game in there.
-
-
-
 
 **What's working:**
 
