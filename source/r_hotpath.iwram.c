@@ -490,7 +490,7 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     // This is as fast as it gets.
 
     unsigned int l = (count >> 2);
-    unsigned int r = (count & 3);
+
 
     while(l--)
     {
@@ -499,6 +499,8 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
     }
+
+    unsigned int r = (count & 3);
 
     while(r--)
     {
@@ -1094,7 +1096,6 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
     unsigned int position = dsvars->position;
 
     unsigned int l = count >> 2;
-    unsigned int r = count & 3;
 
     while(l--)
     {
@@ -1103,6 +1104,8 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
     }
+
+    unsigned int r = count & 3;
 
     while(r--)
     {
@@ -1114,9 +1117,6 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {
-    if(x2 <= x1)
-        return;
-
     fixed_t distance = FixedMul(planeheight, yslope[y]);
     unsigned int xstep = FixedMul(distance,basexscale);
     unsigned int ystep = FixedMul(distance,baseyscale);
@@ -1738,7 +1738,6 @@ static void R_RenderSegLoop (void)
 
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
-
         // mark floor / ceiling areas
 
         int yh = bottomfrac>>HEIGHTBITS;
