@@ -52,9 +52,8 @@ Extract the code to a folder: (Eg: C:\Temp\GBADoom)
 5) Open a cmd prompt and type the following:
 
 
-cd C:\Temp\GBADoom
+cd C:\Temp\GBADoom && make
 
-make
 
 7) The project should build GBADoom.gba and GBADoom.elf. It will take about 5 minutes or so. You may see a lot of warning messages on the screen. These are normal.
 
