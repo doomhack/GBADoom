@@ -18,21 +18,9 @@ A port of prBoom to the GBA. The objective of this project is to get full-fat PC
 
 **Still to do:**
 
-- ~~Still needs too much memory. GBA only has 256Kb of work ram. Some levels will crash out as they are larger than this. Memory issues are pretty much resolved now. Only Doom2 Map15 has issues. Occasionally still get a blue screen of death after playing for a while on that level.~~
-
-- ~Status bar is partially rendered. It's actually quite tricky because we are page-flipping we need to draw the stbar twice when it updates else it will flicker.~
-
-- ~Too dark on real hardware. It either needs a non-linear RGB24 -> RGB15 mapping or a custom palette.~
-
-- ~Save-load are stubbed out.~
-
 - Demo compatability is broken.
 
-- ~~Weapon-swith controls not implimented.~~
-
 - General optimisation. We're never going to get a perfect 35FPS but I think there is still another 25% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
-
-- ~Sound is a bit glitchy because MaxMod doesn't have a function to tell if a sound is still playing. Channels get re-used sooner than they should. To fix this i'll have to store the lengths of all of the samples. Fun.~
 
 - Probably a bunch of other stuff that's borked too...
 
@@ -41,13 +29,31 @@ A port of prBoom to the GBA. The objective of this project is to get full-fat PC
 
 To build the GBA version, you will need DevKitArm. The easiest way to get up and running for Windows users is download the installer from here (https://github.com/devkitPro/installer/releases) and install the GBA dev components.
 
-You will also need GBAWadUtil (https://github.com/doomhack/GbaWadUtil). To build this, you will need Qt Framework 5.13.
+You will also need GBAWadUtil (https://github.com/doomhack/GbaWadUtil). Windows (x64) users can download the Binary release from the releases page.
 
-1) Use GBAWadUtil to create a header file with the WAD data. Retail, Ultimate and Doom2 wads have been tested. Plutonia and TNT should work. Usage: GBAWadUtil -in path/to/iwad.wad -cfile path/to/iwadheader.h
-2) This will create a big .h source file. It's the WAD data. Copy it to /source/iwad/
-3) Change the #include "iwad/doom1.gba.h" line in /source/doom_iwad.c if required.
-4) Ensure the DevKitArm tools are in your path.
-5) Open a cmd prompt in the source folder for GBA Doom.
-6) Run 'make'.
-7) The project should build GBADoom.gba and GBADoom.elf.
-8) Rip and tear...or just stumble around in the dark until you get a headache.
+1) Use GBAWadUtil to create a header file with the WAD data. Retail, Ultimate and Doom2 wads have been tested. Plutonia and TNT should work. 
+
+Copy your IWAD file to a folder (Eg: C:\Temp\Doom\)
+Extract the GBAWadUtil archive to a folder (Eg: C:\Temp\GBAWadUtil\)
+Open a command prompt.
+
+Type the following:
+
+C:\Temp\GBAWadUtil\GbaWadUtil.exe -in C:\Temp\Doom\Doom.wad -cfile C:\Temp\Doom\Doom.wad.h
+
+2) Download or Clone the GBADoom source code. I recommend downloading from the releases page as the latest code may have issues.
+
+Extract the code to a folder: (Eg: C:\Temp\GBADoom)
+
+3) Copy the C:\Temp\Doom.wad.h (Generated in step 1) to C:\Temp\GBADoom\source\iwad\doom.wad.h
+4) Open C:\Temp\GBADoom\source\doom_iwad.h in text editor or code editor of your choice.
+5) Change the first line to #include "iwad/doom.wad.h"
+
+5) Open a cmd prompt and type the following:
+
+cd C:\Temp\GBADoom
+make
+
+7) The project should build GBADoom.gba and GBADoom.elf. It will take about 5 minutes or so. You may see a lot of warning messages on the screen. These are normal.
+
+8) Copy GBADoom.gba (this is the rom file) to your flash cart or run in a emulator.
