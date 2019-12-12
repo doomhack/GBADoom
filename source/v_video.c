@@ -173,7 +173,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
                     unsigned short old = *dest16;
 
-                    *dest16 = ((color & 0xff) | (old << 8));
+                    *dest16 = ((color & 0xff) | (old & 0xff00));
                 }
 
                 dest += byte_pitch;
@@ -224,7 +224,7 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 
 
 
-void V_PlotPixel(int x, int y, int color)
+static void V_PlotPixel(int x, int y, int color)
 {
     byte* fb = (byte*)_g->screens[0].data;
 
@@ -246,7 +246,7 @@ void V_PlotPixel(int x, int y, int color)
 
         unsigned short old = *dest16;
 
-        *dest16 = ((color & 0xff) | (old << 8));
+        *dest16 = ((color & 0xff) | (old & 0xff00));
     }
 }
 
@@ -261,57 +261,39 @@ void V_PlotPixel(int x, int y, int color)
 //
 void V_DrawLine(fline_t* fl, int color)
 {
-    register int x;
-    register int y;
-    register int dx;
-    register int dy;
-    register int sx;
-    register int sy;
-    register int ax;
-    register int ay;
-    register int d;
+    int x0 = fl->a.x;
+    int x1 = fl->b.x;
 
-    dx = fl->b.x - fl->a.x;
-    ax = 2 * (dx<0 ? -dx : dx);
-    sx = dx<0 ? -1 : 1;
+    int y0 = fl->a.y;
+    int y1 = fl->b.y;
 
-    dy = fl->b.y - fl->a.y;
-    ay = 2 * (dy<0 ? -dy : dy);
-    sy = dy<0 ? -1 : 1;
+    int dx =  D_abs(x1-x0);
+    int sx = x0<x1 ? 1 : -1;
 
-    x = fl->a.x;
-    y = fl->a.y;
+    int dy = -D_abs(y1-y0);
+    int sy = y0<y1 ? 1 : -1;
 
-    if (ax > ay)
+    int err = dx + dy;
+
+    while(true)
     {
-        d = ay - ax/2;
-        while (1)
+        V_PlotPixel(x0, y0, color);
+
+        if (x0==x1 && y0==y1)
+            break;
+
+        int e2 = 2*err;
+
+        if (e2 >= dy)
         {
-            V_PlotPixel(x,y,color);
-            if (x == fl->b.x) return;
-            if (d>=0)
-            {
-                y += sy;
-                d -= ax;
-            }
-            x += sx;
-            d += ay;
+            err += dy;
+            x0 += sx;
         }
-    }
-    else
-    {
-        d = ax - ay/2;
-        while (1)
+
+        if (e2 <= dx)
         {
-            V_PlotPixel(x, y, color);
-            if (y == fl->b.y) return;
-            if (d >= 0)
-            {
-                x += sx;
-                d -= ay;
-            }
-            y += sy;
-            d += ax;
+            err += dx;
+            y0 += sy;
         }
     }
 }
