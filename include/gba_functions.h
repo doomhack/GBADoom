@@ -91,6 +91,17 @@ inline static void BlockCopy(void* dest, const void* src, const unsigned int len
 #endif
 }
 
+inline static void CpuBlockCopy(void* dest, const void* src, const unsigned int len)
+{
+#ifdef __arm__
+    const unsigned int words = len >> 2;
+
+    CpuFastSet(src, dest, words);
+#else
+    BlockCopy(dest, src, len);
+#endif
+}
+
 inline static void BlockSet(void* dest, volatile unsigned int val, const unsigned int len)
 {
 #ifdef __arm__

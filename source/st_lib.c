@@ -325,6 +325,6 @@ void ST_refreshBackground(void)
     {
         const unsigned int st_offset = ((SCREENHEIGHT-ST_SCALED_HEIGHT)*120);
 
-        BlockCopy(&_g->screens[0].data[st_offset], _g->stbarbg, _g->stbar_len);
+        CpuBlockCopy(&_g->screens[0].data[st_offset], _g->stbarbg, _g->stbar_len);
     }
 }
