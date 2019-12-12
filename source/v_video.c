@@ -173,7 +173,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
                     unsigned short old = *dest16;
 
-                    *dest16 = ((color & 0xff) | (old << 8));
+                    *dest16 = ((color & 0xff) | (old & 0xff00));
                 }
 
                 dest += byte_pitch;
@@ -224,9 +224,30 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 
 
 
-void V_PlotPixel(int scrn, int x, int y, byte color)
+static void V_PlotPixel(int x, int y, int color)
 {
-    _g->screens[scrn].data[ScreenYToOffset(y)+x] = (color | (color << 8));
+    byte* fb = (byte*)_g->screens[0].data;
+
+    byte* dest = &fb[(ScreenYToOffset(y) << 1) + x];
+
+    //The GBA must write in 16bits.
+    if((unsigned int)dest & 1)
+    {
+        //Odd addreses, we combine existing pixel with new one.
+        unsigned short* dest16 = (unsigned short*)(dest - 1);
+
+        unsigned short old = *dest16;
+
+        *dest16 = (old & 0xff) | (color << 8);
+    }
+    else
+    {
+        unsigned short* dest16 = (unsigned short*)dest;
+
+        unsigned short old = *dest16;
+
+        *dest16 = ((color & 0xff) | (old & 0xff00));
+    }
 }
 
 //
@@ -240,59 +261,39 @@ void V_PlotPixel(int scrn, int x, int y, byte color)
 //
 void V_DrawLine(fline_t* fl, int color)
 {
-  register int x;
-  register int y;
-  register int dx;
-  register int dy;
-  register int sx;
-  register int sy;
-  register int ax;
-  register int ay;
-  register int d;
+    int x0 = fl->a.x;
+    int x1 = fl->b.x;
 
-#define PUTDOT(xx,yy,cc) V_PlotPixel(0,xx,yy,(byte)cc)
+    int y0 = fl->a.y;
+    int y1 = fl->b.y;
 
-  dx = fl->b.x - fl->a.x;
-  ax = 2 * (dx<0 ? -dx : dx);
-  sx = dx<0 ? -1 : 1;
+    int dx =  D_abs(x1-x0);
+    int sx = x0<x1 ? 1 : -1;
 
-  dy = fl->b.y - fl->a.y;
-  ay = 2 * (dy<0 ? -dy : dy);
-  sy = dy<0 ? -1 : 1;
+    int dy = -D_abs(y1-y0);
+    int sy = y0<y1 ? 1 : -1;
 
-  x = fl->a.x;
-  y = fl->a.y;
+    int err = dx + dy;
 
-  if (ax > ay)
-  {
-    d = ay - ax/2;
-    while (1)
+    while(true)
     {
-      PUTDOT(x,y,color);
-      if (x == fl->b.x) return;
-      if (d>=0)
-      {
-        y += sy;
-        d -= ax;
-      }
-      x += sx;
-      d += ay;
+        V_PlotPixel(x0, y0, color);
+
+        if (x0==x1 && y0==y1)
+            break;
+
+        int e2 = 2*err;
+
+        if (e2 >= dy)
+        {
+            err += dy;
+            x0 += sx;
+        }
+
+        if (e2 <= dx)
+        {
+            err += dx;
+            y0 += sy;
+        }
     }
-  }
-  else
-  {
-    d = ax - ay/2;
-    while (1)
-    {
-      PUTDOT(x, y, color);
-      if (y == fl->b.y) return;
-      if (d >= 0)
-      {
-        x += sx;
-        d -= ay;
-      }
-      y += sy;
-      d += ax;
-    }
-  }
 }

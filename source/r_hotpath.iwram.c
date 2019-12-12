@@ -2760,7 +2760,7 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
                 if(odd_addr)
                     *dest16 = (old & 0xff) | (color << 8);
                 else
-                    *dest16 = ((color & 0xff) | (old << 8));
+                    *dest16 = ((color & 0xff) | (old & 0xff00));
 
                 dest += 240;
             }
