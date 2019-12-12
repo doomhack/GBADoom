@@ -106,11 +106,11 @@ const int     key_map_left = KEYD_LEFT;
 const int     key_map_up = KEYD_UP;
 const int     key_map_down = KEYD_DOWN;
 const int     key_map = KEYD_SELECT;
-const int     key_map_follow = 'f';
+const int     key_map_follow = KEYD_A;
 const int     key_map_overlay = 'o'; // cph - map overlay
 const int     key_map_rotate = 'r';  // cph - map rotation
-const int     key_map_zoomin = '.';
-const int     key_map_zoomout = ',';
+const int     key_map_zoomin = KEYD_R;
+const int     key_map_zoomout = KEYD_L;
                                           // phares
 
 #define MAXPLMOVE   (forwardmove[1])

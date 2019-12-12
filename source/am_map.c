@@ -287,7 +287,7 @@ void AM_Stop (void)
 {
     static const event_t st_notify = { 0, ev_keyup, AM_MSGEXITED, 0 };
 
-    _g->automapmode &= ~am_active;
+    _g->automapmode  = 0;
     ST_Responder(&st_notify);
     _g->stopped = true;
 }
@@ -355,110 +355,114 @@ static void AM_maxOutWindowScale(void)
 boolean AM_Responder
 ( event_t*  ev )
 {
-  int rc;
-  int ch;                                                       // phares
+    int rc;
+    int ch;                                                       // phares
 
-  rc = false;
-
-  if (!(_g->automapmode & am_active))
-  {
-    if (ev->type == ev_keydown && ev->data1 == key_map)         // phares
-    {
-      AM_Start ();
-      rc = true;
-    }
-  }
-  else if (ev->type == ev_keydown)
-  {
-    rc = true;
-    ch = ev->data1;                                             // phares
-    if (ch == key_map_right)                                    //    |
-      if (!(_g->automapmode & am_follow))                           //    V
-         _g->m_paninc.x = FTOM(F_PANINC);
-      else
-        rc = false;
-    else if (ch == key_map_left)
-      if (!(_g->automapmode & am_follow))
-           _g->m_paninc.x = -FTOM(F_PANINC);
-      else
-          rc = false;
-    else if (ch == key_map_up)
-      if (!(_g->automapmode & am_follow))
-           _g->m_paninc.y = FTOM(F_PANINC);
-      else
-          rc = false;
-    else if (ch == key_map_down)
-      if (!(_g->automapmode & am_follow))
-           _g->m_paninc.y = -FTOM(F_PANINC);
-      else
-          rc = false;
-    else if (ch == key_map)
-    {
-      AM_Stop ();
-    }
-    else if (ch == key_map_follow)
-    {
-      _g->automapmode ^= am_follow;     // CPhipps - put all automap mode stuff into one enum
-      _g->f_oldloc.x = INT_MAX;
-      // Ty 03/27/98 - externalized
-      _g->player.message = (_g->automapmode & am_follow) ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF;
-    }                                                         //    |
-    else if (ch == key_map_rotate)
-    {
-      _g->automapmode ^= am_rotate;
-      _g->player.message = (_g->automapmode & am_rotate) ? AMSTR_ROTATEON : AMSTR_ROTATEOFF;
-    }
-    else if (ch == key_map_overlay)
-    {
-      _g->automapmode ^= am_overlay;
-      _g->player.message = (_g->automapmode & am_overlay) ? AMSTR_OVERLAYON : AMSTR_OVERLAYOFF;
-    }
-    else if (ch == key_map_zoomout)
-    {
-      _g->mtof_zoommul = M_ZOOMOUT;
-      _g->ftom_zoommul = M_ZOOMIN;
-    }
-    else if (ch == key_map_zoomin)
-    {
-      _g->mtof_zoommul = M_ZOOMIN;
-      _g->ftom_zoommul = M_ZOOMOUT;
-    }
-    else                                                        // phares
-    {
-      rc = false;
-    }
-  }
-  else if (ev->type == ev_keyup)
-  {
     rc = false;
-    ch = ev->data1;
-    if (ch == key_map_right)
+
+    if (!(_g->automapmode & am_active))
     {
-      if (!(_g->automapmode & am_follow))
-           _g->m_paninc.x = 0;
+        if (ev->type == ev_keydown && ev->data1 == key_map)         // phares
+        {
+            AM_Start ();
+            rc = true;
+        }
     }
-    else if (ch == key_map_left)
+    else if (ev->type == ev_keydown)
     {
-      if (!(_g->automapmode & am_follow))
-           _g->m_paninc.x = 0;
+        rc = true;
+        ch = ev->data1;                                             // phares
+
+        if (ch == key_map_right)                                    //    |
+            if (!(_g->automapmode & am_follow))                           //    V
+                _g->m_paninc.x = FTOM(F_PANINC);
+            else
+                rc = false;
+        else if (ch == key_map_left)
+            if (!(_g->automapmode & am_follow))
+                _g->m_paninc.x = -FTOM(F_PANINC);
+            else
+                rc = false;
+        else if (ch == key_map_up)
+            if (!(_g->automapmode & am_follow))
+                _g->m_paninc.y = FTOM(F_PANINC);
+            else
+                rc = false;
+        else if (ch == key_map_down)
+            if (!(_g->automapmode & am_follow))
+                _g->m_paninc.y = -FTOM(F_PANINC);
+            else
+                rc = false;
+        else if (ch == key_map)
+        {
+            if(_g->automapmode & am_overlay)
+                AM_Stop ();
+            else
+                _g->automapmode |= (am_overlay | am_rotate | am_follow);
+        }
+        else if (ch == key_map_follow && _g->gamekeydown[key_use])
+        {
+            _g->automapmode ^= am_follow;     // CPhipps - put all automap mode stuff into one enum
+            _g->f_oldloc.x = INT_MAX;
+            // Ty 03/27/98 - externalized
+            _g->player.message = (_g->automapmode & am_follow) ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF;
+        }                                                         //    |
+        else if (ch == key_map_rotate)
+        {
+            _g->automapmode ^= am_rotate;
+            _g->player.message = (_g->automapmode & am_rotate) ? AMSTR_ROTATEON : AMSTR_ROTATEOFF;
+        }
+        else if (ch == key_map_overlay)
+        {
+            _g->automapmode ^= am_overlay;
+            _g->player.message = (_g->automapmode & am_overlay) ? AMSTR_OVERLAYON : AMSTR_OVERLAYOFF;
+        }
+        else if (ch == key_map_zoomout)
+        {
+            _g->mtof_zoommul = M_ZOOMOUT;
+            _g->ftom_zoommul = M_ZOOMIN;
+        }
+        else if (ch == key_map_zoomin)
+        {
+            _g->mtof_zoommul = M_ZOOMIN;
+            _g->ftom_zoommul = M_ZOOMOUT;
+        }
+        else                                                        // phares
+        {
+            rc = false;
+        }
     }
-    else if (ch == key_map_up)
+    else if (ev->type == ev_keyup)
     {
-      if (!(_g->automapmode & am_follow))
-           _g->m_paninc.y = 0;
+        rc = false;
+        ch = ev->data1;
+        if (ch == key_map_right)
+        {
+            if (!(_g->automapmode & am_follow))
+                _g->m_paninc.x = 0;
+        }
+        else if (ch == key_map_left)
+        {
+            if (!(_g->automapmode & am_follow))
+                _g->m_paninc.x = 0;
+        }
+        else if (ch == key_map_up)
+        {
+            if (!(_g->automapmode & am_follow))
+                _g->m_paninc.y = 0;
+        }
+        else if (ch == key_map_down)
+        {
+            if (!(_g->automapmode & am_follow))
+                _g->m_paninc.y = 0;
+        }
+        else if ((ch == key_map_zoomout) || (ch == key_map_zoomin))
+        {
+            _g->mtof_zoommul = FRACUNIT;
+            _g->ftom_zoommul = FRACUNIT;
+        }
     }
-    else if (ch == key_map_down)
-    {
-      if (!(_g->automapmode & am_follow))
-           _g->m_paninc.y = 0;
-    }
-    else if ((ch == key_map_zoomout) || (ch == key_map_zoomin))
-    {
-      _g->mtof_zoommul = FRACUNIT;
-      _g->ftom_zoommul = FRACUNIT;
-    }
-  }
-  return rc;
+    return rc;
 }
 
 //
