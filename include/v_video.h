@@ -119,7 +119,7 @@ void V_SetPalette(int pal);
 // CPhipps - function to plot a pixel
 
 // V_PlotPixel
-void V_PlotPixel(int,int,int,byte);
+void V_PlotPixel(int, int, int);
 
 typedef struct
 {

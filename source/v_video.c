@@ -224,9 +224,9 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 
 
 
-void V_PlotPixel(int scrn, int x, int y, byte color)
+void V_PlotPixel(int x, int y, int color)
 {
-    byte* fb = _g->screens[0].data;
+    byte* fb = (byte*)_g->screens[0].data;
 
     byte* dest = &fb[(ScreenYToOffset(y) << 1) + x];
 
@@ -235,7 +235,6 @@ void V_PlotPixel(int scrn, int x, int y, byte color)
     {
         //Odd addreses, we combine existing pixel with new one.
         unsigned short* dest16 = (unsigned short*)(dest - 1);
-
 
         unsigned short old = *dest16;
 
@@ -262,61 +261,57 @@ void V_PlotPixel(int scrn, int x, int y, byte color)
 //
 void V_DrawLine(fline_t* fl, int color)
 {
-  register int x;
-  register int y;
-  register int dx;
-  register int dy;
-  register int sx;
-  register int sy;
-  register int ax;
-  register int ay;
-  register int d;
+    register int x;
+    register int y;
+    register int dx;
+    register int dy;
+    register int sx;
+    register int sy;
+    register int ax;
+    register int ay;
+    register int d;
 
-#define PUTDOT(xx,yy,cc) V_PlotPixel(0,xx,yy,(byte)cc)
+    dx = fl->b.x - fl->a.x;
+    ax = 2 * (dx<0 ? -dx : dx);
+    sx = dx<0 ? -1 : 1;
 
-  dx = fl->b.x - fl->a.x;
-  //ax = 2 * (dx<0 ? -dx : dx);
-  ax = (dx<0 ? -dx : dx);
-  sx = dx<0 ? -1 : 1;
+    dy = fl->b.y - fl->a.y;
+    ay = 2 * (dy<0 ? -dy : dy);
+    sy = dy<0 ? -1 : 1;
 
-  dy = fl->b.y - fl->a.y;
-  //ay = 2 * (dy<0 ? -dy : dy);
-  ay = (dy<0 ? -dy : dy);
-  sy = dy<0 ? -1 : 1;
+    x = fl->a.x;
+    y = fl->a.y;
 
-  x = fl->a.x;
-  y = fl->a.y;
-
-  if (ax > ay)
-  {
-    d = ay - ax/2;
-    while (1)
+    if (ax > ay)
     {
-      PUTDOT(x,y,color);
-      if (x == fl->b.x) return;
-      if (d>=0)
-      {
-        y += sy;
-        d -= ax;
-      }
-      x += sx;
-      d += ay;
+        d = ay - ax/2;
+        while (1)
+        {
+            V_PlotPixel(x,y,color);
+            if (x == fl->b.x) return;
+            if (d>=0)
+            {
+                y += sy;
+                d -= ax;
+            }
+            x += sx;
+            d += ay;
+        }
     }
-  }
-  else
-  {
-    d = ax - ay/2;
-    while (1)
+    else
     {
-      PUTDOT(x, y, color);
-      if (y == fl->b.y) return;
-      if (d >= 0)
-      {
-        x += sx;
-        d -= ay;
-      }
-      y += sy;
-      d += ax;
+        d = ax - ay/2;
+        while (1)
+        {
+            V_PlotPixel(x, y, color);
+            if (y == fl->b.y) return;
+            if (d >= 0)
+            {
+                x += sx;
+                d -= ay;
+            }
+            y += sy;
+            d += ax;
+        }
     }
-  }
 }
