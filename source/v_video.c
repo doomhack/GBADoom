@@ -226,7 +226,29 @@ void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
 
 void V_PlotPixel(int scrn, int x, int y, byte color)
 {
-    _g->screens[scrn].data[ScreenYToOffset(y)+x] = (color | (color << 8));
+    byte* fb = _g->screens[0].data;
+
+    byte* dest = &fb[(ScreenYToOffset(y) << 1) + x];
+
+    //The GBA must write in 16bits.
+    if((unsigned int)dest & 1)
+    {
+        //Odd addreses, we combine existing pixel with new one.
+        unsigned short* dest16 = (unsigned short*)(dest - 1);
+
+
+        unsigned short old = *dest16;
+
+        *dest16 = (old & 0xff) | (color << 8);
+    }
+    else
+    {
+        unsigned short* dest16 = (unsigned short*)dest;
+
+        unsigned short old = *dest16;
+
+        *dest16 = ((color & 0xff) | (old << 8));
+    }
 }
 
 //
@@ -253,11 +275,13 @@ void V_DrawLine(fline_t* fl, int color)
 #define PUTDOT(xx,yy,cc) V_PlotPixel(0,xx,yy,(byte)cc)
 
   dx = fl->b.x - fl->a.x;
-  ax = 2 * (dx<0 ? -dx : dx);
+  //ax = 2 * (dx<0 ? -dx : dx);
+  ax = (dx<0 ? -dx : dx);
   sx = dx<0 ? -1 : 1;
 
   dy = fl->b.y - fl->a.y;
-  ay = 2 * (dy<0 ? -dy : dy);
+  //ay = 2 * (dy<0 ? -dy : dy);
+  ay = (dy<0 ? -dy : dy);
   sy = dy<0 ? -1 : 1;
 
   x = fl->a.x;
