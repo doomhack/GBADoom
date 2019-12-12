@@ -173,7 +173,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
     memset(cmd,0,sizeof*cmd);
 
-    speed = (_g->gamekeydown[key_use]);
+    speed = (_g->gamekeydown[key_use] ^ _g->alwaysRun);
 
     forward = side = 0;
 

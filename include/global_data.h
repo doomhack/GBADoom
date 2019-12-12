@@ -276,6 +276,8 @@ unsigned int cheat_buffer;
 //
 int showMessages;    // Show messages has default, 0 = off, 1 = on
 
+int alwaysRun;
+
 int messageToPrint;  // 1 = message to be printed
 
 // CPhipps - static const

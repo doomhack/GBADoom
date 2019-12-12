@@ -101,6 +101,7 @@ void M_EndGame(int choice);
 
 
 void M_ChangeMessages(int choice);
+void M_ChangeAlwaysRun(int choice);
 void M_SfxVol(int choice);
 void M_MusicVol(int choice);
 void M_StartGame(int choice);
@@ -585,6 +586,7 @@ enum
 {                                                   // phares 3/21/98
   endgame,
   messages,
+  alwaysrun,
   soundvol,
   opt_end
 };
@@ -596,6 +598,7 @@ static const menuitem_t OptionsMenu[]=
   // killough 4/6/98: move setup to be a sub-menu of OPTIONs
   {1,"M_ENDGAM", M_EndGame},
   {1,"M_MESSG",  M_ChangeMessages},
+  {1,"M_ARUN",   M_ChangeAlwaysRun},
   {1,"M_SVOL",   M_Sound}
 };
 
@@ -621,6 +624,9 @@ void M_DrawOptions(void)
 
   V_DrawNamePatch(OptionsDef.x + 120, OptionsDef.y+LINEHEIGHT*messages, 0,
       msgNames[_g->showMessages], CR_DEFAULT, VPT_STRETCH);
+
+  V_DrawNamePatch(OptionsDef.x + 146, OptionsDef.y+LINEHEIGHT*alwaysrun, 0,
+      msgNames[_g->alwaysRun], CR_DEFAULT, VPT_STRETCH);
 }
 
 void M_Options(int choice)
@@ -756,6 +762,19 @@ void M_ChangeMessages(int choice)
     _g->player.message = MSGON ; // Ty 03/27/98 - externalized
 
   _g->message_dontfuckwithme = true;
+}
+
+
+void M_ChangeAlwaysRun(int choice)
+{
+    // warning: unused parameter `int choice'
+    choice = 0;
+    _g->alwaysRun = 1 - _g->alwaysRun;
+
+    if (!_g->alwaysRun)
+      _g->player.message = RUNOFF; // Ty 03/27/98 - externalized
+    else
+      _g->player.message = RUNON ; // Ty 03/27/98 - externalized
 }
 
 //
