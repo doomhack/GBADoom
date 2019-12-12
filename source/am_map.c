@@ -1139,5 +1139,5 @@ void AM_Drawer (void)
     AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
   AM_drawWalls();
   AM_drawPlayers();
-  AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
+  //AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
 }
