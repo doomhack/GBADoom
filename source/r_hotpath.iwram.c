@@ -1602,9 +1602,6 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
 #define CACHE_ENTRY(c, t) ((c << 16 | t))
 #define CACHE_HASH(c, t) (((c >> 4) ^ t) & CACHE_KEY_MASK)
 
-#define CACHE_HASH2(c, t) ((((unsigned int)t | (unsigned int)c << 16)*2654435761u) & CACHE_KEY_MASK)
-
-
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
     //static unsigned int looks, peeks;

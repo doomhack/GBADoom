@@ -354,69 +354,57 @@ static struct
 }
 
 const demostates[][4] =
-  {
+{
     {
-      {D_DrawTitle1, "TITLEPIC"},
-      {D_DrawTitle1, "TITLEPIC"},
-      {D_DrawTitle2, "TITLEPIC"},
-      {D_DrawTitle1, "TITLEPIC"},
+        {D_DrawTitle1, "TITLEPIC"},
+        {D_DrawTitle1, "TITLEPIC"},
+        {D_DrawTitle2, "TITLEPIC"},
+        {D_DrawTitle1, "TITLEPIC"},
     },
 
     {
-      {G_DeferedPlayDemo, "demo1"},
-      {G_DeferedPlayDemo, "demo1"},
-      {G_DeferedPlayDemo, "demo1"},
-      {G_DeferedPlayDemo, "demo1"},
+        {G_DeferedPlayDemo, "demo1"},
+        {G_DeferedPlayDemo, "demo1"},
+        {G_DeferedPlayDemo, "demo1"},
+        {G_DeferedPlayDemo, "demo1"},
     },
     {
-      {D_SetPageName, NULL},
-      {D_SetPageName, NULL},
-      {D_SetPageName, NULL},
-      {D_SetPageName, NULL},
-    },
-
-    {
-      {G_DeferedPlayDemo, "demo2"},
-      {G_DeferedPlayDemo, "demo2"},
-      {G_DeferedPlayDemo, "demo2"},
-      {G_DeferedPlayDemo, "demo2"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
     },
 
     {
-      {D_SetPageName, "HELP2"},
-      {D_SetPageName, "HELP2"},
-      {D_SetPageName, "CREDIT"},
-      {D_DrawTitle1,  "TITLEPIC"},
+        {G_DeferedPlayDemo, "demo2"},
+        {G_DeferedPlayDemo, "demo2"},
+        {G_DeferedPlayDemo, "demo2"},
+        {G_DeferedPlayDemo, "demo2"},
     },
 
     {
-      {G_DeferedPlayDemo, "demo3"},
-      {G_DeferedPlayDemo, "demo3"},
-      {G_DeferedPlayDemo, "demo3"},
-      {G_DeferedPlayDemo, "demo3"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
     },
 
     {
-      {NULL},
-      {NULL},
-      {NULL},
-      {D_SetPageName, "CREDIT"},
+        {G_DeferedPlayDemo, "demo3"},
+        {G_DeferedPlayDemo, "demo3"},
+        {G_DeferedPlayDemo, "demo3"},
+        {G_DeferedPlayDemo, "demo3"},
     },
 
     {
-      {NULL},
-      {NULL},
-      {NULL},
-      {G_DeferedPlayDemo, "demo4"},
-    },
-
-    {
-      {NULL},
-      {NULL},
-      {NULL},
-      {NULL},
+        {NULL, NULL},
+        {NULL, NULL},
+        {NULL, NULL},
+        {NULL, NULL},
     }
-  };
+
+
+};
 
 /*
  * This cycles through the demo sequences.
@@ -435,8 +423,8 @@ void D_DoAdvanceDemo(void)
 
   if (!demostates[++_g->demosequence][_g->gamemode].func)
       _g->demosequence = 0;
-  demostates[_g->demosequence][_g->gamemode].func
-          (demostates[_g->demosequence][_g->gamemode].name);
+
+  demostates[_g->demosequence][_g->gamemode].func(demostates[_g->demosequence][_g->gamemode].name);
 }
 
 //
