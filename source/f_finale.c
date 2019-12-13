@@ -258,7 +258,7 @@ void F_Ticker(void)
 
 static void F_TextWrite (void)
 {
-  V_DrawBackground(_g->finaleflat, 0);
+  V_DrawBackground(_g->finaleflat);
   { // draw some of the text onto the screen
     int         cx = 10;
     int         cy = 10;

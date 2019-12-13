@@ -1130,14 +1130,15 @@ inline static void AM_drawCrosshair(int color)
 //
 void AM_Drawer (void)
 {
-  // CPhipps - all automap modes put into one enum
-  if (!(_g->automapmode & am_active)) return;
+    // CPhipps - all automap modes put into one enum
+    if (!(_g->automapmode & am_active)) return;
 
-  if (!(_g->automapmode & am_overlay)) // cph - If not overlay mode, clear background for the automap
-    V_FillRect(FB, _g->f_x, _g->f_y, _g->f_w, _g->f_h, (byte)mapcolor_back); //jff 1/5/98 background default color
-  if (_g->automapmode & am_grid)
-    AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
-  AM_drawWalls();
-  AM_drawPlayers();
-  //AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
+    if (!(_g->automapmode & am_overlay)) // cph - If not overlay mode, clear background for the automap
+        V_FillRect(_g->f_x, _g->f_y, _g->f_w, _g->f_h, (byte)mapcolor_back); //jff 1/5/98 background default color
+
+    if (_g->automapmode & am_grid)
+        AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
+    AM_drawWalls();
+    AM_drawPlayers();
+    //AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
 }

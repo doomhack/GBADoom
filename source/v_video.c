@@ -53,7 +53,7 @@
  * cphipps - used to have M_DrawBackground, but that was used the framebuffer
  * directly, so this is my code from the equivalent function in f_finale.c
  */
-void V_DrawBackground(const char* flatname, int scrn)
+void V_DrawBackground(const char* flatname)
 {
     /* erase the entire screen to a tiled background */
     const byte *src;
@@ -114,12 +114,6 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
         if(dc_x < 0)
             continue;
 
-        //Messy hack to compensate accumulated rounding errors.
-        if(dc_x == right-1)
-        {
-            colindex = patch->width-1;
-        }
-
         const column_t* column = (const column_t *)((const byte*)patch + patch->columnofs[colindex]);
 
         if (dc_x >= 240)
@@ -149,11 +143,6 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             // This is as fast as it gets.
             while (count--)
             {
-                //Messy hack to compensate accumulated rounding errors.
-                if(count == 0)
-                    frac = (column->length-1) << FRACBITS;
-
-
                 unsigned short color = source[frac>>FRACBITS];
 
                 //The GBA must write in 16bits.
@@ -212,13 +201,16 @@ void V_SetPalette(int pal)
 // V_FillRect
 //
 // CPhipps - New function to fill a rectangle with a given colour
-void V_FillRect(int scrn, int x, int y, int width, int height, byte colour)
+void V_FillRect(int x, int y, int width, int height, byte colour)
 {
-    unsigned short* dest = _g->screens[scrn].data + x + y*SCREENPITCH;
+    byte* fb = (byte*)_g->screens[0].data;
+
+    byte* dest = &fb[(ScreenYToOffset(y) << 1) + x];
+
     while (height--)
     {
-        memset(dest, colour, width * 2);
-        dest += SCREENPITCH;
+        BlockSet(dest, colour, width);
+        dest += (SCREENPITCH << 1);
     }
 }
 

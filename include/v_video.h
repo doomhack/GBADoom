@@ -81,8 +81,7 @@ typedef struct
 #define NUM_SCREENS 1
 
 // V_FillRect
-void V_FillRect(int scrn, int x, int y,
-                             int width, int height, byte colour);
+void V_FillRect(int x, int y, int width, int height, byte colour);
 
 
 // CPhipps - patch drawing
@@ -111,7 +110,7 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch);
 #define V_NamePatchHeight(name) R_NumPatchHeight(W_GetNumForName(name))
 
 /* cphipps 10/99: function to tile a flat over the screen */
-void V_DrawBackground(const char* flatname, int scrn);
+void V_DrawBackground(const char* flatname);
 
 // CPhipps - function to set the palette to palette number pal.
 void V_SetPalette(int pal);

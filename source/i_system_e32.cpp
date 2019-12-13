@@ -37,7 +37,7 @@ unsigned char* pl = NULL;
 unsigned char* thearray = NULL;
 int thesize;
 
-unsigned short backbuffer[240*160];
+unsigned short backbuffer[120 *160];
 
 //**************************************************************************************
 
