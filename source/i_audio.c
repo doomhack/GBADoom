@@ -339,7 +339,7 @@ void I_InitSound(void)
 {
 
 #ifdef __arm__
-    mmInitDefault(soundbank_bin, 8);
+    mmInitDefault(soundbank_bin, 12);
 #endif
 
 	if (!nomusicparm)
