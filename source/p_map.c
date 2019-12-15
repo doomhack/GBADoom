@@ -194,10 +194,10 @@ boolean PIT_CrossLine (const line_t* ld)
   {
   if (!(ld->flags & ML_TWOSIDED) ||
       (ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS)))
-    if (!(_g->tmbbox[BOXLEFT]   > LN_BBOX_RIGHT(ld)  ||
-          _g->tmbbox[BOXRIGHT]  < LN_BBOX_LEFT(ld)   ||
-          _g->tmbbox[BOXTOP]    < LN_BBOX_BOTTOM(ld) ||
-          _g->tmbbox[BOXBOTTOM] > LN_BBOX_TOP(ld)))
+    if (!(_g->tmbbox[BOXLEFT]   > ld->bbox[BOXRIGHT]  ||
+          _g->tmbbox[BOXRIGHT]  < ld->bbox[BOXLEFT]   ||
+          _g->tmbbox[BOXTOP]    < ld->bbox[BOXBOTTOM] ||
+          _g->tmbbox[BOXBOTTOM] > ld->bbox[BOXTOP]))
       if (P_PointOnLineSide(_g->pe_x,_g->pe_y,ld) != P_PointOnLineSide(_g->ls_x,_g->ls_y,ld))
         return(false);  // line blocks trajectory                   //   ^
   return(true); // line doesn't block trajectory                    //   |
@@ -212,10 +212,10 @@ static int untouched(const line_t *ld)
 {
   fixed_t x, y, tmbbox[4];
   return
-    (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+_g->tmthing->radius) <= LN_BBOX_LEFT(ld) ||
-    (tmbbox[BOXLEFT] = x-_g->tmthing->radius) >= LN_BBOX_RIGHT(ld) ||
-    (tmbbox[BOXTOP] = (y=_g->tmthing->y)+_g->tmthing->radius) <= LN_BBOX_BOTTOM(ld) ||
-    (tmbbox[BOXBOTTOM] = y-_g->tmthing->radius) >= LN_BBOX_TOP(ld) ||
+    (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+_g->tmthing->radius) <= ld->bbox[BOXLEFT] ||
+    (tmbbox[BOXLEFT] = x-_g->tmthing->radius) >= ld->bbox[BOXRIGHT] ||
+    (tmbbox[BOXTOP] = (y=_g->tmthing->y)+_g->tmthing->radius) <= ld->bbox[BOXBOTTOM] ||
+    (tmbbox[BOXBOTTOM] = y-_g->tmthing->radius) >= ld->bbox[BOXTOP] ||
     P_BoxOnLineSide(tmbbox, ld) != -1;
 }
 
@@ -227,10 +227,10 @@ static int untouched(const line_t *ld)
 static // killough 3/26/98: make static
 boolean PIT_CheckLine (const line_t* ld)
 {
-  if (_g->tmbbox[BOXRIGHT] <= LN_BBOX_LEFT(ld)
-   || _g->tmbbox[BOXLEFT] >= LN_BBOX_RIGHT(ld)
-   || _g->tmbbox[BOXTOP] <= LN_BBOX_BOTTOM(ld)
-   || _g->tmbbox[BOXBOTTOM] >= LN_BBOX_TOP(ld) )
+  if (_g->tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
+   || _g->tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
+   || _g->tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
+   || _g->tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
     return true; // didn't hit it
 
   if (P_BoxOnLineSide(_g->tmbbox, ld) != -1)
@@ -1708,10 +1708,10 @@ void P_DelSeclist(msecnode_t* node)
 
 boolean PIT_GetSectors(const line_t* ld)
   {
-  if (_g->tmbbox[BOXRIGHT]  <= LN_BBOX_LEFT(ld)   ||
-      _g->tmbbox[BOXLEFT]   >= LN_BBOX_RIGHT(ld)  ||
-      _g->tmbbox[BOXTOP]    <= LN_BBOX_BOTTOM(ld) ||
-      _g->tmbbox[BOXBOTTOM] >= LN_BBOX_TOP(ld))
+  if (_g->tmbbox[BOXRIGHT]  <= ld->bbox[BOXLEFT]   ||
+      _g->tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||
+      _g->tmbbox[BOXTOP]    <= ld->bbox[BOXBOTTOM] ||
+      _g->tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
     return true;
 
   if (P_BoxOnLineSide(_g->tmbbox, ld) != -1)

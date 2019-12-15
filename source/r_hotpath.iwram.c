@@ -1733,6 +1733,7 @@ static void R_RenderSegLoop (void)
     dcvars.colormap = R_LoadColorMap(rw_lightlevel);
 
 
+
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
         // mark floor / ceiling areas
@@ -1926,14 +1927,14 @@ static void R_StoreWallRange(const int start, const int stop)
 
     linedata_t* linedata = &_g->linedata[curline->linenum];
 
+    // mark the segment as visible for auto map
     linedata->r_flags |= ML_MAPPED;
 
     sidedef = &_g->sides[curline->sidenum];
     linedef = &_g->lines[curline->linenum];
 
 
-    // mark the segment as visible for auto map
-    linedata->r_flags |= ML_MAPPED;
+    //linedata->r_flags |= ML_MAPPED;
     //linedef->flags |= ML_MAPPED;
 
     // calculate rw_distance for scale calculation

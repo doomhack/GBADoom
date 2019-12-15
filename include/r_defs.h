@@ -192,6 +192,7 @@ typedef struct line_s
     fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
 
     unsigned short sidenum[2];        // Visual appearance: SideDefs.
+    fixed_t bbox[4];        //Line bounding box.
 
     unsigned short flags;           // Animation related.
     short const_special;
@@ -199,12 +200,6 @@ typedef struct line_s
     short slopetype; // To aid move clipping.
 
 } line_t;
-
-#define LN_BBOX_LEFT(l) (l->v1.x < l->v2.x ? l->v1.x : l->v2.x)
-#define LN_BBOX_RIGHT(l) (l->v1.x < l->v2.x ? l->v2.x : l->v1.x)
-
-#define LN_BBOX_TOP(l) (l->v1.y < l->v2.y ? l->v2.y : l->v1.y)
-#define LN_BBOX_BOTTOM(l) (l->v1.y < l->v2.y ? l->v1.y : l->v2.y)
 
 #define LN_FRONTSECTOR(l) (_g->sides[(l)->sidenum[0]].sector)
 #define LN_BACKSECTOR(l) ((l)->sidenum[1] != NO_INDEX ? _g->sides[(l)->sidenum[1]].sector : NULL)

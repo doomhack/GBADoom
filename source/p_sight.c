@@ -95,10 +95,10 @@ static boolean P_CrossSubsector(int num)
     //you and open doors to come after you. It was awesome!
     //I guess they could just see you even when out of sight.
 
-    if (LN_BBOX_LEFT(line) > _g->los.bbox[BOXRIGHT ] ||
-            LN_BBOX_RIGHT(line) < _g->los.bbox[BOXLEFT  ] ||
-            LN_BBOX_BOTTOM(line) > _g->los.bbox[BOXTOP   ] ||
-            LN_BBOX_TOP(line)    < _g->los.bbox[BOXBOTTOM])
+    if (line->bbox[BOXLEFT] > _g->los.bbox[BOXRIGHT ] ||
+            line->bbox[BOXRIGHT] < _g->los.bbox[BOXLEFT  ] ||
+            line->bbox[BOXBOTTOM] > _g->los.bbox[BOXTOP   ] ||
+            line->bbox[BOXTOP]    < _g->los.bbox[BOXBOTTOM])
         continue;
 
     // cph - do what we can before forced to check intersection
