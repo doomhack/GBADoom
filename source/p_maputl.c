@@ -82,26 +82,26 @@ int PUREFUNC P_PointOnLineSide(fixed_t x, fixed_t y, const line_t *line)
 int PUREFUNC P_BoxOnLineSide(const fixed_t *tmbox, const line_t *ld)
 {
     int p;
-  switch (ld->slopetype)
+    switch (ld->slopetype)
     {
 
     default: // shut up compiler warnings -- killough
     case ST_HORIZONTAL:
-      return
-      (tmbox[BOXBOTTOM] > ld->v1.y) == (p = tmbox[BOXTOP] > ld->v1.y) ?
-        p ^ (ld->dx < 0) : -1;
+        return
+                (tmbox[BOXBOTTOM] > ld->v1.y) == (p = tmbox[BOXTOP] > ld->v1.y) ?
+                    p ^ (ld->dx < 0) : -1;
     case ST_VERTICAL:
-      return
-        (tmbox[BOXLEFT] < ld->v1.x) == (p = tmbox[BOXRIGHT] < ld->v1.x) ?
-        p ^ (ld->dy < 0) : -1;
+        return
+                (tmbox[BOXLEFT] < ld->v1.x) == (p = tmbox[BOXRIGHT] < ld->v1.x) ?
+                    p ^ (ld->dy < 0) : -1;
     case ST_POSITIVE:
-      return
-        P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld) ==
-        (p = P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXTOP], ld)) ? p : -1;
+        return
+                P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld) ==
+                (p = P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXTOP], ld)) ? p : -1;
     case ST_NEGATIVE:
-      return
-        (P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld)) ==
-        (p = P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXTOP], ld)) ? p : -1;
+        return
+                (P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld)) ==
+                (p = P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXTOP], ld)) ? p : -1;
     }
 }
 
@@ -161,31 +161,31 @@ fixed_t PUREFUNC P_InterceptVector2(const divline_t *v2, const divline_t *v1)
 
 void P_LineOpening(const line_t *linedef)
 {
-  if (linedef->sidenum[1] == NO_INDEX)      // single sided line
+    if (linedef->sidenum[1] == NO_INDEX)      // single sided line
     {
-      _g->openrange = 0;
-      return;
+        _g->openrange = 0;
+        return;
     }
 
-  _g->openfrontsector = LN_FRONTSECTOR(linedef);
-  _g->openbacksector = LN_BACKSECTOR(linedef);
+    _g->openfrontsector = LN_FRONTSECTOR(linedef);
+    _g->openbacksector = LN_BACKSECTOR(linedef);
 
-  if (_g->openfrontsector->ceilingheight < _g->openbacksector->ceilingheight)
-    _g->opentop = _g->openfrontsector->ceilingheight;
-  else
-    _g->opentop = _g->openbacksector->ceilingheight;
+    if (_g->openfrontsector->ceilingheight < _g->openbacksector->ceilingheight)
+        _g->opentop = _g->openfrontsector->ceilingheight;
+    else
+        _g->opentop = _g->openbacksector->ceilingheight;
 
-  if (_g->openfrontsector->floorheight > _g->openbacksector->floorheight)
+    if (_g->openfrontsector->floorheight > _g->openbacksector->floorheight)
     {
-      _g->openbottom = _g->openfrontsector->floorheight;
-      _g->lowfloor = _g->openbacksector->floorheight;
+        _g->openbottom = _g->openfrontsector->floorheight;
+        _g->lowfloor = _g->openbacksector->floorheight;
     }
-  else
+    else
     {
-      _g->openbottom = _g->openbacksector->floorheight;
-      _g->lowfloor = _g->openfrontsector->floorheight;
+        _g->openbottom = _g->openbacksector->floorheight;
+        _g->lowfloor = _g->openfrontsector->floorheight;
     }
-  _g->openrange = _g->opentop - _g->openbottom;
+    _g->openrange = _g->opentop - _g->openbottom;
 }
 
 //
@@ -338,31 +338,43 @@ void P_SetThingPosition(mobj_t *thing)
 
 boolean P_BlockLinesIterator(int x, int y, boolean func(const line_t*))
 {
-  int        offset;
-  const short *list;   // killough 3/1/98: for removal of blockmap limit
+    int        offset;
+    const short *list;   // killough 3/1/98: for removal of blockmap limit
 
-  if (x<0 || y<0 || x>=_g->bmapwidth || y>=_g->bmapheight)
-    return true;
-  offset = y*_g->bmapwidth+x;
-  offset = *(_g->blockmap+offset);
-  list = _g->blockmaplump+offset;     // original was reading         // phares
-                                  // delmiting 0 as linedef 0     // phares
+    if (x<0 || y<0 || x>=_g->bmapwidth || y>=_g->bmapheight)
+        return true;
 
-  // killough 1/31/98: for compatibility we need to use the old method.
-  // Most demos go out of sync, and maybe other problems happen, if we
-  // don't consider linedef 0. For safety this should be qualified.
+    offset = y*_g->bmapwidth+x;
+    offset = *(_g->blockmap+offset);
+    list = _g->blockmaplump+offset;     // original was reading         // phares
+    // delmiting 0 as linedef 0     // phares
+
+    // killough 1/31/98: for compatibility we need to use the old method.
+    // Most demos go out of sync, and maybe other problems happen, if we
+    // don't consider linedef 0. For safety this should be qualified.
 
     list++;     // skip 0 starting delimiter                      // phares
-  for ( ; *list != -1 ; list++)                                   // phares
+
+    int vcount = _g->validcount;
+
+    for ( ; *list != -1 ; list++)                                   // phares
     {
-      const line_t *ld = &_g->lines[*list];
-      if (LN_VCOUNT(ld) == _g->validcount)
-        continue;       // line has already been checked
-      LN_VCOUNT(ld) = _g->validcount;
-      if (!func(ld))
-        return false;
+        int lineno = *list;
+
+        linedata_t *lt = &_g->linedata[lineno];
+
+        if (lt->validcount == vcount)
+            continue;       // line has already been checked
+
+        lt->validcount = vcount;
+
+        const line_t *ld = &_g->lines[lineno];
+
+        if (!func(ld))
+            return false;
     }
-  return true;  // everything was checked
+
+    return true;  // everything was checked
 }
 
 //
