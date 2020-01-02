@@ -92,7 +92,6 @@ static const audio_map_t musicMap[NUMMUSIC] =
     {mus_e1m7, MOD_D_E1M7},
     {mus_e1m8, MOD_D_E1M8},
     {mus_e1m9, MOD_D_E1M9},
-
     {mus_e2m1, MOD_D_E2M1},
     {mus_e2m2, MOD_D_E2M2},
     {mus_e2m3, MOD_D_E2M3},
@@ -102,7 +101,6 @@ static const audio_map_t musicMap[NUMMUSIC] =
     {mus_e2m7, MOD_D_E2M7},
     {mus_e2m8, MOD_D_E2M8},
     {mus_e2m9, MOD_D_E2M9},
-
     {mus_e3m1, MOD_D_E2M9},
     {mus_e3m2, MOD_D_E3M2},
     {mus_e3m3, MOD_D_E3M3},
@@ -112,9 +110,7 @@ static const audio_map_t musicMap[NUMMUSIC] =
     {mus_e3m7, MOD_D_E2M7},
     {mus_e3m8, MOD_D_E3M8},
     {mus_e3m9, MOD_D_E1M9},
-
     {mus_inter, MOD_D_INTER},
-
     {mus_intro, MOD_D_INTRO},
     {mus_bunny, MOD_D_BUNNY},
     {mus_victor, MOD_D_VICTOR},
@@ -132,6 +128,7 @@ static const audio_map_t musicMap[NUMMUSIC] =
     {mus_stlks2, MOD_D_STALKS},
     {mus_theda2, MOD_D_THE_DA},
     {mus_doom2, MOD_D_DOOM},
+    {mus_ddtbl2, MOD_D_DDTBLU},
     {mus_runni2, MOD_D_RUNNIN},
     {mus_dead2, MOD_D_DEAD},
     {mus_stlks3, MOD_D_STALKS},
@@ -153,7 +150,6 @@ static const audio_map_t musicMap[NUMMUSIC] =
     {mus_read_m, MOD_D_READ_M},
     {mus_dm2ttl, MOD_D_DM2TTL},
     {mus_dm2int, MOD_D_DM2INT},
-    {mus_openin, MOD_D_OPENIN},
 };
 
 static const audio_map_t soundMap[NUMSFX] =
