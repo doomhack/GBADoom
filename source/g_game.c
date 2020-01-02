@@ -932,7 +932,7 @@ void G_DoLoadGame()
 
     gba_save_data_t* savedata = &saveslots[_g->savegameslot];
 
-    if(!savedata->save_present)
+    if(savedata->save_present != 1)
         return;
 
     _g->gameskill = savedata->gameskill;
