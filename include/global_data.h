@@ -196,7 +196,6 @@ int     turnheld;       // for accelerative turning
 
 // Game events info
 buttoncode_t special_event; // Event triggered by local player, to send
-char         savedescription[SAVEDESCLEN];  // Description to save in savegame if gameaction == ga_savegame
 
 gamestate_t prevgamestate;
 
@@ -298,6 +297,9 @@ short whichSkull;       // which skull to draw (he blinks)
 
 boolean menuactive;    // The menus are up
 boolean messageNeedsInput; // timed message = no input from user
+
+char savegamestrings[8][8];
+
 
 //******************************************************************************
 //m_random.c

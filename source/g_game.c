@@ -537,10 +537,7 @@ boolean G_Responder (event_t* ev)
                       break;
 
                   case BTS_SAVEGAME:
-                      if (!_g->savedescription[0])
-                          strcpy(_g->savedescription, "NET GAME");
-                      _g->savegameslot =
-                              (_g->player.cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
+                      _g->savegameslot = (_g->player.cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
                       _g->gameaction = ga_savegame;
                       break;
 
@@ -903,6 +900,48 @@ void G_ForcedLoadGame(void)
   _g->gameaction = ga_loadgame;
 }
 
+
+//
+// Update the strings displayed in the load-save menu.
+//
+void G_UpdateSaveGameStrings()
+{
+    unsigned int savebuffersize = sizeof(gba_save_data_t) * 8;
+
+
+    byte* loadbuffer = Z_Malloc(savebuffersize, PU_STATIC, NULL);
+
+    LoadSRAM(loadbuffer, savebuffersize);
+
+    gba_save_data_t* saveslots = (gba_save_data_t*)loadbuffer;
+
+    for(int i = 0; i < 8; i++)
+    {
+        if(saveslots[i].save_present != 1)
+        {
+            strcpy(_g->savegamestrings[i], "EMPTY");
+        }
+        else
+        {
+            if(_g->gamemode == commercial)
+            {
+                strcpy(_g->savegamestrings[i], "MAP ");
+
+                itoa(saveslots[i].gamemap, &_g->savegamestrings[i][4], 10);
+            }
+            else
+            {
+                strcpy(_g->savegamestrings[i], "ExMy");
+
+                _g->savegamestrings[i][1] = '0' + saveslots[i].gameepisode;
+                _g->savegamestrings[i][3] = '0' + saveslots[i].gamemap;
+            }
+        }
+    }
+
+    Z_Free(loadbuffer);
+}
+
 // killough 3/16/98: add slot info
 // killough 5/15/98: add command-line
 void G_LoadGame(int slot, boolean command)
@@ -954,8 +993,6 @@ void G_DoLoadGame()
 
 void G_SaveGame(int slot, const char *description)
 {
-  strcpy(_g->savedescription, description);
-
   _g->savegameslot = slot;
   G_DoSaveGame(true);
 }
@@ -988,6 +1025,8 @@ static void G_DoSaveGame(boolean menu)
     Z_Free(savebuffer);
 
     _g->player.message = GGSAVED;
+
+    G_UpdateSaveGameStrings();
 }
 
 void G_DeferedInitNew(skill_t skill, int episode, int map)

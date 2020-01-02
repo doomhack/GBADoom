@@ -72,20 +72,6 @@ static void (*messageRoutine)(int response);
 static const char skullName[2][9] = {"M_SKULL1","M_SKULL2"};
 
 
-static const char savegamestrings[8][SAVESTRINGSIZE] =
-{
-    "SLOT 1",
-    "SLOT 2",
-    "SLOT 3",
-    "SLOT 4",
-    "SLOT 5",
-    "SLOT 6",
-    "SLOT 7",
-    "SLOT 8",
-};
-
-
-
 // end of externs added for setup menus
 
 //
@@ -412,7 +398,7 @@ void M_DrawLoad(void)
     for (i = 0 ; i < load_end ; i++)
     {
         M_DrawSaveLoadBorder(LoadDef.x,27+13*i);
-        M_WriteText(LoadDef.x,27+13*i,savegamestrings[i]);
+        M_WriteText(LoadDef.x,27+13*i,_g->savegamestrings[i]);
     }
 }
 
@@ -533,7 +519,7 @@ void M_DrawSave(void)
     for (i = 0 ; i < load_end ; i++)
     {
         M_DrawSaveLoadBorder(LoadDef.x,27+13*i);
-        M_WriteText(LoadDef.x,27+13*i,savegamestrings[i]);
+        M_WriteText(LoadDef.x,27+13*i,_g->savegamestrings[i]);
     }
 }
 
@@ -542,7 +528,7 @@ void M_DrawSave(void)
 //
 static void M_DoSave(int slot)
 {
-  G_SaveGame (slot,savegamestrings[slot]);
+  G_SaveGame (slot,_g->savegamestrings[slot]);
   M_ClearMenus ();
 }
 
@@ -1237,6 +1223,8 @@ void M_Init(void)
   _g->messageToPrint = 0;
   _g->messageString = NULL;
   _g->messageLastMenuActive = _g->menuactive;
+
+  G_UpdateSaveGameStrings();
 }
 
 //

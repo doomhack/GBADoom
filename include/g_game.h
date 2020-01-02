@@ -72,6 +72,8 @@ void G_DoVictory(void);
 void G_BuildTiccmd (ticcmd_t* cmd); // CPhipps - move decl to header
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 
+void G_UpdateSaveGameStrings();
+
 // killough 5/2/98: moved from m_misc.c:
 
 extern const int  key_right;
