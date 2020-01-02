@@ -164,7 +164,6 @@ static inline signed short fudgea(signed short b)
 
 void G_BuildTiccmd(ticcmd_t* cmd)
 {
-    boolean strafe;
     int speed;
     int tspeed;
     int forward;
@@ -469,8 +468,6 @@ boolean G_Responder (event_t* ev)
 
   void G_Ticker (void)
   {
-      int i;
-
       P_MapStart();
       if(_g->playeringame && _g->player.playerstate == PST_REBORN)
           G_DoReborn (0);
