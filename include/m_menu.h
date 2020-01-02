@@ -67,8 +67,6 @@ void M_Init (void);
 
 void M_StartControlPanel (void);
 
-void M_ForcedLoadGame(const char *msg); // killough 5/15/98: forced loadgames
-
 void M_ResetMenu(void);      // killough 11/98: reset main menu ordering
 
 void M_DrawCredits(void);    // killough 11/98

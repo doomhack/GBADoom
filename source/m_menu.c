@@ -281,6 +281,7 @@ void M_Episode(int choice)
   if ( (_g->gamemode == shareware) && choice)
   {
     M_StartMessage(SWSTRING,NULL,false); // Ty 03/27/98 - externalized
+    M_ClearMenus();
     return;
   }
 
@@ -438,23 +439,6 @@ void M_LoadSelect(int choice)
   G_LoadGame(choice, false); // killough 3/16/98, 5/15/98: add slot, cmd
 
   M_ClearMenus ();
-}
-
-//
-// killough 5/15/98: add forced loadgames
-//
-
-static void M_VerifyForcedLoadGame(int ch)
-{
-  if (ch=='y')
-    G_ForcedLoadGame();
-  free(_g->messageString);       // free the message strdup()'ed below
-  M_ClearMenus();
-}
-
-void M_ForcedLoadGame(const char *msg)
-{
-  M_StartMessage(strdup(msg), M_VerifyForcedLoadGame, true); // free()'d above
 }
 
 //
