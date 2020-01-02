@@ -320,23 +320,24 @@ void M_NewGame(int choice)
 // CPhipps - static
 static void M_VerifyNightmare(int ch)
 {
-  if (ch != key_fire)
-    return;
+    if (ch != key_fire)
+        return;
 
-  G_DeferedInitNew(nightmare,_g->epi+1,1);
-  M_ClearMenus ();
+    G_DeferedInitNew(nightmare,_g->epi+1,1);
 }
 
 void M_ChooseSkill(int choice)
 {
-  if (choice == nightmare)
+    if (choice == nightmare)
     {   // Ty 03/27/98 - externalized
-      M_StartMessage(NIGHTMARE,M_VerifyNightmare,true);
-      return;
+        M_StartMessage(NIGHTMARE,M_VerifyNightmare,true);
+    }
+    else
+    {
+        G_DeferedInitNew(choice,_g->epi+1,1);
     }
 
-  G_DeferedInitNew(choice,_g->epi+1,1);
-  M_ClearMenus ();
+    M_ClearMenus ();
 }
 
 /////////////////////////////
@@ -1050,6 +1051,7 @@ void M_Drawer (void)
 void M_ClearMenus (void)
 {
   _g->menuactive = 0;
+  _g->itemOn = 0;
 }
 
 //
@@ -1058,6 +1060,7 @@ void M_ClearMenus (void)
 void M_SetupNextMenu(const menu_t *menudef)
 {
   _g->currentMenu = menudef;
+  _g->itemOn = 0;
 }
 
 /////////////////////////////
