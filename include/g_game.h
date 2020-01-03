@@ -129,8 +129,6 @@ extern const int  key_map_follow;
 extern const int  key_map_mark;                                           //    ^
 extern const int  key_map_clear;                                          //    |
 extern const int  key_map_grid;                                           // phares
-extern const int  key_map_rotate; // cph - map rotation
-extern const int  key_map_overlay;// cph - map overlay
 
 
 // killough 5/2/98: moved from d_deh.c:
@@ -140,7 +138,7 @@ extern const int cpars[32];    // hardcoded array size
 // CPhipps - Make savedesciption visible in wider scope
 #define SAVEDESCLEN 8
 
-#define NUMKEYS   512
+#define NUMKEYS   16
 
 
 #endif

@@ -5,7 +5,6 @@
 //am_map.c
 //******************************************************************************
 
-_g->leveljuststarted = 1;
 _g->scale_mtof = (fixed_t)INITSCALEMTOF;
 _g->stopped = true;
 

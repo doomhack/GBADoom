@@ -68,8 +68,6 @@
 
 void D_InitNetGame (void)
 {
-    _g->localcmds = &_g->netcmds[0];
-
     _g->playeringame = true;
 }
 
@@ -84,7 +82,7 @@ void D_BuildNewTiccmds(void)
         if (_g->maketic - _g->gametic > 3)
             break;
 
-        G_BuildTiccmd(&_g->localcmds[0]);
+        G_BuildTiccmd(&_g->netcmd);
         _g->maketic++;
     }
 }

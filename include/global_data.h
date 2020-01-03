@@ -88,7 +88,6 @@ fixed_t scale_ftom;
 
 int lastlevel, lastepisode;
 
-boolean leveljuststarted;       // kluge until AM_LevelInit() is called
 boolean stopped;
 
 fixed_t mtof_zoommul; // how far the window zooms each tic (map coords)
@@ -98,8 +97,7 @@ fixed_t ftom_zoommul; // how far the window zooms each tic (fb coords)
 //d_client.c
 //******************************************************************************
 
-ticcmd_t         netcmds[MAXPLAYERS];
-ticcmd_t* localcmds;
+ticcmd_t         netcmd;
 int maketic;
 int lastmadetic;
 
@@ -185,7 +183,6 @@ int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
 int             demover;
 wbstartstruct_t wminfo;               // parms for world map / intermission
-byte            *savebuffer;          // CPhipps - static
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int             longtics;
 

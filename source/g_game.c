@@ -103,8 +103,6 @@ const int     key_map_up = KEYD_UP;
 const int     key_map_down = KEYD_DOWN;
 const int     key_map = KEYD_SELECT;
 const int     key_map_follow = KEYD_A;
-const int     key_map_overlay = 'o'; // cph - map overlay
-const int     key_map_rotate = 'r';  // cph - map rotation
 const int     key_map_zoomin = KEYD_R;
 const int     key_map_zoomout = KEYD_L;
                                           // phares
@@ -511,7 +509,7 @@ boolean G_Responder (event_t* ev)
           {
               ticcmd_t *cmd = &_g->player.cmd;
 
-              memcpy(cmd, &_g->netcmds[0], sizeof *cmd);
+              memcpy(cmd, &_g->netcmd, sizeof *cmd);
 
               if (_g->demoplayback)
                   G_ReadDemoTiccmd (cmd);

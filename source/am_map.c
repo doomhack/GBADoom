@@ -261,8 +261,6 @@ static void AM_initVariables(void)
 // CPhipps - get status bar height from status bar code
 static void AM_LevelInit(void)
 {
-  _g->leveljuststarted = 0;
-
   _g->f_x = _g->f_y = 0;
   _g->f_w = SCREENWIDTH*2;           // killough 2/7/98: get rid of finit_ vars
   _g->f_h = SCREENHEIGHT-ST_SCALED_HEIGHT;// to allow runtime setting of width/height
@@ -405,16 +403,6 @@ boolean AM_Responder
             // Ty 03/27/98 - externalized
             _g->player.message = (_g->automapmode & am_follow) ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF;
         }                                                         //    |
-        else if (ch == key_map_rotate)
-        {
-            _g->automapmode ^= am_rotate;
-            _g->player.message = (_g->automapmode & am_rotate) ? AMSTR_ROTATEON : AMSTR_ROTATEOFF;
-        }
-        else if (ch == key_map_overlay)
-        {
-            _g->automapmode ^= am_overlay;
-            _g->player.message = (_g->automapmode & am_overlay) ? AMSTR_OVERLAYON : AMSTR_OVERLAYOFF;
-        }
         else if (ch == key_map_zoomout)
         {
             _g->mtof_zoommul = M_ZOOMOUT;
