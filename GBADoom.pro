@@ -28,9 +28,6 @@ SOURCES += \
         source/d_items.c \
         source/d_main.c \
         source/doom_iwad.c \
-        source/doomdef.c \
-        source/doomstat.c \
-        source/dstrings.c \
         source/f_finale.c \
         source/f_wipe.c \
         source/g_game.c \
@@ -48,7 +45,6 @@ SOURCES += \
         source/m_bbox.c \
         source/m_cheat.c \
         source/m_menu.c \
-        source/m_misc.c \
         source/m_random.c \
         source/p_ceilng.c \
         source/p_doors.c \
@@ -62,7 +58,6 @@ SOURCES += \
         source/p_mobj.c \
         source/p_plats.c \
         source/p_pspr.c \
-        source/p_saveg.c \
         source/p_setup.c \
         source/p_sight.c \
         source/p_spec.c \
@@ -143,7 +138,6 @@ HEADERS += \
     include/p_maputl.h \
     include/p_mobj.h \
     include/p_pspr.h \
-    include/p_saveg.h \
     include/p_setup.h \
     include/p_spec.h \
     include/p_tick.h \

@@ -70,7 +70,7 @@
 
 
 // number of channels available
-const unsigned int numChannels = 8;
+static const unsigned int numChannels = 8;
 
 //
 // Internals.

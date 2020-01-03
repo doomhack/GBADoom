@@ -33,6 +33,10 @@
  *
  *-----------------------------------------------------------------------------*/
 
+//This is to keep the codesize under control.
+//This whole file needs to fit within IWRAM.
+#pragma GCC optimize ("O2")
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -216,7 +220,7 @@ inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
 #ifndef __arm__
 static byte columnCache[128*128];
 #else
-extern byte* columnCache;
+    #define columnCache ((byte*)0x6014000)
 #endif
 
 static unsigned int columnCacheEntries[128];
@@ -455,7 +459,7 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 //
 
 #pragma GCC push_options
-#pragma GCC optimize ("O3")
+#pragma GCC optimize ("Ofast")
 
 inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, int frac)
 {
@@ -1069,7 +1073,7 @@ static void R_DrawMasked(void)
 //
 
 #pragma GCC push_options
-#pragma GCC optimize ("O3")
+#pragma GCC optimize ("Ofast")
 
 inline static void R_DrawSpanPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int position)
 {

@@ -50,7 +50,6 @@
 #include "m_menu.h"
 #include "m_random.h"
 #include "p_setup.h"
-#include "p_saveg.h"
 #include "p_tick.h"
 #include "p_map.h"
 #include "d_main.h"
@@ -76,9 +75,6 @@
 #include "global_data.h"
 
 #include "gba_functions.h"
-
-const int       consoleplayer = 0; // player taking events and displaying
-const int       displayplayer = 0; // view being displayed
 
 //
 // controls (have defaults)
@@ -809,7 +805,7 @@ void G_DoCompleted (void)
   else
     _g->wminfo.partime = TICRATE*pars[_g->gameepisode][_g->gamemap];
 
-  _g->wminfo.pnum = consoleplayer;
+  _g->wminfo.pnum = 0;
 
 
       _g->wminfo.plyr[0].in = _g->playeringame;

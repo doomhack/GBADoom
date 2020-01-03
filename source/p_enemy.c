@@ -51,6 +51,7 @@
 
 #include "global_data.h"
 
+const int distfriend = 128;
 
 typedef enum {
   DI_EAST,

@@ -66,7 +66,6 @@ static const int mapcolor_secr = 252;    // secret sector boundary color
 static const int mapcolor_exit = 0;    // jff 4/23/98 add exit line color
 static const int mapcolor_unsn = 104;    // computer map unseen line color
 static const int mapcolor_flat = 88;    // line with no floor/ceiling changes
-static const int mapcolor_hair = 208;    // crosshair color
 static const int mapcolor_sngl = 208;    // single player arrow color
 static const int map_secret_after = 0;
 
@@ -230,7 +229,6 @@ static void AM_changeWindowLoc(void)
 //
 static void AM_initVariables(void)
 {
-  int pnum;
   static const event_t st_notify = { ev_keyup, AM_MSGENTERED, 0, 0 };
 
   _g->automapmode |= am_active;
@@ -1095,33 +1093,6 @@ static void AM_drawPlayers(void)
 }
 
 //
-// AM_drawCrosshair()
-//
-// Draw the single point crosshair representing map center
-//
-// Passed the color to draw the pixel with
-// Returns nothing
-//
-// CPhipps - made static inline, and use the general pixel plotter function
-
-inline static void AM_drawCrosshair(int color)
-{
-  fline_t line;
-
-  line.a.x = (_g->f_w/2)-1;
-  line.a.y = (_g->f_h/2);
-  line.b.x = (_g->f_w/2)+1;
-  line.b.y = (_g->f_h/2);
-  V_DrawLine(&line, color);
-
-  line.a.x = (_g->f_w/2);
-  line.a.y = (_g->f_h/2)-1;
-  line.b.x = (_g->f_w/2);
-  line.b.y = (_g->f_h/2)+1;
-  V_DrawLine(&line, color);
-}
-
-//
 // AM_Drawer()
 //
 // Draws the entire automap
@@ -1140,5 +1111,4 @@ void AM_Drawer (void)
         AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
     AM_drawWalls();
     AM_drawPlayers();
-    //AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
 }

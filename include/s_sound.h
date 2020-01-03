@@ -104,7 +104,5 @@ typedef struct
 } channel_t;
 
 
-// machine-independent sound params
-extern const unsigned int numChannels;
 
 #endif

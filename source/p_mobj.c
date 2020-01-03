@@ -800,7 +800,7 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
   P_SetupPsprites (p);
 
 
-  if (mthing->type-1 == consoleplayer)
+  if (mthing->type-1 == 0)
     {
     ST_Start(); // wake up the status bar
     HU_Start(); // wake up the heads up text
@@ -884,9 +884,9 @@ void P_SpawnMapThing (const mapthing_t* mthing)
   //Only care about start spot for player 1.
   if(mthing->type == 1)
   {
-      _g->playerstarts[consoleplayer] = *mthing;
-      _g->playerstarts[consoleplayer].options = 1;
-      P_SpawnPlayer (consoleplayer, &_g->playerstarts[consoleplayer]);
+      _g->playerstarts[0] = *mthing;
+      _g->playerstarts[0].options = 1;
+      P_SpawnPlayer (0, &_g->playerstarts[0]);
       return;
   }
 

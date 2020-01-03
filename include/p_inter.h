@@ -69,7 +69,6 @@ extern const int max_soul;
 extern const int soul_health;
 extern const int mega_health;
 extern const int bfgcells;
-extern const int monsters_infight; // e6y: Dehacked support - monsters infight
 extern const int maxammo[], clipammo[];
 
 #endif

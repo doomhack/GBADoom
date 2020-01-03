@@ -209,7 +209,7 @@ side_t* getSide
 //
 // Note: if side=1 is specified, it must exist or results undefined
 //
-sector_t* getSector
+static sector_t* getSector
 ( int           currentSector,
   int           line,
   int           side )

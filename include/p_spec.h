@@ -794,11 +794,6 @@ int twoSided
 ( int sector,
   int line );
 
-sector_t* getSector
-( int currentSector,
-  int line,
-  int side );
-
 side_t* getSide
 ( int   currentSector,
   int   line,

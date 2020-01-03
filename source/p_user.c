@@ -174,7 +174,7 @@ void P_CalcHeight (player_t* player)
 //
 // killough 10/98: simplified
 
-void P_MovePlayer (player_t* player)
+static void P_MovePlayer (player_t* player)
 {
   ticcmd_t *cmd = &player->cmd;
   mobj_t *mo = player->mo;
@@ -221,7 +221,7 @@ void P_MovePlayer (player_t* player)
 // Decrease POV height to floor height.
 //
 
-void P_DeathThink (player_t* player)
+static void P_DeathThink (player_t* player)
   {
   angle_t angle;
   angle_t delta;

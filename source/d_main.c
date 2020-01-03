@@ -261,7 +261,7 @@ static void D_DoomLoop(void)
         if (_g->singletics)
 		{
 			I_StartTic ();
-            G_BuildTiccmd (&_g->netcmds[consoleplayer]);
+            G_BuildTiccmd (&_g->netcmds[0]);
 			
             if (_g->advancedemo)
 				D_DoAdvanceDemo ();
@@ -598,10 +598,6 @@ static void IdentifyVersion()
 
 static void D_DoomMainSetup(void)
 {
-    lprintf(LO_INFO,"M_LoadDefaults: Load defaults.");
-
-    M_LoadDefaults();              // load before initing other systems
-
     IdentifyVersion();
 
     // jff 1/24/98 end of set to both working and command line value

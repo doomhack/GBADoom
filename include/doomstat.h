@@ -46,11 +46,6 @@
 #pragma interface
 #endif
 
-
-// -------------------------------------------
-// Language.
-extern const Language_t   language;
-
 // -------------------------------------------
 // Selected skill type, map etc.
 //
@@ -73,17 +68,10 @@ enum automapmode_e {
 };
 extern enum automapmode_e automapmode; // Mode that the automap is in
 
-// Player taking events, and displaying.
-extern const int consoleplayer;
-extern const int displayplayer;
-
 //-----------------------------------------
 // Internal parameters, used for engine.
 //
 
 //-----------------------------------------------------------------------------
-
-/* killough 8/8/98: distance friendly monsters tend to stay from player */
-extern const int distfriend;
 
 #endif
