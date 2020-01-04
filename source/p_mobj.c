@@ -86,6 +86,8 @@ boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
             {
                 if(mobj->info->missilestate && (state >= mobj->info->missilestate) && (state < mobj->info->painstate))
                     A_CyberAttack(mobj);
+                else
+                    st->action(mobj);
             }
         }
 
