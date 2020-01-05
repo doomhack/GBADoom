@@ -1,7 +1,8 @@
 ## GBADoom SVN
 
 A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s amazing port of prBoom to the GBA. 
-![Episode 2](https://i.imgur.com/kOwpVzW.png)
+
+![Episode 2](https://i.imgur.com/kOwpVzW.png)  
 
 **What's different?:**
 - The HUD is changed to be identical to the GBA Doom II retail HUD, therefore all HUD elements are no longer using scaling algorithms and contain all the HUD elements. This does make the screen vertical viewing space somewhat smaller, not too sure if this improves framerate or not.
@@ -12,18 +13,18 @@ A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s
 Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) for future engine optimisations and bug fixes.
 
 ## Cheats:
-**Chainsaw:** L, UP, UP, LEFT, L, SELECT, SELECT, UP
-**God mode:** UP, UP, DOWN, DOWN, LEFT, LEFT, RIGHT, RIGHT
-**Ammo & Keys:** L, LEFT, R, RIGHT, SELECT,UP, SELECT, UP
-**Ammo:** R, R, SELECT,R, SELECT,UP, UP, LEFT
-**No Clipping:** UP, DOWN, LEFT, RIGHT, UP, DOWN, LEFT, RIGHT
-**Invincibility:** A, B, L, R, L, R, SELECT, SELECT
-**Berserk:** B, B, R, UP, A, A, R, B
-**Invisibility:** A, A, SELECT,B, A, SELECT, L, B
-**Auto-map:** L, SELECT,R, B, A, R, L, UP
-**Lite-Amp Goggles:** DOWN,LEFT, R, LEFT, R, L, L, SELECT
-**Exit Level:** LEFT,R, LEFT, L, B, LEFT, RIGHT, A
-**Enemy Rockets (Goldeneye):** A, B, L, R, R, L, B, A
+**Chainsaw:** L, UP, UP, LEFT, L, SELECT, SELECT, UP  
+**God mode:** UP, UP, DOWN, DOWN, LEFT, LEFT, RIGHT, RIGHT  
+**Ammo & Keys:** L, LEFT, R, RIGHT, SELECT,UP, SELECT, UP  
+**Ammo:** R, R, SELECT,R, SELECT,UP, UP, LEFT  
+**No Clipping:** UP, DOWN, LEFT, RIGHT, UP, DOWN, LEFT, RIGHT  
+**Invincibility:** A, B, L, R, L, R, SELECT, SELECT  
+**Berserk:** B, B, R, UP, A, A, R, B  
+**Invisibility:** A, A, SELECT,B, A, SELECT, L, B  
+**Auto-map:** L, SELECT,R, B, A, R, L, UP  
+**Lite-Amp Goggles:** DOWN,LEFT, R, LEFT, R, L, L, SELECT  
+**Exit Level:** LEFT,R, LEFT, L, B, LEFT, RIGHT, A  
+**Enemy Rockets (Goldeneye):** A, B, L, R, R, L, B, A  
 
 ## Building:
 Video Tutorial: https://www.youtube.com/watch?v=YbZgZqV6JMk
