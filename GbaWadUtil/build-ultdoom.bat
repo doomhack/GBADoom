@@ -1,1 +1,1 @@
-gbawadutil.exe -in doom.wad -cfile doom.c
+gbawadutil.exe -in doom.wad -cfile ..\source\iwad\doom.c
