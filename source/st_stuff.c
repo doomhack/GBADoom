@@ -101,6 +101,8 @@ static int ST_calcPainOffset(void)
 static void ST_updateFaceWidget(void)
 {
     int         i;
+	angle_t     badguyangle;
+	angle_t     diffang;
     static int  lastattackdown = -1;
     static int  priority = 0;
     boolean     doevilgrin;
@@ -140,6 +142,65 @@ static void ST_updateFaceWidget(void)
             }
         }
 
+    }
+	
+	//Restore the face looking at enemies direction in this SVN... Cause it's handy! ~Kippykip
+	if (priority < 8)
+    {
+		if (_g->plyr->damagecount && _g->plyr->attacker && _g->plyr->attacker != _g->plyr->mo)
+		{
+			// being attacked
+			priority = 7;
+
+			// haleyjd 10/12/03: classic DOOM problem of missing OUCH face
+			// was due to inversion of this test:
+			// if(plyr->health - st_oldhealth > ST_MUCHPAIN)
+			if(_g->st_oldhealth - _g->plyr->health > ST_MUCHPAIN)
+			{
+				_g->st_facecount = ST_TURNCOUNT;
+				_g->st_faceindex = ST_calcPainOffset() + ST_OUCHOFFSET;
+			}
+			else
+			{
+				badguyangle = R_PointToAngle2(_g->plyr->mo->x,
+				_g->plyr->mo->y,
+				_g->plyr->attacker->x,
+				_g->plyr->attacker->y);
+
+				if (badguyangle > _g->plyr->mo->angle)
+				{
+					// whether right or left
+					diffang = badguyangle - _g->plyr->mo->angle;
+					i = diffang > ANG180;
+				}
+				else
+				{
+					// whether left or right
+					diffang = _g->plyr->mo->angle - badguyangle;
+					i = diffang <= ANG180;
+				} // confusing, aint it?
+
+
+				_g->st_facecount = ST_TURNCOUNT;
+				_g->st_faceindex = ST_calcPainOffset();
+
+				if (diffang < ANG45)
+				{
+					// head-on
+					_g->st_faceindex += ST_RAMPAGEOFFSET;
+				}
+				else if (i)
+				{
+					// turn face right
+					_g->st_faceindex += ST_TURNOFFSET;
+				}
+				else
+				{
+					// turn face left
+					_g->st_faceindex += ST_TURNOFFSET+1;
+				}
+			}
+		}
     }
 
     if (priority < 7)
@@ -294,6 +355,13 @@ static void ST_doPaletteStuff(void)
 static void ST_drawWidgets(boolean refresh)
 {
     STlib_updateNum(&_g->w_ready, CR_RED, refresh);
+	
+	// Restore the ammo numbers for backpack stats I guess, etc ~Kippykip
+	for (int i=0;i<4;i++)
+    {
+		STlib_updateNum(&_g->w_ammo[i], CR_DEFAULT, refresh);
+		STlib_updateNum(&_g->w_maxammo[i], CR_DEFAULT, refresh);
+    }
 
     STlib_updatePercent(&_g->st_health, CR_RED, refresh);
 
@@ -401,7 +469,8 @@ static void ST_loadGraphics(boolean doload)
     // Load the numbers, tall and short
     for (i=0;i<10;i++)
     {
-        sprintf(namebuf, "STTNUM%d", i);
+        //sprintf(namebuf, "STTNUM%d", i);
+		sprintf(namebuf, "STGANUM%d", i); //Special GBA Doom II Red Numbers ~Kippykip
         _g->tallnum[i] = (const patch_t *) W_CacheLumpName(namebuf);
 
         sprintf(namebuf, "STYSNUM%d", i);
@@ -493,49 +562,40 @@ static void ST_createWidgets(void)
 
     // ready weapon ammo
     STlib_initNum(&_g->w_ready,
-                  ST_AMMOX,
-                  ST_AMMOY,
-                  _g->tallnum,
-                  &_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo],
-            &_g->st_statusbaron,
-            ST_AMMOWIDTH );
+		ST_AMMOX,
+		ST_AMMOY,
+		_g->tallnum,
+		&_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo],
+		&_g->st_statusbaron,
+		ST_AMMOWIDTH );
 
     // health percentage
     STlib_initPercent(&_g->st_health,
-                      ST_HEALTHX,
-                      ST_HEALTHY,
-                      _g->tallnum,
-                      &_g->plyr->health,
-                      &_g->st_statusbaron,
-                      _g->tallpercent);
-
+			ST_HEALTHX,
+			ST_HEALTHY,
+			_g->tallnum,
+			&_g->plyr->health,
+			&_g->st_statusbaron,
+			_g->tallpercent);
+					  
+    // armor percentage - should be colored later
+    STlib_initPercent(&_g->st_armor,
+			ST_ARMORX,
+			ST_ARMORY,
+			_g->tallnum,
+			&_g->plyr->armorpoints,
+			&_g->st_statusbaron, _g->tallpercent);
 
     // weapons owned
     for(i=0;i<6;i++)
     {
         STlib_initMultIcon(&_g->w_arms[i],
-                           ST_ARMSX+(i%3)*ST_ARMSXSPACE,
-                           ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-                           _g->arms[i], (int*) &_g->plyr->weaponowned[i+1],
-                            &_g->st_statusbaron);
+			ST_ARMSX+(i%3)*ST_ARMSXSPACE,
+			ST_ARMSY+(i/3)*ST_ARMSYSPACE,
+			_g->arms[i], (int*) &_g->plyr->weaponowned[i+1],
+			&_g->st_statusbaron);
     }
-
-    // faces
-    STlib_initMultIcon(&_g->w_faces,
-                       ST_FACESX,
-                       ST_FACESY,
-                       _g->faces,
-                       &_g->st_faceindex,
-                       &_g->st_statusbaron);
-
-    // armor percentage - should be colored later
-    STlib_initPercent(&_g->st_armor,
-                      ST_ARMORX,
-                      ST_ARMORY,
-                      _g->tallnum,
-                      &_g->plyr->armorpoints,
-                      &_g->st_statusbaron, _g->tallpercent);
-
+	
     // keyboxes 0-2
     STlib_initMultIcon(&_g->w_keyboxes[0],
             ST_KEY0X,
@@ -556,7 +616,81 @@ static void ST_createWidgets(void)
             ST_KEY2Y,
             _g->keys,
             &_g->keyboxes[2],
-            &_g->st_statusbaron);
+            &_g->st_statusbaron);			
+			
+	// ammo count (all four kinds)
+	STlib_initNum(&_g->w_ammo[0],
+			ST_AMMO0X,
+			ST_AMMO0Y,
+			_g->shortnum,
+			&_g->plyr->ammo[0],
+			&_g->st_statusbaron,
+			ST_AMMO0WIDTH);
+
+	STlib_initNum(&_g->w_ammo[1],
+			ST_AMMO1X,
+			ST_AMMO1Y,
+			_g->shortnum,
+			&_g->plyr->ammo[1],
+			&_g->st_statusbaron,
+			ST_AMMO1WIDTH);
+
+	STlib_initNum(&_g->w_ammo[2],
+			ST_AMMO2X,
+			ST_AMMO2Y,
+			_g->shortnum,
+			&_g->plyr->ammo[2],
+			&_g->st_statusbaron,
+			ST_AMMO2WIDTH);
+
+	STlib_initNum(&_g->w_ammo[3],
+			ST_AMMO3X,
+			ST_AMMO3Y,
+			_g->shortnum,
+			&_g->plyr->ammo[3],
+			&_g->st_statusbaron,
+			ST_AMMO3WIDTH);
+
+	// max ammo count (all four kinds)
+	STlib_initNum(&_g->w_maxammo[0],
+			ST_MAXAMMO0X,
+			ST_MAXAMMO0Y,
+			_g->shortnum,
+			&_g->plyr->maxammo[0],
+			&_g->st_statusbaron,
+			ST_MAXAMMO0WIDTH);
+
+	STlib_initNum(&_g->w_maxammo[1],
+			ST_MAXAMMO1X,
+			ST_MAXAMMO1Y,
+			_g->shortnum,
+			&_g->plyr->maxammo[1],
+			&_g->st_statusbaron,
+			ST_MAXAMMO1WIDTH);
+
+	STlib_initNum(&_g->w_maxammo[2],
+			ST_MAXAMMO2X,
+			ST_MAXAMMO2Y,
+			_g->shortnum,
+			&_g->plyr->maxammo[2],
+			&_g->st_statusbaron,
+			ST_MAXAMMO2WIDTH);
+
+	STlib_initNum(&_g->w_maxammo[3],
+			ST_MAXAMMO3X,
+			ST_MAXAMMO3Y,
+			_g->shortnum,
+			&_g->plyr->maxammo[3],
+			&_g->st_statusbaron,
+			ST_MAXAMMO3WIDTH);
+			
+    // faces
+    STlib_initMultIcon(&_g->w_faces,
+			ST_FACESX,
+			ST_FACESY,
+			_g->faces,
+			&_g->st_faceindex,
+			&_g->st_statusbaron);
 }
 
 static boolean st_stopped = true;

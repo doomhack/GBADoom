@@ -1,0 +1,1 @@
+gbawadutil.exe -in doom1.wad -cfile doom1.c

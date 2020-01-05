@@ -92,9 +92,10 @@ const int     key_menu_escape = KEYD_START;                                     
 const int     key_menu_enter = KEYD_A;                                      // phares 3/7/98
 const int     key_strafeleft = KEYD_L;
 const int     key_straferight = KEYD_R;
-const int     key_fire = KEYD_A;
-const int     key_use = KEYD_B;
-const int     key_speed = KEYD_B;
+//Match Doom II GBA retail controls ~ Kippykip
+const int     key_fire = KEYD_B; 
+const int     key_use = KEYD_A;
+const int     key_speed = KEYD_A;
 const int     key_escape = KEYD_START;                           // phares 4/13/98
 const int     key_enter = KEYD_A;
 const int     key_map_right = KEYD_RIGHT;
