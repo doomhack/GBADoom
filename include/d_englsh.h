@@ -91,8 +91,9 @@
 #define GOTHTHBONUS "Picked up a health bonus."
 #define GOTARMBONUS "Picked up an armor bonus."
 #define GOTSTIM     "Picked up a stimpack."
-#define GOTMEDINEED "Picked up a medikit that you REALLY need!"
 #define GOTMEDIKIT  "Picked up a medikit."
+//#define GOTMEDINEED "Picked up a medikit that you REALLY need!" - String is too long for GBA res
+#define GOTMEDINEED  "Picked up a medikit."
 #define GOTSUPER    "Supercharge!"
 
 #define GOTBLUECARD "Picked up a blue keycard."
