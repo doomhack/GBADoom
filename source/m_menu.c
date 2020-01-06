@@ -321,7 +321,7 @@ void M_NewGame(int choice)
 // CPhipps - static
 static void M_VerifyNightmare(int ch)
 {
-    if (ch != key_fire)
+    if (ch != key_enter)
         return;
 
     G_DeferedInitNew(nightmare,_g->epi+1,1);
@@ -338,7 +338,7 @@ void M_ChooseSkill(int choice)
         G_DeferedInitNew(choice,_g->epi+1,1);
     }
 
-    M_ClearMenus ();
+    _g->itemOn = 0;
 }
 
 /////////////////////////////
@@ -700,7 +700,7 @@ void M_MusicVol(int choice)
 
 static void M_EndGameResponse(int ch)
 {
-  if (ch != key_fire)
+  if (ch != key_enter)
     return;
 
   // killough 5/26/98: make endgame quit if recording or playing back demo
@@ -824,7 +824,7 @@ boolean M_Responder (event_t* ev)
     if (_g->messageToPrint)
     {
         if (_g->messageNeedsInput == true &&
-                !(ch == ' ' || ch == 'n' || ch == 'y' || ch == key_escape || ch == key_fire)) // phares
+                !(ch == ' ' || ch == 'n' || ch == 'y' || ch == key_escape || ch == key_fire || ch == key_enter)) // phares
             return false;
 
         _g->menuactive = _g->messageLastMenuActive;
