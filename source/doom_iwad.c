@@ -1,4 +1,6 @@
-#include "iwad/doomu.gba.h"
+#pragma GCC optimize ("-O0")
+
+#include "iwad/doom2.gba.h"
 
 #include "doom_iwad.h"
 
