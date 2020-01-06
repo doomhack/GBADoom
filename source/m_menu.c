@@ -332,13 +332,13 @@ void M_ChooseSkill(int choice)
     if (choice == nightmare)
     {   // Ty 03/27/98 - externalized
         M_StartMessage(NIGHTMARE,M_VerifyNightmare,true);
+		_g->itemOn = 0;
     }
     else
     {
         G_DeferedInitNew(choice,_g->epi+1,1);
-    }
-
-    _g->itemOn = 0;
+		M_ClearMenus ();
+    }    
 }
 
 /////////////////////////////
