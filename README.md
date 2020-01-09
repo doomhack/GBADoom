@@ -9,6 +9,7 @@ A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s
 - The MUG head turning on damage is restored.
 - The chainsaw sounds no longer overlap.
 - **B** is now the fire button, and sprinting/use has been changed to **A**. To match the retail GBA Doom II controls.
+- Weapon selection order is now: Fist, Chainsaw, Pistol, Shotgun, Super Shotgun, Chaingun, Plasmagun, BFG 9000  
 
 Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) for future engine optimisations and bug fixes.
 
