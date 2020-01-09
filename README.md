@@ -29,15 +29,15 @@ Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) f
 **Exit Level:** LEFT,R, LEFT, L, B, LEFT, RIGHT, A  
 **Enemy Rockets (Goldeneye):** A, B, L, R, R, L, B, A  
 
-## Controls:
-**Fire:** B
-**Use / Sprint:** A
-**Walk:** D-Pad
-**Strafe:** L & R
-**Automap:** SELECT
-**Weapon up:** A + R
-**Weapon down:** A + L
-**Menu:** Start
+## Controls:  
+**Fire:** B  
+**Use / Sprint:** A  
+**Walk:** D-Pad  
+**Strafe:** L & R  
+**Automap:** SELECT  
+**Weapon up:** A + R  
+**Weapon down:** A + L  
+**Menu:** Start  
 
 ## Building:
 Video Tutorial: https://www.youtube.com/watch?v=YbZgZqV6JMk
