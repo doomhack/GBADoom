@@ -88,6 +88,7 @@ void M_EndGame(int choice);
 
 void M_ChangeMessages(int choice);
 void M_ChangeAlwaysRun(int choice);
+void M_ChangeGamma(int choice);
 void M_SfxVol(int choice);
 void M_MusicVol(int choice);
 void M_StartGame(int choice);
@@ -558,6 +559,7 @@ enum
   endgame,
   messages,
   alwaysrun,
+  gamma,
   soundvol,
   opt_end
 };
@@ -570,6 +572,7 @@ static const menuitem_t OptionsMenu[]=
   {1,"M_ENDGAM", M_EndGame},
   {1,"M_MESSG",  M_ChangeMessages},
   {1,"M_ARUN",   M_ChangeAlwaysRun},
+  {1,"M_GAMMA",   M_ChangeGamma},
   {1,"M_SVOL",   M_Sound}
 };
 
@@ -598,6 +601,9 @@ void M_DrawOptions(void)
 
   V_DrawNamePatch(OptionsDef.x + 146, OptionsDef.y+LINEHEIGHT*alwaysrun, 0,
       msgNames[_g->alwaysRun], CR_DEFAULT, VPT_STRETCH);
+	  
+  V_DrawNamePatch(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma, 0,
+      msgNames[_g->gamma], CR_DEFAULT, VPT_STRETCH);
 }
 
 void M_Options(int choice)
@@ -748,6 +754,20 @@ void M_ChangeAlwaysRun(int choice)
       _g->player.message = RUNON ; // Ty 03/27/98 - externalized
 }
 
+void M_ChangeGamma(int choice)
+{
+    // warning: unused parameter `int choice'
+    choice = 0;
+    _g->gamma = 1 - _g->gamma;
+
+    if (!_g->gamma)
+      _g->player.message = GAMMALVL0; // Ty 03/27/98 - externalized
+    else
+      _g->player.message = GAMMALVL4 ; // Ty 03/27/98 - externalized
+  
+	V_SetPalette(0);
+}
+
 //
 // End of Original Menus
 //
@@ -807,8 +827,8 @@ boolean M_Responder (event_t* ev)
     if (ch == -1)
         return false; // we can't use the event here
 
-
-    if(ev->data1 == key_map && _g->gamekeydown[key_use])
+	//No longer needed due to menu addition ~Kippykip
+   /* if(ev->data1 == key_map && _g->gamekeydown[key_use])
     {
         //Use + Select to toggle brightness.
 
@@ -816,7 +836,7 @@ boolean M_Responder (event_t* ev)
         V_SetPalette(0);
 
         return true;
-    }
+    }*/
 
 
     // Take care of any messages that need input

@@ -128,6 +128,8 @@ typedef struct gba_save_data_t
     int gameepisode;
     int gamemap;
     int totalleveltimes;
+	int alwaysRun;
+	int gamma;
 
     int weaponowned[NUMWEAPONS];
     int ammo[NUMAMMO];
@@ -969,6 +971,8 @@ void G_DoLoadGame()
     _g->gameskill = savedata->gameskill;
     _g->gameepisode = savedata->gameepisode;
     _g->gamemap = savedata->gamemap;
+	_g->alwaysRun = savedata->alwaysRun;
+	_g->gamma = savedata->gamma;
 
     G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
 
@@ -1010,6 +1014,8 @@ static void G_DoSaveGame(boolean menu)
     savedata->gameepisode = _g->gameepisode;
     savedata->gamemap = _g->gamemap;
     savedata->totalleveltimes = _g->totalleveltimes;
+	savedata->alwaysRun = _g->alwaysRun;
+	savedata->gamma = _g->gamma;
 
     memcpy(savedata->weaponowned, _g->player.weaponowned, sizeof(savedata->weaponowned));
     memcpy(savedata->ammo, _g->player.ammo, sizeof(savedata->ammo));
