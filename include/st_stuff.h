@@ -102,7 +102,9 @@
 #define ST_FACESY               (ST_Y)
 
 #define ST_EVILGRINCOUNT        (2*TICRATE)
-#define ST_STRAIGHTFACECOUNT    (TICRATE*2)
+ //Fix Status bar face timing ~Kippykip
+//#define ST_STRAIGHTFACECOUNT    (TICRATE*2)
+#define ST_STRAIGHTFACECOUNT    (18)
 #define ST_TURNCOUNT            (1*TICRATE)
 #define ST_OUCHCOUNT            (1*TICRATE)
 #define ST_RAMPAGEDELAY         (2*TICRATE)
