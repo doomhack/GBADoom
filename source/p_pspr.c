@@ -292,6 +292,36 @@ int P_WeaponCycleUp(player_t *player)
         w++;
         if(w >= NUMWEAPONS)
             w = 0;
+		
+		//Dumb hack to fix weapon order	to be like PSXDoom ~Kippykip
+		switch(w)
+		{
+			case wp_chaingun:
+			{
+				w = wp_supershotgun;
+			}
+			break;
+			case wp_fist:
+			{
+				w = wp_chaingun;
+			}
+			break;
+			case wp_chainsaw:
+			{
+				w = wp_fist;
+			}
+			break;
+			case wp_pistol:
+			{
+				w = wp_chainsaw;
+			}
+			break;
+			case wp_supershotgun:
+			{
+				w = wp_pistol;
+			}
+			break;
+		}
 
         if(!player->weaponowned[w])
             continue;
@@ -313,6 +343,36 @@ int P_WeaponCycleDown(player_t *player)
         w--;
         if(w < 0)
             w = NUMWEAPONS-1;
+		
+		//Dumb hack to fix weapon order	to be like PSXDoom ~Kippykip
+		switch(w)
+		{
+			case wp_shotgun:
+			{
+				w = wp_supershotgun;
+			}
+			break;
+			case wp_chainsaw:
+			{
+				w = wp_shotgun;
+			}
+			break;
+			case wp_fist:
+			{
+				w = wp_chainsaw;
+			}
+			break;
+			case wp_bfg:
+			{
+				w = wp_fist;
+			}
+			break;
+			case wp_supershotgun:
+			{
+				w = wp_bfg;
+			}
+			break;
+		}
 
         if(!player->weaponowned[w])
             continue;
