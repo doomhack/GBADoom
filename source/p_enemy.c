@@ -648,7 +648,8 @@ static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
 {
     fixed_t dist = P_AproxDistance(mo->x-actor->x, mo->y-actor->y);
 
-    if(dist > LOOKRANGE)
+    //if(dist > LOOKRANGE)
+	if((dist > LOOKRANGE) && (actor->type != MT_BOSSSPIT)) //Fix for icon of sin being blind
         return false;
 
     if (!allaround)
