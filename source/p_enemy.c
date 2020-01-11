@@ -648,8 +648,8 @@ static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
 {
     fixed_t dist = P_AproxDistance(mo->x-actor->x, mo->y-actor->y);
 
-	//Fix for icon of sin being blind, and having the others have bad depth perception ~Kippykip
-	if((dist > LOOKRANGE) && actor->type != MT_BOSSSPIT && actor->type != MT_CYBORG && actor->type != MT_SPIDER)
+    //Fix for icon of sin being blind, and having the others have bad depth perception ~Kippykip
+    if((dist > LOOKRANGE) && actor->type != MT_BOSSSPIT && actor->type != MT_CYBORG && actor->type != MT_SPIDER)
         return false;
 
     if (!allaround)

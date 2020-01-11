@@ -1,3 +1,5 @@
+#pragma GCC optimize ("-O0")
+
 #include "iwad/doom1.c"
 //#include "iwad/doom.c"
 //#include "iwad/doom2.c"

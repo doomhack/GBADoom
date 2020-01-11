@@ -22,3 +22,5 @@ source/iwad/doom2.gba.h
 *.gba
 
 source/iwad/sigil.gba.h
+
+source/iwad/tnt.gba.h
