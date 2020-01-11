@@ -1172,16 +1172,9 @@ static void R_DoDrawPlane(visplane_t *pl)
     {
         if (pl->picnum == _g->skyflatnum)
         { // sky flat
-            int texture;
-            angle_t an, flip;
-
-            an = viewangle;
 
             // Normal Doom sky, only one allowed per level
             dcvars.texturemid = skytexturemid;    // Default y-offset
-            texture = _g->skytexture;             // Default texture
-            flip = 0;                         // Doom flips it
-
 
           /* Sky is always drawn full bright, i.e. colormaps[0] is used.
            * Because of this hack, sky is not affected by INVUL inverse mapping.
@@ -1193,17 +1186,27 @@ static void R_DoDrawPlane(visplane_t *pl)
             // proff 09/21/98: Changed for high-res
             dcvars.iscale = FRACUNIT*200/viewheight;
 
-            const texture_t* tex = R_GetOrLoadTexture(texture);
+            const texture_t* tex = R_GetOrLoadTexture(_g->skytexture);
 
             const unsigned int widthmask = tex->widthmask;
             const patch_t* patch = tex->patches[0].patch;
 
-            // killough 10/98: Use sky scrolling offset, and possibly flip picture
+            boolean multitex_sky = (tex->patchcount > 1);
+
+            // killough 10/98: Use sky scrolling offset
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
             {
                 if ((dcvars.yl = pl->top[x]) != -1 && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
                 {
-                    const int xc = (((an + xtoviewangle[x])^flip) >> ANGLETOSKYSHIFT) & widthmask;
+                    int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT) & widthmask;
+
+                    if(multitex_sky)
+                    {
+                        int w = patch->width;
+                        int p = IDiv32(xc, w);
+                        xc -= (w * p);
+                        patch = tex->patches[p].patch;
+                    }
 
                     const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
 
