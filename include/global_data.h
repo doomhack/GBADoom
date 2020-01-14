@@ -748,6 +748,12 @@ st_multicon_t w_faces;
 // keycard widgets
 st_multicon_t w_keyboxes[3];
 
+// ammo widgets
+st_number_t w_ammo[4];
+
+// max ammo widgets
+st_number_t w_maxammo[4];
+
 // armor widget
 st_percent_t  st_armor;
 

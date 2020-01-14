@@ -79,10 +79,12 @@
 #define DETAILHI    "High detail"
 #define DETAILLO    "Low detail"
 #define GAMMALVL0   "Gamma correction OFF"
-#define GAMMALVL1   "Gamma correction level 1"
-#define GAMMALVL2   "Gamma correction level 2"
-#define GAMMALVL3   "Gamma correction level 3"
-#define GAMMALVL4   "Gamma correction level 4"
+//Unused ~Kippykip
+//#define GAMMALVL1   "Gamma correction level 1"
+//#define GAMMALVL2   "Gamma correction level 2"
+//#define GAMMALVL3   "Gamma correction level 3"
+//#define GAMMALVL4   "Gamma correction level 4"
+#define GAMMALVL4   "Gamma correction ON"
 #define EMPTYSTRING "empty slot"
 
 /* p_inter.c */
@@ -91,8 +93,9 @@
 #define GOTHTHBONUS "Picked up a health bonus."
 #define GOTARMBONUS "Picked up an armor bonus."
 #define GOTSTIM     "Picked up a stimpack."
-#define GOTMEDINEED "Picked up a medikit that you REALLY need!"
 #define GOTMEDIKIT  "Picked up a medikit."
+//#define GOTMEDINEED "Picked up a medikit that you REALLY need!" - String is too long for GBA res
+#define GOTMEDINEED  "Picked up a medikit."
 #define GOTSUPER    "Supercharge!"
 
 #define GOTBLUECARD "Picked up a blue keycard."

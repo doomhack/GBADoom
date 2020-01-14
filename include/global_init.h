@@ -62,10 +62,10 @@ _g->freehead = &_g->freetail;     // killough
 //s_sounds.c
 //******************************************************************************
 
-_g->snd_SfxVolume = 8;
+_g->snd_SfxVolume = 15;
 
 // Maximum volume of music. Useless so far.
-_g->snd_MusicVolume = 8;
+_g->snd_MusicVolume = 15;
 
 
 //******************************************************************************

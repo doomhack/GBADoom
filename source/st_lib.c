@@ -199,7 +199,7 @@ void STlib_initPercent
 void STlib_updatePercent(st_percent_t* per, int cm, int refresh)
 {
     STlib_updateNum(&per->n, cm, refresh);
-    V_DrawPatchNoScale(per->n.x, per->n.y, per->p);
+    //V_DrawPatchNoScale(per->n.x, per->n.y, per->p); - Percentage is in the GBA Doom II Hud graphic ~Kippykip
 }
 
 //
@@ -251,7 +251,7 @@ void STlib_updateMultIcon
         return;
 
     if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-        V_DrawPatch(mi->x, mi->y, ST_FG, mi->p[*mi->inum]);
+		V_DrawPatchNoScale(mi->x, mi->y, mi->p[*mi->inum]);
 
     mi->oldinum = *mi->inum;
 

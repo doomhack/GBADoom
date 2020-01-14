@@ -92,9 +92,10 @@ const int     key_menu_escape = KEYD_START;                                     
 const int     key_menu_enter = KEYD_A;                                      // phares 3/7/98
 const int     key_strafeleft = KEYD_L;
 const int     key_straferight = KEYD_R;
-const int     key_fire = KEYD_A;
-const int     key_use = KEYD_B;
-const int     key_speed = KEYD_B;
+//Match Doom II GBA retail controls ~ Kippykip
+const int     key_fire = KEYD_B; 
+const int     key_use = KEYD_A;
+const int     key_speed = KEYD_A;
 const int     key_escape = KEYD_START;                           // phares 4/13/98
 const int     key_enter = KEYD_A;
 const int     key_map_right = KEYD_RIGHT;
@@ -127,6 +128,8 @@ typedef struct gba_save_data_t
     int gameepisode;
     int gamemap;
     int totalleveltimes;
+	int alwaysRun;
+	int gamma;
 
     int weaponowned[NUMWEAPONS];
     int ammo[NUMAMMO];
@@ -968,6 +971,8 @@ void G_DoLoadGame()
     _g->gameskill = savedata->gameskill;
     _g->gameepisode = savedata->gameepisode;
     _g->gamemap = savedata->gamemap;
+	_g->alwaysRun = savedata->alwaysRun;
+	_g->gamma = savedata->gamma;
 
     G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
 
@@ -1009,6 +1014,8 @@ static void G_DoSaveGame(boolean menu)
     savedata->gameepisode = _g->gameepisode;
     savedata->gamemap = _g->gamemap;
     savedata->totalleveltimes = _g->totalleveltimes;
+	savedata->alwaysRun = _g->alwaysRun;
+	savedata->gamma = _g->gamma;
 
     memcpy(savedata->weaponowned, _g->player.weaponowned, sizeof(savedata->weaponowned));
     memcpy(savedata->ammo, _g->player.ammo, sizeof(savedata->ammo));

@@ -498,6 +498,27 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
                     ++sc;
               }
             }
+			//Final Doom IWAD check hacks ~Kippykip
+			//TNT - MURAL1
+			else if (fileinfo[length].name[0] == 'M' && fileinfo[length].name[1] == 'U' && fileinfo[length].name[2] == 'R'  && fileinfo[length].name[3] == 'A' && fileinfo[length].name[4] == 'L' && fileinfo[length].name[5] == '1' && fileinfo[length].name[6] == 0)
+            {
+				cm = 32;
+				sc = 2;
+				*gmode = commercial;
+				_g->gamemission = pack_tnt;
+				_g->gamemode = commercial;
+				return;
+            }
+			//Plutonia - WFALL1
+			else if (fileinfo[length].name[0] == 'W' && fileinfo[length].name[1] == 'F' && fileinfo[length].name[2] == 'A'  && fileinfo[length].name[3] == 'L' && fileinfo[length].name[4] == 'L' && fileinfo[length].name[5] == '1' && fileinfo[length].name[6] == 0)
+            {
+				cm = 32;
+				sc = 2;
+				*gmode = commercial;
+				_g->gamemission = pack_plut;
+				_g->gamemode = commercial;
+				return;
+            }
         }
     }
     else
@@ -564,16 +585,7 @@ static void IdentifyVersion()
                 break;
             case commercial:
                 _g->gamemission = doom2;
-
-                /*
-                 * TODO: Detect Plutonia and TNT here.
-                 *
-                 * if(is tnt)
-                 *  gamemission = pack_tnt;
-                 * else if(is_plut)
-                 *  gamemission = pack_plut;
-                 */
-            break;
+				break;
 
             default:
                 _g->gamemission = none;
