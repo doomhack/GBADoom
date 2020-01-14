@@ -24,3 +24,13 @@ source/iwad/doom2.gba.h
 source/iwad/sigil.gba.h
 
 source/iwad/tnt.gba.h
+
+GbaWadUtil/DOOM.WAD
+
+GbaWadUtil/DOOM2.WAD
+
+GbaWadUtil/PLUTONIA.WAD
+
+GbaWadUtil/TNT.WAD
+
+source/iwad/doom.c
