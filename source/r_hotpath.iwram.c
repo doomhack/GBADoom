@@ -1191,7 +1191,7 @@ static void R_DoDrawPlane(visplane_t *pl)
             const unsigned int widthmask = tex->widthmask;
             const patch_t* patch = tex->patches[0].patch;
 
-            boolean multitex_sky = (tex->patchcount > 1);
+            const boolean multitex_sky = (tex->patchcount > 1);
 
             unsigned int inv_width;
 
@@ -1207,7 +1207,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 
                     if(multitex_sky)
                     {
-                        unsigned int p = ((xc * inv_width) >> FRACBITS);
+                        const unsigned int p = ((xc * inv_width) >> FRACBITS);
                         xc -= (patch->width * p);
                         patch = tex->patches[p].patch;
                     }
