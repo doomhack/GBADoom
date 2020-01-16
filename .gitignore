@@ -34,3 +34,5 @@ GbaWadUtil/PLUTONIA.WAD
 GbaWadUtil/TNT.WAD
 
 source/iwad/doom.c
+
+source/iwad/tnt.c
