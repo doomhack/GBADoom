@@ -1193,6 +1193,11 @@ static void R_DoDrawPlane(visplane_t *pl)
 
             boolean multitex_sky = (tex->patchcount > 1);
 
+            unsigned int inv_width;
+
+            if(multitex_sky)
+                inv_width = IDiv32(FRACUNIT, patch->width);
+
             // killough 10/98: Use sky scrolling offset
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
             {
@@ -1202,9 +1207,8 @@ static void R_DoDrawPlane(visplane_t *pl)
 
                     if(multitex_sky)
                     {
-                        int w = patch->width;
-                        int p = IDiv32(xc, w);
-                        xc -= (w * p);
+                        unsigned int p = ((xc * inv_width) >> FRACBITS);
+                        xc -= (patch->width * p);
                         patch = tex->patches[p].patch;
                     }
 
