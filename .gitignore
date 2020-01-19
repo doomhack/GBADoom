@@ -36,3 +36,7 @@ GbaWadUtil/TNT.WAD
 source/iwad/doom.c
 
 source/iwad/tnt.c
+
+GbaWadUtil/DOOMU.WAD
+
+source/iwad/doomu.c
