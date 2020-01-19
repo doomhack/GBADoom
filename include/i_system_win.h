@@ -102,10 +102,10 @@ class DoomWindow : public QWidget
             ev.data1 = KEYD_SELECT;
 
         if(event->key() == Qt::Key_Space)
-            ev.data1 = KEYD_B;
+            ev.data1 = KEYD_A;
 
         if(event->key() == Qt::Key_Control)
-            ev.data1 = KEYD_A;
+            ev.data1 = KEYD_B;
 
         if(event->key() == Qt::Key_Comma)
             ev.data1 = KEYD_L;
@@ -150,10 +150,10 @@ class DoomWindow : public QWidget
             ev.data1 = KEYD_SELECT;
 
         if(event->key() == Qt::Key_Space)
-            ev.data1 = KEYD_B;
+            ev.data1 = KEYD_A;
 
         if(event->key() == Qt::Key_Control)
-            ev.data1 = KEYD_A;
+            ev.data1 = KEYD_B;
 
         if(event->key() == Qt::Key_Comma)
             ev.data1 = KEYD_L;
