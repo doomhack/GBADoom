@@ -1118,10 +1118,6 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {
-    //Don't draw spans under the statusbar.
-    if(y >= 128)
-        return;
-
     fixed_t distance = FixedMul(planeheight, yslope[y]);
     unsigned int xstep = FixedMul(distance,basexscale);
     unsigned int ystep = FixedMul(distance,baseyscale);
