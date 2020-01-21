@@ -22,33 +22,13 @@
 
 static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 {
-    unsigned        bit;
-    unsigned        c;
+#ifdef __arm__
+    unsigned int udiv32_arm (unsigned int a, unsigned int b);
 
-    if ( (aa>>30) >= bb)
-        return 0x7fffffff;
-
-    bit = 1;
-    while (aa > bb && bb < 0x80000000)
-    {
-        bb <<= 1;
-        bit <<= 1;
-    }
-
-    c = 0;
-
-    do
-    {
-        if (aa >= bb)
-        {
-            aa -=bb;
-            c |= bit;
-        }
-        bb >>=1;
-        bit >>= 1;
-    } while (bit && aa);
-
-    return c;
+    return udiv32_arm(aa, bb);
+#else
+    return aa / bb;
+#endif
 }
 
 inline static CONSTFUNC int IDiv32 (int a, int b)
@@ -58,25 +38,7 @@ inline static CONSTFUNC int IDiv32 (int a, int b)
 #ifdef __arm__
     return Div(a, b);
 #else
-
-    unsigned        aa,bb,c;
-    int             sign;
-
-    sign = a^b;
-    if (a<0)
-        aa = -a;
-    else
-        aa = a;
-    if (b<0)
-        bb = -b;
-    else
-        bb = b;
-
-    c = UDiv32(aa,bb);
-
-    if (sign < 0)
-        c = -(int)c;
-    return c;
+    return a / b;
 #endif
 }
 

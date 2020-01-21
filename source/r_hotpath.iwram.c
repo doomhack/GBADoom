@@ -234,7 +234,7 @@ static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
   if (den < 512)
     return SLOPERANGE;
 
-  ans = IDiv32(num<<3, den>>8);
+  ans = UDiv32(num<<3, den>>8);
 
   return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
@@ -494,7 +494,6 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
 
     unsigned int l = (count >> 2);
 
-
     while(l--)
     {
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
@@ -726,8 +725,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         {
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
-            dcvars.iscale = IDiv32(INT_MAX, spryscale >> 1);
-            //dcvars.iscale = UDiv32(0xffffffffu, (unsigned) spryscale);
+            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)spryscale);
 
             // draw the texture
 
@@ -1196,7 +1194,7 @@ static void R_DoDrawPlane(visplane_t *pl)
             unsigned int inv_width;
 
             if(multitex_sky)
-                inv_width = IDiv32(FRACUNIT, patch->width);
+                inv_width = UDiv32(FRACUNIT, patch->width);
 
             // killough 10/98: Use sky scrolling offset
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
@@ -1804,9 +1802,7 @@ static void R_RenderSegLoop (int rw_x)
 
             dcvars.x = rw_x;
 
-            dcvars.iscale = IDiv32(INT_MAX, ((unsigned)rw_scale) >> 1);
-
-            //dcvars.iscale = IDiv32(0xffffffffu >> 1, ((unsigned)rw_scale) >> 1);
+            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)rw_scale);
         }
 
         // draw the wall tiers
