@@ -65,7 +65,7 @@ void I_InitScreen_e32()
 
 
     //Set gamepak wait states and prefetch.
-    REG_WAITCNT = 0x45B6;
+    REG_WAITCNT = 0x46DA;
 
     consoleDemoInit();
 
