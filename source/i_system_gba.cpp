@@ -40,7 +40,6 @@ extern "C"
 #define TM_FREQ_256 0x0002
 
 #define REG_WAITCNT	*((vu16 *)(0x4000204))
-#define REG_MEMCTRL	*((vu32 *)(0x4000800))
 
 
 //**************************************************************************************
@@ -67,9 +66,6 @@ void I_InitScreen_e32()
 
     //Set gamepak wait states and prefetch.
     REG_WAITCNT = 0x46DA;
-
-    //Set memory clocks to 2/2/4
-    REG_MEMCTRL = 0x0E000020;
 
     consoleDemoInit();
 
