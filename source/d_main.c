@@ -74,6 +74,8 @@
 
 #include "doom_iwad.h"
 #include "global_data.h"
+#include "gba_functions.h"
+#include "misc_gfx.h"
 
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
@@ -307,10 +309,13 @@ static void D_PageDrawer(void)
     // proff/nicolas 09/14/98 -- now stretchs bitmaps to fullscreen!
     // CPhipps - updated for new patch drawing
     // proff - added M_DrawCredits
-    if (_g->pagelump)
+	
+	//Use CpuBlockCopy for titlescreen, because menu is unresponsive otherwise.
+    /*if (_g->pagelump)
     {
         V_DrawNumPatch(0, 0, 0, _g->pagelump, CR_DEFAULT, VPT_STRETCH);
-    }
+    }*/
+	CpuBlockCopy(&_g->screens[0].data[0], gfx_titlepic, gfx_titlepic_len);
 }
 
 //
@@ -328,7 +333,8 @@ void D_AdvanceDemo (void)
 
 static void D_SetPageName(const char *name)
 {
-    _g->pagelump = W_GetNumForName(name);
+	return;
+    //_g->pagelump = W_GetNumForName(name);
 }
 
 static void D_DrawTitle1(const char *name)
