@@ -1,0 +1,1 @@
+gbawadutil.exe -in tnt.wad -cfile ..\source\iwad\tnt.c
