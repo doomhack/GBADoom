@@ -2728,3 +2728,51 @@ void R_RenderPlayerView (player_t* player)
 
     R_DrawMasked ();
 }
+
+void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
+{
+    y -= patch->topoffset;
+    x -= patch->leftoffset;
+
+    byte* desttop = (byte*)_g->screens[0].data;
+    desttop += (ScreenYToOffset(y) << 1) + x;
+
+    unsigned int width = patch->width;
+
+    for (unsigned int col = 0; col < width; col++, desttop++)
+    {
+        const column_t* column = (const column_t*)((const byte*)patch + patch->columnofs[col]);
+
+        unsigned int odd_addr = (unsigned int)desttop & 1;
+
+        byte* desttop_even = (byte*)((unsigned int)desttop & 0xfffffffe);
+
+        // step through the posts in a column
+        while (column->topdelta != 0xff)
+        {
+            const byte* source = (const byte*)column + 3;
+            byte* dest = desttop_even + (ScreenYToOffset(column->topdelta) << 1);
+
+            unsigned int count = column->length;
+
+
+            while (count--)
+            {
+                unsigned int color = *source++;
+                unsigned short* dest16 = (unsigned short*)dest;
+
+                unsigned int old = *dest16;
+
+                //The GBA must write in 16bits.
+                if(odd_addr)
+                    *dest16 = (old & 0xff) | (color << 8);
+                else
+                    *dest16 = ((color & 0xff) | (old & 0xff00));
+
+                dest += 240;
+            }
+
+            column = (const column_t*)((const byte*)column + column->length + 4);
+        }
+    }
+}
