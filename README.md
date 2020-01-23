@@ -11,14 +11,15 @@ A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s
  - ~~The chainsaw sounds no longer overlap.~~
  - ~~**B** is now the fire button, and sprinting/use has been changed to **A**. To match the retail GBA Doom II controls.~~
  - ~~Weapon selection order is restored to: Fist, Chainsaw, Pistol, Shotgun, Super Shotgun, Chaingun, Plasmagun, BFG 9000~~  
- - ~~Gamma is in the options now instead of a hotkey~~
- - ~~And other bug general fixes and optimisations~~
-*All of the above changes have been merged into doomhack's main branch*
+ - ~~Gamma is in the options now instead of a hotkey~~  
+ *All of the above changes have been merged into doomhack's main branch*  
  - Optimised Title Screen images (titlepic is rendered via CPUBlockCopy rather than drawing from the IWAD)
  - Unused shareware IWAD content is removed to build a smaller rom
+ - And other bug general fixes and optimisations
 
 **TODO:**
- - Recreate Final Doom: Evilution / TNT.WAD's music in impulsetracker
+ - Recreate Final Doom: Evilution / TNT.WAD's music in impulsetracker  
+ You can view the progress here: https://kippykip.com/index.php?threads/wip-final-doom-evilution-impulse-tracker-soundtrack.1601/
 
 Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) for future engine optimisations and bug fixes!
 
