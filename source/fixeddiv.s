@@ -48,7 +48,8 @@ udiv32_arm :
 
     mov r2, #0                   /* r2 ← 0 */
 
-    .Lloop3:
+    .rept 31
+
       cmp r0, r3                 /* update cpsr with r0 - r3 */
       subhs r0, r0, r3           /* if r0 >= r3 (C=1) then r0 ← r0 - r3 */
       adc r2, r2, r2             /* r2 ← r2 + r2 + C.
@@ -56,7 +57,10 @@ udiv32_arm :
 
       mov r3, r3, LSR #1         /* r3 ← r3/2 */
       cmp r3, r1                 /* update cpsr with r3 - r1 */
-      bhs .Lloop3                /* if r3 >= r1 branch to .Lloop3 */
+      blt .Done                  /* if r3 < r1 branch to .Done */
 
+    .endr
+
+   .Done:
     mov r0, r2                   /* move quotient to r0 return val */
     bx lr
