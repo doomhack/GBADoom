@@ -2729,7 +2729,6 @@ void R_RenderPlayerView (player_t* player)
     R_DrawMasked ();
 }
 
-
 void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
 {
     y -= patch->topoffset;

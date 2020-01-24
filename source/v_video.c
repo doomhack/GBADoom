@@ -174,6 +174,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     }
 }
 
+
 // CPhipps - some simple, useful wrappers for that function, for drawing patches from wads
 
 // CPhipps - GNU C only suppresses generating a copy of a function if it is
