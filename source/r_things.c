@@ -73,12 +73,11 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
     _g->maxframe = frame;
 
 
-  _g->sprtemp[frame].flipmask = 0;
-
-
   if (rotation == 0)
   {    // the lump should be used for all rotations
       int r;
+
+      _g->sprtemp[frame].flipmask = 0;
 
       for (r=0 ; r<8 ; r++)
       {
@@ -103,6 +102,8 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
 
       if(flipped)
         _g->sprtemp[frame].flipmask |= (1 << rotation);
+      else
+        _g->sprtemp[frame].flipmask &=  (~(1 << rotation));
 
       //_g->sprtemp[frame].flip[rotation] |= (byte) flipped;
       _g->sprtemp[frame].rotate = true; //jff 4/24/98 only change if rot used
