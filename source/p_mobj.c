@@ -937,6 +937,7 @@ void P_SpawnMapThing (const mapthing_t* mthing)
       options & MTF_FRIEND)
     {
       mobj->flags |= MF_FRIEND;            // killough 10/98:
+      P_UpdateThinker(&mobj->thinker);     // transfer friendliness flag
     }
 
   /* killough 7/20/98: exclude friends */

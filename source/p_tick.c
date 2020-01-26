@@ -56,7 +56,47 @@
 
 void P_InitThinkers(void)
 {
+  int i;
+
+  for (i=0; i<NUMTHCLASS; i++)  // killough 8/29/98: initialize threaded lists
+    _g->thinkerclasscap[i].cprev = _g->thinkerclasscap[i].cnext = &_g->thinkerclasscap[i];
+
   thinkercap.prev = thinkercap.next  = &thinkercap;
+}
+
+//
+// killough 8/29/98:
+//
+// We maintain separate threads of friends and enemies, to permit more
+// efficient searches.
+//
+
+void P_UpdateThinker(thinker_t *thinker)
+{
+  register thinker_t *th;
+  // find the class the thinker belongs to
+
+  int class =
+    thinker->function == P_RemoveThinkerDelayed ? th_delete :
+    thinker->function == P_MobjThinker &&
+    ((mobj_t *) thinker)->health > 0 &&
+    (((mobj_t *) thinker)->flags & MF_COUNTKILL ||
+     ((mobj_t *) thinker)->type == MT_SKULL) ?
+    ((mobj_t *) thinker)->flags & MF_FRIEND ?
+    th_friends : th_enemies : th_misc;
+
+  {
+    /* Remove from current thread, if in one */
+    if ((th = thinker->cnext)!= NULL)
+      (th->cprev = thinker->cprev)->cnext = th;
+  }
+
+  // Add to appropriate thread
+  th = &_g->thinkerclasscap[class];
+  th->cprev->cnext = thinker;
+  thinker->cnext = th;
+  thinker->cprev = th->cprev;
+  th->cprev = thinker;
 }
 
 //
@@ -70,6 +110,10 @@ void P_AddThinker(thinker_t* thinker)
   thinker->next = &thinkercap;
   thinker->prev = thinkercap.prev;
   thinkercap.prev = thinker;
+
+  // killough 8/29/98: set sentinel pointers, and then add to appropriate list
+  thinker->cnext = thinker->cprev = NULL;
+  P_UpdateThinker(thinker);
 }
 
 //
@@ -99,7 +143,9 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
          * point it to thinker->prev, so the iterator will correctly move on to
          * thinker->prev->next = thinker->next */
     (next->prev = thinker->prev)->next = next;
-
+    /* Remove from current thinker class list */
+    thinker_t *th = thinker->cnext;
+    (th->cprev = thinker->cprev)->cnext = th;
     Z_Free(thinker);
 }
 
@@ -120,16 +166,17 @@ void P_RemoveThinker(thinker_t *thinker)
 {
   thinker->function = P_RemoveThinkerDelayed;
 
+  P_UpdateThinker(thinker);
 }
 
 /* cph 2002/01/13 - iterator for thinker list
  * WARNING: Do not modify thinkers between calls to this functin
  */
-thinker_t* P_NextThinker(thinker_t* th)
+thinker_t* P_NextThinker(thinker_t* th, th_class cl)
 {
-  thinker_t* top = &_g->thinkerclasscap[th_all];
+  thinker_t* top = &_g->thinkerclasscap[cl];
   if (!th) th = top;
-  th = th->next;
+  th = cl == th_all ? th->next : th->cnext;
   return th == top ? NULL : th;
 }
 
