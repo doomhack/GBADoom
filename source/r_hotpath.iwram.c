@@ -878,7 +878,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
     lump = sprframe->lump[0];
-    flip = (boolean) sprframe->flip[0];
+    flip = (boolean) SPR_FLIPPED(sprframe, 0);
 
     {
         const patch_t* patch = W_CacheLumpNum(lump+_g->firstspritelump);
@@ -1353,13 +1353,14 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         angle_t ang = R_PointToAngle(fx, fy);
         unsigned rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
         lump = sprframe->lump[rot];
-        flip = (boolean) sprframe->flip[rot];
+
+        flip = (boolean)SPR_FLIPPED(sprframe, rot);
     }
     else
     {
         // use single rotation for all views
         lump = sprframe->lump[0];
-        flip = (boolean) sprframe->flip[0];
+        flip = (boolean)SPR_FLIPPED(sprframe, 0);
     }
 
     const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);

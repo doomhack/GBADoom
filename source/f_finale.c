@@ -550,7 +550,8 @@ void F_CastDrawer (void)
   sprdef = &_g->sprites[_g->caststate->sprite];
   sprframe = &sprdef->spriteframes[ _g->caststate->frame & FF_FRAMEMASK];
   lump = sprframe->lump[0];
-  flip = (boolean)sprframe->flip[0];
+
+  flip = (boolean)SPR_FLIPPED(sprframe, 0);
 
   // CPhipps - patch drawing updated
   V_DrawNumPatch(160, 170, 0, lump+_g->firstspritelump, CR_DEFAULT,
