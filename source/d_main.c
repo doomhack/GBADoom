@@ -710,6 +710,8 @@ static void D_DoomMainSetup(void)
 
     _g->idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
+    I_InitGraphics();
+
     if (timedemo)
     {
         _g->singletics = true;
@@ -717,10 +719,10 @@ static void D_DoomMainSetup(void)
         G_DeferedPlayDemo(timedemo);
         _g->singledemo = true;            // quit after one demo
     }
-
-    I_InitGraphics();
-
-    D_StartTitle();                 // start up intro loop
+    else
+    {
+        D_StartTitle();                 // start up intro loop
+    }
 }
 
 //
