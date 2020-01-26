@@ -398,7 +398,8 @@ typedef struct
   short lump[8];
 
   // Flip bit (1 = flip) to use for view angles 0-7.
-  byte  flip[8];
+  //byte  flip[8];
+  byte flipmask;
 
   // If false use 0 for any position.
   // Note: as eight entries are available,
@@ -406,6 +407,8 @@ typedef struct
   boolean rotate;
 
 } spriteframe_t;
+
+#define SPR_FLIPPED(s, r) (s->flipmask & (1 << r))
 
 //
 // A sprite definition:
