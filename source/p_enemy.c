@@ -696,17 +696,6 @@ static boolean PIT_FindTarget(mobj_t *mo)
   P_SetTarget(&actor->lastenemy, actor->target);  // Remember previous target
   P_SetTarget(&actor->target, mo);                // Found target
 
-  // Move the selected monster to the end of its associated
-  // list, so that it gets searched last next time.
-
-  {
-    thinker_t *cap = &_g->thinkerclasscap[mo->flags & MF_FRIEND ?
-             th_friends : th_enemies];
-    (mo->thinker.cprev->cnext = mo->thinker.cnext)->cprev = mo->thinker.cprev;
-    (mo->thinker.cprev = cap->cprev)->cnext = &mo->thinker;
-    (mo->thinker.cnext = cap)->cprev = &mo->thinker;
-  }
-
   return false;
 }
 
@@ -770,83 +759,6 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 }
 
 //
-// Friendly monsters, by Lee Killough 7/18/98
-//
-// Friendly monsters go after other monsters first, but
-// also return to owner if they cannot find any targets.
-// A marine's best friend :)  killough 7/18/98, 9/98
-//
-
-static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
-{
-  thinker_t *cap, *th;
-
-  if (actor->lastenemy && actor->lastenemy->health > 0 &&
-      !(actor->lastenemy->flags & actor->flags & MF_FRIEND)) // not friends
-    {
-      P_SetTarget(&actor->target, actor->lastenemy);
-      P_SetTarget(&actor->lastenemy, NULL);
-      return true;
-    }
-
-  // Search the threaded list corresponding to this object's potential targets
-  cap = &_g->thinkerclasscap[actor->flags & MF_FRIEND ? th_enemies : th_friends];
-
-  // Search for new enemy
-
-  if (cap->cnext != cap)        // Empty list? bail out early
-    {
-      int x = (actor->x - _g->bmaporgx)>>MAPBLOCKSHIFT;
-      int y = (actor->y - _g->bmaporgy)>>MAPBLOCKSHIFT;
-      int d;
-
-      _g->current_actor = actor;
-      _g->current_allaround = allaround;
-
-      // Search first in the immediate vicinity.
-
-      if (!P_BlockThingsIterator(x, y, PIT_FindTarget))
-  return true;
-
-      for (d=1; d<5; d++)
-  {
-    int i = 1 - d;
-    do
-      if (!P_BlockThingsIterator(x+i, y-d, PIT_FindTarget) ||
-    !P_BlockThingsIterator(x+i, y+d, PIT_FindTarget))
-        return true;
-    while (++i < d);
-    do
-      if (!P_BlockThingsIterator(x-d, y+i, PIT_FindTarget) ||
-    !P_BlockThingsIterator(x+d, y+i, PIT_FindTarget))
-        return true;
-    while (--i + d >= 0);
-  }
-
-      {   // Random number of monsters, to prevent patterns from forming
-  int n = (P_Random() & 31) + 15;
-
-  for (th = cap->cnext; th != cap; th = th->cnext)
-    if (--n < 0)
-      {
-        // Only a subset of the monsters were searched. Move all of
-        // the ones which were searched so far, to the end of the list.
-
-        (cap->cnext->cprev = cap->cprev)->cnext = cap->cnext;
-        (cap->cprev = th->cprev)->cnext = cap;
-        (th->cprev = cap)->cnext = th;
-        break;
-     }
-    else
-      if (!PIT_FindTarget((mobj_t *) th))   // If target sighted
-        return true;
-      }
-    }
-
-  return false;  // No monster found
-}
-
-//
 // P_LookForTargets
 //
 // killough 9/5/98: look for targets to go after, depending on kind of monster
@@ -854,50 +766,10 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
 
 static boolean P_LookForTargets(mobj_t *actor, int allaround)
 {
-  return actor->flags & MF_FRIEND ?
-    P_LookForMonsters(actor, allaround) || P_LookForPlayers (actor, allaround):
-    P_LookForPlayers (actor, allaround) || P_LookForMonsters(actor, allaround);
+    return P_LookForPlayers (actor, allaround);
 }
 
-//
-// P_HelpFriend
-//
-// killough 9/8/98: Help friends in danger of dying
-//
 
-static boolean P_HelpFriend(mobj_t *actor)
-{
-  thinker_t *cap, *th;
-
-  // If less than 33% health, self-preservation rules
-  if (actor->health*3 < actor->info->spawnhealth)
-    return false;
-
-  _g->current_actor = actor;
-  _g->current_allaround = true;
-
-  // Possibly help a friend under 50% health
-  cap = &_g->thinkerclasscap[actor->flags & MF_FRIEND ? th_friends : th_enemies];
-
-  for (th = cap->cnext; th != cap; th = th->cnext)
-    if (((mobj_t *) th)->health*2 >= ((mobj_t *) th)->info->spawnhealth)
-      {
-  if (P_Random() < 180)
-    break;
-      }
-    else
-      if (((mobj_t *) th)->flags & MF_JUSTHIT &&
-    ((mobj_t *) th)->target &&
-    ((mobj_t *) th)->target != actor->target &&
-    !PIT_FindTarget(((mobj_t *) th)->target))
-  {
-    // Ignore any attacking monsters, while searching for friend
-    actor->threshold = BASETHRESHOLD;
-    return true;
-  }
-
-  return false;
-}
 
 //
 // A_KeenDie
@@ -1089,10 +961,7 @@ void A_Chase(mobj_t *actor)
 
     if (!actor->threshold)
     {
-        if (P_HelpFriend(actor))
-            return;      /* killough 9/8/98: Help friends in need */
-        /* Look for new targets if current one is bad or is out of view */
-        else if (actor->pursuecount)
+        if (actor->pursuecount)
             actor->pursuecount--;
         else
         {
@@ -1587,8 +1456,6 @@ void A_VileChase(mobj_t* actor)
           P_SetTarget(&_g->corpsehit->lastenemy, NULL);
           _g->corpsehit->flags &= ~MF_JUSTHIT;
 
-      /* killough 8/29/98: add to appropriate thread */
-      P_UpdateThinker(&_g->corpsehit->thinker);
 
                   return;
                 }
@@ -1868,8 +1735,6 @@ static void A_PainShootSkull(mobj_t *actor, angle_t angle)
   /* killough 7/20/98: PEs shoot lost souls with the same friendliness */
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
 
-  /* killough 8/29/98: add to appropriate thread */
-  P_UpdateThinker(&newmobj->thinker);
 
   // Check for movements.
   // killough 3/15/98: don't jump over dropoffs:
@@ -2236,8 +2101,6 @@ void A_BrainSpit(mobj_t *mo)
   // killough 7/18/98: brain friendliness is transferred
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
 
-  // killough 8/29/98: add to appropriate thread
-  P_UpdateThinker(&newmobj->thinker);
 
   S_StartSound(NULL, sfx_bospit);
 }
@@ -2298,8 +2161,6 @@ void A_SpawnFly(mobj_t *mo)
   /* killough 7/18/98: brain friendliness is transferred */
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
 
-  /* killough 8/29/98: add to appropriate thread */
-  P_UpdateThinker(&newmobj->thinker);
 
   if (P_LookForTargets(newmobj,true))      /* killough 9/4/98 */
     P_SetMobjState(newmobj, newmobj->info->seestate);
