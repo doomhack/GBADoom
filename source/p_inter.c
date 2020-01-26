@@ -599,7 +599,6 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   target->flags |= MF_CORPSE|MF_DROPOFF;
   target->height >>= 2;
 
-  P_UpdateThinker(&target->thinker);
 
   if (!((target->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
     _g->totallive--;
@@ -789,22 +788,6 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
        */
       if (player)
   P_SetTarget(&target->target, source);
-
-      /* killough 9/8/98:
-       * If target's health is less than 50%, move it to the front of its list.
-       * This will slightly increase the chances that enemies will choose to
-       * "finish it off", but its main purpose is to alert friends of danger.
-       */
-      if (target->health*2 < target->info->spawnhealth)
-  {
-    thinker_t *cap = &_g->thinkerclasscap[target->flags & MF_FRIEND ?
-             th_friends : th_enemies];
-    (target->thinker.cprev->cnext = target->thinker.cnext)->cprev =
-      target->thinker.cprev;
-    (target->thinker.cnext = cap->cnext)->cprev = &target->thinker;
-    (target->thinker.cprev = cap)->cnext = &target->thinker;
-  }
-
 
   if (P_Random () < target->info->painchance &&
       !(target->flags & MF_SKULLFLY))
