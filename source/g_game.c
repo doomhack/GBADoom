@@ -980,6 +980,10 @@ void G_DoLoadGame()
     memcpy(_g->player.weaponowned, savedata->weaponowned, sizeof(savedata->weaponowned));
     memcpy(_g->player.ammo, savedata->ammo, sizeof(savedata->ammo));
     memcpy(_g->player.maxammo, savedata->maxammo, sizeof(savedata->maxammo));
+	
+	//Easy fix, if the max rocket ammo is 100 then the player obviously had a backpack.
+	if(_g->player.maxammo[am_misl] >= 100)
+		_g->player.backpack = true;
 
     Z_Free(loadbuffer);
 }
