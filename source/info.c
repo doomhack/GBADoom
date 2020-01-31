@@ -2082,7 +2082,7 @@ const mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
     S_ROCKET,   // spawnstate
     1000,   // spawnhealth
     S_NULL,   // seestate
-    sfx_rlaunc,   // seesound
+    sfx_None,   // seesound
     8,    // reactiontime
     sfx_None,   // attacksound
     S_NULL,   // painstate
@@ -2108,7 +2108,7 @@ const mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
     S_PLASBALL,   // spawnstate
     1000,   // spawnhealth
     S_NULL,   // seestate
-    sfx_plasma,   // seesound
+    sfx_None,   // seesound
     8,    // reactiontime
     sfx_None,   // attacksound
     S_NULL,   // painstate
