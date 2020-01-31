@@ -141,6 +141,8 @@ typedef struct menu_s
   void            (*routine)(); // draw routine
   short           x;
   short           y;            // x,y of menu
+  const struct menu_s*	prevMenu;	// previous menu
+  short previtemOn;
 } menu_t;
 
 

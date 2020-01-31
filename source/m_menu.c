@@ -168,6 +168,7 @@ static const menu_t MainDef =
   MainMenu,       // table that defines menu items
   M_DrawMainMenu, // drawing routine
   97,64,          // initial cursor position
+  NULL,0,
 };
 
 //
@@ -216,6 +217,7 @@ static const menu_t EpiDef3 =
   EpisodeMenu3,   // menuitem_t ->
   M_DrawEpisode, // drawing routine ->
   48,63,         // x,y
+  &MainDef,0,
 };
 
 // The definitions of the Episodes menu
@@ -234,6 +236,7 @@ static const menu_t EpiDef =
   EpisodeMenu,   // menuitem_t ->
   M_DrawEpisode, // drawing routine ->
   48,63,         // x,y
+  &MainDef,0,
 };
 
 // numerical values for the New Game menu items
@@ -265,6 +268,7 @@ static const menu_t NewDef =
   NewGameMenu,    // menuitem_t ->
   M_DrawNewGame,  // drawing routine ->
   48,63,          // x,y
+  &MainDef,0,
 };
 
 //
@@ -282,7 +286,7 @@ void M_Episode(int choice)
   if ( (_g->gamemode == shareware) && choice)
   {
     M_StartMessage(SWSTRING,NULL,false); // Ty 03/27/98 - externalized
-    M_ClearMenus();
+    _g->itemOn = 0;
     return;
   }
 
@@ -296,6 +300,7 @@ void M_Episode(int choice)
 
   _g->epi = choice;
   M_SetupNextMenu(&NewDef);
+  _g->itemOn = 2; //Set hurt me plenty as default difficulty
 }
 
 //
@@ -312,8 +317,10 @@ void M_DrawNewGame(void)
 void M_NewGame(int choice)
 {
     if ( _g->gamemode == commercial )
-        M_SetupNextMenu(&NewDef);
-    else if( (_g->gamemode == shareware) || (_g->gamemode == registered) )
+    {
+		M_SetupNextMenu(&NewDef);
+		_g->itemOn = 2; //Set hurt me plenty as default difficulty
+	}else if( (_g->gamemode == shareware) || (_g->gamemode == registered) )
         M_SetupNextMenu(&EpiDef3);
     else
         M_SetupNextMenu(&EpiDef);
@@ -382,6 +389,7 @@ static const menu_t LoadDef =
   LoadMenue,
   M_DrawLoad,
   64,34, //jff 3/15/98 move menu up
+  &MainDef,2,
 };
 
 #define LOADGRAPHIC_Y 8
@@ -480,6 +488,7 @@ const static menu_t SaveDef =
   SaveMenu,
   M_DrawSave,
   80,34, //jff 3/15/98 move menu up
+  &MainDef,3,
 };
 
 //
@@ -582,6 +591,7 @@ const static menu_t OptionsDef =
   OptionsMenu,
   M_DrawOptions,
   60,37,
+  &MainDef,1,
 };
 
 //
@@ -643,7 +653,8 @@ static const menu_t SoundDef =
   sound_end,
   SoundMenu,
   M_DrawSound,
-  80,64
+  80,64,
+  &OptionsDef,4,
 };
 
 //
@@ -951,6 +962,23 @@ boolean M_Responder (event_t* ev)
         return true;
     }
 
+	//Allow being able to go back in menus ~Kippykip
+	if (ch == key_fire)                           // phares 3/7/98
+    {
+		//If the prevMenu == NULL (Such as main menu screen), then just get out of the menu altogether
+		if(_g->currentMenu->prevMenu == NULL)
+		{
+			M_ClearMenus();
+		}else //Otherwise, change to the parent menu and match the row used to get there.
+		{
+			short previtemOn = _g->currentMenu->previtemOn; //Temporarily store this so after menu change, we store the last row it was on.
+			M_SetupNextMenu(_g->currentMenu->prevMenu);					
+			_g->itemOn = previtemOn;
+		}
+        S_StartSound(NULL,sfx_swtchx);
+        return true;		
+    }
+	
     return false;
 }
 
