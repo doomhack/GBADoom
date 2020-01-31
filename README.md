@@ -11,15 +11,16 @@ A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s
  - ~~The chainsaw sounds no longer overlap.~~
  - ~~**B** is now the fire button, and sprinting/use has been changed to **A**. To match the retail GBA Doom II controls.~~
  - ~~Weapon selection order is restored to: Fist, Chainsaw, Pistol, Shotgun, Super Shotgun, Chaingun, Plasmagun, BFG 9000~~  
- - ~~Gamma is in the options now instead of a hotkey~~  
- *All of the above changes have been merged into doomhack's main branch*  
- - Optimised Title Screen images (titlepic is rendered via CPUBlockCopy rather than drawing from the IWAD)
+ - ~~Gamma is in the options now instead of a hotkey~~
+ - ~~Gamma/Autorun settings now save in the save slots~~
+*All of the above changes have been merged into doomhack's main branch*
+ - Other minor bug fixes and optimisations
+ - Created properly resized title screen images (TITLEPIC is rendered via CPUBlockCopy rather than drawing from the IWAD, making it more responsive)
  - Unused shareware IWAD content is removed to build a smaller rom
- - And other bug general fixes and optimisations
+ - New MS GS WAVETABLE music for Doom 1, made by [Sakitoshi](https://www.romhacking.net/community/2272/)
 
 **TODO:**
- - Recreate Final Doom: Evilution / TNT.WAD's music in impulsetracker  
- You can view the progress here: https://kippykip.com/index.php?threads/wip-final-doom-evilution-impulse-tracker-soundtrack.1601/
+ - Recreate Final Doom: Evilution / TNT.WAD's music in impulsetracker
 
 Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) for future engine optimisations and bug fixes!
 
@@ -48,7 +49,7 @@ Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) f
 **Menu:** Start  
 
 ## Building:
-Video Tutorial: https://www.youtube.com/watch?v=YbZgZqV6JMk
+Old Video Tutorial: https://www.youtube.com/watch?v=YbZgZqV6JMk
 
 To build the GBA version, you will need DevKitArm. The easiest way to get up and running for Windows users is download the installer from here (https://github.com/devkitPro/installer/releases) and install the GBA dev components.
 
@@ -73,9 +74,9 @@ Alternatively just run the **build_XXXX.bat** files and it'll create it in the s
 #include "iwad/tnt.c"
 #include "iwad/plutonia.c"
 
-5) Open C:\DevKitPro\Projects\GBADoom\source\gfx\titlepic.h in text editor or code editor of your choice.
+5) Open C:\DevKitPro\Projects\GBADoom\include\misc_gfx.h in text editor or code editor of your choice.
 6) Uncomment the line ( // ) for the destination title screen of your IWAD.
-![enter image description here](https://i.imgur.com/zSAlLDQ.png)
+![TITLEPIC](https://i.imgur.com/PUt0IJh.png)
 5) Run msys2.bat and type **make**
 You may need to edit the msys2.bat with notepad and change the path to go to your real "**msys2\msys2_shell.bat**" file within it if it doesn't work.
 
