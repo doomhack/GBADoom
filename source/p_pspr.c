@@ -707,6 +707,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
 
 void A_FireMissile(player_t *player, pspdef_t *psp)
 {
+  S_StartSound(player->mo, sfx_rlaunc);
   player->ammo[weaponinfo[player->readyweapon].ammo]--;
   P_SpawnPlayerMissile(player->mo, MT_ROCKET);
 }
@@ -727,6 +728,7 @@ void A_FireBFG(player_t *player, pspdef_t *psp)
 
 void A_FirePlasma(player_t *player, pspdef_t *psp)
 {
+  S_StartSound(player->mo, sfx_plasma);
   player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
   A_FireSomething(player,P_Random()&1);              // phares
