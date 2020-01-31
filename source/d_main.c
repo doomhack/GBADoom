@@ -311,11 +311,15 @@ static void D_PageDrawer(void)
     // proff - added M_DrawCredits
 	
 	//Use CpuBlockCopy for titlescreen, because menu is unresponsive otherwise.
-    /*if (_g->pagelump)
+	#ifdef TITLEPIC_PWAD
+    if (_g->pagelump)
     {
         V_DrawNumPatch(0, 0, 0, _g->pagelump, CR_DEFAULT, VPT_STRETCH);
-    }*/
+    }
+	#endif
+	#ifndef TITLEPIC_PWAD
 	CpuBlockCopy(&_g->screens[0].data[0], gfx_titlepic, gfx_titlepic_len);
+	#endif
 }
 
 //
@@ -333,8 +337,12 @@ void D_AdvanceDemo (void)
 
 static void D_SetPageName(const char *name)
 {
+	#ifndef TITLEPIC_PWAD
 	return;
-    //_g->pagelump = W_GetNumForName(name);
+	#endif
+	#ifdef TITLEPIC_PWAD
+    _g->pagelump = W_GetNumForName(name);
+	#endif
 }
 
 static void D_DrawTitle1(const char *name)
