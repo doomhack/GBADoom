@@ -12,7 +12,7 @@ A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s
  - ~~**B** is now the fire button, and sprinting/use has been changed to **A**. To match the retail GBA Doom II controls.~~
  - ~~Weapon selection order is restored to: Fist, Chainsaw, Pistol, Shotgun, Super Shotgun, Chaingun, Plasmagun, BFG 9000~~  
  - ~~Gamma is in the options now instead of a hotkey~~
- - ~~Gamma/Autorun settings now save in the save slots~~
+ - ~~Gamma/Autorun settings now save in the save slots~~  
 *All of the above changes have been merged into doomhack's main branch*
  - Other minor bug fixes and optimisations
  - Created properly resized title screen images (TITLEPIC is rendered via CPUBlockCopy rather than drawing from the IWAD, making it more responsive)
