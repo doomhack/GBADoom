@@ -818,184 +818,187 @@ static int AM_DoorColor(int type)
 //
 static void AM_drawWalls(void)
 {
-  int i;
-  mline_t l;
+    int i;
+    mline_t l;
 
-  // draw the unclipped visible portions of all lines
-  for (i=0;i<_g->numlines;i++)
-  {
-    l.a.x = _g->lines[i].v1.x >> FRACTOMAPBITS;//e6y
-    l.a.y = _g->lines[i].v1.y >> FRACTOMAPBITS;//e6y
-    l.b.x = _g->lines[i].v2.x >> FRACTOMAPBITS;//e6y
-    l.b.y = _g->lines[i].v2.y >> FRACTOMAPBITS;//e6y
-
-
-    const sector_t* backsector = LN_BACKSECTOR(&_g->lines[i]);
-    const sector_t* frontsector = LN_FRONTSECTOR(&_g->lines[i]);
-
-    if (_g->automapmode & am_rotate) {
-      AM_rotate(&l.a.x, &l.a.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
-      AM_rotate(&l.b.x, &l.b.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
-    }
-
-    // if line has been seen or IDDT has been used
-    if (_g->linedata[i].r_flags & ML_MAPPED)
+    // draw the unclipped visible portions of all lines
+    for (i=0;i<_g->numlines;i++)
     {
-      if (_g->lines[i].flags & ML_DONTDRAW)
-        continue;
-      {
-        /* cph - show keyed doors and lines */
-        int amd;
-        if ((mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
-            !(_g->lines[i].flags & ML_SECRET) &&    /* non-secret */
-          (amd = AM_DoorColor(LN_SPECIAL(&_g->lines[i]))) != -1
-        )
+        l.a.x = _g->lines[i].v1.x >> FRACTOMAPBITS;//e6y
+        l.a.y = _g->lines[i].v1.y >> FRACTOMAPBITS;//e6y
+        l.b.x = _g->lines[i].v2.x >> FRACTOMAPBITS;//e6y
+        l.b.y = _g->lines[i].v2.y >> FRACTOMAPBITS;//e6y
+
+
+        const sector_t* backsector = LN_BACKSECTOR(&_g->lines[i]);
+        const sector_t* frontsector = LN_FRONTSECTOR(&_g->lines[i]);
+
+        const unsigned int line_special =  LN_SPECIAL(&_g->lines[i]);
+
+        if (_g->automapmode & am_rotate)
         {
-          {
-            switch (amd) /* closed keyed door */
+            AM_rotate(&l.a.x, &l.a.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
+            AM_rotate(&l.b.x, &l.b.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
+        }
+
+        // if line has been seen or IDDT has been used
+        if (_g->linedata[i].r_flags & ML_MAPPED)
+        {
+            if (_g->lines[i].flags & ML_DONTDRAW)
+                continue;
             {
-              case 1:
-                /*bluekey*/
-                AM_drawMline(&l,
-                  mapcolor_bdor? mapcolor_bdor : mapcolor_cchg);
-                continue;
-              case 2:
-                /*yellowkey*/
-                AM_drawMline(&l,
-                  mapcolor_ydor? mapcolor_ydor : mapcolor_cchg);
-                continue;
-              case 0:
-                /*redkey*/
-                AM_drawMline(&l,
-                  mapcolor_rdor? mapcolor_rdor : mapcolor_cchg);
-                continue;
-              case 3:
-                /*any or all*/
-                AM_drawMline(&l,
-                  mapcolor_clsd? mapcolor_clsd : mapcolor_cchg);
+                /* cph - show keyed doors and lines */
+                int amd;
+                if ((mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
+                        !(_g->lines[i].flags & ML_SECRET) &&    /* non-secret */
+                        (amd = AM_DoorColor(line_special)) != -1
+                        )
+                {
+                    {
+                        switch (amd) /* closed keyed door */
+                        {
+                        case 1:
+                            /*bluekey*/
+                            AM_drawMline(&l,
+                                         mapcolor_bdor? mapcolor_bdor : mapcolor_cchg);
+                            continue;
+                        case 2:
+                            /*yellowkey*/
+                            AM_drawMline(&l,
+                                         mapcolor_ydor? mapcolor_ydor : mapcolor_cchg);
+                            continue;
+                        case 0:
+                            /*redkey*/
+                            AM_drawMline(&l,
+                                         mapcolor_rdor? mapcolor_rdor : mapcolor_cchg);
+                            continue;
+                        case 3:
+                            /*any or all*/
+                            AM_drawMline(&l,
+                                         mapcolor_clsd? mapcolor_clsd : mapcolor_cchg);
+                            continue;
+                        }
+                    }
+                }
+            }
+            if /* jff 4/23/98 add exit lines to automap */
+            (
+            mapcolor_exit &&
+                    (
+                        line_special==11 ||
+                        line_special==52 ||
+                        line_special==197 ||
+                        line_special==51  ||
+                        line_special==124 ||
+                        line_special==198
+                        )
+                    ) {
+                AM_drawMline(&l, mapcolor_exit); /* exit line */
                 continue;
             }
-          }
-        }
-      }
-      if /* jff 4/23/98 add exit lines to automap */
-        (
-          mapcolor_exit &&
-          (
-            LN_SPECIAL(&_g->lines[i])==11 ||
-            LN_SPECIAL(&_g->lines[i])==52 ||
-            LN_SPECIAL(&_g->lines[i])==197 ||
-            LN_SPECIAL(&_g->lines[i])==51  ||
-            LN_SPECIAL(&_g->lines[i])==124 ||
-            LN_SPECIAL(&_g->lines[i])==198
-          )
-        ) {
-          AM_drawMline(&l, mapcolor_exit); /* exit line */
-          continue;
-        }
 
-      if(!backsector)
-      {
-        // jff 1/10/98 add new color for 1S secret sector boundary
-        if (mapcolor_secr && //jff 4/3/98 0 is disable
-            (
-             (
-              map_secret_after &&
-              P_WasSecret(LN_FRONTSECTOR(&_g->lines[i])) &&
-              !P_IsSecret(LN_FRONTSECTOR(&_g->lines[i]))
-             )
-             ||
-             (
-              !map_secret_after &&
-              P_WasSecret(LN_FRONTSECTOR(&_g->lines[i]))
-             )
-            )
-          )
-          AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
-        else                               //jff 2/16/98 fixed bug
-          AM_drawMline(&l, mapcolor_wall); // special was cleared
-      }
-      else /* now for 2S lines */
-      {
-        // jff 1/10/98 add color change for all teleporter types
-        if
-        (
-            mapcolor_tele && !(_g->lines[i].flags & ML_SECRET) &&
-            (LN_SPECIAL(&_g->lines[i]) == 39 || LN_SPECIAL(&_g->lines[i]) == 97 ||
-            LN_SPECIAL(&_g->lines[i]) == 125 || LN_SPECIAL(&_g->lines[i]) == 126)
-        )
-        { // teleporters
-          AM_drawMline(&l, mapcolor_tele);
+            if(!backsector)
+            {
+                // jff 1/10/98 add new color for 1S secret sector boundary
+                if (mapcolor_secr && //jff 4/3/98 0 is disable
+                        (
+                            (
+                                map_secret_after &&
+                                P_WasSecret(frontsector) &&
+                                !P_IsSecret(frontsector)
+                                )
+                            ||
+                            (
+                                !map_secret_after &&
+                                P_WasSecret(frontsector)
+                                )
+                            )
+                        )
+                    AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
+                else                               //jff 2/16/98 fixed bug
+                    AM_drawMline(&l, mapcolor_wall); // special was cleared
+            }
+            else /* now for 2S lines */
+            {
+                // jff 1/10/98 add color change for all teleporter types
+                if
+                        (
+                         mapcolor_tele && !(_g->lines[i].flags & ML_SECRET) &&
+                         (line_special == 39 || line_special == 97 ||
+                          line_special == 125 || line_special == 126)
+                         )
+                { // teleporters
+                    AM_drawMline(&l, mapcolor_tele);
+                }
+                else if (_g->lines[i].flags & ML_SECRET)    // secret door
+                {
+                    AM_drawMline(&l, mapcolor_wall);      // wall color
+                }
+                else if
+                        (
+                         mapcolor_clsd &&
+                         !(_g->lines[i].flags & ML_SECRET) &&    // non-secret closed door
+                         ((backsector->floorheight==backsector->ceilingheight) ||
+                          (frontsector->floorheight==frontsector->ceilingheight))
+                         )
+                {
+                    AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
+                } //jff 1/6/98 show secret sector 2S lines
+                else if
+                        (
+                         mapcolor_secr && //jff 2/16/98 fixed bug
+                         (                    // special was cleared after getting it
+                                              (map_secret_after &&
+                                               (
+                                                   (P_WasSecret(frontsector)
+                                                    && !P_IsSecret(frontsector)) ||
+                                                   (P_WasSecret(backsector)
+                                                    && !P_IsSecret(backsector))
+                                                   )
+                                               )
+                                              ||  //jff 3/9/98 add logic to not show secret til after entered
+                                              (   // if map_secret_after is true
+                                                  !map_secret_after &&
+                                                  (P_WasSecret(frontsector) ||
+                                                   P_WasSecret(backsector))
+                                                  )
+                                              )
+                         )
+                {
+                    AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
+                } //jff 1/6/98 end secret sector line change
+                else if (backsector->floorheight !=
+                         frontsector->floorheight)
+                {
+                    AM_drawMline(&l, mapcolor_fchg); // floor level change
+                }
+                else if (backsector->ceilingheight !=
+                         frontsector->ceilingheight)
+                {
+                    AM_drawMline(&l, mapcolor_cchg); // ceiling level change
+                }
+            }
+        } // now draw the lines only visible because the player has computermap
+        else if (_g->player.powers[pw_allmap]) // computermap visible lines
+        {
+            if (!(_g->lines[i].flags & ML_DONTDRAW)) // invisible flag lines do not show
+            {
+                if
+                        (
+                         mapcolor_flat
+                         ||
+                         !backsector
+                         ||
+                         backsector->floorheight
+                         != frontsector->floorheight
+                         ||
+                         backsector->ceilingheight
+                         != frontsector->ceilingheight
+                         )
+                    AM_drawMline(&l, mapcolor_unsn);
+            }
         }
-        else if (_g->lines[i].flags & ML_SECRET)    // secret door
-        {
-          AM_drawMline(&l, mapcolor_wall);      // wall color
-        }
-        else if
-        (
-            mapcolor_clsd &&
-            !(_g->lines[i].flags & ML_SECRET) &&    // non-secret closed door
-            ((backsector->floorheight==backsector->ceilingheight) ||
-            (frontsector->floorheight==frontsector->ceilingheight))
-        )
-        {
-          AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
-        } //jff 1/6/98 show secret sector 2S lines
-        else if
-        (
-            mapcolor_secr && //jff 2/16/98 fixed bug
-            (                    // special was cleared after getting it
-              (map_secret_after &&
-               (
-                (P_WasSecret(LN_FRONTSECTOR(&_g->lines[i]))
-                 && !P_IsSecret(LN_FRONTSECTOR(&_g->lines[i]))) ||
-                (P_WasSecret(LN_BACKSECTOR(&_g->lines[i]))
-                 && !P_IsSecret(LN_BACKSECTOR(&_g->lines[i])))
-               )
-              )
-              ||  //jff 3/9/98 add logic to not show secret til after entered
-              (   // if map_secret_after is true
-                !map_secret_after &&
-                 (P_WasSecret(LN_FRONTSECTOR(&_g->lines[i])) ||
-                  P_WasSecret(LN_BACKSECTOR(&_g->lines[i])))
-              )
-            )
-        )
-        {
-          AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
-        } //jff 1/6/98 end secret sector line change
-        else if (LN_BACKSECTOR(&_g->lines[i])->floorheight !=
-                  LN_FRONTSECTOR(&_g->lines[i])->floorheight)
-        {
-          AM_drawMline(&l, mapcolor_fchg); // floor level change
-        }
-        else if (LN_BACKSECTOR(&_g->lines[i])->ceilingheight !=
-                  LN_FRONTSECTOR(&_g->lines[i])->ceilingheight)
-        {
-          AM_drawMline(&l, mapcolor_cchg); // ceiling level change
-        }
-      }
-    } // now draw the lines only visible because the player has computermap
-    else if (_g->player.powers[pw_allmap]) // computermap visible lines
-    {
-      if (!(_g->lines[i].flags & ML_DONTDRAW)) // invisible flag lines do not show
-      {
-        if
-        (
-          mapcolor_flat
-          ||
-          !LN_BACKSECTOR(&_g->lines[i])
-          ||
-          LN_BACKSECTOR(&_g->lines[i])->floorheight
-          != LN_FRONTSECTOR(&_g->lines[i])->floorheight
-          ||
-          LN_BACKSECTOR(&_g->lines[i])->ceilingheight
-          != LN_FRONTSECTOR(&_g->lines[i])->ceilingheight
-        )
-          AM_drawMline(&l, mapcolor_unsn);
-      }
     }
-  }
 }
 
 //
