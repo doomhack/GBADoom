@@ -115,6 +115,9 @@ void V_DrawBackground(const char* flatname);
 // CPhipps - function to set the palette to palette number pal.
 void V_SetPalette(int pal);
 
+// Kippykip - Multiple colour corrected palettes
+void V_SetPalLump(int pal);
+
 // CPhipps - function to plot a pixel
 
 typedef struct

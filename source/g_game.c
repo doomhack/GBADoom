@@ -973,7 +973,8 @@ void G_DoLoadGame()
     _g->gamemap = savedata->gamemap;
 	_g->alwaysRun = savedata->alwaysRun;
 	_g->gamma = savedata->gamma;
-
+	V_SetPalLump(_g->gamma);
+	
     G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
 
     _g->totalleveltimes = savedata->totalleveltimes;
