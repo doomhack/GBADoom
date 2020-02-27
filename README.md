@@ -18,6 +18,7 @@ A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s
  - Created properly resized title screen images (TITLEPIC is rendered via CPUBlockCopy rather than drawing from the IWAD, making it more responsive)
  - Unused shareware IWAD content is removed to build a smaller rom
  - New MS GS WAVETABLE music for Doom 1, made by [Sakitoshi](https://www.romhacking.net/community/2272/)
+ - Gamma is now a slider, and is colour corrected for the frontlit/non-lit GBA displays.
 
 **TODO:**
  - Recreate Final Doom: Evilution / TNT.WAD's music in impulsetracker
