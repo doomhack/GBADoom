@@ -290,17 +290,15 @@ void I_SetPallete_e32(const byte* pallete)
 {
     unsigned short* pal_ram = (unsigned short*)0x5000000;
 
-    unsigned int gamma = _g->gamma;
-
     for(int i = 0; i< 256; i++)
     {
         unsigned int r = *pallete++;
         unsigned int g = *pallete++;
         unsigned int b = *pallete++;
 
-        r = gammatable[gamma][r >> 3];
-        g = gammatable[gamma][g >> 3];
-        b = gammatable[gamma][b >> 3];
+        r = gammatable[0][r >> 3];
+        g = gammatable[0][g >> 3];
+        b = gammatable[0][b >> 3];
 
         pal_ram[i] = RGB5(r,g,b);
     }
