@@ -581,7 +581,7 @@ static const menuitem_t OptionsMenu[]=
   {1,"M_ENDGAM", M_EndGame},
   {1,"M_MESSG",  M_ChangeMessages},
   {1,"M_ARUN",   M_ChangeAlwaysRun},
-  {1,"M_GAMMA",   M_ChangeGamma},
+  {2,"M_GAMMA",   M_ChangeGamma},
   {1,"M_SVOL",   M_Sound}
 };
 
@@ -612,8 +612,7 @@ void M_DrawOptions(void)
   V_DrawNamePatch(OptionsDef.x + 146, OptionsDef.y+LINEHEIGHT*alwaysrun, 0,
       msgNames[_g->alwaysRun], CR_DEFAULT, VPT_STRETCH);
 	  
-  V_DrawNamePatch(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma, 0,
-      msgNames[_g->gamma], CR_DEFAULT, VPT_STRETCH);
+  M_DrawThermo(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma+2,6,_g->gamma);
 }
 
 void M_Options(int choice)
@@ -767,15 +766,18 @@ void M_ChangeAlwaysRun(int choice)
 
 void M_ChangeGamma(int choice)
 {
-    // warning: unused parameter `int choice'
-    choice = 0;
-    _g->gamma = 1 - _g->gamma;
-
-    if (!_g->gamma)
-      _g->player.message = GAMMALVL0; // Ty 03/27/98 - externalized
-    else
-      _g->player.message = GAMMALVL4 ; // Ty 03/27/98 - externalized
-  
+	switch(choice)
+    {
+		case 0:
+		  if (_g->gamma)
+			_g->gamma--;
+		  break;
+		case 1:
+		  if (_g->gamma < 5)
+			_g->gamma++;
+		  break;
+    }
+	V_SetPalLump(_g->gamma);
 	V_SetPalette(0);
 }
 
@@ -837,18 +839,6 @@ boolean M_Responder (event_t* ev)
 
     if (ch == -1)
         return false; // we can't use the event here
-
-	//No longer needed due to menu addition ~Kippykip
-   /* if(ev->data1 == key_map && _g->gamekeydown[key_use])
-    {
-        //Use + Select to toggle brightness.
-
-        _g->gamma = 1 - _g->gamma;
-        V_SetPalette(0);
-
-        return true;
-    }*/
-
 
     // Take care of any messages that need input
 
