@@ -101,6 +101,4 @@ extern const short negonearray[120];
 
 extern const unsigned char translationtables[1023];
 
-extern const byte gammatable[2][32];
-
 #endif

@@ -62,10 +62,6 @@ class DoomWindow : public QWidget
             int g = pl[(3*p)+1];
             int b = pl[(3*p)+2];
 
-            r = gammatable[0][r >> 3] << 3;
-            g = gammatable[0][g >> 3] << 3;
-            b = gammatable[0][b >> 3] << 3;
-
             i.setColor(p, qRgb(r, g, b));
         }
 
