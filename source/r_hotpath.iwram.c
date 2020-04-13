@@ -1602,14 +1602,15 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
  * straight from const patch_t*.
 */
 
-#define CACHE_WAYS 32
+#define CACHE_WAYS 4
 
 #define CACHE_MASK (CACHE_WAYS-1)
 #define CACHE_STRIDE (128 / CACHE_WAYS)
 #define CACHE_KEY_MASK (CACHE_STRIDE-1)
 
 #define CACHE_ENTRY(c, t) ((c << 16 | t))
-#define CACHE_HASH(c, t) (((c >> 4) ^ t) & CACHE_KEY_MASK)
+
+#define CACHE_HASH(c, t) (((c >> 1) ^ t) & CACHE_KEY_MASK)
 
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
@@ -1638,7 +1639,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
     } while(i < 128);
 
     //No space. Random eviction.
-    return ((P_Random() & CACHE_MASK) * CACHE_STRIDE) + key;
+    return ((M_Random() & CACHE_MASK) * CACHE_STRIDE) + key;
 }
 
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
