@@ -35,7 +35,7 @@
 
 //This is to keep the codesize under control.
 //This whole file needs to fit within IWRAM.
-#pragma GCC optimize ("O2")
+#pragma GCC optimize ("Os")
 
 
 #ifdef HAVE_CONFIG_H
@@ -492,7 +492,7 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
     //  e.g. a DDA-lile scaling.
     // This is as fast as it gets.
 
-    unsigned int l = (count >> 2);
+    unsigned int l = (count >> 4);
 
     while(l--)
     {
@@ -500,9 +500,24 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
     }
 
-    unsigned int r = (count & 3);
+    unsigned int r = (count & 15);
 
     while(r--)
     {
@@ -1096,7 +1111,7 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
     const unsigned int step = dsvars->step;
     unsigned int position = dsvars->position;
 
-    unsigned int l = count >> 2;
+    unsigned int l = (count >> 4);
 
     while(l--)
     {
@@ -1104,9 +1119,24 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
     }
 
-    unsigned int r = count & 3;
+    unsigned int r = (count & 15);
 
     while(r--)
     {
@@ -1637,6 +1667,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
         i+=CACHE_STRIDE;
 
     } while(i < 128);
+
 
     //No space. Random eviction.
     return ((M_Random() & CACHE_MASK) * CACHE_STRIDE) + key;
@@ -2584,6 +2615,10 @@ static boolean R_CheckBBox(const short *bspcoord)
 
 //Render a BSP subsector if bspnum is a leaf node.
 //Return false if bspnum is frame node.
+
+
+
+
 
 static boolean R_RenderBspSubsector(int bspnum)
 {
