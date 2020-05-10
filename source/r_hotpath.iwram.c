@@ -461,12 +461,15 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 #pragma GCC push_options
 #pragma GCC optimize ("Ofast")
 
-inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, int frac)
+#define COLEXTRABITS 9
+#define COLBITS (FRACBITS + COLEXTRABITS)
+
+inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int frac)
 {
 #ifdef __arm__
-    *dest = colormap[source[(frac>>FRACBITS)&127]];
+    *dest = colormap[source[frac>>COLBITS]];
 #else
-    unsigned int color = colormap[source[(frac>>FRACBITS)&127]];
+    unsigned int color = colormap[source[frac>>COLBITS]];
 
     *dest = (color | (color << 8));
 #endif
@@ -485,8 +488,8 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
 
     unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dcvars->yl) + dcvars->x;
 
-    const fixed_t		fracstep = dcvars->iscale;
-    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
+    const unsigned int		fracstep = (dcvars->iscale << COLEXTRABITS);
+    unsigned int frac = (dcvars->texturemid + (dcvars->yl - centery)*dcvars->iscale) << COLEXTRABITS;
 
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
