@@ -254,26 +254,10 @@ static boolean P_CheckMissileRange(mobj_t *actor)
 static boolean P_IsOnLift(const mobj_t *actor)
 {
   const sector_t *sec = actor->subsector->sector;
-  line_t line;
-  int l;
 
   // Short-circuit: it's on a lift which is active.
   if (sec->floordata && ((thinker_t *) sec->floordata)->function==T_PlatRaise)
     return true;
-
-  // Check to see if it's in a sector which can be activated as a lift.
-  if ((line.tag = sec->tag))
-    for (l = -1; (l = P_FindLineFromLineTag(&line, l)) >= 0;)
-      switch (_g->linedata[l].special)
-  {
-  case  10: case  14: case  15: case  20: case  21: case  22:
-  case  47: case  53: case  62: case  66: case  67: case  68:
-  case  87: case  88: case  95: case 120: case 121: case 122:
-  case 123: case 143: case 162: case 163: case 181: case 182:
-  case 144: case 148: case 149: case 211: case 227: case 228:
-  case 231: case 232: case 235: case 236:
-    return true;
-  }
 
   return false;
 }
@@ -404,13 +388,14 @@ static boolean P_SmartMove(mobj_t *actor)
 
   /* killough 9/12/98: Stay on a lift if target is on one */
   on_lift = target && target->health > 0
-    && target->subsector->sector->tag==actor->subsector->sector->tag &&
-    P_IsOnLift(actor);
+    && target->subsector->sector->tag==actor->subsector->sector->tag && P_IsOnLift(actor);
 
-  under_damage = P_IsUnderDamage(actor);
+
 
   if (!P_Move(actor, dropoff))
     return false;
+
+  under_damage = P_IsUnderDamage(actor);
 
   // killough 9/9/98: avoid crushing ceilings or other damaging areas
   if (

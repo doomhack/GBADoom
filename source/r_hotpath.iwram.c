@@ -64,6 +64,8 @@
 #include "gba_functions.h"
 
 
+//#define static
+
 //*****************************************
 //Globals.
 //*****************************************
@@ -419,10 +421,7 @@ static const lighttable_t* R_ColourMap(int lightlevel)
                 lightlevel += 1 << LIGHTSEGSHIFT;
         }
 
-        lightlevel += extralight << LIGHTSEGSHIFT;
-
-        if(_g->gamma > 0)
-            lightlevel += _g->gamma << LIGHTSEGSHIFT;
+        lightlevel += (extralight +_g->gamma) << LIGHTSEGSHIFT;
 
         int cm = ((256-lightlevel)>>2) - 24;
 
@@ -475,7 +474,7 @@ inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte
 #endif
 }
 
-static void R_DrawColumn (draw_column_vars_t *dcvars)
+static void R_DrawColumn (const draw_column_vars_t *dcvars)
 {
     int count = (dcvars->yh - dcvars->yl) + 1;
 
@@ -798,8 +797,6 @@ static void R_DrawSprite (const vissprite_t* spr)
 
     drawseg_t* drawsegs  =_g->drawsegs;
 
-    //int     clipbot[MAX_SCREENWIDTH]; // killough 2/8/98: // dropoff overflow
-    //int     cliptop[MAX_SCREENWIDTH]; // change to MAX_*  // dropoff overflow
     int     x;
     int     r1;
     int     r2;
@@ -1102,7 +1099,7 @@ inline static void R_DrawSpanPixel(pixel* dest, const byte* source, const byte* 
 #endif
 }
 
-static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
+static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const draw_span_vars_t *dsvars)
 {
     unsigned int count = (x2 - x1);
 
@@ -1151,11 +1148,10 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {
-    fixed_t distance = FixedMul(planeheight, yslope[y]);
-    unsigned int xstep = FixedMul(distance,basexscale);
-    unsigned int ystep = FixedMul(distance,baseyscale);
+    const fixed_t distance = FixedMul(planeheight, yslope[y]);
 
-    dsvars->step = ((xstep << 10) & 0xffff0000) | ((ystep >> 6) & 0x0000ffff);
+    dsvars->step = ((FixedMul(distance,basexscale) << 10) & 0xffff0000) | ((FixedMul(distance,baseyscale) >> 6) & 0x0000ffff);
+
 
     fixed_t length = FixedMul (distance, distscale[x1]);
     angle_t angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
@@ -1366,6 +1362,10 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (tz < MINZ)
         return;
 
+    //Too far away.
+    if(tz > 1024*FRACUNIT)
+        return;
+
     xscale = FixedDiv(projection, tz);
 
     gxt = -FixedMul(tr_x,viewsin);
@@ -1422,6 +1422,9 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if(x2 < 0)
         return;
 
+    //Too small.
+    if(x2<=x1)
+        return;
 
     gzt = fz + (patch->topoffset << FRACBITS);
     width = patch->width;
@@ -1701,10 +1704,15 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
     {
         int colmask = 0xfffe;
 
-        if(dcvars->iscale > (4 << FRACBITS))
-            colmask = 0xfff0;
-        else if (dcvars->iscale > (2 << FRACBITS))
-            colmask = 0xfff8;
+        if(tex->width > 8)
+        {
+            if(dcvars->iscale > (4 << FRACBITS))
+                colmask = 0xfff0;
+            else if(dcvars->iscale > (3 << FRACBITS))
+                colmask = 0xfff8;
+            else if (dcvars->iscale > (2 << FRACBITS))
+                colmask = 0xfffc;
+        }
 
         const int xc = (texcolumn & colmask) & tex->widthmask;
 
