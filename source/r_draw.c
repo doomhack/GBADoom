@@ -91,7 +91,7 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 //  could create the SHADOW effect,
 //  i.e. spectres and invisible players.
 //
-void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
+void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
 { 
     int count;
 
@@ -162,7 +162,7 @@ void R_DrawFuzzColumn (draw_column_vars_t *dcvars)
 //
 
 
-void R_DrawTranslatedColumn (draw_column_vars_t *dcvars)
+void R_DrawTranslatedColumn (const draw_column_vars_t *dcvars)
 {
     int count = dcvars->yh - dcvars->yl;
 

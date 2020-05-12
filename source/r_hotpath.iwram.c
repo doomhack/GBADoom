@@ -631,40 +631,39 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
 static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
 {
-    if(texture->patchcount == 1)
+    const unsigned int patchcount = texture->patchcount;
+    const unsigned int widthmask = texture->widthmask;
+
+    const int xc = texcolumn & widthmask;
+
+    if(patchcount == 1)
     {
         //simple texture.
-
-        const unsigned int widthmask = texture->widthmask;
         const patch_t* patch = texture->patches[0].patch;
-
-        const unsigned int xc = texcolumn & widthmask;
 
         return (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
     }
     else
     {
-        const patch_t* realpatch;
+        unsigned int i = 0;
 
-        const int xc = (texcolumn & 0xffff) & texture->widthmask;
-
-        for(int i=0; i<texture->patchcount; i++)
+        do
         {
             const texpatch_t* patch = &texture->patches[i];
 
-            realpatch = patch->patch;
+            const patch_t* realpatch = patch->patch;
 
-            int x1 = patch->originx;
-            int x2 = x1 + realpatch->width;
+            const int x1 = patch->originx;
 
-            if (x2 > texture->width)
-                x2 = texture->width;
+            if(xc < x1)
+                continue;
 
-            if(xc >= x1 && xc < x2)
-            {
+            const int x2 = x1 + realpatch->width;
+
+            if(xc < x2)
                 return (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
-            }
-        }
+
+        } while(++i < patchcount);
     }
 
     return NULL;
@@ -1679,90 +1678,92 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
     return ((M_Random() & CACHE_MASK) * CACHE_STRIDE) + key;
 }
 
-static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
+
+static const byte* R_ComposeColumn(const unsigned int texture, const texture_t* tex, int texcolumn, unsigned int iscale)
 {
     //static int total, misses;
 
+    int colmask = 0xfffe;
+
+    if(tex->width > 8)
+    {
+        if(iscale > (4 << FRACBITS))
+            colmask = 0xfff0;
+        else if(iscale > (3 << FRACBITS))
+            colmask = 0xfff8;
+        else if (iscale > (2 << FRACBITS))
+            colmask = 0xfffc;
+    }
+
+    const int xc = (texcolumn & colmask) & tex->widthmask;
+
+    unsigned int cachekey = FindColumnCacheItem(texture, xc);
+
+    byte* colcache = &columnCache[cachekey*128];
+    unsigned int cacheEntry = columnCacheEntries[cachekey];
+
+    //total++;
+
+    if(cacheEntry != CACHE_ENTRY(xc, texture))
+    {
+        //misses++;
+
+        byte tmpCache[128];
+
+        columnCacheEntries[cachekey] = CACHE_ENTRY(xc, texture);
+
+        unsigned int i = 0;
+        unsigned int patchcount = tex->patchcount;
+
+        do
+        {
+            const texpatch_t* patch = &tex->patches[i];
+
+            const patch_t* realpatch = patch->patch;
+
+            const int x1 = patch->originx;
+
+            if(xc < x1)
+                continue;
+
+            const int x2 = x1 + realpatch->width;
+
+            if(xc < x2)
+            {
+                const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
+
+                R_DrawColumnInCache (patchcol,
+                                     tmpCache,
+                                     patch->originy,
+                                     tex->height);
+
+            }
+
+        } while(++i < patchcount);
+
+        //Block copy will drop low 2 bits of len.
+        BlockCopy(colcache, tmpCache, (tex->height + 3));
+    }
+
+    return colcache;
+}
+
+static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
+{
     const texture_t* tex = R_GetOrLoadTexture(texture);
 
-    if(tex->patchcount == 1)
+    if(tex->overlapped == 0)
     {
-        //simple texture.
-
-        const unsigned int widthmask = tex->widthmask;
-        const patch_t* patch = tex->patches[0].patch;
-
-        const unsigned int xc = texcolumn & widthmask;
-
-        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+        const column_t* column = R_GetColumn(tex, texcolumn);
 
         dcvars->source = (const byte*)column + 3;
-
-        R_DrawColumn (dcvars);
     }
     else
     {
-        int colmask = 0xfffe;
-
-        if(tex->width > 8)
-        {
-            if(dcvars->iscale > (4 << FRACBITS))
-                colmask = 0xfff0;
-            else if(dcvars->iscale > (3 << FRACBITS))
-                colmask = 0xfff8;
-            else if (dcvars->iscale > (2 << FRACBITS))
-                colmask = 0xfffc;
-        }
-
-        const int xc = (texcolumn & colmask) & tex->widthmask;
-
-        unsigned int cachekey = FindColumnCacheItem(texture, xc);
-
-        byte* colcache = &columnCache[cachekey*128];
-        unsigned int cacheEntry = columnCacheEntries[cachekey];
-
-        //total++;
-
-        if(cacheEntry != CACHE_ENTRY(xc, texture))
-        {
-            //misses++;
-
-            byte tmpCache[128];
-
-            columnCacheEntries[cachekey] = CACHE_ENTRY(xc, texture);
-
-            for(int i=0; i<tex->patchcount; i++)
-            {
-                const texpatch_t* patch = &tex->patches[i];
-
-                const patch_t* realpatch = patch->patch;
-
-                int x1 = patch->originx;
-                int x2 = x1 + realpatch->width;
-
-                if (x2 > tex->width)
-                    x2 = tex->width;
-
-                if(xc >= x1 && xc < x2)
-                {
-                    const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
-
-                    R_DrawColumnInCache (patchcol,
-                                         tmpCache,
-                                         patch->originy,
-                                         tex->height);
-
-                }
-            }
-
-            //Block copy will drop low 2 bits of len.
-            BlockCopy(colcache, tmpCache, (tex->height + 3));
-        }
-
-        dcvars->source = colcache;
-
-        R_DrawColumn (dcvars);
+        dcvars->source = R_ComposeColumn(texture, tex, texcolumn, dcvars->iscale);
     }
+
+    R_DrawColumn (dcvars);
 }
 
 //
