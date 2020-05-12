@@ -1214,31 +1214,14 @@ static void R_DoDrawPlane(visplane_t *pl)
 
             const texture_t* tex = R_GetOrLoadTexture(_g->skytexture);
 
-            const unsigned int widthmask = tex->widthmask;
-            const patch_t* patch = tex->patches[0].patch;
-
-            const boolean multitex_sky = (tex->patchcount > 1);
-
-            unsigned int inv_width;
-
-            if(multitex_sky)
-                inv_width = UDiv32(FRACUNIT, patch->width);
-
             // killough 10/98: Use sky scrolling offset
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
             {
                 if ((dcvars.yl = pl->top[x]) != -1 && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
                 {
-                    int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT) & widthmask;
+                    int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT);
 
-                    if(multitex_sky)
-                    {
-                        const unsigned int p = ((xc * inv_width) >> FRACBITS);
-                        xc -= (patch->width * p);
-                        patch = tex->patches[p].patch;
-                    }
-
-                    const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+                    const column_t* column = R_GetColumn(tex, xc);
 
                     dcvars.source = (const byte*)column + 3;
                     R_DrawColumn(&dcvars);
