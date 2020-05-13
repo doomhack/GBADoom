@@ -42,3 +42,7 @@ GbaWadUtil/DOOMU.WAD
 source/iwad/doomu.c
 
 source/iwad/doom2.c
+
+~$GBADoomMemory.xlsx
+
+GbaWadUtil/sigil.wad
