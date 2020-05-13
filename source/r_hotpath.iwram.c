@@ -188,6 +188,8 @@ static const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
 static const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
 
 static const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
+static const fixed_t pspriteyiscale = ((UINT_MAX) / ((((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200));
+
 
 static const angle_t clipangle = 537395200; //xtoviewangle[0];
 
@@ -612,7 +614,8 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
     // proff 11/06/98: Changed for high-res
 
-    dcvars.iscale = FixedDiv (FRACUNIT, vis->scale);
+    //dcvars.iscale = FixedDiv (FRACUNIT, vis->scale);
+    dcvars.iscale = vis->iscale;
     dcvars.texturemid = vis->texturemid;
     frac = vis->startfrac;
 
@@ -925,6 +928,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
     // proff 11/06/98: Added for high-res
     vis->scale = pspriteyscale;
+    vis->iscale = pspriteyiscale;
 
     if (flip)
     {
@@ -1309,74 +1313,45 @@ static vissprite_t *R_NewVisSprite(void)
 
 static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 {
-    fixed_t   gzt;               // killough 3/27/98
-    fixed_t   tx;
-    fixed_t   xscale;
-    int       x1;
-    int       x2;
-    spritedef_t   *sprdef;
-    spriteframe_t *sprframe;
-    int       lump;
-    boolean   flip;
-    vissprite_t *vis;
-    fixed_t   iscale;
+    const fixed_t fx = thing->x;
+    const fixed_t fy = thing->y;
+    const fixed_t fz = thing->z;
 
-    // transform the origin point
-    fixed_t tr_x, tr_y;
-    fixed_t fx, fy, fz;
-    fixed_t gxt, gyt;
-    fixed_t tz;
-    int width;
+    const fixed_t tr_x = fx - viewx;
+    const fixed_t tr_y = fy - viewy;
 
-    fx = thing->x;
-    fy = thing->y;
-    fz = thing->z;
-
-    tr_x = fx - viewx;
-    tr_y = fy - viewy;
-
-    gxt = FixedMul(tr_x,viewcos);
-    gyt = -FixedMul(tr_y,viewsin);
-
-    tz = gxt-gyt;
+    const fixed_t tz = FixedMul(tr_x,viewcos)-(-FixedMul(tr_y,viewsin));
 
     // thing is behind view plane?
     if (tz < MINZ)
         return;
 
     //Too far away.
-    if(tz > 1024*FRACUNIT)
+    if(tz > MAXZ)
         return;
 
-    xscale = FixedDiv(projection, tz);
-
-    gxt = -FixedMul(tr_x,viewsin);
-    gyt = FixedMul(tr_y,viewcos);
-    tx = -(gyt+gxt);
+    fixed_t tx = -(FixedMul(tr_y,viewcos)+(-FixedMul(tr_x,viewsin)));
 
     // too far off the side?
     if (D_abs(tx)>(tz<<2))
         return;
 
     // decide which patch to use for sprite relative to player
-    sprdef = &_g->sprites[thing->sprite];
-    sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+    const spritedef_t* sprdef = &_g->sprites[thing->sprite];
+    const spriteframe_t* sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+
+    unsigned int rot = 0;
 
     if (sprframe->rotate)
     {
         // choose a different rotation based on player view
         angle_t ang = R_PointToAngle(fx, fy);
-        unsigned rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
-        lump = sprframe->lump[rot];
+        rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
+    }
 
-        flip = (boolean)SPR_FLIPPED(sprframe, rot);
-    }
-    else
-    {
-        // use single rotation for all views
-        lump = sprframe->lump[0];
-        flip = (boolean)SPR_FLIPPED(sprframe, 0);
-    }
+    const int lump = sprframe->lump[rot];
+    const boolean flip = (boolean)SPR_FLIPPED(sprframe, rot);
+
 
     const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);
 
@@ -1384,35 +1359,34 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
      * cph 2003/08/1 - fraggle points out that this offset must be flipped
      * if the sprite is flipped; e.g. FreeDoom imp is messed up by this. */
     if (flip)
-    {
         tx -= (patch->width - patch->leftoffset) << FRACBITS;
-    } else
-    {
+    else
         tx -= patch->leftoffset << FRACBITS;
-    }
-    x1 = (centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
+
+    const fixed_t xscale = FixedDiv(projection, tz);
+
+    fixed_t xl = (centerxfrac + FixedMul(tx,xscale));
 
     // off the side?
-    if(x1 > SCREENWIDTH)
+    if(xl > (SCREENWIDTH << FRACBITS))
         return;
 
-    tx += patch->width<<FRACBITS;
-
-    x2 = ((centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
+    fixed_t xr = (centerxfrac + FixedMul(tx + (patch->width << FRACBITS),xscale)) - FRACUNIT;
 
     // off the side?
-    if(x2 < 0)
+    if(xr < 0)
         return;
 
     //Too small.
-    if(x2<=x1)
+    if(xr <= (xl + (FRACUNIT >> 2)))
         return;
 
-    gzt = fz + (patch->topoffset << FRACBITS);
-    width = patch->width;
+
+    const int x1 = (xl >> FRACBITS);
+    const int x2 = (xr >> FRACBITS);
 
     // store information in a vissprite
-    vis = R_NewVisSprite ();
+    vissprite_t* vis = R_NewVisSprite ();
 
     //No more vissprites.
     if(!vis)
@@ -1421,18 +1395,28 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     vis->mobjflags = thing->flags;
     // proff 11/06/98: Changed for high-res
     vis->scale = FixedDiv(projectiony, tz);
+    vis->iscale = tz >> 7;
+    vis->patch = lump;
     vis->gx = fx;
     vis->gy = fy;
     vis->gz = fz;
-    vis->gzt = gzt;                          // killough 3/27/98
+    vis->gzt = fz + (patch->topoffset << FRACBITS);                          // killough 3/27/98
     vis->texturemid = vis->gzt - viewz;
     vis->x1 = x1 < 0 ? 0 : x1;
     vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
-    iscale = FixedDiv (FRACUNIT, xscale);
+
+
+    //const fixed_t iscale = FixedDiv (FRACUNIT, xscale);
+
+    //It simplifies to this.
+    //const fixed_t iscale = tz / 60;
+
+    //This is a cheap divide by 60.
+    const fixed_t iscale = (((uint_64_t)tz * 0x8889) >> 16) >> 5;
 
     if (flip)
     {
-        vis->startfrac = (width<<FRACBITS)-1;
+        vis->startfrac = (patch->width<<FRACBITS)-1;
         vis->xiscale = -iscale;
     }
     else
@@ -1443,7 +1427,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     if (vis->x1 > x1)
         vis->startfrac += vis->xiscale*(vis->x1-x1);
-    vis->patch = lump;
 
     // get light level
     if (thing->flags & MF_SHADOW)
