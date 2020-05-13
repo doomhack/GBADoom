@@ -60,18 +60,7 @@
 //
 
 
-#define FUZZOFF (SCREENWIDTH)
 
-static const int fuzzoffset[FUZZTABLE] =
-{
-  FUZZOFF,-FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
-  FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
-  FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,
-  FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
-  FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,
-  FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,
-  FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF
-};
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 {
@@ -82,73 +71,6 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 	dcvars->translation = NULL;
 }
 
-
-//
-// Framebuffer postprocessing.
-// Creates a fuzzy image by copying pixels
-//  from adjacent ones to left and right.
-// Used with an all black colormap, this
-//  could create the SHADOW effect,
-//  i.e. spectres and invisible players.
-//
-void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
-{ 
-    int count;
-
-    unsigned short* dest;
-    fixed_t		frac;
-    fixed_t		fracstep;
-
-	int dc_yl = dcvars->yl;
-	int dc_yh = dcvars->yh;
-
-    // Adjust borders. Low... 
-    if (!dc_yl) 
-		dc_yl = 1;
-
-    // .. and high.
-    if (dc_yh == viewheight-1)
-        dc_yh = viewheight - 2;
-	
-	 count = dc_yh - dc_yl;
-
-    // Zero length, column does not exceed a pixel.
-     if (count < 0)
-         return;
-    
-    dest = drawvars.byte_topleft + (dcvars->yl*SCREENPITCH) + dcvars->x;
-
-
-    // Looks familiar.
-    fracstep = dcvars->iscale;
-	
-    frac = dcvars->texturemid + (dc_yl-centery)*fracstep;
-
-    // Looks like an attempt at dithering,
-    //  using the colormap #6 (of 0-31, a bit
-    //  brighter than average).
-    do 
-    {
-		// Lookup framebuffer, and retrieve
-		//  a pixel that is either one column
-		//  left or right of the current one.
-		// Add index from colormap to index.
-        unsigned char srcpxl = dest[fuzzoffset[_g->fuzzpos]] & 0xff;
-
-
-        unsigned short color = fullcolormap[6*256+srcpxl];
-
-        *dest = (color | (color << 8));
-
-		// Clamp table lookup index.
-        if (++_g->fuzzpos == FUZZTABLE)
-            _g->fuzzpos = 0;
-	
-		dest += SCREENWIDTH;
-
-		frac += fracstep; 
-    } while (count--); 
-} 
 
 
 //

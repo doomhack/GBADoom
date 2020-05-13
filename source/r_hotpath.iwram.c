@@ -529,6 +529,60 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
     }
 }
 
+#define FUZZOFF (SCREENWIDTH)
+#define FUZZTABLE 32
+
+static const byte fuzzoffset[FUZZTABLE] =
+{
+    FUZZOFF,  -FUZZOFF,   FUZZOFF,    -FUZZOFF,   FUZZOFF,    FUZZOFF,    -FUZZOFF,   FUZZOFF,
+    FUZZOFF,  -FUZZOFF,   FUZZOFF,    FUZZOFF,    FUZZOFF,    -FUZZOFF,   FUZZOFF,    FUZZOFF,
+    FUZZOFF,  -FUZZOFF,   -FUZZOFF,   -FUZZOFF,   -FUZZOFF,   FUZZOFF,    -FUZZOFF,   -FUZZOFF,
+    FUZZOFF,  FUZZOFF,    FUZZOFF,    FUZZOFF,    -FUZZOFF,   FUZZOFF,    -FUZZOFF,   FUZZOFF
+};
+
+//
+// Framebuffer postprocessing.
+// Creates a fuzzy image by copying pixels
+//  from adjacent ones to left and right.
+// Used with an all black colormap, this
+//  could create the SHADOW effect,
+//  i.e. spectres and invisible players.
+//
+static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
+{
+    int dc_yl = dcvars->yl;
+    int dc_yh = dcvars->yh;
+
+    // Adjust borders. Low...
+    if (dc_yl <= 0)
+        dc_yl = 1;
+
+    // .. and high.
+    if (dc_yh >= viewheight-1)
+        dc_yh = viewheight - 2;
+
+    int count = (dc_yh - dc_yl) + 1;
+
+    // Zero length, column does not exceed a pixel.
+    if (count <= 0)
+        return;
+
+    const byte* colormap = &fullcolormap[6*256];
+
+    unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dc_yl) + dcvars->x;
+
+    unsigned int fuzzpos = _g->fuzzpos;
+
+    do
+    {
+        R_DrawColumnPixel(dest, &dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos = ((fuzzpos + 1) & (FUZZTABLE-1));
+    } while(count--);
+
+    _g->fuzzpos = fuzzpos;
+}
+
+
+
 #pragma GCC pop_options
 
 //
@@ -2289,31 +2343,6 @@ static void R_RecalcLineFlags(void)
             linedata->r_flags = (linedata->r_flags & ML_MAPPED); return;
         } else
             linedata->r_flags = (RF_IGNORE | (linedata->r_flags & ML_MAPPED));
-    }
-
-    /* cph - I'm too lazy to try and work with offsets in this */
-    if (side->rowoffset) return;
-
-    /* Now decide on texture tiling */
-    if (linedef->flags & ML_TWOSIDED)
-    {
-        int c;
-
-        /* Does top texture need tiling */
-        if ((c = frontsector->ceilingheight - backsector->ceilingheight) > 0 &&
-                (textureheight[texturetranslation[side->toptexture]] > c))
-            linedata->r_flags |= RF_TOP_TILE;
-
-        /* Does bottom texture need tiling */
-        if ((c = frontsector->floorheight - backsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[side->bottomtexture]] > c))
-            linedata->r_flags |= RF_BOT_TILE;
-    } else {
-        int c;
-        /* Does middle texture need tiling */
-        if ((c = frontsector->ceilingheight - frontsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[side->midtexture]] > c))
-            linedata->r_flags |= RF_MID_TILE;
     }
 }
 

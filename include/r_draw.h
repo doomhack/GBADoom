@@ -75,10 +75,6 @@ extern draw_vars_t drawvars;
 
 typedef void (*R_DrawColumn_f)(const draw_column_vars_t *dcvars);
 
-
-// The Spectre/Invisibility effect.
-void 	R_DrawFuzzColumn (const draw_column_vars_t *dcvars);
-
 // Draw with color translation tables,
 //  for player sprite rendering,
 //  Green/Red/Blue/Indigo shirts.
@@ -86,7 +82,6 @@ void	R_DrawTranslatedColumn (const draw_column_vars_t *dcvars);
 
 void R_InitBuffer();
 
-#define FUZZTABLE 50
 
 
 
