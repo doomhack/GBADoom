@@ -46,3 +46,5 @@ source/iwad/doom2.c
 ~$GBADoomMemory.xlsx
 
 GbaWadUtil/sigil.wad
+
+source/iwad/sigil.c
