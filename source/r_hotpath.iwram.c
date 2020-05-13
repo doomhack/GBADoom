@@ -585,11 +585,9 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 {
     int      texturecolumn;
     fixed_t  frac;
-    const patch_t *patch = W_CacheLumpNum(vis->patch+_g->firstspritelump);
 
     R_DrawColumn_f colfunc;
     draw_column_vars_t dcvars;
-
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
@@ -613,8 +611,6 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     }
 
     // proff 11/06/98: Changed for high-res
-
-    //dcvars.iscale = FixedDiv (FRACUNIT, vis->scale);
     dcvars.iscale = vis->iscale;
     dcvars.texturemid = vis->texturemid;
     frac = vis->startfrac;
@@ -624,6 +620,8 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
     for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
+        const patch_t *patch = vis->patch;
+
         texturecolumn = frac>>FRACBITS;
 
         const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[texturecolumn]);
@@ -882,7 +880,6 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     int           x1, x2;
     spritedef_t   *sprdef;
     spriteframe_t *sprframe;
-    int           lump;
     boolean       flip;
     vissprite_t   *vis;
     vissprite_t   avis;
@@ -894,25 +891,23 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
-    lump = sprframe->lump[0];
     flip = (boolean) SPR_FLIPPED(sprframe, 0);
 
-    {
-        const patch_t* patch = W_CacheLumpNum(lump+_g->firstspritelump);
-        // calculate edges of the shape
-        fixed_t       tx;
-        tx = psp->sx-160*FRACUNIT;
+    const patch_t* patch = W_CacheLumpNum(sprframe->lump[0]+_g->firstspritelump);
+    // calculate edges of the shape
+    fixed_t       tx;
+    tx = psp->sx-160*FRACUNIT;
 
-        tx -= patch->leftoffset<<FRACBITS;
-        x1 = (centerxfrac + FixedMul (tx, pspritescale))>>FRACBITS;
+    tx -= patch->leftoffset<<FRACBITS;
+    x1 = (centerxfrac + FixedMul (tx, pspritescale))>>FRACBITS;
 
-        tx += patch->width<<FRACBITS;
-        x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
+    tx += patch->width<<FRACBITS;
+    x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
 
-        width = patch->width;
-        topoffset = patch->topoffset<<FRACBITS;
-        //R_UnlockPatchNum(lump+_g->firstspritelump);
-    }
+    width = patch->width;
+    topoffset = patch->topoffset<<FRACBITS;
+
+
 
     // off the side
     if (x2 < 0 || x1 > SCREENWIDTH)
@@ -944,7 +939,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     if (vis->x1 > x1)
         vis->startfrac += vis->xiscale*(vis->x1-x1);
 
-    vis->patch = lump;
+    vis->patch = patch;
 
     if (_g->viewplayer->powers[pw_invisibility] > 4*32 || _g->viewplayer->powers[pw_invisibility] & 8)
         vis->colormap = NULL;                    // shadow draw
@@ -1349,11 +1344,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
     }
 
-    const int lump = sprframe->lump[rot];
     const boolean flip = (boolean)SPR_FLIPPED(sprframe, rot);
-
-
-    const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);
+    const patch_t* patch = W_CacheLumpNum(sprframe->lump[rot] + _g->firstspritelump);
 
     /* calculate edges of the shape
      * cph 2003/08/1 - fraggle points out that this offset must be flipped
@@ -1396,7 +1388,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     // proff 11/06/98: Changed for high-res
     vis->scale = FixedDiv(projectiony, tz);
     vis->iscale = tz >> 7;
-    vis->patch = lump;
+    vis->patch = patch;
     vis->gx = fx;
     vis->gy = fy;
     vis->gz = fz;
