@@ -194,6 +194,7 @@ static const fixed_t pspriteyiscale = ((UINT_MAX) / ((((SCREENHEIGHT*SCREENWIDTH
 static const angle_t clipangle = 537395200; //xtoviewangle[0];
 
 static const int skytexturemid = 100*FRACUNIT;
+static const fixed_t skyiscale = (FRACUNIT*200)/(SCREENHEIGHT-ST_SCALED_HEIGHT);
 
 
 //********************************************
@@ -529,6 +530,8 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
     }
 }
 
+
+
 #define FUZZOFF (SCREENWIDTH)
 #define FUZZTABLE 32
 
@@ -575,15 +578,15 @@ static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
 
     do
     {
-        R_DrawColumnPixel(dest, &dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos = ((fuzzpos + 1) & (FUZZTABLE-1));
+        R_DrawColumnPixel((pixel*)dest, &dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos = ((fuzzpos + 1) & (FUZZTABLE-1));
     } while(count--);
 
     _g->fuzzpos = fuzzpos;
 }
 
-
-
 #pragma GCC pop_options
+
+
 
 //
 // R_DrawMaskedColumn
@@ -593,40 +596,44 @@ static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
 //
 static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvars, const column_t *column)
 {
-    int     topscreen;
-    int     bottomscreen;
-    fixed_t basetexturemid = dcvars->texturemid;
+    const fixed_t basetexturemid = dcvars->texturemid;
 
-    for ( ; column->topdelta != 0xff ; )
+    const int fclip_x = mfloorclip[dcvars->x];
+    const int cclip_x = mceilingclip[dcvars->x];
+
+    while (column->topdelta != 0xff)
     {
         // calculate unclipped screen coordinates for post
-        topscreen = sprtopscreen + spryscale*column->topdelta;
-        bottomscreen = topscreen + spryscale*column->length;
+        const int topscreen = sprtopscreen + spryscale*column->topdelta;
+        const int bottomscreen = topscreen + spryscale*column->length;
 
-        dcvars->yl = (topscreen+FRACUNIT-1)>>FRACBITS;
-        dcvars->yh = (bottomscreen-1)>>FRACBITS;
+        int yh = (bottomscreen-1)>>FRACBITS;
+        int yl = (topscreen+FRACUNIT-1)>>FRACBITS;
 
-        if (dcvars->yh >= mfloorclip[dcvars->x])
-            dcvars->yh = mfloorclip[dcvars->x]-1;
+        if(yh >= fclip_x)
+            yh = fclip_x - 1;
 
-        if (dcvars->yl <= mceilingclip[dcvars->x])
-            dcvars->yl = mceilingclip[dcvars->x]+1;
+        if(yl <= cclip_x)
+            yl = cclip_x + 1;
 
         // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
-        if (dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
+        if (yh < viewheight && yl <= yh)
         {
             dcvars->source =  (const byte*)column + 3;
 
             dcvars->texturemid = basetexturemid - (column->topdelta<<FRACBITS);
 
+            dcvars->yh = yh;
+            dcvars->yl = yl;
+
             // Drawn by either R_DrawColumn
             //  or (SHADOW) R_DrawFuzzColumn.
             colfunc (dcvars);
-
         }
 
         column = (const column_t *)((const byte *)column + column->length + 4);
     }
+
     dcvars->texturemid = basetexturemid;
 }
 
@@ -740,7 +747,7 @@ static const texture_t* R_GetOrLoadTexture(int tex_num)
 // R_RenderMaskedSegRange
 //
 
-static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
+static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
 {
     int      texnum;
     draw_column_vars_t dcvars;
@@ -818,24 +825,25 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
 static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 {
-  fixed_t lx = line->v1.x;
-  fixed_t ly = line->v1.y;
-  fixed_t ldx = line->v2.x - lx;
-  fixed_t ldy = line->v2.y - ly;
+    const fixed_t lx = line->v1.x;
+    const fixed_t ly = line->v1.y;
+    const fixed_t ldx = line->v2.x - lx;
+    const fixed_t ldy = line->v2.y - ly;
 
-  if (!ldx)
-    return x <= lx ? ldy > 0 : ldy < 0;
+    if (!ldx)
+        return x <= lx ? ldy > 0 : ldy < 0;
 
-  if (!ldy)
-    return y <= ly ? ldx < 0 : ldx > 0;
+    if (!ldy)
+        return y <= ly ? ldx < 0 : ldx > 0;
 
-  x -= lx;
-  y -= ly;
+    x -= lx;
+    y -= ly;
 
-  // Try to quickly decide by looking at sign bits.
-  if ((ldy ^ ldx ^ x ^ y) < 0)
-    return (ldy ^ x) < 0;          // (left is negative)
-  return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
+    // Try to quickly decide by looking at sign bits.
+    if ((ldy ^ ldx ^ x ^ y) < 0)
+        return (ldy ^ x) < 0;          // (left is negative)
+
+    return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
 }
 
 
@@ -845,20 +853,18 @@ static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 
 static void R_DrawSprite (const vissprite_t* spr)
 {
-    drawseg_t *ds;
     short* clipbot = floorclip;
     short* cliptop = ceilingclip;
 
-    drawseg_t* drawsegs  =_g->drawsegs;
-
-    int     x;
-    int     r1;
-    int     r2;
     fixed_t scale;
     fixed_t lowscale;
 
-    for (x = spr->x1 ; x<=spr->x2 ; x++)
-        clipbot[x] = cliptop[x] = -2;
+    for (int x = spr->x1 ; x<=spr->x2 ; x++)
+    {
+        clipbot[x] = viewheight;
+        cliptop[x] = -1;
+    }
+
 
     // Scan drawsegs from end to start for obscuring segs.
     // The first drawseg that has a greater scale is the clip seg.
@@ -867,14 +873,16 @@ static void R_DrawSprite (const vissprite_t* spr)
     // (pointer check was originally nonportable
     // and buggy, by going past LEFT end of array):
 
-    for (ds=ds_p ; ds-- > drawsegs ; )  // new -- killough
-    {      // determine if the drawseg obscures the sprite
-        if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
-                (!ds->silhouette && !ds->maskedtexturecol))
+    const drawseg_t* drawsegs  =_g->drawsegs;
+
+    for (const drawseg_t* ds = ds_p; ds-- > drawsegs; )  // new -- killough
+    {
+        // determine if the drawseg obscures the sprite
+        if (ds->x1 > spr->x2 || ds->x2 < spr->x1 || (!ds->silhouette && !ds->maskedtexturecol))
             continue;      // does not cover sprite
 
-        r1 = ds->x1 < spr->x1 ? spr->x1 : ds->x1;
-        r2 = ds->x2 > spr->x2 ? spr->x2 : ds->x2;
+        const int r1 = ds->x1 < spr->x1 ? spr->x1 : ds->x1;
+        const int r2 = ds->x2 > spr->x2 ? spr->x2 : ds->x2;
 
         if (ds->scale1 > ds->scale2)
         {
@@ -891,34 +899,34 @@ static void R_DrawSprite (const vissprite_t* spr)
         {
             if (ds->maskedtexturecol)       // masked mid texture?
                 R_RenderMaskedSegRange(ds, r1, r2);
+
             continue;               // seg is behind sprite
         }
 
         // clip this piece of the sprite
         // killough 3/27/98: optimized and made much shorter
 
-        if (ds->silhouette&SIL_BOTTOM && spr->gz < ds->bsilheight) //bottom sil
-            for (x=r1 ; x<=r2 ; x++)
-                if (clipbot[x] == -2)
+        if (ds->silhouette & SIL_BOTTOM && spr->gz < ds->bsilheight) //bottom sil
+        {
+            for (int x = r1; x <= r2; x++)
+            {
+                if (clipbot[x] == viewheight)
                     clipbot[x] = ds->sprbottomclip[x];
+            }
 
-        if (ds->silhouette&SIL_TOP && spr->gzt > ds->tsilheight)   // top sil
-            for (x=r1 ; x<=r2 ; x++)
-                if (cliptop[x] == -2)
+        }
+
+        if (ds->silhouette & SIL_TOP && spr->gzt > ds->tsilheight)   // top sil
+        {
+            for (int x=r1; x <= r2; x++)
+            {
+                if (cliptop[x] == -1)
                     cliptop[x] = ds->sprtopclip[x];
+            }
+        }
     }
 
     // all clipping has been performed, so draw the sprite
-    // check for unclipped columns
-
-    for (x = spr->x1 ; x<=spr->x2 ; x++) {
-        if (clipbot[x] == -2)
-            clipbot[x] = viewheight;
-
-        if (cliptop[x] == -2)
-            cliptop[x] = -1;
-    }
-
     mfloorclip = clipbot;
     mceilingclip = cliptop;
     R_DrawVisSprite (spr);
@@ -1263,7 +1271,7 @@ static void R_DoDrawPlane(visplane_t *pl)
                 dcvars.colormap = fullcolormap;          // killough 3/20/98
 
             // proff 09/21/98: Changed for high-res
-            dcvars.iscale = FRACUNIT*200/viewheight;
+            dcvars.iscale = skyiscale;
 
             const texture_t* tex = R_GetOrLoadTexture(_g->skytexture);
 
@@ -1284,17 +1292,14 @@ static void R_DoDrawPlane(visplane_t *pl)
         else
         {     // regular flat
 
-            int stop;
             draw_span_vars_t dsvars;
 
             dsvars.source = W_CacheLumpNum(_g->firstflat + flattranslation[pl->picnum]);
+            dsvars.colormap = R_LoadColorMap(pl->lightlevel);
 
             planeheight = D_abs(pl->height-viewz);
 
-            dsvars.colormap = R_LoadColorMap(pl->lightlevel);
-
-            stop = pl->maxx + 1;
-
+            const int stop = pl->maxx + 1;
 
             pl->top[pl->minx-1] = pl->top[stop] = 0xff; // dropoff overflow
 
@@ -2739,7 +2744,6 @@ static void R_DrawPlanes (void)
         while(pl)
         {
             R_DoDrawPlane(pl);
-
             pl = pl->next;
         }
     }
@@ -2812,4 +2816,158 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
             column = (const column_t*)((const byte*)column + column->length + 4);
         }
     }
+}
+
+
+
+
+
+
+//
+// P_DivlineSide
+// Returns side 0 (front), 1 (back), or 2 (on).
+//
+// killough 4/19/98: made static, cleaned up
+
+static int P_DivlineSide(fixed_t x, fixed_t y, const divline_t *node)
+{
+  fixed_t left, right;
+  return
+    !node->dx ? x == node->x ? 2 : x <= node->x ? node->dy > 0 : node->dy < 0 :
+    !node->dy ? (y) == node->y ? 2 : y <= node->y ? node->dx < 0 : node->dx > 0 :
+    (right = ((y - node->y) >> FRACBITS) * (node->dx >> FRACBITS)) <
+    (left  = ((x - node->x) >> FRACBITS) * (node->dy >> FRACBITS)) ? 0 :
+    right == left ? 2 : 1;
+}
+
+//
+// P_CrossSubsector
+// Returns true
+//  if strace crosses the given subsector successfully.
+//
+// killough 4/19/98: made static and cleaned up
+
+static boolean P_CrossSubsector(int num)
+{
+    const seg_t *seg = _g->segs + _g->subsectors[num].firstline;
+    int count;
+    fixed_t opentop = 0, openbottom = 0;
+    const sector_t *front = NULL, *back = NULL;
+
+    for (count = _g->subsectors[num].numlines; --count >= 0; seg++)
+    { // check lines
+        int linenum = seg->linenum;
+
+        const line_t *line = &_g->lines[linenum];
+        divline_t divl;
+
+        // allready checked other side?
+        if(_g->linedata[linenum].validcount == _g->validcount)
+            continue;
+
+        _g->linedata[linenum].validcount = _g->validcount;
+
+        if (line->bbox[BOXLEFT] > _g->los.bbox[BOXRIGHT ] ||
+                line->bbox[BOXRIGHT] < _g->los.bbox[BOXLEFT  ] ||
+                line->bbox[BOXBOTTOM] > _g->los.bbox[BOXTOP   ] ||
+                line->bbox[BOXTOP]    < _g->los.bbox[BOXBOTTOM])
+            continue;
+
+        // cph - do what we can before forced to check intersection
+        if (line->flags & ML_TWOSIDED)
+        {
+
+            // no wall to block sight with?
+            if ((front = SG_FRONTSECTOR(seg))->floorheight == (back = SG_BACKSECTOR(seg))->floorheight && front->ceilingheight == back->ceilingheight)
+                continue;
+
+            // possible occluder
+            // because of ceiling height differences
+            opentop = front->ceilingheight < back->ceilingheight ?
+                        front->ceilingheight : back->ceilingheight ;
+
+            // because of floor height differences
+            openbottom = front->floorheight > back->floorheight ?
+                        front->floorheight : back->floorheight ;
+
+            // cph - reject if does not intrude in the z-space of the possible LOS
+            if ((opentop >= _g->los.maxz) && (openbottom <= _g->los.minz))
+                continue;
+        }
+
+        // Forget this line if it doesn't cross the line of sight
+        const vertex_t *v1,*v2;
+
+        v1 = &line->v1;
+        v2 = &line->v2;
+
+        if (P_DivlineSide(v1->x, v1->y, &_g->los.strace) == P_DivlineSide(v2->x, v2->y, &_g->los.strace))
+            continue;
+
+        divl.dx = v2->x - (divl.x = v1->x);
+        divl.dy = v2->y - (divl.y = v1->y);
+
+        // line isn't crossed?
+        if (P_DivlineSide(_g->los.strace.x, _g->los.strace.y, &divl) == P_DivlineSide(_g->los.t2x, _g->los.t2y, &divl))
+            continue;
+
+
+        // cph - if bottom >= top or top < minz or bottom > maxz then it must be
+        // solid wrt this LOS
+        if (!(line->flags & ML_TWOSIDED) || (openbottom >= opentop) ||
+                (opentop < _g->los.minz) || (openbottom > _g->los.maxz))
+            return false;
+
+        // crosses a two sided line
+        /* cph 2006/07/15 - oops, we missed this in 2.4.0 & .1;
+       *  use P_InterceptVector2 for those compat levels only. */
+        fixed_t frac = P_InterceptVector2(&_g->los.strace, &divl);
+
+        if (front->floorheight != back->floorheight)
+        {
+            fixed_t slope = FixedDiv(openbottom - _g->los.sightzstart , frac);
+            if (slope > _g->los.bottomslope)
+                _g->los.bottomslope = slope;
+        }
+
+        if (front->ceilingheight != back->ceilingheight)
+        {
+            fixed_t slope = FixedDiv(opentop - _g->los.sightzstart , frac);
+            if (slope < _g->los.topslope)
+                _g->los.topslope = slope;
+        }
+
+        if (_g->los.topslope <= _g->los.bottomslope)
+            return false;               // stop
+
+    }
+    // passed the subsector ok
+    return true;
+}
+
+boolean P_CrossBSPNode(int bspnum)
+{
+    while (!(bspnum & NF_SUBSECTOR))
+    {
+        const mapnode_t *bsp = nodes + bspnum;
+
+        divline_t dl;
+        dl.x = ((fixed_t)bsp->x << FRACBITS);
+        dl.y = ((fixed_t)bsp->y << FRACBITS);
+        dl.dx = ((fixed_t)bsp->dx << FRACBITS);
+        dl.dy = ((fixed_t)bsp->dy << FRACBITS);
+
+        int side,side2;
+        side = P_DivlineSide(_g->los.strace.x,_g->los.strace.y,&dl)&1;
+        side2= P_DivlineSide(_g->los.t2x, _g->los.t2y, &dl);
+
+        if (side == side2)
+            bspnum = bsp->children[side]; // doesn't touch the other side
+        else         // the partition plane is crossed here
+            if (!P_CrossBSPNode(bsp->children[side]))
+                return 0;  // cross the starting side
+            else
+                bspnum = bsp->children[side^1];  // cross the ending side
+    }
+    return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
 }
