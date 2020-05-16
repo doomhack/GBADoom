@@ -566,6 +566,7 @@ static fixed_t P_AvoidDropoff(mobj_t *actor)
   return _g->dropoff_deltax | _g->dropoff_deltay;   // Non-zero if movement prescribed
 }
 
+
 //
 // P_NewChaseDir
 //
@@ -648,43 +649,6 @@ static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
 }
 
 //
-// PIT_FindTarget
-//
-// killough 9/5/98
-//
-// Finds monster targets for other monsters
-//
-
-
-static boolean PIT_FindTarget(mobj_t *mo)
-{
-  mobj_t *actor = _g->current_actor;
-
-  if (!((mo->flags ^ actor->flags) & MF_FRIEND &&        // Invalid target
-  mo->health > 0 && (mo->flags & MF_COUNTKILL || mo->type == MT_SKULL)))
-    return true;
-
-  // If the monster is already engaged in a one-on-one attack
-  // with a healthy friend, don't attack around 60% the time
-  {
-    const mobj_t *targ = mo->target;
-    if (targ && targ->target == mo &&
-  P_Random() > 100 &&
-  (targ->flags ^ mo->flags) & MF_FRIEND &&
-  targ->health*2 >= targ->info->spawnhealth)
-      return true;
-  }
-
-  if (!P_IsVisible(actor, mo, _g->current_allaround))
-    return true;
-
-  P_SetTarget(&actor->lastenemy, actor->target);  // Remember previous target
-  P_SetTarget(&actor->target, mo);                // Found target
-
-  return false;
-}
-
-//
 // P_LookForPlayers
 // If allaround is false, only look 180 degrees in front.
 // Returns true if a player is targeted.
@@ -693,34 +657,6 @@ static boolean PIT_FindTarget(mobj_t *mo)
 static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 {
     player_t *player;
-
-    /*
-    if (actor->flags & MF_FRIEND)
-    {  // killough 9/9/98: friendly monsters go about players differently
-        int anyone;
-
-        // Go back to a player, no matter whether it's visible or not
-        for (anyone=0; anyone<=1; anyone++)
-                if (_g->playeringame && _g->player.playerstate==PST_LIVE &&
-                        (anyone || P_IsVisible(actor, _g->player.mo, allaround)))
-                {
-                    P_SetTarget(&actor->target, _g->player.mo);
-
-                    // killough 12/98:
-                    // get out of refiring loop, to avoid hitting player accidentally
-
-                    if (actor->info->missilestate)
-                    {
-                        P_SetMobjState(actor, actor->info->seestate);
-                        actor->flags &= ~MF_JUSTHIT;
-                    }
-
-                    return true;
-                }
-
-        return false;
-    }
-    */
 
     if(_g->playeringame)
     {
@@ -741,6 +677,8 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
         return true;
     }
+
+    return false;
 }
 
 //
@@ -1824,7 +1762,6 @@ void A_BossDeath(mobj_t *mo)
 {
   thinker_t *th;
   line_t    junk;
-  int       i;
 
   if (_g->gamemode == commercial)
     {

@@ -66,6 +66,14 @@
 
 //#define static
 
+#ifndef __arm__
+static byte vram1_spare[2560];
+static byte vram2_spare[2560];
+#else
+    #define vram1_spare ((byte*)0x6000000+0x9600)
+    #define vram2_spare ((byte*)0x600A000+0x9600)
+#endif
+
 //*****************************************
 //Globals.
 //*****************************************
@@ -1725,8 +1733,8 @@ static const byte* R_ComposeColumn(const unsigned int texture, const texture_t* 
     if(cacheEntry != CACHE_ENTRY(xc, texture))
     {
         //misses++;
-
         byte tmpCache[128];
+
 
         columnCacheEntries[cachekey] = CACHE_ENTRY(xc, texture);
 
