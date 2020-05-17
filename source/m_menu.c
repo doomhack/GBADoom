@@ -689,6 +689,8 @@ void M_SfxVol(int choice)
       break;
     }
 
+  G_SaveSettings();
+
   S_SetSfxVolume(_g->snd_SfxVolume /* *8 */);
 }
 
@@ -705,6 +707,8 @@ void M_MusicVol(int choice)
         _g->snd_MusicVolume++;
       break;
     }
+
+  G_SaveSettings();
 
   S_SetMusicVolume(_g->snd_MusicVolume /* *8 */);
 }
@@ -749,6 +753,8 @@ void M_ChangeMessages(int choice)
     _g->player.message = MSGON ; // Ty 03/27/98 - externalized
 
   _g->message_dontfuckwithme = true;
+
+  G_SaveSettings();
 }
 
 
@@ -762,6 +768,8 @@ void M_ChangeAlwaysRun(int choice)
       _g->player.message = RUNOFF; // Ty 03/27/98 - externalized
     else
       _g->player.message = RUNON ; // Ty 03/27/98 - externalized
+
+    G_SaveSettings();
 }
 
 void M_ChangeGamma(int choice)
@@ -779,6 +787,8 @@ void M_ChangeGamma(int choice)
     }
 	V_SetPalLump(_g->gamma);
 	V_SetPalette(0);
+
+    G_SaveSettings();
 }
 
 //
