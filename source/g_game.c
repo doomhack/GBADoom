@@ -1086,6 +1086,9 @@ void G_LoadSettings()
 
         V_SetPalLump(_g->gamma);
         V_SetPalette(0);
+
+        S_SetSfxVolume(_g->snd_SfxVolume);
+        S_SetMusicVolume(_g->snd_MusicVolume);
     }
 }
 
