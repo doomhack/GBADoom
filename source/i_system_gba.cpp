@@ -254,7 +254,9 @@ unsigned short* I_GetBackBuffer()
 
 void I_CreateWindow_e32()
 {
-    SetMode(MODE_4 | BG2_ENABLE);
+
+    //Bit5 = unlocked vram at h-blank.
+    SetMode(MODE_4 | BG2_ENABLE | BIT(5));
 
     unsigned short* bb = I_GetBackBuffer();
 

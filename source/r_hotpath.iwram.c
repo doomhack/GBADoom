@@ -66,13 +66,62 @@
 
 //#define static
 
+//*****************************************
+//These are unused regions of VRAM.
+//We can store things in here to free space
+//in IWRAM.
+//*****************************************
+
 #ifndef __arm__
 static byte vram1_spare[2560];
 static byte vram2_spare[2560];
+static byte vram3_spare[1024];
 #else
     #define vram1_spare ((byte*)0x6000000+0x9600)
     #define vram2_spare ((byte*)0x600A000+0x9600)
+    #define vram3_spare ((byte*)0x7000000)
 #endif
+
+//Stuff alloc'd in OAM memory.
+
+//512 bytes.
+static unsigned int* columnCacheEntries = (unsigned int*)&vram3_spare[0];
+
+//240 bytes.
+short* floorclip = (short*)&vram3_spare[512];
+
+//240 bytes.
+short* ceilingclip = (short*)&vram3_spare[512+240];
+
+
+
+//Stuff alloc'd in VRAM1 memory.
+
+//580 bytes
+const fixed_t* yslope_vram = (const fixed_t*)&vram1_spare[0];
+
+//480 bytes
+const fixed_t* distscale_vram = (const fixed_t*)&vram1_spare[580];
+
+//484 bytes.
+const angle_t* xtoviewangle_vram = (const angle_t*)&vram1_spare[580+480];
+
+#define yslope yslope_vram
+#define distscale distscale_vram
+#define xtoviewangle xtoviewangle_vram
+
+//*****************************************
+//Column cache stuff.
+//GBA has 16kb of Video Memory for columns
+//*****************************************
+
+#ifndef __arm__
+static byte columnCache[128*128];
+#else
+    #define columnCache ((byte*)0x6014000)
+#endif
+
+
 
 //*****************************************
 //Globals.
@@ -104,8 +153,6 @@ static angle_t         rw_normalangle; // angle to line origin
 static fixed_t         rw_distance;
 
 static int      rw_stopx;
-
-short floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
 
 static fixed_t  rw_scale;
 static fixed_t  rw_scalestep;
@@ -225,31 +272,18 @@ inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
     return (fixed_t)((int_64_t) a*b >> FRACBITS);
 }
 
-//*****************************************
-//Column cache stuff.
-//GBA has 16kb of Video Memory for columns
-//*****************************************
-
-#ifndef __arm__
-static byte columnCache[128*128];
-#else
-    #define columnCache ((byte*)0x6014000)
-#endif
-
-static unsigned int columnCacheEntries[128];
-
 // killough 5/3/98: reformatted
 
 static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 {
-  unsigned ans;
+    unsigned ans;
 
-  if (den < 512)
-    return SLOPERANGE;
+    if (den < 512)
+        return SLOPERANGE;
 
-  ans = UDiv32(num<<3, den>>8);
+    ans = UDiv32(num << 3, den >> 8);
 
-  return ans <= SLOPERANGE ? ans : SLOPERANGE;
+    return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
 //
@@ -1215,11 +1249,9 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const d
 #pragma GCC pop_options
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
-{
+{    
     const fixed_t distance = FixedMul(planeheight, yslope[y]);
-
     dsvars->step = ((FixedMul(distance,basexscale) << 10) & 0xffff0000) | ((FixedMul(distance,baseyscale) >> 6) & 0x0000ffff);
-
 
     fixed_t length = FixedMul (distance, distscale[x1]);
     angle_t angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
