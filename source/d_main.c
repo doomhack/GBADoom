@@ -91,7 +91,7 @@ const int startmap = 1;
 
 const boolean nodrawers = false;
 
-static const char* timedemo = NULL;
+static const char* timedemo = NULL;//"demo3";
 
 /*
  * D_PostEvent - Event handling
@@ -707,6 +707,9 @@ static void D_DoomMainSetup(void)
     //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"ST_Init: Init status bar.");
     ST_Init();
+
+    lprintf(LO_INFO,"G_LoadSettings: Loading settings.");
+    G_LoadSettings();
 
     _g->idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
