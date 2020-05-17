@@ -276,14 +276,14 @@ inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
 
 static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 {
-    unsigned ans;
+    den = den >> 8;
 
-    if (den < 512)
+    if (den == 0)
         return SLOPERANGE;
 
-    ans = UDiv32(num << 3, den >> 8);
+    const unsigned int ans = UDiv32(num << 3, den);
 
-    return ans <= SLOPERANGE ? ans : SLOPERANGE;
+    return (ans <= SLOPERANGE) ? ans : SLOPERANGE;
 }
 
 //
@@ -1129,7 +1129,6 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
 
 static void R_SortVisSprites (void)
 {
-
     int i = num_vissprite;
 
     if (i)
