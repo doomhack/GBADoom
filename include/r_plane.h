@@ -42,7 +42,6 @@
 
 
 void R_InitPlanes(void);
-void R_ClearPlanes(void);
 void R_ResetPlanes();
 
 

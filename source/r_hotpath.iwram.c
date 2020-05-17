@@ -2789,6 +2789,34 @@ static void R_DrawPlanes (void)
 }
 
 //
+// R_ClearPlanes
+// At begining of frame.
+//
+
+static void R_ClearPlanes(void)
+{
+    int i;
+
+    // opening / clipping determination
+    for (i=0 ; i<SCREENWIDTH ; i++)
+        floorclip[i] = viewheight, ceilingclip[i] = -1;
+
+
+    for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
+        for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
+            _g->freehead = &(*_g->freehead)->next;
+
+    _g->lastopening = _g->openings;
+
+    // scale will be unit scale at SCREENWIDTH/2 distance
+    //basexscale = FixedDiv (viewsin,projection);
+    //baseyscale = FixedDiv (viewcos,projection);
+
+    basexscale = FixedMul(viewsin,iprojection);
+    baseyscale = FixedMul(viewcos,iprojection);
+}
+
+//
 // R_RenderView
 //
 void R_RenderPlayerView (player_t* player)
@@ -3010,3 +3038,168 @@ boolean P_CrossBSPNode(int bspnum)
     }
     return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
 }
+
+
+
+//
+// P_MobjThinker
+//
+
+void P_NightmareRespawn(mobj_t* mobj);
+void P_XYMovement (mobj_t* mo);
+void P_ZMovement (mobj_t* mo);
+
+
+//
+// P_SetMobjState
+// Returns true if the mobj is still present.
+//
+
+boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
+{
+    const state_t*	st;
+
+    do
+    {
+        if (state == S_NULL)
+        {
+            mobj->state = (state_t *) S_NULL;
+            P_RemoveMobj (mobj);
+            return false;
+        }
+
+        st = &states[state];
+        mobj->state = st;
+        mobj->tics = st->tics;
+        mobj->sprite = st->sprite;
+        mobj->frame = st->frame;
+
+        // Modified handling.
+        // Call action functions when the state is set
+        if(st->action)
+        {
+            if(!(_g->player.cheats & CF_ENEMY_ROCKETS))
+            {
+                st->action(mobj);
+            }
+            else
+            {
+                if(mobj->info->missilestate && (state >= mobj->info->missilestate) && (state < mobj->info->painstate))
+                    A_CyberAttack(mobj);
+                else
+                    st->action(mobj);
+            }
+        }
+
+        state = st->nextstate;
+
+    } while (!mobj->tics);
+
+    return true;
+}
+
+
+
+void P_MobjThinker (mobj_t* mobj)
+{
+    // killough 11/98:
+    // removed old code which looked at target references
+    // (we use pointer reference counting now)
+
+    // momentum movement
+    if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
+    {
+        P_XYMovement(mobj);
+        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
+            return;       // killough - mobj was removed
+    }
+
+    if (mobj->z != mobj->floorz || mobj->momz)
+    {
+        P_ZMovement(mobj);
+        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
+            return;       // killough - mobj was removed
+    }
+
+    // cycle through states,
+    // calling action functions at transitions
+
+    if (mobj->tics != -1)
+    {
+        mobj->tics--;
+
+        // you can cycle through multiple states in a tic
+
+        if (!mobj->tics)
+            if (!P_SetMobjState (mobj, mobj->state->nextstate) )
+                return;     // freed itself
+    }
+    else
+    {
+
+        // check for nightmare respawn
+
+        if (! (mobj->flags & MF_COUNTKILL) )
+            return;
+
+        if (!_g->respawnmonsters)
+            return;
+
+        mobj->movecount++;
+
+        if (mobj->movecount < 12*35)
+            return;
+
+        if (_g->leveltime & 31)
+            return;
+
+        if (P_Random () > 4)
+            return;
+
+        P_NightmareRespawn (mobj);
+    }
+
+}
+
+
+//
+// P_RunThinkers
+//
+// killough 4/25/98:
+//
+// Fix deallocator to stop using "next" pointer after node has been freed
+// (a Doom bug).
+//
+// Process each thinker. For thinkers which are marked deleted, we must
+// load the "next" pointer prior to freeing the node. In Doom, the "next"
+// pointer was loaded AFTER the thinker was freed, which could have caused
+// crashes.
+//
+// But if we are not deleting the thinker, we should reload the "next"
+// pointer after calling the function, in case additional thinkers are
+// added at the end of the list.
+//
+// killough 11/98:
+//
+// Rewritten to delete nodes implicitly, by making currentthinker
+// external and using P_RemoveThinkerDelayed() implicitly.
+//
+
+void P_RunThinkers (void)
+{
+    thinker_t* th = thinkercap.next;
+    thinker_t* th_end = &thinkercap;
+
+    while(th != th_end)
+    {
+        thinker_t* th_next = th->next;
+        if(th->function)
+            th->function(th);
+
+        th = th_next;
+    }
+}
+
+
+
+
