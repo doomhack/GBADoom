@@ -575,14 +575,17 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
 
 
 #define FUZZOFF (SCREENWIDTH)
-#define FUZZTABLE 32
+#define FUZZTABLE 50
 
-static const byte fuzzoffset[FUZZTABLE] =
+static const int fuzzoffset[FUZZTABLE] =
 {
-    FUZZOFF,  -FUZZOFF,   FUZZOFF,    -FUZZOFF,   FUZZOFF,    FUZZOFF,    -FUZZOFF,   FUZZOFF,
-    FUZZOFF,  -FUZZOFF,   FUZZOFF,    FUZZOFF,    FUZZOFF,    -FUZZOFF,   FUZZOFF,    FUZZOFF,
-    FUZZOFF,  -FUZZOFF,   -FUZZOFF,   -FUZZOFF,   -FUZZOFF,   FUZZOFF,    -FUZZOFF,   -FUZZOFF,
-    FUZZOFF,  FUZZOFF,    FUZZOFF,    FUZZOFF,    -FUZZOFF,   FUZZOFF,    -FUZZOFF,   FUZZOFF
+    FUZZOFF,-FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+    FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+    FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,
+    FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+    FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,
+    FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,
+    FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF
 };
 
 //
@@ -619,9 +622,13 @@ static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
     unsigned int fuzzpos = _g->fuzzpos;
 
     do
-    {
-        R_DrawColumnPixel((pixel*)dest, &dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos = ((fuzzpos + 1) & (FUZZTABLE-1));
-    } while(count--);
+    {        
+        R_DrawColumnPixel((pixel*)dest, &dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos++;
+
+        if(fuzzpos >= 50)
+            fuzzpos = 0;
+
+    } while(--count);
 
     _g->fuzzpos = fuzzpos;
 }
