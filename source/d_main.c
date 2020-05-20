@@ -598,7 +598,8 @@ static void IdentifyVersion()
                 _g->gamemission = doom;
                 break;
             case commercial:
-                _g->gamemission = doom2;
+				if(_g->gamemission != pack_tnt && _g->gamemission != pack_plut)
+					_g->gamemission = doom2;			
 				break;
 
             default:
