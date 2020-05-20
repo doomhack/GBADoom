@@ -146,6 +146,10 @@ static const texture_t* R_LoadTexture(int texture_num)
     texpatch_t* patch = texture->patches;
     const mappatch_t* mpatch = mtexture->patches;
 
+    texture->overlapped = 0;
+
+
+
     for (int j=0 ; j < texture->patchcount ; j++, mpatch++, patch++)
     {
         patch->originx = mpatch->originx;
@@ -155,6 +159,36 @@ static const texture_t* R_LoadTexture(int texture_num)
         strncpy(pname, (const char*)&pnames[mpatch->patch * 8], 8);
 
         patch->patch = (const patch_t*)W_CacheLumpName(pname);
+    }
+
+    for (int j=0 ; j < texture->patchcount ; j++)
+    {
+        const texpatch_t* patch = &texture->patches[j];
+
+        //Check for patch overlaps.
+        int l1 = patch->originx;
+        int r1 = l1 + patch->patch->width;
+
+        for(int k = j+1; k < texture->patchcount; k++)
+        {
+            if(k == j)
+                continue;
+
+            const texpatch_t* p2 = &texture->patches[k];
+
+            //Check for patch overlaps.
+            int l2 = p2->originx;
+            int r2 = l2 + p2->patch->width;
+
+            if(r1 > l2 && l1 < r2)
+            {
+                texture->overlapped = 1;
+                break;
+            }
+        }
+
+        if(texture->overlapped)
+            break;
     }
 
     int w;

@@ -254,26 +254,10 @@ static boolean P_CheckMissileRange(mobj_t *actor)
 static boolean P_IsOnLift(const mobj_t *actor)
 {
   const sector_t *sec = actor->subsector->sector;
-  line_t line;
-  int l;
 
   // Short-circuit: it's on a lift which is active.
   if (sec->floordata && ((thinker_t *) sec->floordata)->function==T_PlatRaise)
     return true;
-
-  // Check to see if it's in a sector which can be activated as a lift.
-  if ((line.tag = sec->tag))
-    for (l = -1; (l = P_FindLineFromLineTag(&line, l)) >= 0;)
-      switch (_g->linedata[l].special)
-  {
-  case  10: case  14: case  15: case  20: case  21: case  22:
-  case  47: case  53: case  62: case  66: case  67: case  68:
-  case  87: case  88: case  95: case 120: case 121: case 122:
-  case 123: case 143: case 162: case 163: case 181: case 182:
-  case 144: case 148: case 149: case 211: case 227: case 228:
-  case 231: case 232: case 235: case 236:
-    return true;
-  }
 
   return false;
 }
@@ -404,13 +388,14 @@ static boolean P_SmartMove(mobj_t *actor)
 
   /* killough 9/12/98: Stay on a lift if target is on one */
   on_lift = target && target->health > 0
-    && target->subsector->sector->tag==actor->subsector->sector->tag &&
-    P_IsOnLift(actor);
+    && target->subsector->sector->tag==actor->subsector->sector->tag && P_IsOnLift(actor);
 
-  under_damage = P_IsUnderDamage(actor);
+
 
   if (!P_Move(actor, dropoff))
     return false;
+
+  under_damage = P_IsUnderDamage(actor);
 
   // killough 9/9/98: avoid crushing ceilings or other damaging areas
   if (
@@ -581,6 +566,7 @@ static fixed_t P_AvoidDropoff(mobj_t *actor)
   return _g->dropoff_deltax | _g->dropoff_deltay;   // Non-zero if movement prescribed
 }
 
+
 //
 // P_NewChaseDir
 //
@@ -663,43 +649,6 @@ static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
 }
 
 //
-// PIT_FindTarget
-//
-// killough 9/5/98
-//
-// Finds monster targets for other monsters
-//
-
-
-static boolean PIT_FindTarget(mobj_t *mo)
-{
-  mobj_t *actor = _g->current_actor;
-
-  if (!((mo->flags ^ actor->flags) & MF_FRIEND &&        // Invalid target
-  mo->health > 0 && (mo->flags & MF_COUNTKILL || mo->type == MT_SKULL)))
-    return true;
-
-  // If the monster is already engaged in a one-on-one attack
-  // with a healthy friend, don't attack around 60% the time
-  {
-    const mobj_t *targ = mo->target;
-    if (targ && targ->target == mo &&
-  P_Random() > 100 &&
-  (targ->flags ^ mo->flags) & MF_FRIEND &&
-  targ->health*2 >= targ->info->spawnhealth)
-      return true;
-  }
-
-  if (!P_IsVisible(actor, mo, _g->current_allaround))
-    return true;
-
-  P_SetTarget(&actor->lastenemy, actor->target);  // Remember previous target
-  P_SetTarget(&actor->target, mo);                // Found target
-
-  return false;
-}
-
-//
 // P_LookForPlayers
 // If allaround is false, only look 180 degrees in front.
 // Returns true if a player is targeted.
@@ -708,34 +657,6 @@ static boolean PIT_FindTarget(mobj_t *mo)
 static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 {
     player_t *player;
-
-    /*
-    if (actor->flags & MF_FRIEND)
-    {  // killough 9/9/98: friendly monsters go about players differently
-        int anyone;
-
-        // Go back to a player, no matter whether it's visible or not
-        for (anyone=0; anyone<=1; anyone++)
-                if (_g->playeringame && _g->player.playerstate==PST_LIVE &&
-                        (anyone || P_IsVisible(actor, _g->player.mo, allaround)))
-                {
-                    P_SetTarget(&actor->target, _g->player.mo);
-
-                    // killough 12/98:
-                    // get out of refiring loop, to avoid hitting player accidentally
-
-                    if (actor->info->missilestate)
-                    {
-                        P_SetMobjState(actor, actor->info->seestate);
-                        actor->flags &= ~MF_JUSTHIT;
-                    }
-
-                    return true;
-                }
-
-        return false;
-    }
-    */
 
     if(_g->playeringame)
     {
@@ -756,6 +677,8 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
         return true;
     }
+
+    return false;
 }
 
 //
@@ -1839,7 +1762,6 @@ void A_BossDeath(mobj_t *mo)
 {
   thinker_t *th;
   line_t    junk;
-  int       i;
 
   if (_g->gamemode == commercial)
     {

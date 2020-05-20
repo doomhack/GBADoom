@@ -50,53 +50,7 @@
 #include "global_data.h"
 
 
-//
-// P_SetMobjState
-// Returns true if the mobj is still present.
-//
 
-boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
-{
-    const state_t*	st;
-
-    do
-    {
-        if (state == S_NULL)
-        {
-            mobj->state = (state_t *) S_NULL;
-            P_RemoveMobj (mobj);
-            return false;
-        }
-
-        st = &states[state];
-        mobj->state = st;
-        mobj->tics = st->tics;
-        mobj->sprite = st->sprite;
-        mobj->frame = st->frame;
-
-        // Modified handling.
-        // Call action functions when the state is set
-        if(st->action)
-        {
-            if(!(_g->player.cheats & CF_ENEMY_ROCKETS))
-            {
-                st->action(mobj);
-            }
-            else
-            {
-                if(mobj->info->missilestate && (state >= mobj->info->missilestate) && (state < mobj->info->painstate))
-                    A_CyberAttack(mobj);
-                else
-                    st->action(mobj);
-            }
-        }
-
-        state = st->nextstate;
-
-    } while (!mobj->tics);
-
-    return true;
-}
 
 //
 // P_ExplodeMissile
@@ -126,7 +80,7 @@ void P_ExplodeMissile (mobj_t* mo)
 // Attempts to move something if it has momentum.
 //
 
-static void P_XYMovement (mobj_t* mo)
+void P_XYMovement (mobj_t* mo)
 {
     player_t *player;
     fixed_t xmove, ymove;
@@ -316,7 +270,7 @@ static void P_XYMovement (mobj_t* mo)
 //
 // Attempt vertical movement.
 
-static void P_ZMovement (mobj_t* mo)
+void P_ZMovement (mobj_t* mo)
 {
 
   // check for smooth step up
@@ -435,7 +389,7 @@ static void P_ZMovement (mobj_t* mo)
 // P_NightmareRespawn
 //
 
-static void P_NightmareRespawn(mobj_t* mobj)
+void P_NightmareRespawn(mobj_t* mobj)
 {
     fixed_t      x;
     fixed_t      y;
@@ -534,70 +488,6 @@ void P_MobjBrainlessThinker(mobj_t* mobj)
     }
 }
 
-//
-// P_MobjThinker
-//
-
-void P_MobjThinker (mobj_t* mobj)
-{
-    // killough 11/98:
-    // removed old code which looked at target references
-    // (we use pointer reference counting now)
-
-    // momentum movement
-    if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
-    {
-        P_XYMovement(mobj);
-        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
-            return;       // killough - mobj was removed
-    }
-
-    if (mobj->z != mobj->floorz || mobj->momz)
-    {
-        P_ZMovement(mobj);
-        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
-            return;       // killough - mobj was removed
-    }
-
-    // cycle through states,
-    // calling action functions at transitions
-
-    if (mobj->tics != -1)
-    {
-        mobj->tics--;
-
-        // you can cycle through multiple states in a tic
-
-        if (!mobj->tics)
-            if (!P_SetMobjState (mobj, mobj->state->nextstate) )
-                return;     // freed itself
-    }
-    else
-    {
-
-        // check for nightmare respawn
-
-        if (! (mobj->flags & MF_COUNTKILL) )
-            return;
-
-        if (!_g->respawnmonsters)
-            return;
-
-        mobj->movecount++;
-
-        if (mobj->movecount < 12*35)
-            return;
-
-        if (_g->leveltime & 31)
-            return;
-
-        if (P_Random () > 4)
-            return;
-
-        P_NightmareRespawn (mobj);
-    }
-
-}
 
 
 static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)

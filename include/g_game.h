@@ -74,6 +74,10 @@ void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 
 void G_UpdateSaveGameStrings();
 
+void G_LoadSettings();
+void G_SaveSettings();
+
+
 // killough 5/2/98: moved from m_misc.c:
 
 extern const int  key_right;

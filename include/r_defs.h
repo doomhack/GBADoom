@@ -366,8 +366,9 @@ typedef struct vissprite_s
   fixed_t scale;
   fixed_t xiscale;             // negative if flipped
   fixed_t texturemid;
+  fixed_t iscale;
 
-  short patch;
+  const patch_t* patch;
 
   unsigned int mobjflags;
 

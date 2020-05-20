@@ -136,6 +136,22 @@ typedef struct gba_save_data_t
     int maxammo[NUMAMMO];
 } gba_save_data_t;
 
+
+typedef struct gba_save_settings_t
+{
+    unsigned int cookie;
+    unsigned int alwaysRun;
+    unsigned int gamma;
+    unsigned int showMessages;
+    unsigned int musicVolume;
+    unsigned int soundVolume;
+
+} gba_save_settings_t;
+
+const unsigned int settings_cookie = 0xbaddead1;
+
+const unsigned int settings_sram_offset = sizeof(gba_save_data_t) * 8;
+
 //
 // G_BuildTiccmd
 // Builds a ticcmd from all of the available inputs
@@ -908,7 +924,7 @@ void G_UpdateSaveGameStrings()
 
     byte* loadbuffer = Z_Malloc(savebuffersize, PU_STATIC, NULL);
 
-    LoadSRAM(loadbuffer, savebuffersize);
+    LoadSRAM(loadbuffer, savebuffersize, 0);
 
     gba_save_data_t* saveslots = (gba_save_data_t*)loadbuffer;
 
@@ -959,7 +975,7 @@ void G_DoLoadGame()
 
     byte* loadbuffer = Z_Malloc(savebuffersize, PU_STATIC, NULL);
 
-    LoadSRAM(loadbuffer, savebuffersize);
+    LoadSRAM(loadbuffer, savebuffersize, 0);
 
     gba_save_data_t* saveslots = (gba_save_data_t*)loadbuffer;
 
@@ -1007,7 +1023,7 @@ static void G_DoSaveGame(boolean menu)
 
     byte* savebuffer = Z_Malloc(savebuffersize, PU_STATIC, NULL);
 
-    LoadSRAM(savebuffer, savebuffersize);
+    LoadSRAM(savebuffer, savebuffersize, 0);
 
     gba_save_data_t* saveslots = (gba_save_data_t*)savebuffer;
 
@@ -1026,13 +1042,54 @@ static void G_DoSaveGame(boolean menu)
     memcpy(savedata->ammo, _g->player.ammo, sizeof(savedata->ammo));
     memcpy(savedata->maxammo, _g->player.maxammo, sizeof(savedata->maxammo));
 
-    SaveSRAM(savebuffer, savebuffersize);
+    SaveSRAM(savebuffer, savebuffersize, 0);
 
     Z_Free(savebuffer);
 
     _g->player.message = GGSAVED;
 
     G_UpdateSaveGameStrings();
+}
+
+void G_SaveSettings()
+{
+    gba_save_settings_t settings;
+
+    settings.cookie = settings_cookie;
+
+    settings.gamma = _g->gamma;
+    settings.alwaysRun = _g->alwaysRun;
+
+    settings.showMessages = _g->showMessages;
+
+    settings.musicVolume = _g->snd_MusicVolume;
+    settings.soundVolume = _g->snd_SfxVolume;
+
+    SaveSRAM((byte*)&settings, sizeof(settings), settings_sram_offset);
+}
+
+void G_LoadSettings()
+{
+    gba_save_settings_t settings;
+
+    LoadSRAM((byte*)&settings, sizeof(settings), settings_sram_offset);
+
+    if(settings.cookie == settings_cookie)
+    {
+        _g->gamma = (settings.gamma > 0) ? 1 : 0;
+        _g->alwaysRun = (settings.alwaysRun > 0) ? 1 : 0;
+
+        _g->showMessages = (settings.showMessages > 0) ? 1 : 0;
+
+        _g->snd_SfxVolume = (settings.soundVolume > 15) ? 15 : settings.soundVolume;
+        _g->snd_MusicVolume = (settings.musicVolume > 15) ? 15 : settings.musicVolume;
+
+        V_SetPalLump(_g->gamma);
+        V_SetPalette(0);
+
+        S_SetSfxVolume(_g->snd_SfxVolume);
+        S_SetMusicVolume(_g->snd_MusicVolume);
+    }
 }
 
 void G_DeferedInitNew(skill_t skill, int episode, int map)

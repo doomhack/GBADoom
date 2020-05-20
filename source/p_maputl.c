@@ -338,15 +338,14 @@ void P_SetThingPosition(mobj_t *thing)
 
 boolean P_BlockLinesIterator(int x, int y, boolean func(const line_t*))
 {
-    int        offset;
-    const short *list;   // killough 3/1/98: for removal of blockmap limit
 
     if (x<0 || y<0 || x>=_g->bmapwidth || y>=_g->bmapheight)
         return true;
 
-    offset = y*_g->bmapwidth+x;
-    offset = *(_g->blockmap+offset);
-    list = _g->blockmaplump+offset;     // original was reading         // phares
+    const int offset = _g->blockmap[y*_g->bmapwidth+x];
+    const short* list = _g->blockmaplump+offset;     // original was reading         // phares
+
+
     // delmiting 0 as linedef 0     // phares
 
     // killough 1/31/98: for compatibility we need to use the old method.
@@ -355,11 +354,11 @@ boolean P_BlockLinesIterator(int x, int y, boolean func(const line_t*))
 
     list++;     // skip 0 starting delimiter                      // phares
 
-    int vcount = _g->validcount;
+    const int vcount = _g->validcount;
 
     for ( ; *list != -1 ; list++)                                   // phares
     {
-        int lineno = *list;
+        const int lineno = *list;
 
         linedata_t *lt = &_g->linedata[lineno];
 
