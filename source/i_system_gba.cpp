@@ -254,7 +254,9 @@ unsigned short* I_GetBackBuffer()
 
 void I_CreateWindow_e32()
 {
-    SetMode(MODE_4 | BG2_ENABLE);
+
+    //Bit5 = unlocked vram at h-blank.
+    SetMode(MODE_4 | BG2_ENABLE | BIT(5));
 
     unsigned short* bb = I_GetBackBuffer();
 
@@ -296,11 +298,7 @@ void I_SetPallete_e32(const byte* pallete)
         unsigned int g = *pallete++;
         unsigned int b = *pallete++;
 
-        r = gammatable[0][r >> 3];
-        g = gammatable[0][g >> 3];
-        b = gammatable[0][b >> 3];
-
-        pal_ram[i] = RGB5(r,g,b);
+        pal_ram[i] = RGB5(r >> 3, g >> 3, b >> 3);
     }
 }
 
