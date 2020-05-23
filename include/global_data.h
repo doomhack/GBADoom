@@ -118,6 +118,13 @@ boolean advancedemo;
 
 unsigned int gamma;
 
+//fps counter stuff
+
+unsigned int fps_timebefore;
+unsigned int fps_frames;
+unsigned int fps_framerate;
+boolean fps_show;
+
 //******************************************************************************
 //doomstat.c
 //******************************************************************************

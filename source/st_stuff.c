@@ -275,10 +275,12 @@ static void ST_updateFaceWidget(void)
 
 static void ST_updateWidgets(void)
 {
-    static int  largeammo = 1994; // means "n/a"
+    const static int  largeammo = 1994; // means "n/a"
     int         i;
 
-    if (weaponinfo[_g->plyr->readyweapon].ammo == am_noammo)
+    if(_g->fps_show)
+        _g->w_ready.num = &_g->fps_framerate;
+    else if (weaponinfo[_g->plyr->readyweapon].ammo == am_noammo)
         _g->w_ready.num = &largeammo;
     else
         _g->w_ready.num = &_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo];

@@ -77,6 +77,8 @@
 
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
+static void D_UpdateFPS(void);
+
 
 // CPhipps - removed wadfiles[] stuff
 
@@ -91,7 +93,9 @@ const int startmap = 1;
 
 const boolean nodrawers = false;
 
-static const char* timedemo = NULL;//"demo3";
+static const char* timedemo = NULL;//"demo4";
+
+static const boolean show_fps = false;
 
 /*
  * D_PostEvent - Event handling
@@ -156,7 +160,7 @@ static void D_Wipe(void)
 //  draw current display, possibly wiping it from the previous
 //
 
-void D_Display (void)
+static void D_Display (void)
 {
 
   boolean wipe;
@@ -281,6 +285,35 @@ static void D_DoomLoop(void)
 
         // Update display, next frame, with current state.
         D_Display();
+
+
+        if(show_fps)
+        {
+            D_UpdateFPS();
+        }
+    }
+}
+
+static void D_UpdateFPS()
+{
+    _g->fps_frames++;
+
+    unsigned int timenow = I_GetTime();
+    if(timenow >= (_g->fps_timebefore + TICRATE))
+    {
+        unsigned int tics_elapsed = timenow - _g->fps_timebefore;
+        fixed_t f_realfps = FixedDiv((_g->fps_frames*35) << FRACBITS, tics_elapsed <<FRACBITS);
+
+        _g->fps_framerate = (f_realfps >> FRACBITS);
+
+        _g->fps_frames = 0;
+        _g->fps_timebefore = timenow;
+    }
+    else if(timenow < _g->fps_timebefore)
+    {
+        //timer overflow.
+        _g->fps_timebefore = timenow;
+        _g->fps_frames = 0;
     }
 }
 
@@ -712,6 +745,8 @@ static void D_DoomMainSetup(void)
     G_LoadSettings();
 
     _g->idmusnum = -1; //jff 3/17/98 insure idmus number is blank
+
+    _g->fps_show = show_fps;
 
     I_InitGraphics();
 

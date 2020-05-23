@@ -23,7 +23,7 @@
 static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 {
 #ifdef __arm__
-    unsigned int udiv32_arm (unsigned int a, unsigned int b);
+    unsigned int udiv32_arm(unsigned int a, unsigned int b);
 
     return udiv32_arm(aa, bb);
 #else
