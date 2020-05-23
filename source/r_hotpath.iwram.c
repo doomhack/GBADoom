@@ -42,6 +42,10 @@
 #include "config.h"
 #endif
 
+#ifndef __arm__
+    #include <sys/time.h>
+#endif
+
 #include "doomstat.h"
 #include "d_net.h"
 #include "w_wad.h"
@@ -3208,5 +3212,52 @@ void P_RunThinkers (void)
 }
 
 
+
+static int I_GetTime_e32(void)
+{
+    int thistimereply = *((unsigned short*)(0x400010C));
+
+    return thistimereply;
+}
+
+
+int I_GetTime(void)
+{
+    int thistimereply;
+
+#ifndef __arm__
+    struct timeval tv;
+    struct timezone tz;
+
+    gettimeofday(&tv, &tz);
+
+    thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
+
+    thistimereply = (thistimereply & 0xffff);
+#else
+    thistimereply = I_GetTime_e32();
+#endif
+
+    if (thistimereply < _g->lasttimereply)
+    {
+        _g->basetime -= 0xffff;
+    }
+
+    _g->lasttimereply = thistimereply;
+
+
+    /* Fix for time problem */
+    if (!_g->basetime)
+    {
+        _g->basetime = thistimereply;
+        thistimereply = 0;
+    }
+    else
+    {
+        thistimereply -= _g->basetime;
+    }
+
+    return thistimereply;
+}
 
 
