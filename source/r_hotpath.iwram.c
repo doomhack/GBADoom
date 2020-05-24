@@ -570,9 +570,23 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
 
     unsigned int r = (count & 15);
 
-    while(r--)
+    switch(r)
     {
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 15:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 14:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 13:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 12:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 11:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 10:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 9:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 8:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 7:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 6:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 5:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 4:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 3:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 2:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 1:     R_DrawColumnPixel(dest, source, colormap, frac);
     }
 }
 
@@ -1247,9 +1261,23 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const d
 
     unsigned int r = (count & 15);
 
-    while(r--)
+    switch(r)
     {
-        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 15:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 14:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 13:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 12:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 11:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 10:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 9:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 8:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 7:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 6:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 5:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 4:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 3:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 2:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 1:     R_DrawSpanPixel(dest, source, colormap, position);
     }
 }
 
