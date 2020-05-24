@@ -68,6 +68,11 @@ class DoomWindow : public QWidget
         p.drawImage(this->rect(), i, i.rect());
     }
 
+    void closeEvent(QCloseEvent *event) override
+    {
+        exit(0);
+    }
+
     void keyPressEvent(QKeyEvent *event) override
     {
         event_t ev;

@@ -95,7 +95,7 @@ const boolean nodrawers = false;
 
 static const char* timedemo = NULL;//"demo4";
 
-static const boolean show_fps = true;
+static const boolean show_fps = false;
 
 /*
  * D_PostEvent - Event handling
