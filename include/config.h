@@ -1,6 +1,10 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+#ifdef _MSC_VER
+    #define __WINS__
+#endif
+
 /* Uncomment this to exhaustively run memory checks while the game is running
    (this is EXTREMELY slow). */
 /* #undef CHECKHEAP */

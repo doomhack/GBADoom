@@ -43,7 +43,7 @@
 #endif
 
 #ifndef __arm__
-    #include <sys/time.h>
+    #include <time.h>
 #endif
 
 #include "doomstat.h"
@@ -697,7 +697,6 @@ static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvar
 // CPhipps - new wad lump handling, *'s to const*'s
 static void R_DrawVisSprite(const vissprite_t *vis)
 {
-    int      texturecolumn;
     fixed_t  frac;
 
     R_DrawColumn_f colfunc;
@@ -732,13 +731,12 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     spryscale = vis->scale;
     sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
+
+    const patch_t *patch = vis->patch;
+
     for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
-        const patch_t *patch = vis->patch;
-
-        texturecolumn = frac>>FRACBITS;
-
-        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[texturecolumn]);
+        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
 
         R_DrawMaskedColumn(colfunc, &dcvars, column);
     }
@@ -852,16 +850,15 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
     // draw the columns
     for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
     {
-        if (maskedtexturecol[dcvars.x] != SHRT_MAX) // dropoff overflow
+        const int xc = maskedtexturecol[dcvars.x];
+
+        if (xc != SHRT_MAX) // dropoff overflow
         {
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
             dcvars.iscale = UDiv32(UINT_MAX, (unsigned)spryscale);
 
             // draw the texture
-
-            int xc = maskedtexturecol[dcvars.x];
-
             const column_t* column = R_GetColumn(texture, xc);
 
             R_DrawMaskedColumn(R_DrawColumn, &dcvars, column);
@@ -3226,6 +3223,12 @@ int I_GetTime(void)
     int thistimereply;
 
 #ifndef __arm__
+
+    clock_t now = clock();
+
+    thistimereply = (int)((double)now / ((double)CLOCKS_PER_SEC / (double)TICRATE));
+
+    /*
     struct timeval tv;
     struct timezone tz;
 
@@ -3234,6 +3237,7 @@ int I_GetTime(void)
     thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
 
     thistimereply = (thistimereply & 0xffff);
+    */
 #else
     thistimereply = I_GetTime_e32();
 #endif

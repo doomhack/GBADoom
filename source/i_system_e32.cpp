@@ -178,7 +178,7 @@ void I_ProcessKeyEvents()
 
 //**************************************************************************************
 
-#define MAX_MESSAGE_SIZE 2048
+#define MAX_MESSAGE_SIZE 1024
 
 void I_Error (const char *error, ...)
 {
@@ -197,7 +197,7 @@ void I_Error (const char *error, ...)
     fflush( stderr );
 	fflush( stdout );
 
-    gets(msg);
+    fgets(msg, sizeof(msg), stdin);
 
 	I_Quit_e32();
 }

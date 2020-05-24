@@ -34,8 +34,6 @@
  */
 
 
-#include <sys/time.h>
-
 #include <sys/stat.h>
 #include <errno.h>
 
