@@ -1430,8 +1430,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (tz < MINZ)
         return;
 
-    //Too far away.
-    if(tz > MAXZ)
+    //Too far away. Always draw Cyberdemon and Spiderdemon. They are big sprites!
+    if( (tz > MAXZ) && (thing->type != MT_CYBORG) && (thing->type != MT_SPIDER) )
         return;
 
     fixed_t tx = -(FixedMul(tr_y,viewcos)+(-FixedMul(tr_x,viewsin)));
