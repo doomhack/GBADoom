@@ -187,7 +187,7 @@ typedef struct {
   short bbox[2][4];
   // If NF_SUBSECTOR its a subsector, else it's a node of another subtree.
   unsigned short children[2];
-} PACKEDATTR mapnode_t;
+} mapnode_t;
 
 // Thing definition, position, orientation and type,
 // plus skill/visibility flags and attributes.
