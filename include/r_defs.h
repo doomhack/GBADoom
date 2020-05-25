@@ -434,6 +434,7 @@ typedef struct visplane
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
+  unsigned int modified;
 
   //byte		pad1;
   // Here lies the rub for all
