@@ -1648,6 +1648,8 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
 
     BlockSet(check->top, UINT_MAX, sizeof(check->top));
 
+    check->modified = 0;
+
     return check;
 }
 
@@ -1668,6 +1670,8 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->maxx = stop;
 
     BlockSet(new_pl->top, UINT_MAX, sizeof(new_pl->top));
+
+    new_pl->modified = false;
 
     return new_pl;
 }
@@ -1905,6 +1909,7 @@ static void R_RenderSegLoop (int rw_x)
             {
                 ceilingplane->top[rw_x] = top;
                 ceilingplane->bottom[rw_x] = bottom;
+                ceilingplane->modified = 1;
             }
             // SoM: this should be set here
             cc_rwx = bottom;
@@ -1923,6 +1928,7 @@ static void R_RenderSegLoop (int rw_x)
             {
                 floorplane->top[rw_x] = top;
                 floorplane->bottom[rw_x] = bottom;
+                floorplane->modified = 1;
             }
             // SoM: This should be set here to prevent overdraw
             fc_rwx = top;
@@ -2818,7 +2824,9 @@ static void R_DrawPlanes (void)
 
         while(pl)
         {
-            R_DoDrawPlane(pl);
+            if(pl->modified)
+                R_DoDrawPlane(pl);
+
             pl = pl->next;
         }
     }
