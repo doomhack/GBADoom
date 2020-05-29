@@ -1509,31 +1509,6 @@ boolean PIT_ChangeSector (mobj_t* thing)
   return true;
   }
 
-
-//
-// P_ChangeSector
-//
-boolean P_ChangeSector(sector_t* sector,boolean crunch)
-  {
-  int   x;
-  int   y;
-
-  _g->nofit = false;
-  _g->crushchange = crunch;
-
-  // ARRGGHHH!!!!
-  // This is horrendously slow!!!
-  // killough 3/14/98
-
-  // re-check heights for all things near the moving sector
-
-  for (x=sector->blockbox[BOXLEFT] ; x<= sector->blockbox[BOXRIGHT] ; x++)
-    for (y=sector->blockbox[BOXBOTTOM];y<= sector->blockbox[BOXTOP] ; y++)
-      P_BlockThingsIterator (x, y, PIT_ChangeSector);
-
-  return _g->nofit;
-  }
-
 //
 // P_CheckSector
 // jff 3/19/98 added to just check monsters on the periphery

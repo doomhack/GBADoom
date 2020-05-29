@@ -93,7 +93,7 @@ const int startmap = 1;
 
 const boolean nodrawers = false;
 
-static const char* timedemo = NULL;//"demo4";
+static const char* timedemo = NULL;//"demo1";
 
 static const boolean show_fps = false;
 

@@ -277,7 +277,6 @@ void S_StartSound2(degenmobj_t* origin, int sfx_id)
 
     fm.origin.x = origin->x;
     fm.origin.y = origin->y;
-    fm.origin.z = origin->z;
 
     S_StartSoundAtVolume((mobj_t*) &fm, sfx_id, _g->snd_SfxVolume);
 }

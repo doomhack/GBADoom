@@ -50,3 +50,5 @@ GbaWadUtil/sigil.wad
 source/iwad/sigil.c
 
 source/iwad/doom64.c
+
+source/iwad/

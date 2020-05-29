@@ -707,18 +707,7 @@ typedef struct
 
 typedef struct {
   thinker_t thinker;   // Thinker structure for scrolling
-  fixed_t dx, dy;      // (dx,dy) scroll speeds
   int affectee;        // Number of affected sidedef, sector, tag, or whatever
-  int control;         // Control sector (-1 if none) used to control scrolling
-  fixed_t last_height; // Last known height of control sector
-  fixed_t vdx, vdy;    // Accumulated velocity if accelerative
-  int accel;           // Whether it's accelerative
-  enum
-  {
-    sc_side,
-    sc_floor,
-    sc_ceiling,
-  } type;              // Type of scroll effect
 } scroll_t;
 
 // phares 3/12/98: added new model of friction for ice/sludge effects

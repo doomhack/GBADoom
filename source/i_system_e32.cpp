@@ -197,7 +197,7 @@ void I_Error (const char *error, ...)
     fflush( stderr );
 	fflush( stdout );
 
-    fgets(msg, sizeof(msg), stdin);
+    //fgets(msg, sizeof(msg), stdin);
 
 	I_Quit_e32();
 }

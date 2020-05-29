@@ -855,7 +855,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
         dcvars.texturemid = dcvars.texturemid - viewz;
     }
 
-    dcvars.texturemid += _g->sides[curline->sidenum].rowoffset;
+    dcvars.texturemid += (_g->sides[curline->sidenum].rowoffset << FRACBITS);
 
     const texture_t* texture = R_GetOrLoadTexture(texnum);
 
@@ -2149,7 +2149,7 @@ static void R_StoreWallRange(const int start, const int stop)
         else        // top of texture at top
             rw_midtexturemid = worldtop;
 
-        rw_midtexturemid += FixedMod(sidedef->rowoffset, textureheight[midtexture]);
+        rw_midtexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[midtexture]);
 
         ds_p->silhouette = SIL_BOTH;
         ds_p->sprtopclip = screenheightarray;
@@ -2232,7 +2232,7 @@ static void R_StoreWallRange(const int start, const int stop)
             toptexture = texturetranslation[sidedef->toptexture];
             rw_toptexturemid = linedef->flags & ML_DONTPEGTOP ? worldtop :
                                                                         backsector->ceilingheight+textureheight[sidedef->toptexture]-viewz;
-            rw_toptexturemid += FixedMod(sidedef->rowoffset, textureheight[toptexture]);
+            rw_toptexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[toptexture]);
         }
 
         if (worldlow > worldbottom) // bottom texture
@@ -2240,7 +2240,7 @@ static void R_StoreWallRange(const int start, const int stop)
             bottomtexture = texturetranslation[sidedef->bottomtexture];
             rw_bottomtexturemid = linedef->flags & ML_DONTPEGBOTTOM ? worldtop : worldlow;
 
-            rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
+            rw_bottomtexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[bottomtexture]);
         }
 
         // allocate space for masked texture tables
@@ -2259,7 +2259,7 @@ static void R_StoreWallRange(const int start, const int stop)
     {
         rw_offset = FixedMul (hyp, -finesine[offsetangle >>ANGLETOFINESHIFT]);
 
-        rw_offset += sidedef->textureoffset + curline->offset;
+        rw_offset += (sidedef->textureoffset << FRACBITS) + curline->offset;
 
         rw_centerangle = ANG90 + viewangle - rw_normalangle;
 

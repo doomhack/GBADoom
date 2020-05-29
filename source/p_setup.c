@@ -220,11 +220,6 @@ static void P_LoadLineDefs (int lump)
 
     for (i=0; i<_g->numlines; i++)
     {
-        const line_t* ld = &_g->lines[i];
-        // killough 4/4/98: support special sidedef interpretation below
-        if (ld->sidenum[0] != NO_INDEX && ld->const_special)
-            _g->sides[*ld->sidenum].special = ld->const_special;
-
         _g->linedata[i].special = _g->lines[i].const_special;
     }
 }
@@ -271,8 +266,8 @@ static void P_LoadSideDefs2(int lump)
         register side_t *sd = _g->sides + i;
         register sector_t *sec;
 
-        sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
-        sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
+        sd->textureoffset = msd->textureoffset;
+        sd->rowoffset = msd->rowoffset;
 
         { /* cph 2006/09/30 - catch out-of-range sector numbers; use sector 0 instead */
             unsigned short sector_num = SHORT(msd->sector);
@@ -349,30 +344,10 @@ static void P_LoadBlockMap (int lump)
 // No more desync on teeth-32.wad\teeth-32.lmp.
 // http://www.doomworld.com/vb/showthread.php?s=&threadid=35214
 
-static void P_LoadReject(int lumpnum, int totallines)
+static void P_LoadReject(int lumpnum)
 {
-  unsigned int length, required;
-  byte *newreject;
-
   _g->rejectlump = lumpnum + ML_REJECT;
   _g->rejectmatrix = W_CacheLumpNum(_g->rejectlump);
-
-  required = (_g->numsectors * _g->numsectors + 7) / 8;
-  length = W_LumpLength(_g->rejectlump);
-
-  if (length >= required)
-    return; // nothing to do
-
-  // allocate a new block and copy the reject table into it; zero the rest
-  // PU_LEVEL => will be freed on level exit
-  newreject = Z_Malloc(required, PU_LEVEL, NULL);
-  _g->rejectmatrix = (const byte *)memmove(newreject, _g->rejectmatrix, length);
-  memset(newreject + length, 0, required - length);
-
-  _g->rejectlump = -1;
-
-  lprintf(LO_WARN, "P_LoadReject: REJECT too short (%u<%u) - padded\n",
-          length, required);
 }
 
 //
@@ -388,103 +363,83 @@ static void P_LoadReject(int lumpnum, int totallines)
 // cph - convenient sub-function
 static void P_AddLineToSector(const line_t* li, sector_t* sector)
 {
-  fixed_t *bbox = (void*)sector->blockbox;
-
   sector->lines[sector->linecount++] = li;
-  M_AddToBox (bbox, li->v1.x, li->v1.y);
-  M_AddToBox (bbox, li->v2.x, li->v2.y);
 }
 
 // modified to return totallines (needed by P_LoadReject)
 static int P_GroupLines (void)
 {
-  register const line_t *li;
-  register sector_t *sector;
-  int i,j, total = _g->numlines;
+    register const line_t *li;
+    register sector_t *sector;
+    int i,j, total = _g->numlines;
 
-  // figgi
-  for (i=0 ; i<_g->numsubsectors ; i++)
-  {
-    const seg_t *seg = &_g->segs[_g->subsectors[i].firstline];
-    _g->subsectors[i].sector = NULL;
-    for(j=0; j<_g->subsectors[i].numlines; j++)
+    // figgi
+    for (i=0 ; i<_g->numsubsectors ; i++)
     {
-      if(seg->sidenum != NO_INDEX)
-      {
-        _g->subsectors[i].sector = _g->sides[seg->sidenum].sector;
-        break;
-      }
-      seg++;
-    }
-    if(_g->subsectors[i].sector == NULL)
-      I_Error("P_GroupLines: Subsector a part of no sector!\n");
-  }
-
-  // count number of lines in each sector
-  for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
-    {
-      LN_FRONTSECTOR(li)->linecount++;
-      if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
+        const seg_t *seg = &_g->segs[_g->subsectors[i].firstline];
+        _g->subsectors[i].sector = NULL;
+        for(j=0; j<_g->subsectors[i].numlines; j++)
         {
-          LN_BACKSECTOR(li)->linecount++;
-          total++;
+            if(seg->sidenum != NO_INDEX)
+            {
+                _g->subsectors[i].sector = _g->sides[seg->sidenum].sector;
+                break;
+            }
+            seg++;
+        }
+        if(_g->subsectors[i].sector == NULL)
+            I_Error("P_GroupLines: Subsector a part of no sector!\n");
+    }
+
+    // count number of lines in each sector
+    for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
+    {
+        LN_FRONTSECTOR(li)->linecount++;
+        if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
+        {
+            LN_BACKSECTOR(li)->linecount++;
+            total++;
         }
     }
 
-  {  // allocate line tables for each sector
-    const line_t **linebuffer = Z_Malloc(total*sizeof(line_t *), PU_LEVEL, 0);
+    {  // allocate line tables for each sector
+        const line_t **linebuffer = Z_Malloc(total*sizeof(line_t *), PU_LEVEL, 0);
 
-    // e6y: REJECT overrun emulation code
-    // moved to P_LoadReject
+        // e6y: REJECT overrun emulation code
+        // moved to P_LoadReject
+
+        for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)
+        {
+            sector->lines = linebuffer;
+            linebuffer += sector->linecount;
+            sector->linecount = 0;
+        }
+    }
+
+    // Enter those lines
+    for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
+    {
+        P_AddLineToSector(li, LN_FRONTSECTOR(li));
+        if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
+            P_AddLineToSector(li, LN_BACKSECTOR(li));
+    }
 
     for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)
     {
-      sector->lines = linebuffer;
-      linebuffer += sector->linecount;
-      sector->linecount = 0;
-      M_ClearBox(sector->blockbox);
-    }
-  }
+        fixed_t bbox[4];
+        M_ClearBox(bbox);
 
-  // Enter those lines
-  for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
-  {
-    P_AddLineToSector(li, LN_FRONTSECTOR(li));
-    if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
-      P_AddLineToSector(li, LN_BACKSECTOR(li));
-  }
+        for(int l = 0; l < sector->linecount; l++)
+        {
+            M_AddToBox (bbox, sector->lines[l]->v1.x, sector->lines[l]->v1.y);
+            M_AddToBox (bbox, sector->lines[l]->v2.x, sector->lines[l]->v2.y);
+        }
 
-  for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)
-  {
-    fixed_t *bbox = (void*)sector->blockbox; // cph - For convenience, so
-                                  // I can sue the old code unchanged
-    int block;
-
-    {
-      //e6y: fix sound origin for large levels
-      sector->soundorg.x = bbox[BOXRIGHT]/2+bbox[BOXLEFT]/2;
-      sector->soundorg.y = bbox[BOXTOP]/2+bbox[BOXBOTTOM]/2;
+        sector->soundorg.x = bbox[BOXRIGHT]/2+bbox[BOXLEFT]/2;
+        sector->soundorg.y = bbox[BOXTOP]/2+bbox[BOXBOTTOM]/2;
     }
 
-    // adjust bounding box to map blocks
-    block = (bbox[BOXTOP]-_g->bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;
-    block = block >= _g->bmapheight ? _g->bmapheight-1 : block;
-    sector->blockbox[BOXTOP]=block;
-
-    block = (bbox[BOXBOTTOM]-_g->bmaporgy-MAXRADIUS)>>MAPBLOCKSHIFT;
-    block = block < 0 ? 0 : block;
-    sector->blockbox[BOXBOTTOM]=block;
-
-    block = (bbox[BOXRIGHT]-_g->bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
-    block = block >= _g->bmapwidth ? _g->bmapwidth-1 : block;
-    sector->blockbox[BOXRIGHT]=block;
-
-    block = (bbox[BOXLEFT]-_g->bmaporgx-MAXRADIUS)>>MAPBLOCKSHIFT;
-    block = block < 0 ? 0 : block;
-    sector->blockbox[BOXLEFT]=block;
-  }
-
-  return total; // this value is needed by the reject overrun emulation code
+    return total; // this value is needed by the reject overrun emulation code
 }
 
 
@@ -564,9 +519,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     P_LoadNodes(lumpnum + ML_NODES);
     P_LoadSegs(lumpnum + ML_SEGS);
 
+    P_GroupLines();
+
   // reject loading and underflow padding separated out into new function
   // P_GroupLines modified to return a number the underflow padding needs
-  P_LoadReject(lumpnum, P_GroupLines());
+  P_LoadReject(lumpnum);
 
   // Note: you don't need to clear player queue slots --
   // a much simpler fix is in g_game.c -- killough 10/98
