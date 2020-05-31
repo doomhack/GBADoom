@@ -190,7 +190,7 @@ void P_XYMovement (mobj_t* mo)
    * killough 9/15/98: add objects falling off ledges
    * killough 11/98: only include bouncers hanging off ledges
    */
-    if ((mo->flags & MF_CORPSE || mo->intflags & MIF_FALLING) &&
+    if ((mo->flags & MF_CORPSE) &&
             (mo->momx > FRACUNIT/4 || mo->momx < -FRACUNIT/4 ||
              mo->momy > FRACUNIT/4 || mo->momy < -FRACUNIT/4) &&
             mo->floorz != mo->subsector->sector->floorheight)
