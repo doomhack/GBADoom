@@ -27,6 +27,9 @@ static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 
     return udiv32_arm(aa, bb);
 #else
+    if(bb == 0)
+        return UINT_MAX;
+
     return aa / bb;
 #endif
 }

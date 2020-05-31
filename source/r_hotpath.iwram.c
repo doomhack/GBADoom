@@ -870,7 +870,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
         {
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
-            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)spryscale);
+            dcvars.iscale = RECIPROCAL((unsigned)spryscale);
 
             // draw the texture
             const column_t* column = R_GetColumn(texture, xc);
@@ -1946,7 +1946,7 @@ static void R_RenderSegLoop (int rw_x)
 
             dcvars.x = rw_x;
 
-            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)rw_scale);
+            dcvars.iscale = RECIPROCAL((unsigned)rw_scale);
         }
 
         // draw the wall tiers
