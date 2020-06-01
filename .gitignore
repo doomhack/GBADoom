@@ -48,3 +48,7 @@ source/iwad/doom2.c
 GbaWadUtil/sigil.wad
 
 source/iwad/sigil.c
+
+source/iwad/doom64.c
+
+source/iwad/

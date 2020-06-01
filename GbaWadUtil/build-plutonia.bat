@@ -1,0 +1,1 @@
+gbawadutil.exe -in plutonia.wad -cfile ..\source\iwad\plutonia.c

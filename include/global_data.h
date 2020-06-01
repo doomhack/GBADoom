@@ -118,6 +118,13 @@ boolean advancedemo;
 
 unsigned int gamma;
 
+//fps counter stuff
+
+unsigned int fps_timebefore;
+unsigned int fps_frames;
+unsigned int fps_framerate;
+boolean fps_show;
+
 //******************************************************************************
 //doomstat.c
 //******************************************************************************
@@ -503,7 +510,7 @@ side_t   *sides;
 int       bmapwidth, bmapheight;  // size in mapblocks
 
 // killough 3/1/98: remove blockmap limit internally:
-short      *blockmap;              // was short -- killough
+const short      *blockmap;              // was short -- killough
 
 // offsets in blockmap are from here
 const short      *blockmaplump;          // was short -- killough

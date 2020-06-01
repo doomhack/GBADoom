@@ -2427,50 +2427,8 @@ void P_SpawnSpecials (void)
 
 void T_Scroll(scroll_t *s)
 {
-  fixed_t dx = s->dx, dy = s->dy;
-
-  if (s->control != -1)
-    {   // compute scroll amounts based on a sector's height changes
-      fixed_t height = _g->sectors[s->control].floorheight +
-        _g->sectors[s->control].ceilingheight;
-      fixed_t delta = height - s->last_height;
-      s->last_height = height;
-      dx = FixedMul(dx, delta);
-      dy = FixedMul(dy, delta);
-    }
-
-  // killough 3/14/98: Add acceleration
-  if (s->accel)
-    {
-      s->vdx = dx += s->vdx;
-      s->vdy = dy += s->vdy;
-    }
-
-  if (!(dx | dy))                   // no-op if both (x,y) offsets 0
-    return;
-
-  switch (s->type)
-    {
-      side_t *side;
-      sector_t *sec;
-      fixed_t height, waterheight;  // killough 4/4/98: add waterheight
-      msecnode_t *node;
-      mobj_t *thing;
-
-    case sc_side:                   // killough 3/7/98: Scroll wall texture
-        side = _g->sides + s->affectee;
-        side->textureoffset += dx;
-        side->rowoffset += dy;
-        break;
-
-    case sc_floor:                  // killough 3/7/98: Scroll floor texture
-        sec = _g->sectors + s->affectee;
-        break;
-
-    case sc_ceiling:               // killough 3/7/98: Scroll ceiling texture
-        sec = _g->sectors + s->affectee;
-        break;
-    }
+    side_t *side  =_g->sides + s->affectee;
+    side->textureoffset++;
 }
 
 //
@@ -2491,127 +2449,30 @@ void T_Scroll(scroll_t *s)
 // accel: non-zero if this is an accelerative effect
 //
 
-static void Add_Scroller(int type, fixed_t dx, fixed_t dy,
-                         int control, int affectee, int accel)
+static void Add_Scroller(int affectee)
 {
   scroll_t *s = Z_Malloc(sizeof *s, PU_LEVSPEC, 0);
   s->thinker.function = T_Scroll;
-  s->type = type;
-  s->dx = dx;
-  s->dy = dy;
-  s->accel = accel;
-  s->vdx = s->vdy = 0;
-  if ((s->control = control) != -1)
-    s->last_height =
-      _g->sectors[control].floorheight + _g->sectors[control].ceilingheight;
   s->affectee = affectee;
   P_AddThinker(&s->thinker);
 }
 
-// Adds wall scroller. Scroll amount is rotated with respect to wall's
-// linedef first, so that scrolling towards the wall in a perpendicular
-// direction is translated into vertical motion, while scrolling along
-// the wall in a parallel direction is translated into horizontal motion.
-//
-// killough 5/25/98: cleaned up arithmetic to avoid drift due to roundoff
-//
-// killough 10/98:
-// fix scrolling aliasing problems, caused by long linedefs causing overflowing
-
-static void Add_WallScroller(fixed_t dx, fixed_t dy, const line_t *l,
-                             int control, int accel)
-{
-  fixed_t x = D_abs(l->dx), y = D_abs(l->dy), d;
-  if (y > x)
-    d = x, x = y, y = d;
-  d = FixedDiv(x, finesine[(tantoangle[FixedDiv(y,x) >> DBITS] + ANG90)
-                          >> ANGLETOFINESHIFT]);
-
-
-    x = (fixed_t)(((int_64_t)dy * -(int_64_t)l->dy - (int_64_t)dx * (int_64_t)l->dx) / (int_64_t)d);  // killough 10/98:
-    y = (fixed_t)(((int_64_t)dy * (int_64_t)l->dx - (int_64_t)dx * (int_64_t)l->dy) / (int_64_t)d);   // Use long long arithmetic
-
-  Add_Scroller(sc_side, x, y, control, *l->sidenum, accel);
-}
-
-// Amount (dx,dy) vector linedef is shifted right to get scroll amount
-#define SCROLL_SHIFT 5
-
-// Factor to scale scrolling effect into mobj-carrying properties = 3/32.
-// (This is so scrolling floors and objects on them can move at same speed.)
-#define CARRYFACTOR ((fixed_t)(FRACUNIT*.09375))
-
 // Initialize the scrollers
 static void P_SpawnScrollers(void)
 {
-  int i;
-  const line_t *l = _g->lines;
+    int i;
+    const line_t *l = _g->lines;
 
-  for (i=0;i<_g->numlines;i++,l++)
+    for (i=0;i<_g->numlines;i++,l++)
     {
-      fixed_t dx = l->dx >> SCROLL_SHIFT;  // direction and speed of scrolling
-      fixed_t dy = l->dy >> SCROLL_SHIFT;
-      int control = -1, accel = 0;         // no control sector or acceleration
-      int special = LN_SPECIAL(l);
+        int special = LN_SPECIAL(l);
 
-      // killough 3/7/98: Types 245-249 are same as 250-254 except that the
-      // first side's sector's heights cause scrolling when they change, and
-      // this linedef controls the direction and speed of the scrolling. The
-      // most complicated linedef since donuts, but powerful :)
-      //
-      // killough 3/15/98: Add acceleration. Types 214-218 are the same but
-      // are accelerative.
-
-      if (special >= 245 && special <= 249)         // displacement scrollers
+        switch (special)
         {
-          special += 250-245;
-          control = _g->sides[*l->sidenum].sector - _g->sectors;
-        }
-      else
-        if (special >= 214 && special <= 218)       // accelerative scrollers
-          {
-            accel = 1;
-            special += 250-214;
-            control = _g->sides[*l->sidenum].sector - _g->sectors;
-          }
-
-      switch (special)
-        {
-          register int s;
-
-        case 250:   // scroll effect ceiling
-          for (s=-1; (s = P_FindSectorFromLineTag(l,s)) >= 0;)
-            Add_Scroller(sc_ceiling, -dx, dy, control, s, accel);
-          break;
-
-        case 251:   // scroll effect floor
-        case 253:   // scroll and carry objects on floor
-          for (s=-1; (s = P_FindSectorFromLineTag(l,s)) >= 0;)
-            Add_Scroller(sc_floor, -dx, dy, control, s, accel);
-          if (special != 253)
+        case 48:                  // scroll first side
+            Add_Scroller(_g->lines[i].sidenum[0]);
             break;
 
-          // killough 3/1/98: scroll wall according to linedef
-          // (same direction and speed as scrolling floors)
-        case 254:
-          for (s=-1; (s = P_FindLineFromLineTag(l,s)) >= 0;)
-            if (s != i)
-              Add_WallScroller(dx, dy, _g->lines+s, control, accel);
-          break;
-
-        case 255:    // killough 3/2/98: scroll according to sidedef offsets
-          s = _g->lines[i].sidenum[0];
-          Add_Scroller(sc_side, -_g->sides[s].textureoffset,
-                       _g->sides[s].rowoffset, -1, s, accel);
-          break;
-
-        case 48:                  // scroll first side
-          Add_Scroller(sc_side,  FRACUNIT, 0, -1, _g->lines[i].sidenum[0], accel);
-          break;
-
-        case 85:                  // jff 1/30/98 2-way scroll
-          Add_Scroller(sc_side, -FRACUNIT, 0, -1, _g->lines[i].sidenum[0], accel);
-          break;
         }
     }
 }

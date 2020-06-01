@@ -96,7 +96,7 @@ inline static fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
     l = (a << 16);
     h = (a >> 16);
 
-    q = udiv64_arm (l,h,b);
+    q = udiv64_arm (h,l,b);
     if (sign)
         q = -q;
 

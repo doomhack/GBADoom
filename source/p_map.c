@@ -582,87 +582,82 @@ boolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
 //
 boolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
                   boolean dropoff) // killough 3/15/98: allow dropoff as option
-  {
-  fixed_t oldx;
-  fixed_t oldy;
+{
+    fixed_t oldx;
+    fixed_t oldy;
 
-  _g->felldown = _g->floatok = false;               // killough 11/98
+    _g->felldown = _g->floatok = false;               // killough 11/98
 
-  if (!P_CheckPosition (thing, x, y))
-    return false;   // solid wall or thing
+    if (!P_CheckPosition (thing, x, y))
+        return false;   // solid wall or thing
 
-  if ( !(thing->flags & MF_NOCLIP) )
+    if ( !(thing->flags & MF_NOCLIP) )
     {
-      // killough 7/26/98: reformatted slightly
-      // killough 8/1/98: Possibly allow escape if otherwise stuck
+        // killough 7/26/98: reformatted slightly
+        // killough 8/1/98: Possibly allow escape if otherwise stuck
 
-      if (_g->tmceilingz - _g->tmfloorz < thing->height ||     // doesn't fit
-    // mobj must lower to fit
-    (_g->floatok = true, !(thing->flags & MF_TELEPORT) &&
-     _g->tmceilingz - thing->z < thing->height) ||
-    // too big a step up
-    (!(thing->flags & MF_TELEPORT) &&
-     _g->tmfloorz - thing->z > 24*FRACUNIT))
-  return _g->tmunstuck
-    && !(_g->ceilingline && untouched(_g->ceilingline))
-    && !(  _g->floorline && untouched(  _g->floorline));
+        if (_g->tmceilingz - _g->tmfloorz < thing->height ||     // doesn't fit
+                // mobj must lower to fit
+                (_g->floatok = true, !(thing->flags & MF_TELEPORT) &&
+                 _g->tmceilingz - thing->z < thing->height) ||
+                // too big a step up
+                (!(thing->flags & MF_TELEPORT) &&
+                 _g->tmfloorz - thing->z > 24*FRACUNIT))
+            return _g->tmunstuck
+                    && !(_g->ceilingline && untouched(_g->ceilingline))
+                    && !(  _g->floorline && untouched(  _g->floorline));
 
-      /* killough 3/15/98: Allow certain objects to drop off
+        /* killough 3/15/98: Allow certain objects to drop off
        * killough 7/24/98, 8/1/98:
        * Prevent monsters from getting stuck hanging off ledges
        * killough 10/98: Allow dropoffs in controlled circumstances
        * killough 11/98: Improve symmetry of clipping on stairs
        */
 
-      if (!(thing->flags & (MF_DROPOFF|MF_FLOAT))) {
-    if (!dropoff || (dropoff==2 &&  // large jump down (e.g. dogs)
-         (_g->tmfloorz-_g->tmdropoffz > 128*FRACUNIT ||
-          !thing->target || thing->target->z >_g->tmdropoffz)))
-      {
-        if (_g->tmfloorz - _g->tmdropoffz > 24*FRACUNIT)
-    return false;
-      }
-    else { /* dropoff allowed -- check for whether it fell more than 24 */
-      _g->felldown = !(thing->flags & MF_NOGRAVITY) &&
-        thing->z - _g->tmfloorz > 24*FRACUNIT;
-    }
-      }
-
-      // killough 11/98: prevent falling objects from going up too many steps
-      if (thing->intflags & MIF_FALLING && _g->tmfloorz - thing->z >
-    FixedMul(thing->momx,thing->momx)+FixedMul(thing->momy,thing->momy))
-  return false;
+        if (!(thing->flags & (MF_DROPOFF|MF_FLOAT))) {
+            if (!dropoff || (dropoff==2 &&  // large jump down (e.g. dogs)
+                             (_g->tmfloorz-_g->tmdropoffz > 128*FRACUNIT ||
+                              !thing->target || thing->target->z >_g->tmdropoffz)))
+            {
+                if (_g->tmfloorz - _g->tmdropoffz > 24*FRACUNIT)
+                    return false;
+            }
+            else { /* dropoff allowed -- check for whether it fell more than 24 */
+                _g->felldown = !(thing->flags & MF_NOGRAVITY) &&
+                        thing->z - _g->tmfloorz > 24*FRACUNIT;
+            }
+        }
     }
 
-  // the move is ok,
-  // so unlink from the old position and link into the new position
+    // the move is ok,
+    // so unlink from the old position and link into the new position
 
-  P_UnsetThingPosition (thing);
+    P_UnsetThingPosition (thing);
 
-  oldx = thing->x;
-  oldy = thing->y;
-  thing->floorz = _g->tmfloorz;
-  thing->ceilingz = _g->tmceilingz;
-  thing->dropoffz = _g->tmdropoffz;      // killough 11/98: keep track of dropoffs
-  thing->x = x;
-  thing->y = y;
+    oldx = thing->x;
+    oldy = thing->y;
+    thing->floorz = _g->tmfloorz;
+    thing->ceilingz = _g->tmceilingz;
+    thing->dropoffz = _g->tmdropoffz;      // killough 11/98: keep track of dropoffs
+    thing->x = x;
+    thing->y = y;
 
-  P_SetThingPosition (thing);
+    P_SetThingPosition (thing);
 
-  // if any special lines were hit, do the effect
+    // if any special lines were hit, do the effect
 
-  if (! (thing->flags&(MF_TELEPORT|MF_NOCLIP)) )
-    while (_g->numspechit--)
-      if (LN_SPECIAL(_g->spechit[_g->numspechit]))  // see if the line was crossed
-  {
-    int oldside;
-    if ((oldside = P_PointOnLineSide(oldx, oldy, _g->spechit[_g->numspechit])) !=
-        P_PointOnLineSide(thing->x, thing->y, _g->spechit[_g->numspechit]))
-      P_CrossSpecialLine(_g->spechit[_g->numspechit], oldside, thing);
-  }
+    if (! (thing->flags&(MF_TELEPORT|MF_NOCLIP)) )
+        while (_g->numspechit--)
+            if (LN_SPECIAL(_g->spechit[_g->numspechit]))  // see if the line was crossed
+            {
+                int oldside;
+                if ((oldside = P_PointOnLineSide(oldx, oldy, _g->spechit[_g->numspechit])) !=
+                        P_PointOnLineSide(thing->x, thing->y, _g->spechit[_g->numspechit]))
+                    P_CrossSpecialLine(_g->spechit[_g->numspechit], oldside, thing);
+            }
 
-  return true;
-  }
+    return true;
+}
 
 //
 // P_ThingHeightClip
@@ -1507,31 +1502,6 @@ boolean PIT_ChangeSector (mobj_t* thing)
 
   // keep checking (crush other things)
   return true;
-  }
-
-
-//
-// P_ChangeSector
-//
-boolean P_ChangeSector(sector_t* sector,boolean crunch)
-  {
-  int   x;
-  int   y;
-
-  _g->nofit = false;
-  _g->crushchange = crunch;
-
-  // ARRGGHHH!!!!
-  // This is horrendously slow!!!
-  // killough 3/14/98
-
-  // re-check heights for all things near the moving sector
-
-  for (x=sector->blockbox[BOXLEFT] ; x<= sector->blockbox[BOXRIGHT] ; x++)
-    for (y=sector->blockbox[BOXBOTTOM];y<= sector->blockbox[BOXTOP] ; y++)
-      P_BlockThingsIterator (x, y, PIT_ChangeSector);
-
-  return _g->nofit;
   }
 
 //

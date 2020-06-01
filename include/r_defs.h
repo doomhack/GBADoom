@@ -85,7 +85,6 @@ typedef struct
 {
   fixed_t x;
   fixed_t y;
-  fixed_t z;
 } degenmobj_t;
 
 //
@@ -99,7 +98,6 @@ typedef struct
   fixed_t ceilingheight;
 
   mobj_t *soundtarget;   // thing that made a sound (or null)
-  int blockbox[4];       // mapblock bounding box for height changes
   degenmobj_t soundorg;  // origin for any sounds played by the sector
   int validcount;        // if == validcount, already checked
   mobj_t *thinglist;     // list of mobjs in sector
@@ -135,21 +133,14 @@ typedef struct
 
 typedef struct
 {
-  fixed_t textureoffset; // add this to the calculated texture column
-  fixed_t rowoffset;     // add this to the calculated texture top
+    sector_t* sector;      // Sector the SideDef is facing.
 
-  sector_t* sector;      // Sector the SideDef is facing.
+    short textureoffset; // add this to the calculated texture column
+    short rowoffset;     // add this to the calculated texture top
 
-  short toptexture;      // Texture indices. We do not maintain names here.
-  short bottomtexture;
-  short midtexture;
-
-
-  // killough 4/4/98, 4/11/98: highest referencing special linedef's type,
-  // or lump number of special effect. Allows texture names to be overloaded
-  // for other functions.
-  short special;
-
+    short toptexture;      // Texture indices. We do not maintain names here.
+    short bottomtexture;
+    short midtexture;
 } side_t;
 
 //
@@ -434,6 +425,7 @@ typedef struct visplane
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
+  unsigned int modified;
 
   //byte		pad1;
   // Here lies the rub for all

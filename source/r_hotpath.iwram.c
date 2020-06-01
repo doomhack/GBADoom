@@ -42,6 +42,10 @@
 #include "config.h"
 #endif
 
+#ifndef __arm__
+    #include <time.h>
+#endif
+
 #include "doomstat.h"
 #include "d_net.h"
 #include "w_wad.h"
@@ -566,9 +570,23 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
 
     unsigned int r = (count & 15);
 
-    while(r--)
+    switch(r)
     {
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 15:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 14:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 13:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 12:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 11:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 10:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 9:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 8:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 7:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 6:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 5:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 4:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 3:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 2:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 1:     R_DrawColumnPixel(dest, source, colormap, frac);
     }
 }
 
@@ -693,7 +711,6 @@ static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvar
 // CPhipps - new wad lump handling, *'s to const*'s
 static void R_DrawVisSprite(const vissprite_t *vis)
 {
-    int      texturecolumn;
     fixed_t  frac;
 
     R_DrawColumn_f colfunc;
@@ -728,13 +745,12 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     spryscale = vis->scale;
     sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
+
+    const patch_t *patch = vis->patch;
+
     for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
-        const patch_t *patch = vis->patch;
-
-        texturecolumn = frac>>FRACBITS;
-
-        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[texturecolumn]);
+        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
 
         R_DrawMaskedColumn(colfunc, &dcvars, column);
     }
@@ -839,7 +855,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
         dcvars.texturemid = dcvars.texturemid - viewz;
     }
 
-    dcvars.texturemid += _g->sides[curline->sidenum].rowoffset;
+    dcvars.texturemid += (_g->sides[curline->sidenum].rowoffset << FRACBITS);
 
     const texture_t* texture = R_GetOrLoadTexture(texnum);
 
@@ -848,16 +864,15 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
     // draw the columns
     for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
     {
-        if (maskedtexturecol[dcvars.x] != SHRT_MAX) // dropoff overflow
+        const int xc = maskedtexturecol[dcvars.x];
+
+        if (xc != SHRT_MAX) // dropoff overflow
         {
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
-            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)spryscale);
+            dcvars.iscale = RECIPROCAL((unsigned)spryscale);
 
             // draw the texture
-
-            int xc = maskedtexturecol[dcvars.x];
-
             const column_t* column = R_GetColumn(texture, xc);
 
             R_DrawMaskedColumn(R_DrawColumn, &dcvars, column);
@@ -1246,9 +1261,23 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const d
 
     unsigned int r = (count & 15);
 
-    while(r--)
+    switch(r)
     {
-        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 15:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 14:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 13:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 12:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 11:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 10:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 9:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 8:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 7:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 6:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 5:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 4:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 3:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 2:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 1:     R_DrawSpanPixel(dest, source, colormap, position);
     }
 }
 
@@ -1426,8 +1455,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (tz < MINZ)
         return;
 
-    //Too far away.
-    if(tz > MAXZ)
+    //Too far away. Always draw Cyberdemon and Spiderdemon. They are big sprites!
+    if( (tz > MAXZ) && (thing->type != MT_CYBORG) && (thing->type != MT_SPIDER) )
         return;
 
     fixed_t tx = -(FixedMul(tr_y,viewcos)+(-FixedMul(tr_x,viewsin)));
@@ -1619,6 +1648,8 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
 
     BlockSet(check->top, UINT_MAX, sizeof(check->top));
 
+    check->modified = 0;
+
     return check;
 }
 
@@ -1639,6 +1670,8 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->maxx = stop;
 
     BlockSet(new_pl->top, UINT_MAX, sizeof(new_pl->top));
+
+    new_pl->modified = false;
 
     return new_pl;
 }
@@ -1876,6 +1909,7 @@ static void R_RenderSegLoop (int rw_x)
             {
                 ceilingplane->top[rw_x] = top;
                 ceilingplane->bottom[rw_x] = bottom;
+                ceilingplane->modified = 1;
             }
             // SoM: this should be set here
             cc_rwx = bottom;
@@ -1894,6 +1928,7 @@ static void R_RenderSegLoop (int rw_x)
             {
                 floorplane->top[rw_x] = top;
                 floorplane->bottom[rw_x] = bottom;
+                floorplane->modified = 1;
             }
             // SoM: This should be set here to prevent overdraw
             fc_rwx = top;
@@ -1911,7 +1946,7 @@ static void R_RenderSegLoop (int rw_x)
 
             dcvars.x = rw_x;
 
-            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)rw_scale);
+            dcvars.iscale = RECIPROCAL((unsigned)rw_scale);
         }
 
         // draw the wall tiers
@@ -2114,7 +2149,7 @@ static void R_StoreWallRange(const int start, const int stop)
         else        // top of texture at top
             rw_midtexturemid = worldtop;
 
-        rw_midtexturemid += FixedMod(sidedef->rowoffset, textureheight[midtexture]);
+        rw_midtexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[midtexture]);
 
         ds_p->silhouette = SIL_BOTH;
         ds_p->sprtopclip = screenheightarray;
@@ -2197,7 +2232,7 @@ static void R_StoreWallRange(const int start, const int stop)
             toptexture = texturetranslation[sidedef->toptexture];
             rw_toptexturemid = linedef->flags & ML_DONTPEGTOP ? worldtop :
                                                                         backsector->ceilingheight+textureheight[sidedef->toptexture]-viewz;
-            rw_toptexturemid += FixedMod(sidedef->rowoffset, textureheight[toptexture]);
+            rw_toptexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[toptexture]);
         }
 
         if (worldlow > worldbottom) // bottom texture
@@ -2205,7 +2240,7 @@ static void R_StoreWallRange(const int start, const int stop)
             bottomtexture = texturetranslation[sidedef->bottomtexture];
             rw_bottomtexturemid = linedef->flags & ML_DONTPEGBOTTOM ? worldtop : worldlow;
 
-            rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
+            rw_bottomtexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[bottomtexture]);
         }
 
         // allocate space for masked texture tables
@@ -2224,7 +2259,7 @@ static void R_StoreWallRange(const int start, const int stop)
     {
         rw_offset = FixedMul (hyp, -finesine[offsetangle >>ANGLETOFINESHIFT]);
 
-        rw_offset += sidedef->textureoffset + curline->offset;
+        rw_offset += (sidedef->textureoffset << FRACBITS) + curline->offset;
 
         rw_centerangle = ANG90 + viewangle - rw_normalangle;
 
@@ -2789,7 +2824,9 @@ static void R_DrawPlanes (void)
 
         while(pl)
         {
-            R_DoDrawPlane(pl);
+            if(pl->modified)
+                R_DoDrawPlane(pl);
+
             pl = pl->next;
         }
     }
@@ -3208,5 +3245,59 @@ void P_RunThinkers (void)
 }
 
 
+
+static int I_GetTime_e32(void)
+{
+    int thistimereply = *((unsigned short*)(0x400010C));
+
+    return thistimereply;
+}
+
+
+int I_GetTime(void)
+{
+    int thistimereply;
+
+#ifndef __arm__
+
+    clock_t now = clock();
+
+    thistimereply = (int)((double)now / ((double)CLOCKS_PER_SEC / (double)TICRATE));
+
+    /*
+    struct timeval tv;
+    struct timezone tz;
+
+    gettimeofday(&tv, &tz);
+
+    thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
+
+    thistimereply = (thistimereply & 0xffff);
+    */
+#else
+    thistimereply = I_GetTime_e32();
+#endif
+
+    if (thistimereply < _g->lasttimereply)
+    {
+        _g->basetime -= 0xffff;
+    }
+
+    _g->lasttimereply = thistimereply;
+
+
+    /* Fix for time problem */
+    if (!_g->basetime)
+    {
+        _g->basetime = thistimereply;
+        thistimereply = 0;
+    }
+    else
+    {
+        thistimereply -= _g->basetime;
+    }
+
+    return thistimereply;
+}
 
 
