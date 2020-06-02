@@ -18,6 +18,7 @@ static void cheat_map(void);
 static void cheat_goggles(void);
 static void cheat_exit(void);
 static void cheat_rockets(void);
+static void cheat_fps(void);
 
 
 
@@ -49,6 +50,7 @@ static const c_cheat cheat_def[] =
 
     //Because Goldeneye!
     {"Enemy Rockets",   CHEAT_SEQ(KEYD_A,   KEYD_B,     KEYD_L,     KEYD_R,     KEYD_R,     KEYD_L,         KEYD_B,         KEYD_A),        cheat_rockets},
+	{"FPS Counter Ammo",CHEAT_SEQ(KEYD_A,   KEYD_B,     KEYD_L,     KEYD_UP,    KEYD_DOWN,  KEYD_B,         KEYD_LEFT,     KEYD_LEFT),      cheat_fps},
 };
 
 static const unsigned int num_cheats = sizeof(cheat_def) / sizeof (c_cheat);
@@ -251,4 +253,16 @@ static void cheat_rockets()
     {
         _g->player.message = STSTR_ROCKETOFF;
     }
+}
+
+static void cheat_fps()
+{
+    _g->fps_show = !_g->fps_show;
+	if(_g->fps_show)
+	{
+		_g->player.message = STSTR_FPSON;
+	}else
+	{
+		_g->player.message = STSTR_FPSOFF;
+	}
 }

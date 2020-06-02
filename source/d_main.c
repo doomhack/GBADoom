@@ -95,8 +95,6 @@ const boolean nodrawers = false;
 
 static const char* timedemo = NULL;//"demo1";
 
-static const boolean show_fps = false;
-
 /*
  * D_PostEvent - Event handling
  *
@@ -287,7 +285,7 @@ static void D_DoomLoop(void)
         D_Display();
 
 
-        if(show_fps)
+        if(_g->fps_show)
         {
             D_UpdateFPS();
         }
@@ -746,7 +744,7 @@ static void D_DoomMainSetup(void)
 
     _g->idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
-    _g->fps_show = show_fps;
+    _g->fps_show = false;
 
     I_InitGraphics();
 
