@@ -12,16 +12,18 @@ A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s
  - ~~**B** is now the fire button, and sprinting/use has been changed to **A**. To match the retail GBA Doom II controls.~~
  - ~~Weapon selection order is restored to: Fist, Chainsaw, Pistol, Shotgun, Super Shotgun, Chaingun, Plasmagun, BFG 9000~~  
  - ~~Gamma is in the options now instead of a hotkey~~
- - ~~Gamma/Autorun settings now save in the save slots~~  
+ - ~~Gamma/Autorun settings now save save slots~~  
+ - ~~Gamma is now a slider, and is colour corrected for the frontlit/non-lit GBA displays.~~  
 *All of the above changes have been merged into doomhack's main branch*
  - Other minor bug fixes and optimisations
  - Created properly resized title screen images (TITLEPIC is rendered via CPUBlockCopy rather than drawing from the IWAD, making it more responsive)
  - Unused shareware IWAD content is removed to build a smaller rom
  - New MS GS WAVETABLE music for Doom 1, made by [Sakitoshi](https://www.romhacking.net/community/2272/)
- - Gamma is now a slider, and is colour corrected for the frontlit/non-lit GBA displays.
+ - FPS Counter is now accessable via a cheat
 
 **TODO:**
  - Recreate Final Doom: Evilution / TNT.WAD's music in impulsetracker
+ - Get Doom II running smoothly, and re-port the music in impulsetracker as well
 
 Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) for future engine optimisations and bug fixes!
 
@@ -38,6 +40,7 @@ Be sure to check [doomhack's main branch](https://github.com/doomhack/GBADoom) f
 **Lite-Amp Goggles:** DOWN,LEFT, R, LEFT, R, L, L, SELECT  
 **Exit Level:** LEFT,R, LEFT, L, B, LEFT, RIGHT, A  
 **Enemy Rockets (Goldeneye):** A, B, L, R, R, L, B, A  
+**FPS Ammo Counter:** A, B, L, UP, DOWN, B, LEFT, LEFT  
 
 ## Controls:  
 **Fire:** B  
