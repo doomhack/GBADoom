@@ -1,7 +1,8 @@
 
 ## GBADoom SVN
 
-A slightly modified version of [doomhack](https://github.com/doomhack/GBADoom)'s amazing port of prBoom to the GBA. 
+A slightly modified version of **[doomhack](https://github.com/doomhack/GBADoom)**'s amazing port of prBoom to the GBA.  
+A pre-compiled shareware rom can be found over at the **[Releases](https://github.com/Kippykip/GBADoom/releases)** tab, while a developer branch can be found as **[in-dev](https://github.com/Kippykip/GBADoom/tree/in-dev)**
 
 ![Episode 2](https://i.imgur.com/kOwpVzW.png)  
 
