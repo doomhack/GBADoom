@@ -23,10 +23,13 @@
 static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
 {
 #ifdef __arm__
-    unsigned int udiv32_arm (unsigned int a, unsigned int b);
+    unsigned int udiv32_arm(unsigned int a, unsigned int b);
 
     return udiv32_arm(aa, bb);
 #else
+    if(bb == 0)
+        return UINT_MAX;
+
     return aa / bb;
 #endif
 }
@@ -104,17 +107,17 @@ inline static void* ByteFind(byte* mem, byte val, unsigned int count)
     return NULL;
 }
 
-inline static void SaveSRAM(const byte* eeprom, unsigned int size)
+inline static void SaveSRAM(const byte* eeprom, unsigned int size, unsigned int offset)
 {
 #ifdef __arm__
-    ByteCopy(0xE000000, eeprom, size);
+    ByteCopy(0xE000000 + offset, eeprom, size);
 #endif
 }
 
-inline static void LoadSRAM(byte* eeprom, unsigned int size)
+inline static void LoadSRAM(byte* eeprom, unsigned int size, unsigned int offset)
 {
 #ifdef __arm__
-    ByteCopy(eeprom, 0xE000000, size);
+    ByteCopy(eeprom, 0xE000000 + offset, size);
 #endif
 }
 

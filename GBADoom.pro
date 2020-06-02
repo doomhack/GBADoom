@@ -169,3 +169,10 @@ HEADERS += \
 DISTFILES += \
     Makefile \
     source/fixeddiv.s
+
+
+win32-msvc* {
+    LIBS += $$PWD/codeprophet.lib
+    QMAKE_CXXFLAGS += /GH /Gh
+    QMAKE_CFLAGS += /GH /Gh
+}

@@ -47,6 +47,8 @@ void R_InitSprites(const char * const * namelist);
 #define MAX_SPRITE_FRAMES 29          /* Macroized -- killough 1/25/98 */
 
 #define MINZ        (FRACUNIT*4)
+#define MAXZ        (FRACUNIT*1280)
+
 #define BASEYCENTER 100
 
 #endif

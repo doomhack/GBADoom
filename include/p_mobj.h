@@ -286,7 +286,6 @@ typedef struct mobj_s
     int                 tics;   // state tic counter
     const state_t*      state;
     unsigned int        flags;
-    int                 intflags;  // killough 9/15/98: internal flags
     int                 health;
 
     // Thing being chased/attacked (or NULL),

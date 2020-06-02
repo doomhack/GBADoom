@@ -200,30 +200,20 @@ void V_SetPalette(int pal)
 
 //Colour corrected PLAYPAL lumps ~ Kippykip
 void V_SetPalLump(int index)
-{	
-	switch(index)
-    {
-		//Use native IWAD PLAYPAL if = 0 or something odd
-		default:
-		case 0:
-		  _g->pallete_lump = W_CacheLumpName("PLAYPAL");
-		  break;
-		case 1:
-		  _g->pallete_lump = W_CacheLumpName("PLAYPAL1");
-		  break;
-		case 2:
-		  _g->pallete_lump = W_CacheLumpName("PLAYPAL2");
-		  break;
-		case 3:
-		  _g->pallete_lump = W_CacheLumpName("PLAYPAL3");
-		  break;
-		case 4:
-		  _g->pallete_lump = W_CacheLumpName("PLAYPAL4");
-		  break;
-		case 5:
-		  _g->pallete_lump = W_CacheLumpName("PLAYPAL5");
-		  break;
-    }
+{
+    if(index < 0)
+        index = 0;
+    else if(index > 5)
+        index = 5;
+
+    char lumpName[9] = "PLAYPAL0";
+
+    if(index == 0)
+        lumpName[7] = 0;
+    else
+        lumpName[7] = '0' + index;
+
+    _g->pallete_lump = W_CacheLumpName(lumpName);
 }
 
 //

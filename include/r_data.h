@@ -66,7 +66,9 @@ typedef struct
   unsigned short  widthmask;
   // CPhipps - end of additions
   short width, height;
-  short patchcount;      // All the patches[patchcount] are drawn
+
+  unsigned char overlapped;
+  unsigned char patchcount;      // All the patches[patchcount] are drawn
   texpatch_t patches[1]; // back-to-front into the cached texture.
 } texture_t;
 

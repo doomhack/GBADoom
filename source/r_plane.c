@@ -75,33 +75,7 @@ void R_InitPlanes (void)
 {
 }
 
-//
-// R_ClearPlanes
-// At begining of frame.
-//
 
-void R_ClearPlanes(void)
-{
-    int i;
-
-    // opening / clipping determination
-    for (i=0 ; i<SCREENWIDTH ; i++)
-        floorclip[i] = viewheight, ceilingclip[i] = -1;
-
-
-    for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
-        for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
-            _g->freehead = &(*_g->freehead)->next;
-
-    _g->lastopening = _g->openings;
-
-    // scale will be unit scale at SCREENWIDTH/2 distance
-    //basexscale = FixedDiv (viewsin,projection);
-    //baseyscale = FixedDiv (viewcos,projection);
-
-    basexscale = FixedMul(viewsin,iprojection);
-    baseyscale = FixedMul(viewcos,iprojection);
-}
 
 //Planes are alloc'd with PU_LEVEL tag so are dumped at level
 //end. This function resets the visplane arrays.

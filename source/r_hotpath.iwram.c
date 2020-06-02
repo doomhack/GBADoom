@@ -35,11 +35,15 @@
 
 //This is to keep the codesize under control.
 //This whole file needs to fit within IWRAM.
-#pragma GCC optimize ("O2")
+#pragma GCC optimize ("Os")
 
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+#ifndef __arm__
+    #include <time.h>
 #endif
 
 #include "doomstat.h"
@@ -62,6 +66,65 @@
 #include "global_data.h"
 
 #include "gba_functions.h"
+
+
+//#define static
+
+//*****************************************
+//These are unused regions of VRAM.
+//We can store things in here to free space
+//in IWRAM.
+//*****************************************
+
+#ifndef __arm__
+static byte vram1_spare[2560];
+static byte vram2_spare[2560];
+static byte vram3_spare[1024];
+#else
+    #define vram1_spare ((byte*)0x6000000+0x9600)
+    #define vram2_spare ((byte*)0x600A000+0x9600)
+    #define vram3_spare ((byte*)0x7000000)
+#endif
+
+//Stuff alloc'd in OAM memory.
+
+//512 bytes.
+static unsigned int* columnCacheEntries = (unsigned int*)&vram3_spare[0];
+
+//240 bytes.
+short* floorclip = (short*)&vram3_spare[512];
+
+//240 bytes.
+short* ceilingclip = (short*)&vram3_spare[512+240];
+
+
+
+//Stuff alloc'd in VRAM1 memory.
+
+//580 bytes
+const fixed_t* yslope_vram = (const fixed_t*)&vram1_spare[0];
+
+//480 bytes
+const fixed_t* distscale_vram = (const fixed_t*)&vram1_spare[580];
+
+//484 bytes.
+const angle_t* xtoviewangle_vram = (const angle_t*)&vram1_spare[580+480];
+
+#define yslope yslope_vram
+#define distscale distscale_vram
+#define xtoviewangle xtoviewangle_vram
+
+//*****************************************
+//Column cache stuff.
+//GBA has 16kb of Video Memory for columns
+//*****************************************
+
+#ifndef __arm__
+static byte columnCache[128*128];
+#else
+    #define columnCache ((byte*)0x6014000)
+#endif
+
 
 
 //*****************************************
@@ -94,8 +157,6 @@ static angle_t         rw_normalangle; // angle to line origin
 static fixed_t         rw_distance;
 
 static int      rw_stopx;
-
-short floorclip[MAX_SCREENWIDTH], ceilingclip[MAX_SCREENWIDTH]; // dropoff overflow
 
 static fixed_t  rw_scale;
 static fixed_t  rw_scalestep;
@@ -186,10 +247,13 @@ static const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
 static const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
 
 static const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
+static const fixed_t pspriteyiscale = ((UINT_MAX) / ((((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200));
+
 
 static const angle_t clipangle = 537395200; //xtoviewangle[0];
 
 static const int skytexturemid = 100*FRACUNIT;
+static const fixed_t skyiscale = (FRACUNIT*200)/(SCREENHEIGHT-ST_SCALED_HEIGHT);
 
 
 //********************************************
@@ -212,31 +276,18 @@ inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
     return (fixed_t)((int_64_t) a*b >> FRACBITS);
 }
 
-//*****************************************
-//Column cache stuff.
-//GBA has 16kb of Video Memory for columns
-//*****************************************
-
-#ifndef __arm__
-static byte columnCache[128*128];
-#else
-    #define columnCache ((byte*)0x6014000)
-#endif
-
-static unsigned int columnCacheEntries[128];
-
 // killough 5/3/98: reformatted
 
 static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 {
-  unsigned ans;
+    den = den >> 8;
 
-  if (den < 512)
-    return SLOPERANGE;
+    if (den == 0)
+        return SLOPERANGE;
 
-  ans = UDiv32(num<<3, den>>8);
+    const unsigned int ans = UDiv32(num << 3, den);
 
-  return ans <= SLOPERANGE ? ans : SLOPERANGE;
+    return (ans <= SLOPERANGE) ? ans : SLOPERANGE;
 }
 
 //
@@ -419,10 +470,7 @@ static const lighttable_t* R_ColourMap(int lightlevel)
                 lightlevel += 1 << LIGHTSEGSHIFT;
         }
 
-        lightlevel += extralight << LIGHTSEGSHIFT;
-
-        if(_g->gamma > 0)
-            lightlevel += _g->gamma << LIGHTSEGSHIFT;
+        lightlevel += (extralight +_g->gamma) << LIGHTSEGSHIFT;
 
         int cm = ((256-lightlevel)>>2) - 24;
 
@@ -461,18 +509,21 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 #pragma GCC push_options
 #pragma GCC optimize ("Ofast")
 
-inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, int frac)
+#define COLEXTRABITS 9
+#define COLBITS (FRACBITS + COLEXTRABITS)
+
+inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int frac)
 {
 #ifdef __arm__
-    *dest = colormap[source[(frac>>FRACBITS)&127]];
+    *dest = colormap[source[frac>>COLBITS]];
 #else
-    unsigned int color = colormap[source[(frac>>FRACBITS)&127]];
+    unsigned int color = colormap[source[frac>>COLBITS]];
 
     *dest = (color | (color << 8));
 #endif
 }
 
-static void R_DrawColumn (draw_column_vars_t *dcvars)
+static void R_DrawColumn (const draw_column_vars_t *dcvars)
 {
     int count = (dcvars->yh - dcvars->yl) + 1;
 
@@ -485,14 +536,14 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
 
     unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dcvars->yl) + dcvars->x;
 
-    const fixed_t		fracstep = dcvars->iscale;
-    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
+    const unsigned int		fracstep = (dcvars->iscale << COLEXTRABITS);
+    unsigned int frac = (dcvars->texturemid + (dcvars->yl - centery)*dcvars->iscale) << COLEXTRABITS;
 
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
     // This is as fast as it gets.
 
-    unsigned int l = (count >> 2);
+    unsigned int l = (count >> 4);
 
     while(l--)
     {
@@ -500,17 +551,109 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
         R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
     }
 
-    unsigned int r = (count & 3);
+    unsigned int r = (count & 15);
 
-    while(r--)
+    switch(r)
     {
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 15:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 14:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 13:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 12:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 11:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 10:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 9:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 8:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 7:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 6:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 5:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 4:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 3:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 2:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 1:     R_DrawColumnPixel(dest, source, colormap, frac);
     }
 }
 
+
+
+#define FUZZOFF (SCREENWIDTH)
+#define FUZZTABLE 50
+
+static const int fuzzoffset[FUZZTABLE] =
+{
+    FUZZOFF,-FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+    FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+    FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,
+    FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+    FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,
+    FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,
+    FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF
+};
+
+//
+// Framebuffer postprocessing.
+// Creates a fuzzy image by copying pixels
+//  from adjacent ones to left and right.
+// Used with an all black colormap, this
+//  could create the SHADOW effect,
+//  i.e. spectres and invisible players.
+//
+static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
+{
+    int dc_yl = dcvars->yl;
+    int dc_yh = dcvars->yh;
+
+    // Adjust borders. Low...
+    if (dc_yl <= 0)
+        dc_yl = 1;
+
+    // .. and high.
+    if (dc_yh >= viewheight-1)
+        dc_yh = viewheight - 2;
+
+    int count = (dc_yh - dc_yl) + 1;
+
+    // Zero length, column does not exceed a pixel.
+    if (count <= 0)
+        return;
+
+    const byte* colormap = &fullcolormap[6*256];
+
+    unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dc_yl) + dcvars->x;
+
+    unsigned int fuzzpos = _g->fuzzpos;
+
+    do
+    {        
+        R_DrawColumnPixel((pixel*)dest, &dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos++;
+
+        if(fuzzpos >= 50)
+            fuzzpos = 0;
+
+    } while(--count);
+
+    _g->fuzzpos = fuzzpos;
+}
+
 #pragma GCC pop_options
+
+
 
 //
 // R_DrawMaskedColumn
@@ -520,40 +663,44 @@ static void R_DrawColumn (draw_column_vars_t *dcvars)
 //
 static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvars, const column_t *column)
 {
-    int     topscreen;
-    int     bottomscreen;
-    fixed_t basetexturemid = dcvars->texturemid;
+    const fixed_t basetexturemid = dcvars->texturemid;
 
-    for ( ; column->topdelta != 0xff ; )
+    const int fclip_x = mfloorclip[dcvars->x];
+    const int cclip_x = mceilingclip[dcvars->x];
+
+    while (column->topdelta != 0xff)
     {
         // calculate unclipped screen coordinates for post
-        topscreen = sprtopscreen + spryscale*column->topdelta;
-        bottomscreen = topscreen + spryscale*column->length;
+        const int topscreen = sprtopscreen + spryscale*column->topdelta;
+        const int bottomscreen = topscreen + spryscale*column->length;
 
-        dcvars->yl = (topscreen+FRACUNIT-1)>>FRACBITS;
-        dcvars->yh = (bottomscreen-1)>>FRACBITS;
+        int yh = (bottomscreen-1)>>FRACBITS;
+        int yl = (topscreen+FRACUNIT-1)>>FRACBITS;
 
-        if (dcvars->yh >= mfloorclip[dcvars->x])
-            dcvars->yh = mfloorclip[dcvars->x]-1;
+        if(yh >= fclip_x)
+            yh = fclip_x - 1;
 
-        if (dcvars->yl <= mceilingclip[dcvars->x])
-            dcvars->yl = mceilingclip[dcvars->x]+1;
+        if(yl <= cclip_x)
+            yl = cclip_x + 1;
 
         // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
-        if (dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
+        if (yh < viewheight && yl <= yh)
         {
             dcvars->source =  (const byte*)column + 3;
 
             dcvars->texturemid = basetexturemid - (column->topdelta<<FRACBITS);
 
+            dcvars->yh = yh;
+            dcvars->yl = yl;
+
             // Drawn by either R_DrawColumn
             //  or (SHADOW) R_DrawFuzzColumn.
             colfunc (dcvars);
-
         }
 
         column = (const column_t *)((const byte *)column + column->length + 4);
     }
+
     dcvars->texturemid = basetexturemid;
 }
 
@@ -564,13 +711,10 @@ static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvar
 // CPhipps - new wad lump handling, *'s to const*'s
 static void R_DrawVisSprite(const vissprite_t *vis)
 {
-    int      texturecolumn;
     fixed_t  frac;
-    const patch_t *patch = W_CacheLumpNum(vis->patch+_g->firstspritelump);
 
     R_DrawColumn_f colfunc;
     draw_column_vars_t dcvars;
-
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
@@ -594,19 +738,19 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     }
 
     // proff 11/06/98: Changed for high-res
-
-    dcvars.iscale = FixedDiv (FRACUNIT, vis->scale);
+    dcvars.iscale = vis->iscale;
     dcvars.texturemid = vis->texturemid;
     frac = vis->startfrac;
 
     spryscale = vis->scale;
     sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
+
+    const patch_t *patch = vis->patch;
+
     for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
     {
-        texturecolumn = frac>>FRACBITS;
-
-        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[texturecolumn]);
+        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
 
         R_DrawMaskedColumn(colfunc, &dcvars, column);
     }
@@ -614,40 +758,39 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
 static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
 {
-    if(texture->patchcount == 1)
+    const unsigned int patchcount = texture->patchcount;
+    const unsigned int widthmask = texture->widthmask;
+
+    const int xc = texcolumn & widthmask;
+
+    if(patchcount == 1)
     {
         //simple texture.
-
-        const unsigned int widthmask = texture->widthmask;
         const patch_t* patch = texture->patches[0].patch;
-
-        const unsigned int xc = texcolumn & widthmask;
 
         return (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
     }
     else
     {
-        const patch_t* realpatch;
+        unsigned int i = 0;
 
-        const int xc = (texcolumn & 0xffff) & texture->widthmask;
-
-        for(int i=0; i<texture->patchcount; i++)
+        do
         {
             const texpatch_t* patch = &texture->patches[i];
 
-            realpatch = patch->patch;
+            const patch_t* realpatch = patch->patch;
 
-            int x1 = patch->originx;
-            int x2 = x1 + realpatch->width;
+            const int x1 = patch->originx;
 
-            if (x2 > texture->width)
-                x2 = texture->width;
+            if(xc < x1)
+                continue;
 
-            if(xc >= x1 && xc < x2)
-            {
+            const int x2 = x1 + realpatch->width;
+
+            if(xc < x2)
                 return (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
-            }
-        }
+
+        } while(++i < patchcount);
     }
 
     return NULL;
@@ -669,7 +812,7 @@ static const texture_t* R_GetOrLoadTexture(int tex_num)
 // R_RenderMaskedSegRange
 //
 
-static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
+static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
 {
     int      texnum;
     draw_column_vars_t dcvars;
@@ -712,7 +855,7 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         dcvars.texturemid = dcvars.texturemid - viewz;
     }
 
-    dcvars.texturemid += _g->sides[curline->sidenum].rowoffset;
+    dcvars.texturemid += (_g->sides[curline->sidenum].rowoffset << FRACBITS);
 
     const texture_t* texture = R_GetOrLoadTexture(texnum);
 
@@ -721,16 +864,15 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     // draw the columns
     for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
     {
-        if (maskedtexturecol[dcvars.x] != SHRT_MAX) // dropoff overflow
+        const int xc = maskedtexturecol[dcvars.x];
+
+        if (xc != SHRT_MAX) // dropoff overflow
         {
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
-            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)spryscale);
+            dcvars.iscale = RECIPROCAL((unsigned)spryscale);
 
             // draw the texture
-
-            int xc = maskedtexturecol[dcvars.x];
-
             const column_t* column = R_GetColumn(texture, xc);
 
             R_DrawMaskedColumn(R_DrawColumn, &dcvars, column);
@@ -747,24 +889,25 @@ static void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
 static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 {
-  fixed_t lx = line->v1.x;
-  fixed_t ly = line->v1.y;
-  fixed_t ldx = line->v2.x - lx;
-  fixed_t ldy = line->v2.y - ly;
+    const fixed_t lx = line->v1.x;
+    const fixed_t ly = line->v1.y;
+    const fixed_t ldx = line->v2.x - lx;
+    const fixed_t ldy = line->v2.y - ly;
 
-  if (!ldx)
-    return x <= lx ? ldy > 0 : ldy < 0;
+    if (!ldx)
+        return x <= lx ? ldy > 0 : ldy < 0;
 
-  if (!ldy)
-    return y <= ly ? ldx < 0 : ldx > 0;
+    if (!ldy)
+        return y <= ly ? ldx < 0 : ldx > 0;
 
-  x -= lx;
-  y -= ly;
+    x -= lx;
+    y -= ly;
 
-  // Try to quickly decide by looking at sign bits.
-  if ((ldy ^ ldx ^ x ^ y) < 0)
-    return (ldy ^ x) < 0;          // (left is negative)
-  return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
+    // Try to quickly decide by looking at sign bits.
+    if ((ldy ^ ldx ^ x ^ y) < 0)
+        return (ldy ^ x) < 0;          // (left is negative)
+
+    return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
 }
 
 
@@ -774,22 +917,18 @@ static PUREFUNC int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 
 static void R_DrawSprite (const vissprite_t* spr)
 {
-    drawseg_t *ds;
     short* clipbot = floorclip;
     short* cliptop = ceilingclip;
 
-    drawseg_t* drawsegs  =_g->drawsegs;
-
-    //int     clipbot[MAX_SCREENWIDTH]; // killough 2/8/98: // dropoff overflow
-    //int     cliptop[MAX_SCREENWIDTH]; // change to MAX_*  // dropoff overflow
-    int     x;
-    int     r1;
-    int     r2;
     fixed_t scale;
     fixed_t lowscale;
 
-    for (x = spr->x1 ; x<=spr->x2 ; x++)
-        clipbot[x] = cliptop[x] = -2;
+    for (int x = spr->x1 ; x<=spr->x2 ; x++)
+    {
+        clipbot[x] = viewheight;
+        cliptop[x] = -1;
+    }
+
 
     // Scan drawsegs from end to start for obscuring segs.
     // The first drawseg that has a greater scale is the clip seg.
@@ -798,14 +937,16 @@ static void R_DrawSprite (const vissprite_t* spr)
     // (pointer check was originally nonportable
     // and buggy, by going past LEFT end of array):
 
-    for (ds=ds_p ; ds-- > drawsegs ; )  // new -- killough
-    {      // determine if the drawseg obscures the sprite
-        if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
-                (!ds->silhouette && !ds->maskedtexturecol))
+    const drawseg_t* drawsegs  =_g->drawsegs;
+
+    for (const drawseg_t* ds = ds_p; ds-- > drawsegs; )  // new -- killough
+    {
+        // determine if the drawseg obscures the sprite
+        if (ds->x1 > spr->x2 || ds->x2 < spr->x1 || (!ds->silhouette && !ds->maskedtexturecol))
             continue;      // does not cover sprite
 
-        r1 = ds->x1 < spr->x1 ? spr->x1 : ds->x1;
-        r2 = ds->x2 > spr->x2 ? spr->x2 : ds->x2;
+        const int r1 = ds->x1 < spr->x1 ? spr->x1 : ds->x1;
+        const int r2 = ds->x2 > spr->x2 ? spr->x2 : ds->x2;
 
         if (ds->scale1 > ds->scale2)
         {
@@ -822,34 +963,34 @@ static void R_DrawSprite (const vissprite_t* spr)
         {
             if (ds->maskedtexturecol)       // masked mid texture?
                 R_RenderMaskedSegRange(ds, r1, r2);
+
             continue;               // seg is behind sprite
         }
 
         // clip this piece of the sprite
         // killough 3/27/98: optimized and made much shorter
 
-        if (ds->silhouette&SIL_BOTTOM && spr->gz < ds->bsilheight) //bottom sil
-            for (x=r1 ; x<=r2 ; x++)
-                if (clipbot[x] == -2)
+        if (ds->silhouette & SIL_BOTTOM && spr->gz < ds->bsilheight) //bottom sil
+        {
+            for (int x = r1; x <= r2; x++)
+            {
+                if (clipbot[x] == viewheight)
                     clipbot[x] = ds->sprbottomclip[x];
+            }
 
-        if (ds->silhouette&SIL_TOP && spr->gzt > ds->tsilheight)   // top sil
-            for (x=r1 ; x<=r2 ; x++)
-                if (cliptop[x] == -2)
+        }
+
+        if (ds->silhouette & SIL_TOP && spr->gzt > ds->tsilheight)   // top sil
+        {
+            for (int x=r1; x <= r2; x++)
+            {
+                if (cliptop[x] == -1)
                     cliptop[x] = ds->sprtopclip[x];
+            }
+        }
     }
 
     // all clipping has been performed, so draw the sprite
-    // check for unclipped columns
-
-    for (x = spr->x1 ; x<=spr->x2 ; x++) {
-        if (clipbot[x] == -2)
-            clipbot[x] = viewheight;
-
-        if (cliptop[x] == -2)
-            cliptop[x] = -1;
-    }
-
     mfloorclip = clipbot;
     mceilingclip = cliptop;
     R_DrawVisSprite (spr);
@@ -865,7 +1006,6 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     int           x1, x2;
     spritedef_t   *sprdef;
     spriteframe_t *sprframe;
-    int           lump;
     boolean       flip;
     vissprite_t   *vis;
     vissprite_t   avis;
@@ -877,25 +1017,23 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
-    lump = sprframe->lump[0];
     flip = (boolean) SPR_FLIPPED(sprframe, 0);
 
-    {
-        const patch_t* patch = W_CacheLumpNum(lump+_g->firstspritelump);
-        // calculate edges of the shape
-        fixed_t       tx;
-        tx = psp->sx-160*FRACUNIT;
+    const patch_t* patch = W_CacheLumpNum(sprframe->lump[0]+_g->firstspritelump);
+    // calculate edges of the shape
+    fixed_t       tx;
+    tx = psp->sx-160*FRACUNIT;
 
-        tx -= patch->leftoffset<<FRACBITS;
-        x1 = (centerxfrac + FixedMul (tx, pspritescale))>>FRACBITS;
+    tx -= patch->leftoffset<<FRACBITS;
+    x1 = (centerxfrac + FixedMul (tx, pspritescale))>>FRACBITS;
 
-        tx += patch->width<<FRACBITS;
-        x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
+    tx += patch->width<<FRACBITS;
+    x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
 
-        width = patch->width;
-        topoffset = patch->topoffset<<FRACBITS;
-        //R_UnlockPatchNum(lump+_g->firstspritelump);
-    }
+    width = patch->width;
+    topoffset = patch->topoffset<<FRACBITS;
+
+
 
     // off the side
     if (x2 < 0 || x1 > SCREENWIDTH)
@@ -911,6 +1049,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
     // proff 11/06/98: Added for high-res
     vis->scale = pspriteyscale;
+    vis->iscale = pspriteyiscale;
 
     if (flip)
     {
@@ -926,7 +1065,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     if (vis->x1 > x1)
         vis->startfrac += vis->xiscale*(vis->x1-x1);
 
-    vis->patch = lump;
+    vis->patch = patch;
 
     if (_g->viewplayer->powers[pw_invisibility] > 4*32 || _g->viewplayer->powers[pw_invisibility] & 8)
         vis->colormap = NULL;                    // shadow draw
@@ -1012,7 +1151,6 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
 
 static void R_SortVisSprites (void)
 {
-
     int i = num_vissprite;
 
     if (i)
@@ -1084,7 +1222,7 @@ inline static void R_DrawSpanPixel(pixel* dest, const byte* source, const byte* 
 #endif
 }
 
-static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
+static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const draw_span_vars_t *dsvars)
 {
     unsigned int count = (x2 - x1);
 
@@ -1096,7 +1234,7 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
     const unsigned int step = dsvars->step;
     unsigned int position = dsvars->position;
 
-    unsigned int l = count >> 2;
+    unsigned int l = (count >> 4);
 
     while(l--)
     {
@@ -1104,25 +1242,51 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, draw_sp
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
         R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
     }
 
-    unsigned int r = count & 3;
+    unsigned int r = (count & 15);
 
-    while(r--)
+    switch(r)
     {
-        R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 15:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 14:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 13:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 12:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 11:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 10:    R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 9:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 8:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 7:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 6:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 5:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 4:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 3:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 2:     R_DrawSpanPixel(dest, source, colormap, position); dest++; position+=step;
+        case 1:     R_DrawSpanPixel(dest, source, colormap, position);
     }
 }
 
 #pragma GCC pop_options
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
-{
-    fixed_t distance = FixedMul(planeheight, yslope[y]);
-    unsigned int xstep = FixedMul(distance,basexscale);
-    unsigned int ystep = FixedMul(distance,baseyscale);
-
-    dsvars->step = ((xstep << 10) & 0xffff0000) | ((ystep >> 6) & 0x0000ffff);
+{    
+    const fixed_t distance = FixedMul(planeheight, yslope[y]);
+    dsvars->step = ((FixedMul(distance,basexscale) << 10) & 0xffff0000) | ((FixedMul(distance,baseyscale) >> 6) & 0x0000ffff);
 
     fixed_t length = FixedMul (distance, distscale[x1]);
     angle_t angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
@@ -1182,35 +1346,18 @@ static void R_DoDrawPlane(visplane_t *pl)
                 dcvars.colormap = fullcolormap;          // killough 3/20/98
 
             // proff 09/21/98: Changed for high-res
-            dcvars.iscale = FRACUNIT*200/viewheight;
+            dcvars.iscale = skyiscale;
 
             const texture_t* tex = R_GetOrLoadTexture(_g->skytexture);
-
-            const unsigned int widthmask = tex->widthmask;
-            const patch_t* patch = tex->patches[0].patch;
-
-            const boolean multitex_sky = (tex->patchcount > 1);
-
-            unsigned int inv_width;
-
-            if(multitex_sky)
-                inv_width = UDiv32(FRACUNIT, patch->width);
 
             // killough 10/98: Use sky scrolling offset
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
             {
                 if ((dcvars.yl = pl->top[x]) != -1 && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
                 {
-                    int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT) & widthmask;
+                    int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT);
 
-                    if(multitex_sky)
-                    {
-                        const unsigned int p = ((xc * inv_width) >> FRACBITS);
-                        xc -= (patch->width * p);
-                        patch = tex->patches[p].patch;
-                    }
-
-                    const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+                    const column_t* column = R_GetColumn(tex, xc);
 
                     dcvars.source = (const byte*)column + 3;
                     R_DrawColumn(&dcvars);
@@ -1220,17 +1367,14 @@ static void R_DoDrawPlane(visplane_t *pl)
         else
         {     // regular flat
 
-            int stop;
             draw_span_vars_t dsvars;
 
             dsvars.source = W_CacheLumpNum(_g->firstflat + flattranslation[pl->picnum]);
+            dsvars.colormap = R_LoadColorMap(pl->lightlevel);
 
             planeheight = D_abs(pl->height-viewz);
 
-            dsvars.colormap = R_LoadColorMap(pl->lightlevel);
-
-            stop = pl->maxx + 1;
-
+            const int stop = pl->maxx + 1;
 
             pl->top[pl->minx-1] = pl->top[stop] = 0xff; // dropoff overflow
 
@@ -1298,103 +1442,77 @@ static vissprite_t *R_NewVisSprite(void)
 
 static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 {
-    fixed_t   gzt;               // killough 3/27/98
-    fixed_t   tx;
-    fixed_t   xscale;
-    int       x1;
-    int       x2;
-    spritedef_t   *sprdef;
-    spriteframe_t *sprframe;
-    int       lump;
-    boolean   flip;
-    vissprite_t *vis;
-    fixed_t   iscale;
+    const fixed_t fx = thing->x;
+    const fixed_t fy = thing->y;
+    const fixed_t fz = thing->z;
 
-    // transform the origin point
-    fixed_t tr_x, tr_y;
-    fixed_t fx, fy, fz;
-    fixed_t gxt, gyt;
-    fixed_t tz;
-    int width;
+    const fixed_t tr_x = fx - viewx;
+    const fixed_t tr_y = fy - viewy;
 
-    fx = thing->x;
-    fy = thing->y;
-    fz = thing->z;
-
-    tr_x = fx - viewx;
-    tr_y = fy - viewy;
-
-    gxt = FixedMul(tr_x,viewcos);
-    gyt = -FixedMul(tr_y,viewsin);
-
-    tz = gxt-gyt;
+    const fixed_t tz = FixedMul(tr_x,viewcos)-(-FixedMul(tr_y,viewsin));
 
     // thing is behind view plane?
     if (tz < MINZ)
         return;
 
-    xscale = FixedDiv(projection, tz);
+    //Too far away. Always draw Cyberdemon and Spiderdemon. They are big sprites!
+    if( (tz > MAXZ) && (thing->type != MT_CYBORG) && (thing->type != MT_SPIDER) )
+        return;
 
-    gxt = -FixedMul(tr_x,viewsin);
-    gyt = FixedMul(tr_y,viewcos);
-    tx = -(gyt+gxt);
+    fixed_t tx = -(FixedMul(tr_y,viewcos)+(-FixedMul(tr_x,viewsin)));
 
     // too far off the side?
     if (D_abs(tx)>(tz<<2))
         return;
 
     // decide which patch to use for sprite relative to player
-    sprdef = &_g->sprites[thing->sprite];
-    sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+    const spritedef_t* sprdef = &_g->sprites[thing->sprite];
+    const spriteframe_t* sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+
+    unsigned int rot = 0;
 
     if (sprframe->rotate)
     {
         // choose a different rotation based on player view
         angle_t ang = R_PointToAngle(fx, fy);
-        unsigned rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
-        lump = sprframe->lump[rot];
-
-        flip = (boolean)SPR_FLIPPED(sprframe, rot);
-    }
-    else
-    {
-        // use single rotation for all views
-        lump = sprframe->lump[0];
-        flip = (boolean)SPR_FLIPPED(sprframe, 0);
+        rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
     }
 
-    const patch_t* patch = W_CacheLumpNum(lump + _g->firstspritelump);
+    const boolean flip = (boolean)SPR_FLIPPED(sprframe, rot);
+    const patch_t* patch = W_CacheLumpNum(sprframe->lump[rot] + _g->firstspritelump);
 
     /* calculate edges of the shape
      * cph 2003/08/1 - fraggle points out that this offset must be flipped
      * if the sprite is flipped; e.g. FreeDoom imp is messed up by this. */
     if (flip)
-    {
         tx -= (patch->width - patch->leftoffset) << FRACBITS;
-    } else
-    {
+    else
         tx -= patch->leftoffset << FRACBITS;
-    }
-    x1 = (centerxfrac + FixedMul(tx,xscale)) >> FRACBITS;
+
+    const fixed_t xscale = FixedDiv(projection, tz);
+
+    fixed_t xl = (centerxfrac + FixedMul(tx,xscale));
 
     // off the side?
-    if(x1 > SCREENWIDTH)
+    if(xl > (SCREENWIDTH << FRACBITS))
         return;
 
-    tx += patch->width<<FRACBITS;
-
-    x2 = ((centerxfrac + FixedMul (tx,xscale) ) >> FRACBITS) - 1;
+    fixed_t xr = (centerxfrac + FixedMul(tx + (patch->width << FRACBITS),xscale)) - FRACUNIT;
 
     // off the side?
-    if(x2 < 0)
+    if(xr < 0)
+        return;
+
+    //Too small.
+    if(xr <= (xl + (FRACUNIT >> 2)))
         return;
 
 
-    gzt = fz + (patch->topoffset << FRACBITS);
-    width = patch->width;
+    const int x1 = (xl >> FRACBITS);
+    const int x2 = (xr >> FRACBITS);
 
     // store information in a vissprite
-    vis = R_NewVisSprite ();
+    vissprite_t* vis = R_NewVisSprite ();
 
     //No more vissprites.
     if(!vis)
@@ -1403,18 +1521,29 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     vis->mobjflags = thing->flags;
     // proff 11/06/98: Changed for high-res
     vis->scale = FixedDiv(projectiony, tz);
+    vis->iscale = tz >> 7;
+    vis->patch = patch;
     vis->gx = fx;
     vis->gy = fy;
     vis->gz = fz;
-    vis->gzt = gzt;                          // killough 3/27/98
+    vis->gzt = fz + (patch->topoffset << FRACBITS);                          // killough 3/27/98
     vis->texturemid = vis->gzt - viewz;
     vis->x1 = x1 < 0 ? 0 : x1;
     vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
-    iscale = FixedDiv (FRACUNIT, xscale);
+
+
+    //const fixed_t iscale = FixedDiv (FRACUNIT, xscale);
+
+    //It simplifies to this.
+    //const fixed_t iscale = tz / 60;
+
+    //This is a cheap divide by 60.
+    //const fixed_t iscale = (((uint_64_t)tz * 0x8889) >> 16) >> 5;
+    const fixed_t iscale = ((tz >> 6) + (tz >> 10)); // -> x/64 + x/1024 is very close to x/60. (Delta -0.4%)
 
     if (flip)
     {
-        vis->startfrac = (width<<FRACBITS)-1;
+        vis->startfrac = (patch->width<<FRACBITS)-1;
         vis->xiscale = -iscale;
     }
     else
@@ -1425,7 +1554,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     if (vis->x1 > x1)
         vis->startfrac += vis->xiscale*(vis->x1-x1);
-    vis->patch = lump;
 
     // get light level
     if (thing->flags & MF_SHADOW)
@@ -1520,6 +1648,8 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
 
     BlockSet(check->top, UINT_MAX, sizeof(check->top));
 
+    check->modified = 0;
+
     return check;
 }
 
@@ -1540,6 +1670,8 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->maxx = stop;
 
     BlockSet(new_pl->top, UINT_MAX, sizeof(new_pl->top));
+
+    new_pl->modified = false;
 
     return new_pl;
 }
@@ -1602,14 +1734,15 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
  * straight from const patch_t*.
 */
 
-#define CACHE_WAYS 32
+#define CACHE_WAYS 4
 
 #define CACHE_MASK (CACHE_WAYS-1)
 #define CACHE_STRIDE (128 / CACHE_WAYS)
 #define CACHE_KEY_MASK (CACHE_STRIDE-1)
 
 #define CACHE_ENTRY(c, t) ((c << 16 | t))
-#define CACHE_HASH(c, t) (((c >> 4) ^ t) & CACHE_KEY_MASK)
+
+#define CACHE_HASH(c, t) (((c >> 1) ^ t) & CACHE_KEY_MASK)
 
 static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
 {
@@ -1637,89 +1770,97 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
 
     } while(i < 128);
 
+
     //No space. Random eviction.
-    return ((P_Random() & CACHE_MASK) * CACHE_STRIDE) + key;
+    return ((M_Random() & CACHE_MASK) * CACHE_STRIDE) + key;
+}
+
+
+static const byte* R_ComposeColumn(const unsigned int texture, const texture_t* tex, int texcolumn, unsigned int iscale)
+{
+    //static int total, misses;
+
+    int colmask = 0xfffe;
+
+    if(tex->width > 8)
+    {
+        if(iscale > (4 << FRACBITS))
+            colmask = 0xfff0;
+        else if(iscale > (3 << FRACBITS))
+            colmask = 0xfff8;
+        else if (iscale > (2 << FRACBITS))
+            colmask = 0xfffc;
+    }
+
+    const int xc = (texcolumn & colmask) & tex->widthmask;
+
+    unsigned int cachekey = FindColumnCacheItem(texture, xc);
+
+    byte* colcache = &columnCache[cachekey*128];
+    unsigned int cacheEntry = columnCacheEntries[cachekey];
+
+    //total++;
+
+    if(cacheEntry != CACHE_ENTRY(xc, texture))
+    {
+        //misses++;
+        byte tmpCache[128];
+
+
+        columnCacheEntries[cachekey] = CACHE_ENTRY(xc, texture);
+
+        unsigned int i = 0;
+        unsigned int patchcount = tex->patchcount;
+
+        do
+        {
+            const texpatch_t* patch = &tex->patches[i];
+
+            const patch_t* realpatch = patch->patch;
+
+            const int x1 = patch->originx;
+
+            if(xc < x1)
+                continue;
+
+            const int x2 = x1 + realpatch->width;
+
+            if(xc < x2)
+            {
+                const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
+
+                R_DrawColumnInCache (patchcol,
+                                     tmpCache,
+                                     patch->originy,
+                                     tex->height);
+
+            }
+
+        } while(++i < patchcount);
+
+        //Block copy will drop low 2 bits of len.
+        BlockCopy(colcache, tmpCache, (tex->height + 3));
+    }
+
+    return colcache;
 }
 
 static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
 {
-    //static int total, misses;
-
     const texture_t* tex = R_GetOrLoadTexture(texture);
 
-    if(tex->patchcount == 1)
+    if(tex->overlapped == 0)
     {
-        //simple texture.
-
-        const unsigned int widthmask = tex->widthmask;
-        const patch_t* patch = tex->patches[0].patch;
-
-        const unsigned int xc = texcolumn & widthmask;
-
-        const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
+        const column_t* column = R_GetColumn(tex, texcolumn);
 
         dcvars->source = (const byte*)column + 3;
-
-        R_DrawColumn (dcvars);
     }
     else
     {
-        int colmask = 0xfffe;
-
-        if(dcvars->iscale > (4 << FRACBITS))
-            colmask = 0xfff0;
-        else if (dcvars->iscale > (2 << FRACBITS))
-            colmask = 0xfff8;
-
-        const int xc = (texcolumn & colmask) & tex->widthmask;
-
-        unsigned int cachekey = FindColumnCacheItem(texture, xc);
-
-        byte* colcache = &columnCache[cachekey*128];
-        unsigned int cacheEntry = columnCacheEntries[cachekey];
-
-        //total++;
-
-        if(cacheEntry != CACHE_ENTRY(xc, texture))
-        {
-            //misses++;
-
-            byte tmpCache[128];
-
-            columnCacheEntries[cachekey] = CACHE_ENTRY(xc, texture);
-
-            for(int i=0; i<tex->patchcount; i++)
-            {
-                const texpatch_t* patch = &tex->patches[i];
-
-                const patch_t* realpatch = patch->patch;
-
-                int x1 = patch->originx;
-                int x2 = x1 + realpatch->width;
-
-                if (x2 > tex->width)
-                    x2 = tex->width;
-
-                if(xc >= x1 && xc < x2)
-                {
-                    const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
-
-                    R_DrawColumnInCache (patchcol,
-                                         tmpCache,
-                                         patch->originy,
-                                         tex->height);
-
-                }
-            }
-
-            //Block copy will drop low 2 bits of len.
-            BlockCopy(colcache, tmpCache, (tex->height + 3));
-        }
-
-        dcvars->source = colcache;
-
-        R_DrawColumn (dcvars);
+        dcvars->source = R_ComposeColumn(texture, tex, texcolumn, dcvars->iscale);
     }
+
+    R_DrawColumn (dcvars);
 }
 
 //
@@ -1768,6 +1909,7 @@ static void R_RenderSegLoop (int rw_x)
             {
                 ceilingplane->top[rw_x] = top;
                 ceilingplane->bottom[rw_x] = bottom;
+                ceilingplane->modified = 1;
             }
             // SoM: this should be set here
             cc_rwx = bottom;
@@ -1786,6 +1928,7 @@ static void R_RenderSegLoop (int rw_x)
             {
                 floorplane->top[rw_x] = top;
                 floorplane->bottom[rw_x] = bottom;
+                floorplane->modified = 1;
             }
             // SoM: This should be set here to prevent overdraw
             fc_rwx = top;
@@ -1803,7 +1946,7 @@ static void R_RenderSegLoop (int rw_x)
 
             dcvars.x = rw_x;
 
-            dcvars.iscale = UDiv32(UINT_MAX, (unsigned)rw_scale);
+            dcvars.iscale = RECIPROCAL((unsigned)rw_scale);
         }
 
         // draw the wall tiers
@@ -2006,7 +2149,7 @@ static void R_StoreWallRange(const int start, const int stop)
         else        // top of texture at top
             rw_midtexturemid = worldtop;
 
-        rw_midtexturemid += FixedMod(sidedef->rowoffset, textureheight[midtexture]);
+        rw_midtexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[midtexture]);
 
         ds_p->silhouette = SIL_BOTH;
         ds_p->sprtopclip = screenheightarray;
@@ -2089,7 +2232,7 @@ static void R_StoreWallRange(const int start, const int stop)
             toptexture = texturetranslation[sidedef->toptexture];
             rw_toptexturemid = linedef->flags & ML_DONTPEGTOP ? worldtop :
                                                                         backsector->ceilingheight+textureheight[sidedef->toptexture]-viewz;
-            rw_toptexturemid += FixedMod(sidedef->rowoffset, textureheight[toptexture]);
+            rw_toptexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[toptexture]);
         }
 
         if (worldlow > worldbottom) // bottom texture
@@ -2097,7 +2240,7 @@ static void R_StoreWallRange(const int start, const int stop)
             bottomtexture = texturetranslation[sidedef->bottomtexture];
             rw_bottomtexturemid = linedef->flags & ML_DONTPEGBOTTOM ? worldtop : worldlow;
 
-            rw_bottomtexturemid += FixedMod(sidedef->rowoffset, textureheight[bottomtexture]);
+            rw_bottomtexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[bottomtexture]);
         }
 
         // allocate space for masked texture tables
@@ -2116,7 +2259,7 @@ static void R_StoreWallRange(const int start, const int stop)
     {
         rw_offset = FixedMul (hyp, -finesine[offsetangle >>ANGLETOFINESHIFT]);
 
-        rw_offset += sidedef->textureoffset + curline->offset;
+        rw_offset += (sidedef->textureoffset << FRACBITS) + curline->offset;
 
         rw_centerangle = ANG90 + viewangle - rw_normalangle;
 
@@ -2286,31 +2429,6 @@ static void R_RecalcLineFlags(void)
             linedata->r_flags = (linedata->r_flags & ML_MAPPED); return;
         } else
             linedata->r_flags = (RF_IGNORE | (linedata->r_flags & ML_MAPPED));
-    }
-
-    /* cph - I'm too lazy to try and work with offsets in this */
-    if (side->rowoffset) return;
-
-    /* Now decide on texture tiling */
-    if (linedef->flags & ML_TWOSIDED)
-    {
-        int c;
-
-        /* Does top texture need tiling */
-        if ((c = frontsector->ceilingheight - backsector->ceilingheight) > 0 &&
-                (textureheight[texturetranslation[side->toptexture]] > c))
-            linedata->r_flags |= RF_TOP_TILE;
-
-        /* Does bottom texture need tiling */
-        if ((c = frontsector->floorheight - backsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[side->bottomtexture]] > c))
-            linedata->r_flags |= RF_BOT_TILE;
-    } else {
-        int c;
-        /* Does middle texture need tiling */
-        if ((c = frontsector->ceilingheight - frontsector->floorheight) > 0 &&
-                (textureheight[texturetranslation[side->midtexture]] > c))
-            linedata->r_flags |= RF_MID_TILE;
     }
 }
 
@@ -2584,6 +2702,10 @@ static boolean R_CheckBBox(const short *bspcoord)
 //Render a BSP subsector if bspnum is a leaf node.
 //Return false if bspnum is frame node.
 
+
+
+
+
 static boolean R_RenderBspSubsector(int bspnum)
 {
     // Found a subsector?
@@ -2702,11 +2824,40 @@ static void R_DrawPlanes (void)
 
         while(pl)
         {
-            R_DoDrawPlane(pl);
+            if(pl->modified)
+                R_DoDrawPlane(pl);
 
             pl = pl->next;
         }
     }
+}
+
+//
+// R_ClearPlanes
+// At begining of frame.
+//
+
+static void R_ClearPlanes(void)
+{
+    int i;
+
+    // opening / clipping determination
+    for (i=0 ; i<SCREENWIDTH ; i++)
+        floorclip[i] = viewheight, ceilingclip[i] = -1;
+
+
+    for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
+        for (*_g->freehead = _g->visplanes[i], _g->visplanes[i] = NULL; *_g->freehead; )
+            _g->freehead = &(*_g->freehead)->next;
+
+    _g->lastopening = _g->openings;
+
+    // scale will be unit scale at SCREENWIDTH/2 distance
+    //basexscale = FixedDiv (viewsin,projection);
+    //baseyscale = FixedDiv (viewcos,projection);
+
+    basexscale = FixedMul(viewsin,iprojection);
+    baseyscale = FixedMul(viewcos,iprojection);
 }
 
 //
@@ -2777,3 +2928,376 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
         }
     }
 }
+
+
+
+
+
+
+//
+// P_DivlineSide
+// Returns side 0 (front), 1 (back), or 2 (on).
+//
+// killough 4/19/98: made static, cleaned up
+
+static int P_DivlineSide(fixed_t x, fixed_t y, const divline_t *node)
+{
+  fixed_t left, right;
+  return
+    !node->dx ? x == node->x ? 2 : x <= node->x ? node->dy > 0 : node->dy < 0 :
+    !node->dy ? (y) == node->y ? 2 : y <= node->y ? node->dx < 0 : node->dx > 0 :
+    (right = ((y - node->y) >> FRACBITS) * (node->dx >> FRACBITS)) <
+    (left  = ((x - node->x) >> FRACBITS) * (node->dy >> FRACBITS)) ? 0 :
+    right == left ? 2 : 1;
+}
+
+//
+// P_CrossSubsector
+// Returns true
+//  if strace crosses the given subsector successfully.
+//
+// killough 4/19/98: made static and cleaned up
+
+static boolean P_CrossSubsector(int num)
+{
+    const seg_t *seg = _g->segs + _g->subsectors[num].firstline;
+    int count;
+    fixed_t opentop = 0, openbottom = 0;
+    const sector_t *front = NULL, *back = NULL;
+
+    for (count = _g->subsectors[num].numlines; --count >= 0; seg++)
+    { // check lines
+        int linenum = seg->linenum;
+
+        const line_t *line = &_g->lines[linenum];
+        divline_t divl;
+
+        // allready checked other side?
+        if(_g->linedata[linenum].validcount == _g->validcount)
+            continue;
+
+        _g->linedata[linenum].validcount = _g->validcount;
+
+        if (line->bbox[BOXLEFT] > _g->los.bbox[BOXRIGHT ] ||
+                line->bbox[BOXRIGHT] < _g->los.bbox[BOXLEFT  ] ||
+                line->bbox[BOXBOTTOM] > _g->los.bbox[BOXTOP   ] ||
+                line->bbox[BOXTOP]    < _g->los.bbox[BOXBOTTOM])
+            continue;
+
+        // cph - do what we can before forced to check intersection
+        if (line->flags & ML_TWOSIDED)
+        {
+
+            // no wall to block sight with?
+            if ((front = SG_FRONTSECTOR(seg))->floorheight == (back = SG_BACKSECTOR(seg))->floorheight && front->ceilingheight == back->ceilingheight)
+                continue;
+
+            // possible occluder
+            // because of ceiling height differences
+            opentop = front->ceilingheight < back->ceilingheight ?
+                        front->ceilingheight : back->ceilingheight ;
+
+            // because of floor height differences
+            openbottom = front->floorheight > back->floorheight ?
+                        front->floorheight : back->floorheight ;
+
+            // cph - reject if does not intrude in the z-space of the possible LOS
+            if ((opentop >= _g->los.maxz) && (openbottom <= _g->los.minz))
+                continue;
+        }
+
+        // Forget this line if it doesn't cross the line of sight
+        const vertex_t *v1,*v2;
+
+        v1 = &line->v1;
+        v2 = &line->v2;
+
+        if (P_DivlineSide(v1->x, v1->y, &_g->los.strace) == P_DivlineSide(v2->x, v2->y, &_g->los.strace))
+            continue;
+
+        divl.dx = v2->x - (divl.x = v1->x);
+        divl.dy = v2->y - (divl.y = v1->y);
+
+        // line isn't crossed?
+        if (P_DivlineSide(_g->los.strace.x, _g->los.strace.y, &divl) == P_DivlineSide(_g->los.t2x, _g->los.t2y, &divl))
+            continue;
+
+
+        // cph - if bottom >= top or top < minz or bottom > maxz then it must be
+        // solid wrt this LOS
+        if (!(line->flags & ML_TWOSIDED) || (openbottom >= opentop) ||
+                (opentop < _g->los.minz) || (openbottom > _g->los.maxz))
+            return false;
+
+        // crosses a two sided line
+        /* cph 2006/07/15 - oops, we missed this in 2.4.0 & .1;
+       *  use P_InterceptVector2 for those compat levels only. */
+        fixed_t frac = P_InterceptVector2(&_g->los.strace, &divl);
+
+        if (front->floorheight != back->floorheight)
+        {
+            fixed_t slope = FixedDiv(openbottom - _g->los.sightzstart , frac);
+            if (slope > _g->los.bottomslope)
+                _g->los.bottomslope = slope;
+        }
+
+        if (front->ceilingheight != back->ceilingheight)
+        {
+            fixed_t slope = FixedDiv(opentop - _g->los.sightzstart , frac);
+            if (slope < _g->los.topslope)
+                _g->los.topslope = slope;
+        }
+
+        if (_g->los.topslope <= _g->los.bottomslope)
+            return false;               // stop
+
+    }
+    // passed the subsector ok
+    return true;
+}
+
+boolean P_CrossBSPNode(int bspnum)
+{
+    while (!(bspnum & NF_SUBSECTOR))
+    {
+        const mapnode_t *bsp = nodes + bspnum;
+
+        divline_t dl;
+        dl.x = ((fixed_t)bsp->x << FRACBITS);
+        dl.y = ((fixed_t)bsp->y << FRACBITS);
+        dl.dx = ((fixed_t)bsp->dx << FRACBITS);
+        dl.dy = ((fixed_t)bsp->dy << FRACBITS);
+
+        int side,side2;
+        side = P_DivlineSide(_g->los.strace.x,_g->los.strace.y,&dl)&1;
+        side2= P_DivlineSide(_g->los.t2x, _g->los.t2y, &dl);
+
+        if (side == side2)
+            bspnum = bsp->children[side]; // doesn't touch the other side
+        else         // the partition plane is crossed here
+            if (!P_CrossBSPNode(bsp->children[side]))
+                return 0;  // cross the starting side
+            else
+                bspnum = bsp->children[side^1];  // cross the ending side
+    }
+    return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
+}
+
+
+
+//
+// P_MobjThinker
+//
+
+void P_NightmareRespawn(mobj_t* mobj);
+void P_XYMovement (mobj_t* mo);
+void P_ZMovement (mobj_t* mo);
+
+
+//
+// P_SetMobjState
+// Returns true if the mobj is still present.
+//
+
+boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
+{
+    const state_t*	st;
+
+    do
+    {
+        if (state == S_NULL)
+        {
+            mobj->state = (state_t *) S_NULL;
+            P_RemoveMobj (mobj);
+            return false;
+        }
+
+        st = &states[state];
+        mobj->state = st;
+        mobj->tics = st->tics;
+        mobj->sprite = st->sprite;
+        mobj->frame = st->frame;
+
+        // Modified handling.
+        // Call action functions when the state is set
+        if(st->action)
+        {
+            if(!(_g->player.cheats & CF_ENEMY_ROCKETS))
+            {
+                st->action(mobj);
+            }
+            else
+            {
+                if(mobj->info->missilestate && (state >= mobj->info->missilestate) && (state < mobj->info->painstate))
+                    A_CyberAttack(mobj);
+                else
+                    st->action(mobj);
+            }
+        }
+
+        state = st->nextstate;
+
+    } while (!mobj->tics);
+
+    return true;
+}
+
+
+
+void P_MobjThinker (mobj_t* mobj)
+{
+    // killough 11/98:
+    // removed old code which looked at target references
+    // (we use pointer reference counting now)
+
+    // momentum movement
+    if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
+    {
+        P_XYMovement(mobj);
+        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
+            return;       // killough - mobj was removed
+    }
+
+    if (mobj->z != mobj->floorz || mobj->momz)
+    {
+        P_ZMovement(mobj);
+        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
+            return;       // killough - mobj was removed
+    }
+
+    // cycle through states,
+    // calling action functions at transitions
+
+    if (mobj->tics != -1)
+    {
+        mobj->tics--;
+
+        // you can cycle through multiple states in a tic
+
+        if (!mobj->tics)
+            if (!P_SetMobjState (mobj, mobj->state->nextstate) )
+                return;     // freed itself
+    }
+    else
+    {
+
+        // check for nightmare respawn
+
+        if (! (mobj->flags & MF_COUNTKILL) )
+            return;
+
+        if (!_g->respawnmonsters)
+            return;
+
+        mobj->movecount++;
+
+        if (mobj->movecount < 12*35)
+            return;
+
+        if (_g->leveltime & 31)
+            return;
+
+        if (P_Random () > 4)
+            return;
+
+        P_NightmareRespawn (mobj);
+    }
+
+}
+
+
+//
+// P_RunThinkers
+//
+// killough 4/25/98:
+//
+// Fix deallocator to stop using "next" pointer after node has been freed
+// (a Doom bug).
+//
+// Process each thinker. For thinkers which are marked deleted, we must
+// load the "next" pointer prior to freeing the node. In Doom, the "next"
+// pointer was loaded AFTER the thinker was freed, which could have caused
+// crashes.
+//
+// But if we are not deleting the thinker, we should reload the "next"
+// pointer after calling the function, in case additional thinkers are
+// added at the end of the list.
+//
+// killough 11/98:
+//
+// Rewritten to delete nodes implicitly, by making currentthinker
+// external and using P_RemoveThinkerDelayed() implicitly.
+//
+
+void P_RunThinkers (void)
+{
+    thinker_t* th = thinkercap.next;
+    thinker_t* th_end = &thinkercap;
+
+    while(th != th_end)
+    {
+        thinker_t* th_next = th->next;
+        if(th->function)
+            th->function(th);
+
+        th = th_next;
+    }
+}
+
+
+
+static int I_GetTime_e32(void)
+{
+    int thistimereply = *((unsigned short*)(0x400010C));
+
+    return thistimereply;
+}
+
+
+int I_GetTime(void)
+{
+    int thistimereply;
+
+#ifndef __arm__
+
+    clock_t now = clock();
+
+    thistimereply = (int)((double)now / ((double)CLOCKS_PER_SEC / (double)TICRATE));
+
+    /*
+    struct timeval tv;
+    struct timezone tz;
+
+    gettimeofday(&tv, &tz);
+
+    thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
+
+    thistimereply = (thistimereply & 0xffff);
+    */
+#else
+    thistimereply = I_GetTime_e32();
+#endif
+
+    if (thistimereply < _g->lasttimereply)
+    {
+        _g->basetime -= 0xffff;
+    }
+
+    _g->lasttimereply = thistimereply;
+
+
+    /* Fix for time problem */
+    if (!_g->basetime)
+    {
+        _g->basetime = thistimereply;
+        thistimereply = 0;
+    }
+    else
+    {
+        thistimereply -= _g->basetime;
+    }
+
+    return thistimereply;
+}
+
+

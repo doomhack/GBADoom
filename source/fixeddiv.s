@@ -1,8 +1,3 @@
-//Fast 64 by 32 division.
-//Found here: https://stackoverflow.com/questions/15215196/64bit-32bit-division-faster-algorithm-for-arm-neon
-
-//Original source: http://www.peter-teichmann.de/adiv2e.html
-
 .section .iwram
 .arm
 .align
@@ -10,79 +5,135 @@
 .global udiv64_arm
 
 udiv64_arm:
-    adds      r0,r0,r0
-    adc       r1,r1,r1
+
+/*
+    Tweaked version of 64/32 division found in
+    section 7.3.1.3 of
+    ARM System Developer’s Guide
+    Designing and Optimizing System Software
+
+    ISBN: 1-55860-874-5
+
+    r0 = numerator high, return quotient
+    r1 = numerator low
+    r2 = denominator
+    r3 = scratch
+*/
+
+    cmp r0, r2
+    bcs .overflow_32
+    rsb r2, r2, #0
+    adds r3, r1, r1
+    adcs r1, r2, r0, LSL#1
+    subcc r1, r1, r2
 
     .rept 31
-        cmp     r1,r2
-        subcs   r1,r1,r2
-        adcs    r0,r0,r0
-        adc     r1,r1,r1
+        adcs r3, r3, r3
+        adcs r1, r2, r1, LSL#1
+        subcc r1,r1, r2
     .endr
 
-    cmp     r1,r2
-    subcs   r1,r1,r2
-    adcs    r0,r0,r0
+    adcs r0, r3, r3
+    bx lr
 
-    bx      lr
+    .overflow_32:
+    mov r0, #-1
+    bx lr
 
 
 
-//Faster u32 division.
-//Sourced from here: https://thinkingeek.com/2013/08/11/arm-assembler-raspberry-pi-chapter-15/
 
 .global udiv32_arm
 
-udiv32_arm :
-    /* r0 contains N and Ni */
-    /* r1 contains D */
-    /* r2 contains Q */
-    /* r3 will contain Di */
+udiv32_arm:
 
-    mov r3, r1                   /* r3 ← r1 */
-    cmp r3, r0, LSR #1           /* update cpsr with r3 - r0/2 */
+/*
+    Tweaked version of 32/32 division found in
+    section 7.3.1.1 of
+    ARM System Developer’s Guide
+    Designing and Optimizing System Software
 
-.Lloop2:
+    ISBN: 1-55860-874-5
 
+    r0 = numerator, return quotient
+    r1 = denominator
+    r2, r3 = scratch
+*/
 
-.rept 7
-        movls r3, r3, LSL #1       /* if r3 <= 2*r0 (C=0 or Z=1) then r3 ← r3*2 */
-        cmp r3, r0, LSR #1         /* update cpsr with r3 - (r0/2) */
-        bhi .L2Done                /* branch to .Lloop2 if r3 <= 2*r0 (C=0 or Z=1) */
-.endr
+    mov r3, #0
+    rsbs r2, r1, r0, LSR#3
+    bcc .div_3bits
 
-        movls r3, r3, LSL #1       /* if r3 <= 2*r0 (C=0 or Z=1) then r3 ← r3*2 */
-        cmp r3, r0, LSR #1         /* update cpsr with r3 - (r0/2) */
-        bls .Lloop2                /* branch to .Lloop2 if r3 <= 2*r0 (C=0 or Z=1) */
+    rsbs r2, r1, r0, LSR#8
+    bcc .div_8bits
 
+    mov r1, r1, LSL#8
+    orr r3, r3, #0xFF000000
+    rsbs r2, r1, r0, LSR#4
+    bcc .div_4bits
 
+    rsbs r2, r1, r0, LSR#8
+    bcc .div_8bits
 
-.L2Done:
+    mov r1, r1, LSL#8
+    orr r3, r3, #0x00FF0000
+    rsbs r2, r1, r0, LSR#8
+    movcs r1, r1, LSL#8
+    orrcs r3, r3, #0x0000FF00
+    rsbs r2, r1, r0, LSR#4
+    bcc .div_4bits
 
-    mov r2, #0                   /* r2 ← 0 */
+    rsbs r2, r1, #0
+    bcs .div_by_0
 
-.Lloop3:
+.div_loop:
 
-.rept 7
-        cmp r0, r3                 /* update cpsr with r0 - r3 */
-        subhs r0, r0, r3           /* if r0 >= r3 (C=1) then r0 ← r0 - r3 */
-        adc r2, r2, r2             /* r2 ← r2 + r2 + C.
-                                    Note that if r0 >= r3 then C=1, C=0 otherwise */
+    movcs r1, r1, LSR#8
 
-        mov r3, r3, LSR #1         /* r3 ← r3/2 */
-        cmp r3, r1                 /* update cpsr with r3 - r1 */
-        blt .L3Done                  /* if r3 < r1 branch to .Done */
-.endr
+.div_8bits:
 
-        cmp r0, r3                 /* update cpsr with r0 - r3 */
-        subhs r0, r0, r3           /* if r0 >= r3 (C=1) then r0 ← r0 - r3 */
-        adc r2, r2, r2             /* r2 ← r2 + r2 + C.
-                                    Note that if r0 >= r3 then C=1, C=0 otherwise */
+    rsbs r2, r1, r0, LSR#7
+    subcs r0, r0, r1, LSL#7
+    adc r3, r3, r3
 
-        mov r3, r3, LSR #1         /* r3 ← r3/2 */
-        cmp r3, r1                 /* update cpsr with r3 - r1 */
-        bhs .Lloop3                /* if r3 >= r1 branch to .Lloop3 */
+    rsbs r2, r1, r0, LSR#6
+    subcs r0, r0, r1, LSL#6
+    adc r3, r3, r3
 
-.L3Done:
-    mov r0, r2                   /* move quotient to r0 return val */
+    rsbs r2, r1, r0, LSR#5
+    subcs r0, r0, r1, LSL#5
+    adc r3, r3, r3
+
+    rsbs r2, r1, r0, LSR#4
+    subcs r0, r0, r1, LSL#4
+    adc r3, r3, r3
+
+.div_4bits:
+
+    rsbs r2, r1, r0, LSR#3
+    subcs r0, r0, r1, LSL#3
+    adc r3, r3, r3
+
+.div_3bits:
+
+    rsbs r2, r1, r0, LSR#2
+    subcs r0, r0, r1, LSL#2
+    adc r3, r3, r3
+
+    rsbs r2, r1, r0, LSR#1
+    subcs r0, r0, r1, LSL#1
+    adc r3, r3, r3
+
+    rsbs r2, r1, r0
+    subcs r0, r0, r1
+    adcs r3, r3, r3
+
+.div_next:
+    bcs .div_loop
+
+    mov r0, r3
+    bx lr
+
+.div_by_0:
+    mov r0, #-1
     bx lr

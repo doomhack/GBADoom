@@ -150,47 +150,6 @@ void P_SetTarget(mobj_t **mop, mobj_t *targ)
     *mop = targ;    // Set new target and if non-NULL, increase its counter
 }
 
-//
-// P_RunThinkers
-//
-// killough 4/25/98:
-//
-// Fix deallocator to stop using "next" pointer after node has been freed
-// (a Doom bug).
-//
-// Process each thinker. For thinkers which are marked deleted, we must
-// load the "next" pointer prior to freeing the node. In Doom, the "next"
-// pointer was loaded AFTER the thinker was freed, which could have caused
-// crashes.
-//
-// But if we are not deleting the thinker, we should reload the "next"
-// pointer after calling the function, in case additional thinkers are
-// added at the end of the list.
-//
-// killough 11/98:
-//
-// Rewritten to delete nodes implicitly, by making currentthinker
-// external and using P_RemoveThinkerDelayed() implicitly.
-//
-
-static void P_RunThinkers (void)
-{
-    thinker_t* th = thinkercap.next;
-    thinker_t* th_end = &thinkercap;
-
-    while(th != th_end)
-    {
-        thinker_t* th_next = th->next;
-        if(th->function)
-            th->function(th);
-
-        th = th_next;
-    }
-}
-
-//
-// P_Ticker
-//
 
 void P_Ticker (void)
 {
