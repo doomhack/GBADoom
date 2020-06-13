@@ -10,7 +10,7 @@ A port of prBoom to the GBA.
 
 - Monster behaviour is all intact. (I.e sound propagation etc.)
 
-- Framerate is pretty variable. Simple areas run at ~25fps. Complex areas (Eg: E4M2) chug along at about 5 FPS. It's running around the same as the original GBA Doom1 and Doom2 ports. Doom1 Episodes 1-3 are all completely playable. Episode 4 chugs.
+- Framerate is pretty variable. Simple areas run at ~35fps. Complex areas (Eg: E4M2) chug along at about 10 FPS. It's running around the same as the original GBA Doom1 and Doom2 ports. Doom1 Episodes 1-3 are all completely playable. Episode 4 chugs.
 
 - Sound and music support. Big thanks to BloodShedder for his Chiptune Doom MOD files.
 
@@ -44,6 +44,7 @@ KippyKip is maintaining an upstream fork with new features and fixes. [KippyKip 
 **Lite-Amp Goggles:** DOWN,LEFT, R, LEFT, R, L, L, SELECT  
 **Exit Level:** LEFT,R, LEFT, L, B, LEFT, RIGHT, A  
 **Enemy Rockets (Goldeneye):** A, B, L, R, R, L, B, A  
+**Toggle FPS counter:** A, B, L, UP, DOWN, B, LEFT, LEFT  
 
 ## Controls:  
 **Fire:** B  
@@ -89,4 +90,4 @@ You may need to edit the msys2.bat with notepad and change the path to go to you
 
 ## Developers:
 
-For development, this project also builds for Windows with Qt. Use the MingW 32bit version. The .pro file at the root of the source tree can be opened in Qt Creator.
+For development, this project also builds for Windows with Qt. Use the MingW 32bit version or MSVC 32bit. The .pro file at the root of the source tree can be opened in Qt Creator.
