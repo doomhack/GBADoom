@@ -300,7 +300,7 @@ static void D_UpdateFPS()
     if(timenow >= (_g->fps_timebefore + TICRATE))
     {
         unsigned int tics_elapsed = timenow - _g->fps_timebefore;
-        fixed_t f_realfps = FixedDiv((_g->fps_frames*350) << FRACBITS, tics_elapsed <<FRACBITS);
+        fixed_t f_realfps = FixedDiv((_g->fps_frames*(TICRATE*10)) << FRACBITS, tics_elapsed <<FRACBITS);
 
         _g->fps_framerate = (f_realfps >> FRACBITS);
 
