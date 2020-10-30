@@ -105,8 +105,5 @@ extern const short negonearray[120];
 
 extern const unsigned char translationtables[1023];
 
-extern const unsigned int reciprocal_table[65536];
-
-#define RECIPROCAL(x) (reciprocal_table[((x) >> 4) & 0xffff])
 
 #endif

@@ -104,19 +104,12 @@ void I_PollWServEvents_e32()
     {
         ev.type = ev_keydown;
 
-        if(key_down & KEY_SELECT)
-        {
-            ev.data1 = KEYD_SELECT;
-            D_PostEvent(&ev);
-        }
-
         if(key_down & KEY_UP)
         {
             ev.data1 = KEYD_UP;
             D_PostEvent(&ev);
         }
-
-        if(key_down & KEY_DOWN)
+        else if(key_down & KEY_DOWN)
         {
             ev.data1 = KEYD_DOWN;
             D_PostEvent(&ev);
@@ -127,10 +120,15 @@ void I_PollWServEvents_e32()
             ev.data1 = KEYD_LEFT;
             D_PostEvent(&ev);
         }
-
-        if(key_down & KEY_RIGHT)
+        else if(key_down & KEY_RIGHT)
         {
             ev.data1 = KEYD_RIGHT;
+            D_PostEvent(&ev);
+        }
+
+        if(key_down & KEY_SELECT)
+        {
+            ev.data1 = KEYD_SELECT;
             D_PostEvent(&ev);
         }
 
@@ -171,19 +169,12 @@ void I_PollWServEvents_e32()
     {
         ev.type = ev_keyup;
 
-        if(key_up & KEY_SELECT)
-        {
-            ev.data1 = KEYD_SELECT;
-            D_PostEvent(&ev);
-        }
-
         if(key_up & KEY_UP)
         {
             ev.data1 = KEYD_UP;
             D_PostEvent(&ev);
         }
-
-        if(key_up & KEY_DOWN)
+        else if(key_up & KEY_DOWN)
         {
             ev.data1 = KEYD_DOWN;
             D_PostEvent(&ev);
@@ -194,10 +185,15 @@ void I_PollWServEvents_e32()
             ev.data1 = KEYD_LEFT;
             D_PostEvent(&ev);
         }
-
-        if(key_up & KEY_RIGHT)
+        else if(key_up & KEY_RIGHT)
         {
             ev.data1 = KEYD_RIGHT;
+            D_PostEvent(&ev);
+        }
+
+        if(key_up & KEY_SELECT)
+        {
+            ev.data1 = KEYD_SELECT;
             D_PostEvent(&ev);
         }
 

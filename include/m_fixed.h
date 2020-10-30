@@ -37,12 +37,15 @@
 #include "config.h"
 #include "doomtype.h"
 
+#include "m_recip.h"
+
 /*
  * Fixed point, 32bit as 16.16.
  */
 
 #define FRACBITS 16
 #define FRACUNIT (1<<FRACBITS)
+
 
 typedef int fixed_t;
 
@@ -68,7 +71,6 @@ inline static int CONSTFUNC D_abs(fixed_t x)
  * Also made const */
 
 fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b);
-
 
 /*
  * Fixed Point Division
@@ -121,6 +123,53 @@ inline static fixed_t CONSTFUNC FixedMod(fixed_t a, fixed_t b)
     }
     else
         return (a & (b-1));
+}
+
+//Approx Reciprocal of v
+inline static CONSTFUNC fixed_t FixedReciprocal(fixed_t v)
+{
+    fixed_t result;
+
+    const fixed_t val = v < 0 ? -v : v;
+
+
+    if(val <= (1 << FRACBITS))
+    {
+        result = reciprocalTable[val];
+    }
+    else if(val <= (2 << FRACBITS))
+    {
+        result = reciprocalTable[val >> 1] >> 1;
+    }
+    else if(val <= (4 << FRACBITS))
+    {
+        result = reciprocalTable[val >> 2] >> 2;
+    }
+    else if(val <= (8 << FRACBITS))
+    {
+        result = reciprocalTable[val >> 3] >> 3;
+    }
+    else if(val <= (16 << FRACBITS))
+    {
+        result = reciprocalTable[val >> 4] >> 4;
+    }
+    else if(val <= (256 << FRACBITS))
+    {
+        result = reciprocalTable[val >> 8] >> 8;
+    }
+    else
+    {
+        result = reciprocalTable[val >> 15] >> 15;
+    }
+
+    return v < 0 ? -result : result;
+}
+
+
+//Approx fixed point divide of a/b using reciprocal. -> a * (1/b).
+inline static CONSTFUNC fixed_t FixedApproxDiv(fixed_t a, fixed_t b)
+{
+    return FixedMul(a, FixedReciprocal(b));
 }
 
 

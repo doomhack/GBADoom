@@ -285,7 +285,7 @@ static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
     if (den == 0)
         return SLOPERANGE;
 
-    const unsigned int ans = UDiv32(num << 3, den);
+    const unsigned int ans = FixedApproxDiv(num << 3, den) >> FRACBITS;
 
     return (ans <= SLOPERANGE) ? ans : SLOPERANGE;
 }
@@ -453,7 +453,7 @@ static CONSTFUNC fixed_t R_PointToDist(fixed_t x, fixed_t y)
         dy = t;
     }
 
-    return FixedDiv(dx, finesine[(tantoangle[FixedDiv(dy,dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT]);
+    return FixedApproxDiv(dx, finesine[(tantoangle[FixedApproxDiv(dy,dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT]);
 }
 
 static const lighttable_t* R_ColourMap(int lightlevel)
@@ -870,7 +870,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
         {
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
-            dcvars.iscale = RECIPROCAL((unsigned)spryscale);
+            dcvars.iscale = FixedReciprocal((unsigned)spryscale);
 
             // draw the texture
             const column_t* column = R_GetColumn(texture, xc);
@@ -1946,7 +1946,7 @@ static void R_RenderSegLoop (int rw_x)
 
             dcvars.x = rw_x;
 
-            dcvars.iscale = RECIPROCAL((unsigned)rw_scale);
+            dcvars.iscale = FixedReciprocal((unsigned)rw_scale);
         }
 
         // draw the wall tiers
@@ -2086,10 +2086,6 @@ static void R_StoreWallRange(const int start, const int stop)
 
     sidedef = &_g->sides[curline->sidenum];
     linedef = &_g->lines[curline->linenum];
-
-
-    //linedata->r_flags |= ML_MAPPED;
-    //linedef->flags |= ML_MAPPED;
 
     // calculate rw_distance for scale calculation
     rw_normalangle = curline->angle + ANG90;
@@ -3263,17 +3259,6 @@ int I_GetTime(void)
     clock_t now = clock();
 
     thistimereply = (int)((double)now / ((double)CLOCKS_PER_SEC / (double)TICRATE));
-
-    /*
-    struct timeval tv;
-    struct timezone tz;
-
-    gettimeofday(&tv, &tz);
-
-    thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
-
-    thistimereply = (thistimereply & 0xffff);
-    */
 #else
     thistimereply = I_GetTime_e32();
 #endif

@@ -46,6 +46,7 @@ SOURCES += \
         source/m_cheat.c \
         source/m_menu.c \
         source/m_random.c \
+        source/m_recip.c \
         source/p_ceilng.c \
         source/p_doors.c \
         source/p_enemy.c \
@@ -131,6 +132,7 @@ HEADERS += \
     include/m_menu.h \
     include/m_misc.h \
     include/m_random.h \
+    include/m_recip.h \
     include/m_swap.h \
     include/p_enemy.h \
     include/p_inter.h \
