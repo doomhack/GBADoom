@@ -125,51 +125,20 @@ inline static fixed_t CONSTFUNC FixedMod(fixed_t a, fixed_t b)
         return (a & (b-1));
 }
 
-//Count leading zeros. 16bit.
-inline static CONSTFUNC unsigned int clz16(unsigned int x)
-{
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-
-    x -= x >> 1 & 0x5555;
-    x = (x >> 2 & 0x3333) + (x & 0x3333);
-    x = (x >> 4) + x & 0x0f0f;
-    x += x >> 8;
-
-    return 16 - (x & 0x003f);
-}
-
 //Approx Reciprocal of v
 inline static CONSTFUNC fixed_t FixedReciprocal(fixed_t v)
 {
-    fixed_t result;
+    unsigned int val = v < 0 ? -v : v;
 
-    const fixed_t val = v < 0 ? -v : v;
+    unsigned int shift = 0;
 
-    if(val <= (1 << FRACBITS))
+    while(val > (1 << FRACBITS))
     {
-        result = reciprocalTable[val];
+        val = (val >> 1u);
+        shift++;
     }
-    else if(val <= (2 << FRACBITS))
-    {
-        result = reciprocalTable[val >> 1] >> 1;
-    }
-    else if(val <= (4 << FRACBITS))
-    {
-        result = reciprocalTable[val >> 2] >> 2;
-    }
-    else if(val <= (8 << FRACBITS))
-    {
-        result = reciprocalTable[val >> 3] >> 3;
-    }
-    else
-    {
-        const unsigned int shift = 16 - clz16((val-1) >> FRACBITS);
 
-        result = reciprocalTable[val >> shift] >> shift;
-    }
+    fixed_t result = (reciprocalTable[val] >> shift);
 
     return v < 0 ? -result : result;
 }
