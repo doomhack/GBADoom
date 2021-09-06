@@ -1,10 +1,12 @@
-## GBADoom
+## GBAFreeDoom
 
 A port of prBoom to the GBA.
 
+This is a result of me messing around it works but its not great. With some help maybe it could be.
+
 **What's hot?**
 
-- Supports Doom Shareware, Retail, Ultimate and Doom2 IWADS.
+- Supports FreeDoom IWAD.
 
 - Renderer is largely intact. Z-Depth lighting is gone and there is mip-mapping but it's otherwise complete.
 
