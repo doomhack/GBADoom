@@ -1,1 +1,1 @@
-gbawadutil.exe -in freedoom1.wad -cfile ..\source\iwad\doomu.c
+gbawadutil.exe -in freedoom1.wad -cfile ..\source\iwad\freedoom.c
