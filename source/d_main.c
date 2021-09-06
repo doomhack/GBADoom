@@ -383,34 +383,34 @@ static struct
     void (*func)(const char *);
     const char *name;
 }
-
+//FreeDOOM Demo2 crashes
 const demostates[][4] =
-{
+{ 
+    {
+        {NULL, NULL},
+        {NULL, NULL},
+        {NULL, NULL},
+        {NULL, NULL},
+    },
+
     {
         {D_DrawTitle1, "TITLEPIC"},
         {D_DrawTitle1, "TITLEPIC"},
         {D_DrawTitle2, "TITLEPIC"},
         {D_DrawTitle1, "TITLEPIC"},
     },
-
     {
         {G_DeferedPlayDemo, "demo1"},
         {G_DeferedPlayDemo, "demo1"},
         {G_DeferedPlayDemo, "demo1"},
         {G_DeferedPlayDemo, "demo1"},
     },
-    {
-        {D_SetPageName, "TITLEPIC"},
-        {D_SetPageName, "TITLEPIC"},
-        {D_SetPageName, "TITLEPIC"},
-        {D_SetPageName, "TITLEPIC"},
-    },
 
     {
-        {G_DeferedPlayDemo, "demo2"},
-        {G_DeferedPlayDemo, "demo2"},
-        {G_DeferedPlayDemo, "demo2"},
-        {G_DeferedPlayDemo, "demo2"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
     },
 
     {
@@ -428,10 +428,10 @@ const demostates[][4] =
     },
 
     {
-        {NULL, NULL},
-        {NULL, NULL},
-        {NULL, NULL},
-        {NULL, NULL},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
+        {D_SetPageName, "TITLEPIC"},
     }
 
 
@@ -529,27 +529,6 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
                     ++sc;
               }
             }
-			//Final Doom IWAD check hacks ~Kippykip
-			//TNT - MURAL1
-			else if (fileinfo[length].name[0] == 'M' && fileinfo[length].name[1] == 'U' && fileinfo[length].name[2] == 'R'  && fileinfo[length].name[3] == 'A' && fileinfo[length].name[4] == 'L' && fileinfo[length].name[5] == '1' && fileinfo[length].name[6] == 0)
-            {
-				cm = 32;
-				sc = 2;
-				*gmode = commercial;
-				_g->gamemission = pack_tnt;
-				_g->gamemode = commercial;
-				return;
-            }
-			//Plutonia - WFALL1
-			else if (fileinfo[length].name[0] == 'W' && fileinfo[length].name[1] == 'F' && fileinfo[length].name[2] == 'A'  && fileinfo[length].name[3] == 'L' && fileinfo[length].name[4] == 'L' && fileinfo[length].name[5] == '1' && fileinfo[length].name[6] == 0)
-            {
-				cm = 32;
-				sc = 2;
-				*gmode = commercial;
-				_g->gamemission = pack_plut;
-				_g->gamemode = commercial;
-				return;
-            }
         }
     }
     else
@@ -563,17 +542,6 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
 
     *gmode = indetermined;
     *hassec = false;
-    if (cm>=30)
-    {
-      *gmode = commercial;
-      *hassec = sc>=2;
-    }
-    else if (ud>=9)
-      *gmode = retail;
-    else if (rg>=18)
-      *gmode = registered;
-    else if (sw>=9)
-      *gmode = shareware;
 }
 
 //
