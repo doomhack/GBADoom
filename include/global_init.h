@@ -29,7 +29,7 @@ _g->oldgamestate = -1;
 //******************************************************************************
 
 // Game Mode - identify IWAD as shareware, retail etc.
-_g->gamemode = indetermined;
+_g->gamemode = retail;
 _g->gamemission = doom;
 
 
