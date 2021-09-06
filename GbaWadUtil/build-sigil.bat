@@ -1,1 +1,0 @@
-gbawadutil.exe -in doomu.wad -cfile ..\source\iwad\sigil.c -pwad sigil.wad
