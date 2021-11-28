@@ -295,7 +295,6 @@ typedef struct mobj_s
     // Movement direction, movement generation (zig-zagging).
     short               movedir;        // 0-7
     short               movecount;      // when 0, select a new dir
-    short               strafecount;    // killough 9/8/98: monster strafing
 
 
 

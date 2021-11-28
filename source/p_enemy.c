@@ -584,8 +584,6 @@ static void P_NewChaseDir(mobj_t *actor)
     // 1) Stay a certain distance away from a friend, to avoid being in their way
     // 2) Take advantage over an enemy without missiles, by keeping distance
 
-    actor->strafecount = 0;
-
     if (actor->floorz - actor->dropoffz > FRACUNIT*24 &&
             actor->z <= actor->floorz &&
             !(actor->flags & (MF_DROPOFF|MF_FLOAT)) &&
@@ -616,12 +614,6 @@ static void P_NewChaseDir(mobj_t *actor)
 
 
     P_DoNewChaseDir(actor, deltax, deltay);
-
-    // If strafing, set movecount to strafecount so that old Doom
-    // logic still works the same, except in the strafing part
-
-    if (actor->strafecount)
-        actor->movecount = actor->strafecount;
 }
 
 //
@@ -825,9 +817,7 @@ void A_Chase(mobj_t *actor)
    * killough 9/7/98: keep facing towards target if strafing or backing out
    */
 
-    if (actor->strafecount)
-        A_FaceTarget(actor);
-    else if (actor->movedir < 8)
+    if (actor->movedir < 8)
     {
         int delta = (actor->angle &= (7<<29)) - (actor->movedir << 29);
         if (delta > 0)
@@ -920,9 +910,6 @@ void A_Chase(mobj_t *actor)
             }
         }
     }
-
-    if (actor->strafecount)
-        actor->strafecount--;
 
     // chase towards player
     if (--actor->movecount<0 || !P_SmartMove(actor))
