@@ -38,6 +38,7 @@
  * SCREEN WIPE PACKAGE
  */
 
+void wipe_initMelt();
 int wipe_ScreenWipe (int ticks);
 int wipe_StartScreen(void);
 int wipe_EndScreen  (void);

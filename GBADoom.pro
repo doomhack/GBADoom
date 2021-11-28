@@ -177,6 +177,6 @@ win32-msvc* {
 #    LIBS += $$PWD/codeprophet.lib
 #    QMAKE_CXXFLAGS += /GH /Gh
 #    QMAKE_CFLAGS += /GH /Gh
-     QMAKE_CFLAGS += /fsanitize=address
-     QMAKE_CXXFLAGS += /fsanitize=address
+#     QMAKE_CFLAGS += /fsanitize=address
+#     QMAKE_CXXFLAGS += /fsanitize=address
 }

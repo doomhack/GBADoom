@@ -135,6 +135,8 @@ static void D_Wipe(void)
 	boolean done;
 	int wipestart = I_GetTime () - 1;
 	
+    wipe_initMelt();
+
 	do
 	{
 		int nowtime, tics;
@@ -147,7 +149,7 @@ static void D_Wipe(void)
 		wipestart = nowtime;
 		done = wipe_ScreenWipe(tics);
 
-		I_UpdateNoBlit();
+        I_UpdateNoBlit();
 		M_Drawer();                   // menu is drawn even on top of wipes
 
 	} while (!done);

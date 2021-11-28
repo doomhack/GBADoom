@@ -248,6 +248,16 @@ unsigned short* I_GetBackBuffer()
 
 //**************************************************************************************
 
+unsigned short* I_GetFrontBuffer()
+{
+    if(REG_DISPCNT & DCNT_PAGE)
+        return (unsigned short*)VID_PAGE2;
+
+    return (unsigned short*)VID_PAGE1;
+}
+
+//**************************************************************************************
+
 void I_CreateWindow_e32()
 {
 

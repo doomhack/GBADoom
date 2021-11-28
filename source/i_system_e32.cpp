@@ -38,6 +38,7 @@ unsigned char* thearray = NULL;
 int thesize;
 
 unsigned short backbuffer[120 *160];
+unsigned short frontbuffer[120 *160];
 
 //**************************************************************************************
 
@@ -80,6 +81,11 @@ void I_ClearWindow_e32()
 unsigned short* I_GetBackBuffer()
 {
     return &backbuffer[0];
+}
+
+unsigned short* I_GetFrontBuffer()
+{
+    return &frontbuffer[0];
 }
 
 //**************************************************************************************

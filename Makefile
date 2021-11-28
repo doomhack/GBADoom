@@ -28,12 +28,24 @@ DATA		:= data
 MUSIC		:= music
 
 #---------------------------------------------------------------------------------
+# Disable LTO for IWRAM
+#---------------------------------------------------------------------------------
+%.iwram.o: %.iwram.cpp
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(CXX) -MMD -MP -MF $(DEPSDIR)/$*.iwram.d $(CXXFLAGS) -fno-lto -marm -c $< -o $@ $(ERROR_FILTER)
+
+#---------------------------------------------------------------------------------
+%.iwram.o: %.iwram.c
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(CC) -MMD -MP -MF $(DEPSDIR)/$*.iwram.d $(CFLAGS) -fno-lto -marm -c $< -o $@ $(ERROR_FILTER)
+
+#---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -O3 -fgcse-after-reload\
-		-mcpu=arm7tdmi -mtune=arm7tdmi\
+CFLAGS	:=	-g -Wall -O3 -fgcse-after-reload -gdwarf-4\
+                -mcpu=arm7tdmi -mtune=arm7tdmi -flto\
 		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE)

@@ -32,6 +32,8 @@
  *-----------------------------------------------------------------------------
  */
 
+//Most of this code is backported from https://github.com/next-hack/nRF52840Doom
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,6 +46,8 @@
 #include "m_random.h"
 #include "f_wipe.h"
 #include "global_data.h"
+#include "i_system_e32.h"
+
 
 #ifdef __arm__
     #include <gba.h>
@@ -55,59 +59,101 @@
 
 int wipe_StartScreen(void)
 {
-    _g->wipe_tick = 0;
     return 0;
 }
 
 int wipe_EndScreen(void)
 {
-    _g->wipe_tick = 0;
     return 0;
 }
 
-// killough 3/5/98: reformatted and cleaned up
+// oh man, why aren't you commenting anything ?
+// 2021-08-08 next-hack: commented and modified to use the dual buffer.
+static int wipe_doMelt(int ticks)
+{
+    boolean done = true;
+
+    unsigned short* backbuffer = I_GetBackBuffer();
+    unsigned short* frontbuffer = I_GetFrontBuffer();
+
+    while (ticks--)
+    {
+        for (int i = 0; i < SCREENWIDTH; i++)
+        {
+            if (_g->y_lookup[i] < 0)
+            {
+                _g->y_lookup[i]++;
+                done = false;
+                continue;
+            }
+
+            // scroll down columns, which are still visible
+            if (_g->y_lookup[i] < SCREENHEIGHT)
+            {
+                /* cph 2001/07/29 -
+                 *  The original melt rate was 8 pixels/sec, i.e. 25 frames to melt
+                 *  the whole screen, so make the melt rate depend on SCREENHEIGHT
+                 *  so it takes no longer in high res
+                 */
+                int dy = (_g->y_lookup[i] < 16) ? _g->y_lookup[i] + 1 : SCREENHEIGHT / 25;
+                // At most dy shall be so that the column is shifted by SCREENHEIGHT (i.e. just
+                // invisible)
+                if (_g->y_lookup[i] + dy >= SCREENHEIGHT)
+                    dy = SCREENHEIGHT - _g->y_lookup[i];
+
+                unsigned short* s = &frontbuffer[i] + ((SCREENHEIGHT - dy - 1) * SCREENPITCH);
+
+                unsigned short* d = &frontbuffer[i] + ((SCREENHEIGHT - 1) * SCREENPITCH);
+
+                // scroll down the column. Of course we need to copy from the bottom... up to
+                // SCREENHEIGHT - yLookup - dy
+
+                for (int j = SCREENHEIGHT - _g->y_lookup[i] - dy; j; j--)
+                {
+                    *d = *s;
+                    d += -SCREENPITCH;
+                    s += -SCREENPITCH;
+                }
+
+                // copy new screen. We need to copy only between y_lookup and + dy y_lookup
+                s = &backbuffer[i] +  _g->y_lookup[i] * SCREENPITCH;
+                d = &frontbuffer[i] + _g->y_lookup[i] * SCREENPITCH;
+
+                for (int j = 0 ; j < dy; j++)
+                {
+                    *d = *s;
+                    d += SCREENPITCH;
+                    s += SCREENPITCH;
+                }
+
+                _g->y_lookup[i] += dy;
+                done = false;
+            }
+        }
+    }
+    return done;
+}
+
+void wipe_initMelt()
+{
+    // setup initial column positions (y<0 => not ready to scroll yet)
+    _g->y_lookup[0] = -(M_Random() % 16);
+    for (int i = 1; i < SCREENWIDTH; i++)
+    {
+        int r = (M_Random() % 3) - 1;
+
+        _g->y_lookup[i] = _g->y_lookup[i - 1] + r;
+
+        if (_g->y_lookup[i] > 0)
+            _g->y_lookup[i] = 0;
+        else if (_g->y_lookup[i] == -16)
+            _g->y_lookup[i] = -15;
+    }
+}
+
+
 int wipe_ScreenWipe(int ticks)
 {
-    unsigned int wipepos;
-
-    //Do a pageflip on the 16th tick.
-    boolean pageflip = (_g->wipe_tick < 16) &&  (_g->wipe_tick + ticks >= 16);
-
-    _g->wipe_tick += ticks;
-
-    int wipeticks = _g->wipe_tick;
-
-    if(wipeticks >= 32)
-    {
-        wipeticks = 32;
-        wipepos = 0;
-    }
-    else if(wipeticks < 16)
-    {
-        wipepos = wipeticks;
-    }
-    else //16->31
-    {
-        wipepos = 31 - wipeticks;
-    }
-
-#ifdef __arm__
-    REG_BLDCNT = 0xc4;
-    REG_BLDY = wipepos;
-
-    VBlankIntrWait();
-#endif
-
-    if(pageflip)
-         I_FinishUpdate();
-
-    if(wipeticks >= 32)
-    {
-#ifdef __arm__
-        REG_BLDCNT = 0;
-#endif
-        return 1;
-    }
-
-    return 0;
+    // do a piece of wipe-in
+    return wipe_doMelt(ticks);
 }
