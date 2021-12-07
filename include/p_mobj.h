@@ -254,8 +254,8 @@ typedef struct mobj_s
 
     //More drawing info: to determine current sprite.
     angle_t             angle;  // orientation
-    spritenum_t         sprite; // used to find patch_t and flip value
-    int                 frame;  // might be ORed with FF_FULLBRIGHT
+    unsigned short      sprite; // used to find patch_t and flip value
+    unsigned short      frame;  // might be ORed with FF_FULLBRIGHT
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
@@ -280,13 +280,14 @@ typedef struct mobj_s
     fixed_t             momy;
     fixed_t             momz;
 
-    mobjtype_t          type;
-    const mobjinfo_t*   info;   // &mobjinfo[mobj->type]
+    short               health;
+
+    unsigned short      type;
+    //const mobjinfo_t*   info;   // &mobjinfo[mobj->type]
 
     int                 tics;   // state tic counter
     const state_t*      state;
     unsigned int        flags;
-    int                 health;
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.

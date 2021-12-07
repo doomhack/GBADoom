@@ -142,7 +142,7 @@ static boolean P_CheckMeleeRange(mobj_t *actor)
   return  // killough 7/18/98: friendly monsters don't attack other friends
     pl && !(actor->flags & pl->flags & MF_FRIEND) &&
     (P_AproxDistance(pl->x-actor->x, pl->y-actor->y) <
-     MELEERANGE - 20*FRACUNIT + pl->info->radius) &&
+     MELEERANGE - 20*FRACUNIT + mobjinfo[pl->type].radius) &&
     P_CheckSight(actor, actor->target);
 }
 
@@ -203,7 +203,7 @@ static boolean P_CheckMissileRange(mobj_t *actor)
   dist = P_AproxDistance ( actor->x-actor->target->x,
                            actor->y-actor->target->y) - 64*FRACUNIT;
 
-  if (!actor->info->meleestate)
+  if (!mobjinfo[actor->type].meleestate)
     dist -= 128*FRACUNIT;       // no melee attack, so fire more
 
   dist >>= FRACBITS;
@@ -307,7 +307,7 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) /* killough 9/12/98 */
     I_Error ("P_Move: Weird actor->movedir!");
 #endif
 
-  speed = actor->info->speed;
+  speed = mobjinfo[actor->type].speed;
 
   tryx = (origx = actor->x) + (deltax = speed * xspeed[actor->movedir]);
   tryy = (origy = actor->y) + (deltay = speed * yspeed[actor->movedir]);
@@ -766,10 +766,10 @@ void A_Look(mobj_t *actor)
 
     // go into chase state
 
-    if (actor->info->seesound)
+    if (mobjinfo[actor->type].seesound)
     {
         int sound;
-        switch (actor->info->seesound)
+        switch (mobjinfo[actor->type].seesound)
         {
         case sfx_posit1:
         case sfx_posit2:
@@ -783,7 +783,7 @@ void A_Look(mobj_t *actor)
             break;
 
         default:
-            sound = actor->info->seesound;
+            sound = mobjinfo[actor->type].seesound;
             break;
         }
         if (actor->type==MT_SPIDER || actor->type == MT_CYBORG)
@@ -791,7 +791,7 @@ void A_Look(mobj_t *actor)
         else
             S_StartSound(actor, sound);
     }
-    P_SetMobjState(actor, actor->info->seestate);
+    P_SetMobjState(actor, mobjinfo[actor->type].seestate);
 }
 
 //
@@ -830,7 +830,7 @@ void A_Chase(mobj_t *actor)
     if (!actor->target || !(actor->target->flags&MF_SHOOTABLE))
     {
         if (!P_LookForTargets(actor,true)) // look for a new target
-            P_SetMobjState(actor, actor->info->spawnstate); // no new target
+            P_SetMobjState(actor, mobjinfo[actor->type].spawnstate); // no new target
         return;
     }
 
@@ -844,27 +844,27 @@ void A_Chase(mobj_t *actor)
     }
 
     // check for melee attack
-    if (actor->info->meleestate && P_CheckMeleeRange(actor))
+    if (mobjinfo[actor->type].meleestate && P_CheckMeleeRange(actor))
     {
-        if (actor->info->attacksound)
-            S_StartSound(actor, actor->info->attacksound);
+        if (mobjinfo[actor->type].attacksound)
+            S_StartSound(actor, mobjinfo[actor->type].attacksound);
 
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_SetMobjState(actor, mobjinfo[actor->type].meleestate);
         /* killough 8/98: remember an attack
       * cph - DEMOSYNC? */
-        if (!actor->info->missilestate)
+        if (!mobjinfo[actor->type].missilestate)
             actor->flags |= MF_JUSTHIT;
         return;
     }
 
     // check for missile attack
-    if (actor->info->missilestate)
+    if (mobjinfo[actor->type].missilestate)
     {
         if (!(_g->gameskill < sk_nightmare && actor->movecount))
         {
             if (P_CheckMissileRange(actor))
             {
-                P_SetMobjState(actor, actor->info->missilestate);
+                P_SetMobjState(actor, mobjinfo[actor->type].missilestate);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
@@ -901,7 +901,7 @@ void A_Chase(mobj_t *actor)
            * return to player, if no attacks have occurred recently.
            */
 
-            if (!actor->info->missilestate && actor->flags & MF_FRIEND)
+            if (!mobjinfo[actor->type].missilestate && actor->flags & MF_FRIEND)
             {
                 if (actor->flags & MF_JUSTHIT)          /* if recent action, */
                     actor->flags &= ~MF_JUSTHIT;          /* keep fighting */
@@ -916,8 +916,8 @@ void A_Chase(mobj_t *actor)
         P_NewChaseDir(actor);
 
     // make active sound
-    if (actor->info->activesound && P_Random()<3)
-        S_StartSound(actor, actor->info->activesound);
+    if (mobjinfo[actor->type].activesound && P_Random()<3)
+        S_StartSound(actor, mobjinfo[actor->type].activesound);
 }
 
 //
@@ -1015,7 +1015,7 @@ void A_CPosRefire(mobj_t *actor)
 
   if (!actor->target || actor->target->health <= 0
       || !P_CheckSight(actor, actor->target))
-stop:  P_SetMobjState(actor, actor->info->seestate);
+stop:  P_SetMobjState(actor, mobjinfo[actor->type].seestate);
 }
 
 void A_SpidRefire(mobj_t* actor)
@@ -1034,7 +1034,7 @@ void A_SpidRefire(mobj_t* actor)
   if (!actor->target || actor->target->health <= 0
       || actor->flags & actor->target->flags & MF_FRIEND
       || !P_CheckSight(actor, actor->target))
-    stop: P_SetMobjState(actor, actor->info->seestate);
+    stop: P_SetMobjState(actor, mobjinfo[actor->type].seestate);
 }
 
 void A_BspiAttack(mobj_t *actor)
@@ -1201,13 +1201,13 @@ void A_Tracer(mobj_t *actor)
   }
 
   exact = actor->angle>>ANGLETOFINESHIFT;
-  actor->momx = FixedMul(actor->info->speed, finecosine[exact]);
-  actor->momy = FixedMul(actor->info->speed, finesine[exact]);
+  actor->momx = FixedMul(mobjinfo[actor->type].speed, finecosine[exact]);
+  actor->momy = FixedMul(mobjinfo[actor->type].speed, finesine[exact]);
 
   // change slope
   dist = P_AproxDistance(dest->x - actor->x, dest->y - actor->y);
 
-  dist = dist / actor->info->speed;
+  dist = dist / mobjinfo[actor->type].speed;
 
   if (dist < 1)
     dist = 1;
@@ -1258,10 +1258,10 @@ static boolean PIT_VileCheck(mobj_t *thing)
   if (thing->tics != -1)
     return true;        // not lying still yet
 
-  if (thing->info->raisestate == S_NULL)
+  if (mobjinfo[thing->type].raisestate == S_NULL)
     return true;        // monster doesn't have a raise state
 
-  maxdist = thing->info->radius + mobjinfo[MT_VILE].radius;
+  maxdist = mobjinfo[thing->type].radius + mobjinfo[MT_VILE].radius;
 
   if (D_abs(thing->x-_g->viletryx) > maxdist || D_abs(thing->y-_g->viletryy) > maxdist)
     return true;                // not actually touching
@@ -1285,8 +1285,8 @@ static boolean PIT_VileCheck(mobj_t *thing)
 
         height = _g->corpsehit->height; // save temporarily
         radius = _g->corpsehit->radius; // save temporarily
-        _g->corpsehit->height = _g->corpsehit->info->height;
-        _g->corpsehit->radius = _g->corpsehit->info->radius;
+        _g->corpsehit->height = mobjinfo[_g->corpsehit->type].height;
+        _g->corpsehit->radius = mobjinfo[_g->corpsehit->type].radius;
         _g->corpsehit->flags |= MF_SOLID;
         check = P_CheckPosition(_g->corpsehit,_g->corpsehit->x,_g->corpsehit->y);
         _g->corpsehit->height = height; // restore
@@ -1314,9 +1314,9 @@ void A_VileChase(mobj_t* actor)
     {
       // check for corpses to raise
       _g->viletryx =
-        actor->x + actor->info->speed*xspeed[actor->movedir];
+        actor->x + mobjinfo[actor->type].speed*xspeed[actor->movedir];
       _g->viletryy =
-        actor->y + actor->info->speed*yspeed[actor->movedir];
+        actor->y + mobjinfo[actor->type].speed*yspeed[actor->movedir];
 
       xl = (_g->viletryx - _g->bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
       xh = (_g->viletryx - _g->bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
@@ -1342,7 +1342,7 @@ void A_VileChase(mobj_t* actor)
 
                   P_SetMobjState(actor, S_VILE_HEAL1);
                   S_StartSound(_g->corpsehit, sfx_slop);
-                  info = _g->corpsehit->info;
+                  info = &mobjinfo[_g->corpsehit->type];
 
                   P_SetMobjState(_g->corpsehit,info->raisestate);
 
@@ -1465,7 +1465,7 @@ void A_VileAttack(mobj_t *actor)
 
   S_StartSound(actor, sfx_barexp);
   P_DamageMobj(actor->target, actor, actor, 20);
-  actor->target->momz = 1000*FRACUNIT/actor->target->info->mass;
+  actor->target->momz = 1000*FRACUNIT/mobjinfo[actor->target->type].mass;
 
   an = actor->angle >> ANGLETOFINESHIFT;
 
@@ -1513,8 +1513,8 @@ void A_FatAttack1(mobj_t *actor)
   mo = P_SpawnMissile (actor, actor->target, MT_FATSHOT);
   mo->angle += FATSPREAD;
   an = mo->angle >> ANGLETOFINESHIFT;
-  mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-  mo->momy = FixedMul(mo->info->speed, finesine[an]);
+  mo->momx = FixedMul(mobjinfo[mo->type].speed, finecosine[an]);
+  mo->momy = FixedMul(mobjinfo[mo->type].speed, finesine[an]);
 }
 
 void A_FatAttack2(mobj_t *actor)
@@ -1533,8 +1533,8 @@ void A_FatAttack2(mobj_t *actor)
   mo = P_SpawnMissile(actor, actor->target, MT_FATSHOT);
   mo->angle -= FATSPREAD*2;
   an = mo->angle >> ANGLETOFINESHIFT;
-  mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-  mo->momy = FixedMul(mo->info->speed, finesine[an]);
+  mo->momx = FixedMul(mobjinfo[mo->type].speed, finecosine[an]);
+  mo->momy = FixedMul(mobjinfo[mo->type].speed, finesine[an]);
 }
 
 void A_FatAttack3(mobj_t *actor)
@@ -1550,14 +1550,14 @@ void A_FatAttack3(mobj_t *actor)
   mo = P_SpawnMissile(actor, actor->target, MT_FATSHOT);
   mo->angle -= FATSPREAD/2;
   an = mo->angle >> ANGLETOFINESHIFT;
-  mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-  mo->momy = FixedMul(mo->info->speed, finesine[an]);
+  mo->momx = FixedMul(mobjinfo[mo->type].speed, finecosine[an]);
+  mo->momy = FixedMul(mobjinfo[mo->type].speed, finesine[an]);
 
   mo = P_SpawnMissile(actor, actor->target, MT_FATSHOT);
   mo->angle += FATSPREAD/2;
   an = mo->angle >> ANGLETOFINESHIFT;
-  mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-  mo->momy = FixedMul(mo->info->speed, finesine[an]);
+  mo->momx = FixedMul(mobjinfo[mo->type].speed, finecosine[an]);
+  mo->momy = FixedMul(mobjinfo[mo->type].speed, finesine[an]);
 }
 
 
@@ -1579,7 +1579,7 @@ void A_SkullAttack(mobj_t *actor)
   dest = actor->target;
   actor->flags |= MF_SKULLFLY;
 
-  S_StartSound(actor, actor->info->attacksound);
+  S_StartSound(actor, mobjinfo[actor->type].attacksound);
   A_FaceTarget(actor);
   an = actor->angle >> ANGLETOFINESHIFT;
   actor->momx = FixedMul(SKULLSPEED, finecosine[an]);
@@ -1612,7 +1612,7 @@ static void A_PainShootSkull(mobj_t *actor, angle_t angle)
 
   an = angle >> ANGLETOFINESHIFT;
 
-  prestep = 4*FRACUNIT + 3*(actor->info->radius + mobjinfo[MT_SKULL].radius)/2;
+  prestep = 4*FRACUNIT + 3*(mobjinfo[actor->type].radius + mobjinfo[MT_SKULL].radius)/2;
 
   x = actor->x + FixedMul(prestep, finecosine[an]);
   y = actor->y + FixedMul(prestep, finesine[an]);
@@ -1686,7 +1686,7 @@ void A_Scream(mobj_t *actor)
 {
   int sound;
 
-  switch (actor->info->deathsound)
+  switch (mobjinfo[actor->type].deathsound)
     {
     case 0:
       return;
@@ -1703,7 +1703,7 @@ void A_Scream(mobj_t *actor)
       break;
 
     default:
-      sound = actor->info->deathsound;
+      sound = mobjinfo[actor->type].deathsound;
       break;
     }
 
@@ -1721,8 +1721,8 @@ void A_XScream(mobj_t *actor)
 
 void A_Pain(mobj_t *actor)
 {
-  if (actor->info->painsound)
-    S_StartSound(actor, actor->info->painsound);
+  if (mobjinfo[actor->type].painsound)
+    S_StartSound(actor, mobjinfo[actor->type].painsound);
 }
 
 void A_Fall(mobj_t *actor)
@@ -2073,7 +2073,7 @@ void A_SpawnFly(mobj_t *mo)
 
 
   if (P_LookForTargets(newmobj,true))      /* killough 9/4/98 */
-    P_SetMobjState(newmobj, newmobj->info->seestate);
+    P_SetMobjState(newmobj, mobjinfo[newmobj->type].seestate);
 
     // telefrag anything in this spot
   P_TeleportMove(newmobj, newmobj->x, newmobj->y, true); /* killough 8/9/98 */
@@ -2105,7 +2105,7 @@ void A_Die(mobj_t *actor)
 
 void A_Detonate(mobj_t *mo)
 {
-  P_RadiusAttack(mo, mo->target, mo->info->damage);
+  P_RadiusAttack(mo, mo->target, mobjinfo[mo->type].damage);
 }
 
 //
@@ -2115,7 +2115,7 @@ void A_Detonate(mobj_t *mo)
 
 void A_Mushroom(mobj_t *actor)
 {
-  int i, j, n = actor->info->damage;
+  int i, j, n = mobjinfo[actor->type].damage;
 
   A_Explode(actor);  // First make normal explosion
 

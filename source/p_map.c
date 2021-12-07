@@ -339,14 +339,14 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       // A flying skull is smacking something.
       // Determine damage amount, and the skull comes to a dead stop.
 
-      int damage = ((P_Random()%8)+1)*_g->tmthing->info->damage;
+      int damage = ((P_Random()%8)+1)*mobjinfo[_g->tmthing->type].damage;
 
       P_DamageMobj (thing, _g->tmthing, _g->tmthing, damage);
 
       _g->tmthing->flags &= ~MF_SKULLFLY;
       _g->tmthing->momx = _g->tmthing->momy = _g->tmthing->momz = 0;
 
-      P_SetMobjState (_g->tmthing, _g->tmthing->info->spawnstate);
+      P_SetMobjState (_g->tmthing, mobjinfo[_g->tmthing->type].spawnstate);
 
       return false;   // stop moving
     }
@@ -398,7 +398,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
       // damage / explode
 
-      damage = ((P_Random()%8)+1)*_g->tmthing->info->damage;
+      damage = ((P_Random()%8)+1)*mobjinfo[_g->tmthing->type].damage;
       P_DamageMobj (thing, _g->tmthing, _g->tmthing->target, damage);
 
       // don't traverse any more

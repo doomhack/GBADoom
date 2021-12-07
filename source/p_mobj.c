@@ -69,8 +69,8 @@ void P_ExplodeMissile (mobj_t* mo)
 
   mo->flags &= ~MF_MISSILE;
 
-  if (mo->info->deathsound)
-    S_StartSound (mo, mo->info->deathsound);
+  if (mobjinfo[mo->type].deathsound)
+    S_StartSound (mo, mobjinfo[mo->type].deathsound);
   }
 
 
@@ -95,7 +95,7 @@ void P_XYMovement (mobj_t* mo)
             mo->flags &= ~MF_SKULLFLY;
             mo->momz = 0;
 
-            P_SetMobjState (mo, mo->info->spawnstate);
+            P_SetMobjState (mo, mobjinfo[mo->type].spawnstate);
         }
         return;
     }
@@ -449,7 +449,7 @@ void P_NightmareRespawn(mobj_t* mobj)
     // spawn the new monster
 
     //mthing = &mobj->spawnpoint;
-    if (mobj->info->flags & MF_SPAWNCEILING)
+    if (mobjinfo[mobj->type].flags & MF_SPAWNCEILING)
         z = ONCEILINGZ;
     else
         z = ONFLOORZ;
@@ -517,7 +517,6 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   memset (mobj, 0, sizeof (*mobj));
   info = &mobjinfo[type];
   mobj->type = type;
-  mobj->info = info;
   mobj->x = x;
   mobj->y = y;
   mobj->radius = info->radius;
@@ -935,8 +934,8 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 
   th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type);
 
-  if (th->info->seesound)
-    S_StartSound (th, th->info->seesound);
+  if (mobjinfo[th->type].seesound)
+    S_StartSound (th, mobjinfo[th->type].seesound);
 
   P_SetTarget(&th->target, source);    // where it came from
   an = R_PointToAngle2 (source->x, source->y, dest->x, dest->y);
@@ -951,11 +950,11 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 
   th->angle = an;
   an >>= ANGLETOFINESHIFT;
-  th->momx = FixedMul (th->info->speed, finecosine[an]);
-  th->momy = FixedMul (th->info->speed, finesine[an]);
+  th->momx = FixedMul (mobjinfo[th->type].speed, finecosine[an]);
+  th->momy = FixedMul (mobjinfo[th->type].speed, finesine[an]);
 
   dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
-  dist = dist / th->info->speed;
+  dist = dist / mobjinfo[th->type].speed;
 
   if (dist < 1)
     dist = 1;
@@ -1005,14 +1004,14 @@ void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   th = P_SpawnMobj (x,y,z, type);
 
-  if (th->info->seesound)
-    S_StartSound (th, th->info->seesound);
+  if (mobjinfo[th->type].seesound)
+    S_StartSound (th, mobjinfo[th->type].seesound);
 
   P_SetTarget(&th->target, source);
   th->angle = an;
-  th->momx = FixedMul(th->info->speed,finecosine[an>>ANGLETOFINESHIFT]);
-  th->momy = FixedMul(th->info->speed,finesine[an>>ANGLETOFINESHIFT]);
-  th->momz = FixedMul(th->info->speed,slope);
+  th->momx = FixedMul(mobjinfo[th->type].speed,finecosine[an>>ANGLETOFINESHIFT]);
+  th->momy = FixedMul(mobjinfo[th->type].speed,finesine[an>>ANGLETOFINESHIFT]);
+  th->momz = FixedMul(mobjinfo[th->type].speed,slope);
 
   P_CheckMissileSpawn(th);
   }

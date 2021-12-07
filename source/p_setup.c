@@ -182,19 +182,13 @@ static void P_LoadThings (int lump)
 
   for (i=0; i<numthings; i++)
     {
-      mapthing_t mt = data[i];
+      const mapthing_t* mt = &data[i];
 
-      mt.x = SHORT(mt.x);
-      mt.y = SHORT(mt.y);
-      mt.angle = SHORT(mt.angle);
-      mt.type = SHORT(mt.type);
-      mt.options = SHORT(mt.options);
-
-      if (!P_IsDoomnumAllowed(mt.type))
+      if (!P_IsDoomnumAllowed(mt->type))
         continue;
 
       // Do spawn all other stuff.
-      P_SpawnMapThing(&mt);
+      P_SpawnMapThing(mt);
     }
 }
 

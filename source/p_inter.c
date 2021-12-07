@@ -634,10 +634,10 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
         AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 
-  if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
-    P_SetMobjState (target, target->info->xdeathstate);
+  if (target->health < -mobjinfo[target->type].spawnhealth && mobjinfo[target->type].xdeathstate)
+    P_SetMobjState (target, mobjinfo[target->type].xdeathstate);
   else
-    P_SetMobjState (target, target->info->deathstate);
+    P_SetMobjState (target, mobjinfo[target->type].deathstate);
 
   target->tics -= P_Random()&3;
 
@@ -720,7 +720,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       unsigned ang = R_PointToAngle2 (inflictor->x, inflictor->y,
                                       target->x,    target->y);
 
-      fixed_t thrust = damage*(FRACUNIT>>3)*100/target->info->mass;
+      fixed_t thrust = damage*(FRACUNIT>>3)*100/mobjinfo[target->type].mass;
 
       // make fall forwards sometimes
       if ( damage < 40 && damage > target->health
@@ -789,12 +789,12 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       if (player)
   P_SetTarget(&target->target, source);
 
-  if (P_Random () < target->info->painchance &&
+  if (P_Random () < mobjinfo[target->type].painchance &&
       !(target->flags & MF_SKULLFLY))
   { //killough 11/98: see below
       justhit = true;
 
-    P_SetMobjState(target, target->info->painstate);
+    P_SetMobjState(target, mobjinfo[target->type].painstate);
   }
 
   target->reactiontime = 0;           // we're awake now...
@@ -819,9 +819,9 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
       P_SetTarget(&target->target, source);       // killough 11/98
       target->threshold = BASETHRESHOLD;
-      if (target->state == &states[target->info->spawnstate]
-          && target->info->seestate != S_NULL)
-        P_SetMobjState (target, target->info->seestate);
+      if (target->state == &states[mobjinfo[target->type].spawnstate]
+          && mobjinfo[target->type].seestate != S_NULL)
+        P_SetMobjState (target, mobjinfo[target->type].seestate);
     }
 
   /* killough 11/98: Don't attack a friend, unless hit by that friend.
