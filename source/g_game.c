@@ -389,8 +389,6 @@ static void G_DoLoadLevel (void)
   if (_g->playeringame && _g->player.playerstate == PST_DEAD)
     _g->player.playerstate = PST_REBORN;
 
-  memset (_g->player.frags,0,sizeof(_g->player.frags));
-
 
   // initialize the msecnode_t freelist.                     phares 3/25/98
   // any nodes in the freelist are gone by now, cleared
@@ -656,12 +654,10 @@ void G_PlayerReborn (int player)
 {
   player_t *p;
   int i;
-  int frags[MAXPLAYERS];
   int killcount;
   int itemcount;
   int secretcount;
 
-  memcpy (frags, _g->player.frags, sizeof frags);
   killcount = _g->player.killcount;
   itemcount = _g->player.itemcount;
   secretcount = _g->player.secretcount;
@@ -675,7 +671,6 @@ void G_PlayerReborn (int player)
     p->cheats = cheats;
   }
 
-  memcpy(_g->player.frags, frags, sizeof(_g->player.frags));
   _g->player.killcount = killcount;
   _g->player.itemcount = itemcount;
   _g->player.secretcount = secretcount;
@@ -830,8 +825,6 @@ void G_DoCompleted (void)
       _g->wminfo.plyr[0].sitems = _g->player.itemcount;
       _g->wminfo.plyr[0].ssecret = _g->player.secretcount;
       _g->wminfo.plyr[0].stime = _g->leveltime;
-      memcpy (_g->wminfo.plyr[0].frags, _g->player.frags,
-              sizeof(_g->wminfo.plyr[0].frags));
 
   /* cph - modified so that only whole seconds are added to the totalleveltimes
    *  value; so our total is compatible with the "naive" total of just adding

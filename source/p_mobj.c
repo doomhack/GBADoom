@@ -100,7 +100,7 @@ void P_XYMovement (mobj_t* mo)
         return;
     }
 
-    player = mo->player;
+    player = P_MobjIsPlayer(mo);
 
     if (mo->momx > MAXMOVE)
         mo->momx = MAXMOVE;
@@ -273,14 +273,14 @@ void P_XYMovement (mobj_t* mo)
 void P_ZMovement (mobj_t* mo)
 {
 
-  // check for smooth step up
+    // check for smooth step up
 
-  if (mo->player &&
-      mo->player->mo == mo &&  // killough 5/12/98: exclude voodoo dolls
-      mo->z < mo->floorz)
+    if (P_MobjIsPlayer(mo) &&
+            P_MobjIsPlayer(mo)->mo == mo &&  // killough 5/12/98: exclude voodoo dolls
+            mo->z < mo->floorz)
     {
-    mo->player->viewheight -= mo->floorz-mo->z;
-    mo->player->deltaviewheight = (VIEWHEIGHT - mo->player->viewheight)>>3;
+        P_MobjIsPlayer(mo)->viewheight -= mo->floorz-mo->z;
+        P_MobjIsPlayer(mo)->deltaviewheight = (VIEWHEIGHT - P_MobjIsPlayer(mo)->viewheight)>>3;
     }
 
   // adjust altitude
@@ -331,15 +331,15 @@ void P_ZMovement (mobj_t* mo)
 
     if (mo->momz < 0)
       {
-    if (mo->player && /* killough 5/12/98: exclude voodoo dolls */
-        mo->player->mo == mo && mo->momz < -GRAVITY*8)
+    if (P_MobjIsPlayer(mo) && /* killough 5/12/98: exclude voodoo dolls */
+        P_MobjIsPlayer(mo)->mo == mo && mo->momz < -GRAVITY*8)
       {
         // Squat down.
         // Decrease viewheight for a moment
         // after hitting the ground (hard),
         // and utter appropriate sound.
 
-        mo->player->deltaviewheight = mo->momz>>3;
+        P_MobjIsPlayer(mo)->deltaviewheight = mo->momz>>3;
         if (mo->health > 0) /* cph - prevent "oof" when dead */
     S_StartSound (mo, sfx_oof);
       }
@@ -671,7 +671,6 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
   // set color translations for player sprites
 
   mobj->angle      = ANG45 * (mthing->angle/45);
-  mobj->player     = p;
   mobj->health     = p->health;
 
   p->mo            = mobj;
@@ -1015,3 +1014,13 @@ void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   P_CheckMissileSpawn(th);
   }
+
+struct player_s* P_MobjIsPlayer(const mobj_t* mobj)
+{
+    if(mobj == _g->player.mo)
+    {
+        return &_g->player;
+    }
+
+    return NULL;
+}

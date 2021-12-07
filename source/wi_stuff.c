@@ -738,26 +738,6 @@ void WI_drawNoState(void)
 }
 
 // ====================================================================
-// WI_fragSum
-// Purpose: Calculate frags for this player based on the current totals
-//          of all the other players.  Subtract self-frags.
-// Args:    playernum -- the player to be calculated
-// Returns: the total frags for this player
-//
-int WI_fragSum(int playernum)
-{
-  int   i;
-  int   frags = 0;
-
-  // JDC hack - negative frags.
-  frags -= _g->plrs[playernum].frags[playernum];
-
-  return frags;
-}
-
-
-
-// ====================================================================
 // WI_initStats
 // Purpose: Get ready for single player stats
 // Args:    none

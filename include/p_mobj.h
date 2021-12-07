@@ -310,10 +310,6 @@ typedef struct mobj_s
     // killough 9/9/98: How long a monster pursues a target.
     short               pursuecount;
 
-    // Additional info record for player avatars only.
-    // Only valid if type == MT_PLAYER
-    struct player_s*    player;
-
     // Thing being chased/attacked for tracers.
     struct mobj_s*      tracer;
 
@@ -370,5 +366,8 @@ void    P_SpawnMapThing (const mapthing_t*  mthing);
 void    P_SpawnPlayer(int n, const mapthing_t *mthing);
 void    P_CheckMissileSpawn(mobj_t*);  // killough 8/2/98
 void    P_ExplodeMissile(mobj_t*);    // killough
+
+struct player_s* P_MobjIsPlayer(const mobj_t* mobj);
+
 #endif
 

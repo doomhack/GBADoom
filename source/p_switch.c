@@ -257,7 +257,7 @@ P_UseSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenFloorBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if ((LN_SPECIAL(line) & FloorChange) || !(LN_SPECIAL(line) & FloorModel))
           return false; // FloorModel is "Allow Monsters" if FloorChange is 0
       if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
@@ -266,7 +266,7 @@ P_UseSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenCeilingBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if ((LN_SPECIAL(line) & CeilingChange) || !(LN_SPECIAL(line) & CeilingModel))
           return false;   // CeilingModel is "Allow Monsters" if CeilingChange is 0
       if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
@@ -275,7 +275,7 @@ P_UseSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenDoorBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
       {
         if (!(LN_SPECIAL(line) & DoorMonster))
           return false;   // monsters disallowed from this door
@@ -288,9 +288,9 @@ P_UseSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenLockedBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         return false;   // monsters disallowed from unlocking doors
-      if (!P_CanUnlockGenDoor(line,thing->player))
+      if (!P_CanUnlockGenDoor(line,P_MobjIsPlayer(thing)))
         return false;
       if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
         return false;                         // generalized types require tag
@@ -299,7 +299,7 @@ P_UseSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenLiftBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & LiftMonster))
           return false; // monsters disallowed
       if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
@@ -308,7 +308,7 @@ P_UseSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenStairsBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & StairMonster))
           return false; // monsters disallowed
       if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
@@ -317,7 +317,7 @@ P_UseSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenCrusherBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & CrusherMonster))
           return false; // monsters disallowed
       if (!line->tag && ((LN_SPECIAL(line)&6)!=6)) //jff 2/27/98 all non-manual
@@ -351,7 +351,7 @@ P_UseSpecialLine
   }
 
   // Switches that other things can activate.
-  if (!thing->player)
+  if (!P_MobjIsPlayer(thing))
   {
     // never open secret doors
     if (line->flags & ML_SECRET)
@@ -414,7 +414,7 @@ P_UseSpecialLine
       /* Exit level
        * killough 10/98: prevent zombies from exiting levels
        */
-      if (thing->player && thing->player->health <= 0)
+      if (P_MobjIsPlayer(thing) && P_MobjIsPlayer(thing)->health <= 0)
       {
         S_StartSound(thing, sfx_noway);
         return false;
@@ -494,7 +494,7 @@ P_UseSpecialLine
       /* Secret EXIT
        * killough 10/98: prevent zombies from exiting levels
        */
-      if (thing->player && thing->player->health <= 0)
+      if (P_MobjIsPlayer(thing) && P_MobjIsPlayer(thing)->health <= 0)
       {
         S_StartSound(thing, sfx_noway);
         return false;

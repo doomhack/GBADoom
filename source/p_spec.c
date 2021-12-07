@@ -1067,7 +1067,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
   int         ok;
 
   //  Things that should never trigger lines
-  if (!thing->player)
+  if (!P_MobjIsPlayer(thing))
   {
     // Things that should NOT trigger specials...
     switch(thing->type)
@@ -1096,7 +1096,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenFloorBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if ((LN_SPECIAL(line) & FloorChange) || !(LN_SPECIAL(line) & FloorModel))
           return;     // FloorModel is "Allow Monsters" if FloorChange is 0
       if (!line->tag) //jff 2/27/98 all walk generalized types require tag
@@ -1105,7 +1105,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenCeilingBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if ((LN_SPECIAL(line) & CeilingChange) || !(LN_SPECIAL(line) & CeilingModel))
           return;     // CeilingModel is "Allow Monsters" if CeilingChange is 0
       if (!line->tag) //jff 2/27/98 all walk generalized types require tag
@@ -1114,7 +1114,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenDoorBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
       {
         if (!(LN_SPECIAL(line) & DoorMonster))
           return;                    // monsters disallowed from this door
@@ -1127,11 +1127,11 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenLockedBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         return;                     // monsters disallowed from unlocking doors
       if (((LN_SPECIAL(line)&TriggerType)==WalkOnce) || ((LN_SPECIAL(line)&TriggerType)==WalkMany))
       { //jff 4/1/98 check for being a walk type before reporting door type
-        if (!P_CanUnlockGenDoor(line,thing->player))
+        if (!P_CanUnlockGenDoor(line,P_MobjIsPlayer(thing)))
           return;
       }
       else
@@ -1140,7 +1140,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenLiftBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & LiftMonster))
           return; // monsters disallowed
       if (!line->tag) //jff 2/27/98 all walk generalized types require tag
@@ -1149,7 +1149,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenStairsBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & StairMonster))
           return; // monsters disallowed
       if (!line->tag) //jff 2/27/98 all walk generalized types require tag
@@ -1172,7 +1172,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
       }
 
 
-  if (!thing->player)
+  if (!P_MobjIsPlayer(thing))
   {
     ok = 0;
     switch(LN_SPECIAL(line))
@@ -1350,7 +1350,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
     case 52:
       // EXIT!
       // killough 10/98: prevent zombies from exiting levels
-      if (!(thing->player && thing->player->health <= 0))
+      if (!(P_MobjIsPlayer(thing) && P_MobjIsPlayer(thing)->health <= 0))
   G_ExitLevel ();
       break;
 
@@ -1436,13 +1436,13 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
       // Secret EXIT
       // killough 10/98: prevent zombies from exiting levels
       // CPhipps - change for lxdoom's compatibility handling
-      if (!(thing->player && thing->player->health <= 0))
+      if (!(P_MobjIsPlayer(thing) && P_MobjIsPlayer(thing)->health <= 0))
   G_SecretExitLevel ();
       break;
 
     case 125:
       // TELEPORT MonsterONLY
-      if (!thing->player &&
+      if (!P_MobjIsPlayer(thing) &&
           (EV_Teleport(line, side, thing)))
         LN_SPECIAL(line) = 0;
       break;
@@ -1610,7 +1610,7 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
 
     case 126:
       // TELEPORT MonsterONLY.
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         EV_Teleport( line, side, thing );
       break;
 
@@ -1750,19 +1750,19 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
             break;
 
           case 264: //jff 4/14/98 add monster-only silent line-line reversed
-            if (!thing->player &&
+            if (!P_MobjIsPlayer(thing) &&
                 EV_SilentLineTeleport(line, side, thing, true))
               LN_SPECIAL(line) = 0;
             break;
 
           case 266: //jff 4/14/98 add monster-only silent line-line
-            if (!thing->player &&
+            if (!P_MobjIsPlayer(thing) &&
                 EV_SilentLineTeleport(line, side, thing, false))
               LN_SPECIAL(line) = 0;
             break;
 
           case 268: //jff 4/14/98 add monster-only silent
-            if (!thing->player && EV_SilentTeleport(line, side, thing))
+            if (!P_MobjIsPlayer(thing) && EV_SilentTeleport(line, side, thing))
               LN_SPECIAL(line) = 0;
             break;
 
@@ -1913,17 +1913,17 @@ void P_CrossSpecialLine(const line_t *line, int side, mobj_t *thing)
             break;
 
           case 265: //jff 4/14/98 add monster-only silent line-line reversed
-            if (!thing->player)
+            if (!P_MobjIsPlayer(thing))
               EV_SilentLineTeleport(line, side, thing, true);
             break;
 
           case 267: //jff 4/14/98 add monster-only silent line-line
-            if (!thing->player)
+            if (!P_MobjIsPlayer(thing))
               EV_SilentLineTeleport(line, side, thing, false);
             break;
 
           case 269: //jff 4/14/98 add monster-only silent
-            if (!thing->player)
+            if (!P_MobjIsPlayer(thing))
               EV_SilentTeleport(line, side, thing);
             break;
 
@@ -1958,7 +1958,7 @@ void P_ShootSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenFloorBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if ((LN_SPECIAL(line) & FloorChange) || !(LN_SPECIAL(line) & FloorModel))
           return;   // FloorModel is "Allow Monsters" if FloorChange is 0
       if (!line->tag) //jff 2/27/98 all gun generalized types require tag
@@ -1968,7 +1968,7 @@ void P_ShootSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenCeilingBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if ((LN_SPECIAL(line) & CeilingChange) || !(LN_SPECIAL(line) & CeilingModel))
           return;   // CeilingModel is "Allow Monsters" if CeilingChange is 0
       if (!line->tag) //jff 2/27/98 all gun generalized types require tag
@@ -1977,7 +1977,7 @@ void P_ShootSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenDoorBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
       {
         if (!(LN_SPECIAL(line) & DoorMonster))
           return;   // monsters disallowed from this door
@@ -1990,11 +1990,11 @@ void P_ShootSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenLockedBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         return;   // monsters disallowed from unlocking doors
       if (((LN_SPECIAL(line)&TriggerType)==GunOnce) || ((LN_SPECIAL(line)&TriggerType)==GunMany))
       { //jff 4/1/98 check for being a gun type before reporting door type
-        if (!P_CanUnlockGenDoor(line,thing->player))
+        if (!P_CanUnlockGenDoor(line,P_MobjIsPlayer(thing)))
           return;
       }
       else
@@ -2006,14 +2006,14 @@ void P_ShootSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenLiftBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & LiftMonster))
           return; // monsters disallowed
       linefunc = EV_DoGenLift;
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenStairsBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & StairMonster))
           return; // monsters disallowed
       if (!line->tag) //jff 2/27/98 all gun generalized types require tag
@@ -2022,7 +2022,7 @@ void P_ShootSpecialLine
     }
     else if ((unsigned)LN_SPECIAL(line) >= GenCrusherBase)
     {
-      if (!thing->player)
+      if (!P_MobjIsPlayer(thing))
         if (!(LN_SPECIAL(line) & StairMonster))
           return; // monsters disallowed
       if (!line->tag) //jff 2/27/98 all gun generalized types require tag
@@ -2046,7 +2046,7 @@ void P_ShootSpecialLine
       }
 
   // Impacts that other things can activate.
-  if (!thing->player)
+  if (!P_MobjIsPlayer(thing))
   {
     int ok = 0;
     switch(LN_SPECIAL(line))
@@ -2092,7 +2092,7 @@ void P_ShootSpecialLine
           case 197:
             // Exit to next level
             // killough 10/98: prevent zombies from exiting levels
-            if(thing->player && thing->player->health<=0)
+            if(P_MobjIsPlayer(thing) && P_MobjIsPlayer(thing)->health<=0)
               break;
             P_ChangeSwitchTexture(line,0);
             G_ExitLevel();
@@ -2101,7 +2101,7 @@ void P_ShootSpecialLine
           case 198:
             // Exit to secret level
             // killough 10/98: prevent zombies from exiting levels
-            if(thing->player && thing->player->health<=0)
+            if(P_MobjIsPlayer(thing) && P_MobjIsPlayer(thing)->health<=0)
               break;
             P_ChangeSwitchTexture(line,0);
             G_SecretExitLevel();

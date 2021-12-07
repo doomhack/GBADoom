@@ -286,7 +286,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     return;        // out of reach
 
   sound = sfx_itemup;
-  player = toucher->player;
+  player = P_MobjIsPlayer(toucher);
 
   // Dead thing touching.
   // Can happen with a sliding player corpse.
@@ -603,13 +603,11 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   if (!((target->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
     _g->totallive--;
 
-  if (source && source->player)
+  if (source && P_MobjIsPlayer(source))
     {
       // count for intermission
       if (target->flags & MF_COUNTKILL)
-        source->player->killcount++;
-      if (target->player)
-        source->player->frags[target->player-&_g->player]++;
+        P_MobjIsPlayer(source)->killcount++;
     }
   else if (target->flags & MF_COUNTKILL)
   { /* Add to kills tally */
@@ -620,17 +618,13 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 
   }
 
-  if (target->player)
+  if (P_MobjIsPlayer(target))
     {
-      // count environment kills against you
-      if (!source)
-        target->player->frags[target->player-&_g->player]++;
-
       target->flags &= ~MF_SOLID;
-      target->player->playerstate = PST_DEAD;
-      P_DropWeapon (target->player);
+      _g->player.playerstate = PST_DEAD;
+      P_DropWeapon (&_g->player);
 
-      if (target->player == &_g->player && (_g->automapmode & am_active))
+      if (_g->automapmode & am_active)
         AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 
@@ -705,7 +699,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   if (target->flags & MF_SKULLFLY)
     target->momx = target->momy = target->momz = 0;
 
-  player = target->player;
+  player = P_MobjIsPlayer(target);
   if (player && _g->gameskill == sk_baby)
     damage >>= 1;   // take half damage in trainer mode
 
@@ -714,8 +708,8 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   // thus kick away unless using the chainsaw.
 
   if (inflictor && !(target->flags & MF_NOCLIP) &&
-      (!source || !source->player ||
-       source->player->readyweapon != wp_chainsaw))
+      (!source || !P_MobjIsPlayer(source) ||
+       P_MobjIsPlayer(source)->readyweapon != wp_chainsaw))
     {
       unsigned ang = R_PointToAngle2 (inflictor->x, inflictor->y,
                                       target->x,    target->y);

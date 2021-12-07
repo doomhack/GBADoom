@@ -285,7 +285,8 @@ int EV_DoLockedDoor
   player_t* p;
 
   // only players can open locked doors
-  p = thing->player;
+  p = P_MobjIsPlayer(thing);
+
   if (!p)
     return 0;
 
@@ -436,12 +437,11 @@ int EV_VerticalDoor
   mobj_t* thing )
 {
   player_t* player;
-  int   secnum;
   sector_t* sec;
   vldoor_t* door;
 
   //  Check for locks
-  player = thing->player;
+  player = P_MobjIsPlayer(thing);
 
   switch(LN_SPECIAL(line))
   {
@@ -494,7 +494,6 @@ int EV_VerticalDoor
 
   // get the sector on the second side of activating linedef
   sec = _g->sides[line->sidenum[1]].sector;
-  secnum = sec-_g->sectors;
 
   /* if door already has a thinker, use it
    * cph 2001/04/05 -

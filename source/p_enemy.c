@@ -186,7 +186,7 @@ static boolean P_CheckMissileRange(mobj_t *actor)
               !(actor->flags & MF_FRIEND) ||
               (actor->target->health > 0 &&
                (!(actor->target->flags & MF_FRIEND) ||
-                (actor->target->player ? true :
+                (P_MobjIsPlayer(actor->target) ? true :
                      !(actor->target->flags & MF_JUSTHIT) && P_Random() >128)));
   }
 

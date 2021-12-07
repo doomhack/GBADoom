@@ -80,7 +80,7 @@ int EV_Teleport(const line_t *line, int side, mobj_t *thing)
   if ((m = P_TeleportDestination(line)) != NULL)
         {
           fixed_t oldx = thing->x, oldy = thing->y, oldz = thing->z;
-          player_t *player = thing->player;
+          player_t *player = P_MobjIsPlayer(thing);
 
           // killough 5/12/98: exclude voodoo dolls:
           if (player && player->mo != thing)
@@ -107,7 +107,7 @@ int EV_Teleport(const line_t *line, int side, mobj_t *thing)
 
     /* don't move for a bit
      * cph - DEMOSYNC - BOOM had (player) here? */
-          if (thing->player)
+          if (P_MobjIsPlayer(thing))
             thing->reactiontime = 18;
 
           thing->angle = m->angle;
@@ -162,7 +162,7 @@ int EV_SilentTeleport(const line_t *line, int side, mobj_t *thing)
           fixed_t momy = thing->momy;
 
           // Whether this is a player, and if so, a pointer to its player_t
-          player_t *player = thing->player;
+          player_t *player = P_MobjIsPlayer(thing);
 
           // Attempt to teleport, aborting if blocked
           if (!P_TeleportMove(thing, m->x, m->y, false)) /* killough 8/9/98 */
@@ -250,8 +250,8 @@ int EV_SilentLineTeleport(const line_t *line, int side, mobj_t *thing,
 
         // Whether this is a player, and if so, a pointer to its player_t.
         // Voodoo dolls are excluded by making sure thing->player->mo==thing.
-        player_t *player = thing->player && thing->player->mo == thing ?
-          thing->player : NULL;
+        player_t *player = P_MobjIsPlayer(thing) && P_MobjIsPlayer(thing)->mo == thing ?
+          P_MobjIsPlayer(thing) : NULL;
 
         // Whether walking towards first side of exit linedef steps down
         int stepdown =
