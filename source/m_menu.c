@@ -344,7 +344,7 @@ void M_ChooseSkill(int choice)
     }
     else
     {
-        G_DeferedInitNew(choice,_g->epi+1,1);
+        G_DeferedInitNew(choice,_g->epi+1,23);
 		M_ClearMenus ();
     }    
 }
@@ -1028,7 +1028,7 @@ void M_Drawer (void)
     if (_g->messageToPrint)
     {
         /* cph - strdup string to writable memory */
-        char *ms = strdup(_g->messageString);
+        char *ms = Z_Strdup(_g->messageString);
         char *p = ms;
 
         int y = 80 - M_StringHeight(_g->messageString)/2;
@@ -1043,7 +1043,7 @@ void M_Drawer (void)
             if ((*p = c))
                 p++;
         }
-        free(ms);
+        Z_Free(ms);
     }
     else
         if (_g->menuactive)

@@ -1934,9 +1934,9 @@ void P_SpawnBrainTargets(void)  // killough 3/26/98: renamed old function
         if (m->type == MT_BOSSTARGET )
           {   // killough 2/7/98: remove limit on icon landings:
             if (_g->numbraintargets >= _g->numbraintargets_alloc)
-              _g->braintargets = realloc(_g->braintargets,
+              _g->braintargets = Z_Realloc(_g->braintargets,
                       (_g->numbraintargets_alloc = _g->numbraintargets_alloc ?
-                       _g->numbraintargets_alloc*2 : 32) *sizeof *_g->braintargets);
+                       _g->numbraintargets_alloc*2 : 32) *sizeof *_g->braintargets, PU_STATIC, NULL);
             _g->braintargets[_g->numbraintargets++] = m;
           }
       }

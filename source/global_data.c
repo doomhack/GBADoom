@@ -8,7 +8,7 @@ globals_t* _g = NULL;
 
 void InitGlobals()
 {
-    _g = malloc(sizeof(globals_t));
+    _g = Z_Malloc(sizeof(globals_t), PU_STATIC, NULL);
 
     memset(_g, 0, sizeof(globals_t));
 

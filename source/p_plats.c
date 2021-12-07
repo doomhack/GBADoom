@@ -418,7 +418,7 @@ void P_RemoveActivePlat(plat_t* plat)
   if (list->prev && (*list->prev = list->next))
     list->next->prev = list->prev;
 
-  free(list);
+  Z_Free(list);
 }
 
 //
@@ -433,7 +433,7 @@ void P_RemoveAllActivePlats(void)
   while (_g->activeplats)
   {
     platlist_t *next = _g->activeplats->next;
-    free(_g->activeplats);
+    Z_Free(_g->activeplats);
     _g->activeplats = next;
   }
 }

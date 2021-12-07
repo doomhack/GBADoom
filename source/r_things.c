@@ -157,7 +157,7 @@ static void R_InitSpriteDefs(const char * const * namelist)
   // Create hash table based on just the first four letters of each sprite
   // killough 1/31/98
 
-  hash = malloc(sizeof(*hash)*numentries); // allocate hash table
+  hash = Z_Malloc(sizeof(*hash)*numentries, PU_STATIC, NULL); // allocate hash table
 
   for (i=0; (size_t)i<numentries; i++)             // initialize hash table as empty
     hash[i].index = -1;
@@ -245,7 +245,8 @@ static void R_InitSpriteDefs(const char * const * namelist)
             }
         }
     }
-  free(hash);             // free hash table
+
+  Z_Free(hash);           // free hash table
 }
 
 //

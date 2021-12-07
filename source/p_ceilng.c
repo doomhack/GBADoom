@@ -452,7 +452,7 @@ void P_RemoveActiveCeiling(ceiling_t* ceiling)
   if ((list->prev && (*list->prev = list->next)))
     list->next->prev = list->prev;
 
-  free(list);
+  Z_Free(list);
 }
 
 //
@@ -467,7 +467,7 @@ void P_RemoveAllActiveCeilings(void)
   while (_g->activeceilings)
   {
     ceilinglist_t *next = _g->activeceilings->next;
-    free(_g->activeceilings);
+    Z_Free(_g->activeceilings);
     _g->activeceilings = next;
   }
 }
