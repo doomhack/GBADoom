@@ -138,9 +138,13 @@ typedef struct
     short textureoffset; // add this to the calculated texture column
     short rowoffset;     // add this to the calculated texture top
 
-    short toptexture;      // Texture indices. We do not maintain names here.
-    short bottomtexture;
-    short midtexture;
+    unsigned int toptexture:10;
+    unsigned int bottomtexture:10;
+    unsigned int midtexture:10;
+
+    //short toptexture;      // Texture indices. We do not maintain names here.
+    //short bottomtexture;
+    //short midtexture;
 } side_t;
 
 //

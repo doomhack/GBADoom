@@ -283,7 +283,6 @@ typedef struct mobj_s
     short               health;
 
     unsigned short      type;
-    //const mobjinfo_t*   info;   // &mobjinfo[mobj->type]
 
     int                 tics;   // state tic counter
     const state_t*      state;
@@ -294,21 +293,22 @@ typedef struct mobj_s
     struct mobj_s*      target;
 
     // Movement direction, movement generation (zig-zagging).
-    short               movedir;        // 0-7
+
+    unsigned short movedir: 4;
+
+    // If >0, the current target will be chased no
+    // matter what (even if shot by another object)
+    unsigned short               threshold:8;
+
+
+    // killough 9/9/98: How long a monster pursues a target.
+    unsigned short      pursuecount;
+
     short               movecount;      // when 0, select a new dir
-
-
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
     short               reactiontime;
-
-    // If >0, the current target will be chased no
-    // matter what (even if shot by another object)
-    short               threshold;
-
-    // killough 9/9/98: How long a monster pursues a target.
-    short               pursuecount;
 
     // Thing being chased/attacked for tracers.
     struct mobj_s*      tracer;
