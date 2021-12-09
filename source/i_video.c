@@ -207,9 +207,9 @@ void I_InitGraphics(void)
 
 void I_UpdateVideoMode(void)
 {
-  lprintf(LO_INFO, "I_SetRes: %dx%d", SCREENWIDTH, SCREENHEIGHT);
-  I_SetRes();
+    lprintf(LO_INFO, "I_SetRes: %dx%d", SCREENWIDTH, SCREENHEIGHT);
+    I_SetRes();
 
-  lprintf(LO_INFO, "R_InitBuffer:");
-  R_InitBuffer();
+    lprintf(LO_INFO, "R_InitBuffer:");
+    R_InitBuffer();
 }
