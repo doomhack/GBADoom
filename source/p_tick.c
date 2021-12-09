@@ -162,7 +162,7 @@ void P_Ticker (void)
    * All of this complicated mess is used to preserve demo sync.
    */
 
-  if (_g->paused || (_g->menuactive && !_g->demoplayback && _g->player.viewz != 1))
+  if (_g->menuactive && !_g->demoplayback && _g->player.viewz != 1)
     return;
 
   P_MapStart();

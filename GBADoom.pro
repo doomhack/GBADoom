@@ -13,6 +13,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 DEFINES += RANGECHECK
 
+DEFINES += _CRT_SECURE_NO_WARNINGS
+
+
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.

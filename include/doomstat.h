@@ -63,8 +63,7 @@ enum automapmode_e {
   am_active = 1,  // currently shown
   am_overlay= 2,  // covers the screen, i.e. not overlay mode
   am_rotate = 4,  // rotates to the player facing direction
-  am_follow = 8,  // keep the player centred
-  am_grid   =16,  // show grid
+  am_follow = 8  // keep the player centred
 };
 extern enum automapmode_e automapmode; // Mode that the automap is in
 

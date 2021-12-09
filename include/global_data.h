@@ -213,7 +213,6 @@ byte  savegameslot;         // Slot to load if gameaction == ga_loadgame
 boolean secretexit;
 
 boolean         respawnmonsters;
-boolean         paused;
 // CPhipps - moved *_loadgame vars here
 boolean command_loadgame;
 

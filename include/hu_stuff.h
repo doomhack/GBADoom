@@ -59,13 +59,9 @@
  */
 void HU_Init(void);
 void HU_Start(void);
-
-boolean HU_Responder(event_t* ev);
-
 void HU_Ticker(void);
 void HU_Drawer(void);
 void HU_Erase(void);
-void HU_MoveHud(void); // jff 3/9/98 avoid glitch in HUD display
 
 /* killough 5/2/98: moved from m_misc.c: */
 

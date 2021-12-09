@@ -156,7 +156,7 @@ void HUlib_initTextLine
 boolean HUlib_addCharToTextLine(hu_textline_t *t, char ch);
 
 // draws tline
-void HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor);
+void HUlib_drawTextLine(hu_textline_t *l);
 
 // erases text line
 void HUlib_eraseTextLine(hu_textline_t *l);
@@ -172,7 +172,7 @@ void HUlib_initSText
   int   x,
   int   y,
   int   h,
-  const patch_t* font,
+  const patch_t *font,
   int   startchar,   //jff 2/16/98 add color range parameter
   boolean*  on );
 

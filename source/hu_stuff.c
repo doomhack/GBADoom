@@ -146,162 +146,162 @@ const int hud_msg_lines = 1;  // number of message lines in window
 // CPhipps - const**const
 const char *const mapnames[] =
 {
-  HUSTR_E1M1,
-  HUSTR_E1M2,
-  HUSTR_E1M3,
-  HUSTR_E1M4,
-  HUSTR_E1M5,
-  HUSTR_E1M6,
-  HUSTR_E1M7,
-  HUSTR_E1M8,
-  HUSTR_E1M9,
+    HUSTR_E1M1,
+    HUSTR_E1M2,
+    HUSTR_E1M3,
+    HUSTR_E1M4,
+    HUSTR_E1M5,
+    HUSTR_E1M6,
+    HUSTR_E1M7,
+    HUSTR_E1M8,
+    HUSTR_E1M9,
 
-  HUSTR_E2M1,
-  HUSTR_E2M2,
-  HUSTR_E2M3,
-  HUSTR_E2M4,
-  HUSTR_E2M5,
-  HUSTR_E2M6,
-  HUSTR_E2M7,
-  HUSTR_E2M8,
-  HUSTR_E2M9,
+    HUSTR_E2M1,
+    HUSTR_E2M2,
+    HUSTR_E2M3,
+    HUSTR_E2M4,
+    HUSTR_E2M5,
+    HUSTR_E2M6,
+    HUSTR_E2M7,
+    HUSTR_E2M8,
+    HUSTR_E2M9,
 
-  HUSTR_E3M1,
-  HUSTR_E3M2,
-  HUSTR_E3M3,
-  HUSTR_E3M4,
-  HUSTR_E3M5,
-  HUSTR_E3M6,
-  HUSTR_E3M7,
-  HUSTR_E3M8,
-  HUSTR_E3M9,
+    HUSTR_E3M1,
+    HUSTR_E3M2,
+    HUSTR_E3M3,
+    HUSTR_E3M4,
+    HUSTR_E3M5,
+    HUSTR_E3M6,
+    HUSTR_E3M7,
+    HUSTR_E3M8,
+    HUSTR_E3M9,
 
-  HUSTR_E4M1,
-  HUSTR_E4M2,
-  HUSTR_E4M3,
-  HUSTR_E4M4,
-  HUSTR_E4M5,
-  HUSTR_E4M6,
-  HUSTR_E4M7,
-  HUSTR_E4M8,
-  HUSTR_E4M9,
+    HUSTR_E4M1,
+    HUSTR_E4M2,
+    HUSTR_E4M3,
+    HUSTR_E4M4,
+    HUSTR_E4M5,
+    HUSTR_E4M6,
+    HUSTR_E4M7,
+    HUSTR_E4M8,
+    HUSTR_E4M9,
 };
 
 // CPhipps - const**const
 const char *const mapnames2[] = // DOOM 2 map names.
 {
-  HUSTR_1,
-  HUSTR_2,
-  HUSTR_3,
-  HUSTR_4,
-  HUSTR_5,
-  HUSTR_6,
-  HUSTR_7,
-  HUSTR_8,
-  HUSTR_9,
-  HUSTR_10,
-  HUSTR_11,
+    HUSTR_1,
+    HUSTR_2,
+    HUSTR_3,
+    HUSTR_4,
+    HUSTR_5,
+    HUSTR_6,
+    HUSTR_7,
+    HUSTR_8,
+    HUSTR_9,
+    HUSTR_10,
+    HUSTR_11,
 
-  HUSTR_12,
-  HUSTR_13,
-  HUSTR_14,
-  HUSTR_15,
-  HUSTR_16,
-  HUSTR_17,
-  HUSTR_18,
-  HUSTR_19,
-  HUSTR_20,
+    HUSTR_12,
+    HUSTR_13,
+    HUSTR_14,
+    HUSTR_15,
+    HUSTR_16,
+    HUSTR_17,
+    HUSTR_18,
+    HUSTR_19,
+    HUSTR_20,
 
-  HUSTR_21,
-  HUSTR_22,
-  HUSTR_23,
-  HUSTR_24,
-  HUSTR_25,
-  HUSTR_26,
-  HUSTR_27,
-  HUSTR_28,
-  HUSTR_29,
-  HUSTR_30,
-  HUSTR_31,
-  HUSTR_32,
+    HUSTR_21,
+    HUSTR_22,
+    HUSTR_23,
+    HUSTR_24,
+    HUSTR_25,
+    HUSTR_26,
+    HUSTR_27,
+    HUSTR_28,
+    HUSTR_29,
+    HUSTR_30,
+    HUSTR_31,
+    HUSTR_32,
 };
 
 //CPhipps - const**const
 const char *const mapnamesp[] = // Plutonia WAD map names.
 {
-  PHUSTR_1,
-  PHUSTR_2,
-  PHUSTR_3,
-  PHUSTR_4,
-  PHUSTR_5,
-  PHUSTR_6,
-  PHUSTR_7,
-  PHUSTR_8,
-  PHUSTR_9,
-  PHUSTR_10,
-  PHUSTR_11,
+    PHUSTR_1,
+    PHUSTR_2,
+    PHUSTR_3,
+    PHUSTR_4,
+    PHUSTR_5,
+    PHUSTR_6,
+    PHUSTR_7,
+    PHUSTR_8,
+    PHUSTR_9,
+    PHUSTR_10,
+    PHUSTR_11,
 
-  PHUSTR_12,
-  PHUSTR_13,
-  PHUSTR_14,
-  PHUSTR_15,
-  PHUSTR_16,
-  PHUSTR_17,
-  PHUSTR_18,
-  PHUSTR_19,
-  PHUSTR_20,
+    PHUSTR_12,
+    PHUSTR_13,
+    PHUSTR_14,
+    PHUSTR_15,
+    PHUSTR_16,
+    PHUSTR_17,
+    PHUSTR_18,
+    PHUSTR_19,
+    PHUSTR_20,
 
-  PHUSTR_21,
-  PHUSTR_22,
-  PHUSTR_23,
-  PHUSTR_24,
-  PHUSTR_25,
-  PHUSTR_26,
-  PHUSTR_27,
-  PHUSTR_28,
-  PHUSTR_29,
-  PHUSTR_30,
-  PHUSTR_31,
-  PHUSTR_32,
+    PHUSTR_21,
+    PHUSTR_22,
+    PHUSTR_23,
+    PHUSTR_24,
+    PHUSTR_25,
+    PHUSTR_26,
+    PHUSTR_27,
+    PHUSTR_28,
+    PHUSTR_29,
+    PHUSTR_30,
+    PHUSTR_31,
+    PHUSTR_32,
 };
 
 // CPhipps - const**const
 const char *const mapnamest[] = // TNT WAD map names.
 {
-  THUSTR_1,
-  THUSTR_2,
-  THUSTR_3,
-  THUSTR_4,
-  THUSTR_5,
-  THUSTR_6,
-  THUSTR_7,
-  THUSTR_8,
-  THUSTR_9,
-  THUSTR_10,
-  THUSTR_11,
+    THUSTR_1,
+    THUSTR_2,
+    THUSTR_3,
+    THUSTR_4,
+    THUSTR_5,
+    THUSTR_6,
+    THUSTR_7,
+    THUSTR_8,
+    THUSTR_9,
+    THUSTR_10,
+    THUSTR_11,
 
-  THUSTR_12,
-  THUSTR_13,
-  THUSTR_14,
-  THUSTR_15,
-  THUSTR_16,
-  THUSTR_17,
-  THUSTR_18,
-  THUSTR_19,
-  THUSTR_20,
+    THUSTR_12,
+    THUSTR_13,
+    THUSTR_14,
+    THUSTR_15,
+    THUSTR_16,
+    THUSTR_17,
+    THUSTR_18,
+    THUSTR_19,
+    THUSTR_20,
 
-  THUSTR_21,
-  THUSTR_22,
-  THUSTR_23,
-  THUSTR_24,
-  THUSTR_25,
-  THUSTR_26,
-  THUSTR_27,
-  THUSTR_28,
-  THUSTR_29,
-  THUSTR_30,
-  THUSTR_31,
-  THUSTR_32,
+    THUSTR_21,
+    THUSTR_22,
+    THUSTR_23,
+    THUSTR_24,
+    THUSTR_25,
+    THUSTR_26,
+    THUSTR_27,
+    THUSTR_28,
+    THUSTR_29,
+    THUSTR_30,
+    THUSTR_31,
+    THUSTR_32,
 };
 
 //
@@ -335,7 +335,7 @@ void HU_Init(void)
 //
 static void HU_Stop(void)
 {
-  _g->headsupactive = false;
+    _g->headsupactive = false;
 }
 
 //
@@ -351,78 +351,61 @@ static void HU_Stop(void)
 //
 void HU_Start(void)
 {
-  const char* s; /* cph - const */
+    const char* s; /* cph - const */
 
-  if (_g->headsupactive)                    // stop before starting
-    HU_Stop();
-
-
-  _g->message_on = false;
-  _g->message_dontfuckwithme = false;
-
-  // create the message widget
-  // messages to player in upper-left of screen
-  HUlib_initSText
-  (
-    &_g->w_message,
-    HU_MSGX,
-    HU_MSGY,
-    HU_MSGHEIGHT,
-    _g->hu_font,
-    HU_FONTSTART,
-    &_g->message_on
-  );
-
-  //jff 2/16/98 added some HUD widgets
-  // create the map title widget - map title display in lower left of automap
-  HUlib_initTextLine
-  (
-    &_g->w_title,
-    HU_TITLEX,
-    HU_TITLEY,
-    _g->hu_font,
-    HU_FONTSTART
-  );
-
-  // initialize the automap's level title widget
-  if (_g->gamestate == GS_LEVEL) /* cph - stop SEGV here when not in level */
-  switch (_g->gamemode)
-  {
-    case shareware:
-    case registered:
-    case retail:
-      s = HU_TITLE;
-      break;
-
-    case commercial:
-    default:  // Ty 08/27/98 - modified to check mission for TNT/Plutonia
-      s = (_g->gamemission==pack_tnt)  ? HU_TITLET :
-          (_g->gamemission==pack_plut) ? HU_TITLEP : HU_TITLE2;
-      break;
-  } else s = "";
-  while (*s)
-    HUlib_addCharToTextLine(&_g->w_title, *(s++));
+    if (_g->headsupactive)                    // stop before starting
+        HU_Stop();
 
 
-  // now allow the heads-up display to run
-  _g->headsupactive = true;
+    _g->message_on = false;
+    _g->message_dontfuckwithme = false;
 
-  HU_MoveHud();
-}
+    // create the message widget
+    // messages to player in upper-left of screen
+    HUlib_initSText
+            (
+                &_g->w_message,
+                HU_MSGX,
+                HU_MSGY,
+                HU_MSGHEIGHT,
+                _g->hu_font,
+                HU_FONTSTART,
+                &_g->message_on
+                );
 
-//
-// HU_MoveHud()
-//
-// Move the HUD display from distributed to compact mode or vice-versa
-//
-// Passed nothing, returns nothing
-//
-//jff 3/9/98 create this externally callable to avoid glitch
-// when menu scatter's HUD due to delay in change of position
-//
-void HU_MoveHud(void)
-{
+    //jff 2/16/98 added some HUD widgets
+    // create the map title widget - map title display in lower left of automap
+    HUlib_initTextLine
+            (
+                &_g->w_title,
+                HU_TITLEX,
+                HU_TITLEY,
+                _g->hu_font,
+                HU_FONTSTART
+                );
 
+    // initialize the automap's level title widget
+    if (_g->gamestate == GS_LEVEL) /* cph - stop SEGV here when not in level */
+        switch (_g->gamemode)
+        {
+        case shareware:
+        case registered:
+        case retail:
+            s = HU_TITLE;
+            break;
+
+        case commercial:
+        default:  // Ty 08/27/98 - modified to check mission for TNT/Plutonia
+            s = (_g->gamemission==pack_tnt)  ? HU_TITLET :
+                                               (_g->gamemission==pack_plut) ? HU_TITLEP : HU_TITLE2;
+            break;
+        } else s = "";
+    while (*s)
+        HUlib_addCharToTextLine(&_g->w_title, *(s++));
+
+
+    // now allow the heads-up display to run
+    _g->headsupactive = true;
 }
 
 //
@@ -434,19 +417,19 @@ void HU_MoveHud(void)
 //
 void HU_Drawer(void)
 {
-  // draw the automap widgets if automap is displayed
-  if (_g->automapmode & am_active)
-  {
-    // map title
-    HUlib_drawTextLine(&_g->w_title, false);
-  }
+    // draw the automap widgets if automap is displayed
+    if (_g->automapmode & am_active)
+    {
+        // map title
+        HUlib_drawTextLine(&_g->w_title);
+    }
 
-  //jff 3/4/98 display last to give priority
-  HU_Erase(); // jff 4/24/98 Erase current lines before drawing current
-              // needed when screen not fullsize
+    //jff 3/4/98 display last to give priority
+    HU_Erase(); // jff 4/24/98 Erase current lines before drawing current
+    // needed when screen not fullsize
 
 
-  HUlib_drawSText(&_g->w_message);
+    HUlib_drawSText(&_g->w_message);
 }
 
 //
@@ -458,11 +441,11 @@ void HU_Drawer(void)
 //
 void HU_Erase(void)
 {
-  // erase the message display or the message review display
+    // erase the message display or the message review display
     HUlib_eraseSText(&_g->w_message);
 
-  // erase the automap title
-  HUlib_eraseTextLine(&_g->w_title);
+    // erase the automap title
+    HUlib_eraseTextLine(&_g->w_title);
 }
 
 //
@@ -477,45 +460,32 @@ void HU_Ticker(void)
 {
     player_t* plr = &_g->player;        // killough 3/7/98
 
-  // tick down message counter if message is up
-  if (_g->message_counter && !--_g->message_counter)
-  {
-    _g->message_on = false;
-  }
-
-
-  // if messages on, or "Messages Off" is being displayed
-  // this allows the notification of turning messages off to be seen
-  if (_g->showMessages || _g->message_dontfuckwithme)
-  {
-    // display message if necessary
-    if (plr->message)
+    // tick down message counter if message is up
+    if (_g->message_counter && !--_g->message_counter)
     {
-      //post the message to the message widget
-      HUlib_addMessageToSText(&_g->w_message, 0, plr->message);
-
-      // clear the message to avoid posting multiple times
-      plr->message = 0;
-      // note a message is displayed
-      _g->message_on = true;
-      // start the message persistence counter
-      _g->message_counter = HU_MSGTIMEOUT;
-
-      // clear the flag that "Messages Off" is being posted
-      _g->message_dontfuckwithme = 0;
+        _g->message_on = false;
     }
-  }
-}
 
 
-//
-// HU_Responder()
-//
-// Responds to input events that affect the heads up displays
-//
-// Passed the event to respond to, returns true if the event was handled
-//
-boolean HU_Responder(event_t *ev)
-{
-    return false;
+    // if messages on, or "Messages Off" is being displayed
+    // this allows the notification of turning messages off to be seen
+    if (_g->showMessages || _g->message_dontfuckwithme)
+    {
+        // display message if necessary
+        if (plr->message)
+        {
+            //post the message to the message widget
+            HUlib_addMessageToSText(&_g->w_message, 0, plr->message);
+
+            // clear the message to avoid posting multiple times
+            plr->message = 0;
+            // note a message is displayed
+            _g->message_on = true;
+            // start the message persistence counter
+            _g->message_counter = HU_MSGTIMEOUT;
+
+            // clear the flag that "Messages Off" is being posted
+            _g->message_dontfuckwithme = 0;
+        }
+    }
 }

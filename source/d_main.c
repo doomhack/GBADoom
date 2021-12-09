@@ -106,20 +106,19 @@ static const char* timedemo = NULL;//"demo1";
 
 void D_PostEvent(event_t *ev)
 {
-  /* cph - suppress all input events at game start
+    /* cph - suppress all input events at game start
    * FIXME: This is a lousy kludge */
-  if (_g->gametic < 3)
-      return;
+    if (_g->gametic < 3)
+        return;
 
-  M_Responder(ev) ||
-      (_g->gamestate == GS_LEVEL && (
-                     C_Responder(ev) ||
-				     HU_Responder(ev) ||
-				     ST_Responder(ev) ||
-                     AM_Responder(ev)
-				     )
-	  ) ||
-	G_Responder(ev);
+    M_Responder(ev) ||
+            (_g->gamestate == GS_LEVEL && (
+                 C_Responder(ev) ||
+                 ST_Responder(ev) ||
+                 AM_Responder(ev)
+                 )
+             ) ||
+            G_Responder(ev);
 
 }
 
@@ -132,27 +131,27 @@ void D_PostEvent(event_t *ev)
 
 static void D_Wipe(void)
 {
-	boolean done;
-	int wipestart = I_GetTime () - 1;
-	
+    boolean done;
+    int wipestart = I_GetTime () - 1;
+
     wipe_initMelt();
 
-	do
-	{
-		int nowtime, tics;
-		do
-		{
-			nowtime = I_GetTime();
-			tics = nowtime - wipestart;
-		} while (!tics);
+    do
+    {
+        int nowtime, tics;
+        do
+        {
+            nowtime = I_GetTime();
+            tics = nowtime - wipestart;
+        } while (!tics);
 
-		wipestart = nowtime;
-		done = wipe_ScreenWipe(tics);
+        wipestart = nowtime;
+        done = wipe_ScreenWipe(tics);
 
         I_UpdateNoBlit();
-		M_Drawer();                   // menu is drawn even on top of wipes
+        M_Drawer();                   // menu is drawn even on top of wipes
 
-	} while (!done);
+    } while (!done);
 }
 
 //
@@ -163,83 +162,84 @@ static void D_Wipe(void)
 static void D_Display (void)
 {
 
-  boolean wipe;
-  boolean viewactive = false;
+    boolean wipe;
+    boolean viewactive = false;
 
-  if (nodrawers)                    // for comparative timing / profiling
-    return;
+    if (nodrawers)                    // for comparative timing / profiling
+        return;
 
-  if (!I_StartDisplay())
-    return;
+    if (!I_StartDisplay())
+        return;
 
-  // save the current screen if about to wipe
-  if (wipe = _g->gamestate != _g->wipegamestate)
-    wipe_StartScreen();
+    // save the current screen if about to wipe
+    wipe = (_g->gamestate != _g->wipegamestate);
 
-  if (_g->gamestate != GS_LEVEL) { // Not a level
-    switch (_g->oldgamestate) {
-    case -1:
-    case GS_LEVEL:
-      V_SetPalette(0); // cph - use default (basic) palette
-    default:
-      break;
+    if (wipe)
+        wipe_StartScreen();
+
+    if (_g->gamestate != GS_LEVEL) { // Not a level
+        switch (_g->oldgamestate)
+        {
+            case -1:
+            case GS_LEVEL:
+                V_SetPalette(0); // cph - use default (basic) palette
+            default:
+                break;
+        }
+
+        switch (_g->gamestate)
+        {
+            case GS_INTERMISSION:
+                WI_Drawer();
+                break;
+            case GS_FINALE:
+                F_Drawer();
+                break;
+            case GS_DEMOSCREEN:
+                D_PageDrawer();
+                break;
+            default:
+                break;
+        }
+    }
+    else if (_g->gametic != _g->basetic)
+    { // In a level
+
+        HU_Erase();
+
+        // Work out if the player view is visible, and if there is a border
+        viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
+
+        // Now do the drawing
+        if (viewactive)
+            R_RenderPlayerView (&_g->player);
+
+        if (_g->automapmode & am_active)
+            AM_Drawer();
+
+        ST_Drawer(true, false);
+
+        HU_Drawer();
     }
 
-    switch (_g->gamestate) {
-    case GS_INTERMISSION:
-      WI_Drawer();
-      break;
-    case GS_FINALE:
-      F_Drawer();
-      break;
-    case GS_DEMOSCREEN:
-      D_PageDrawer();
-      break;
-    default:
-      break;
+    _g->oldgamestate = _g->wipegamestate = _g->gamestate;
+
+    // menus go directly to the screen
+    M_Drawer();          // menu is drawn even on top of everything
+
+    D_BuildNewTiccmds();
+
+    // normal update
+    if (!wipe)
+        I_FinishUpdate ();              // page flip or blit buffer
+    else
+    {
+        // wipe update
+        wipe_EndScreen();
+        D_Wipe();
     }
-  } else if (_g->gametic != _g->basetic) { // In a level
 
-    HU_Erase();
-
-    // Work out if the player view is visible, and if there is a border
-    viewactive = (!(_g->automapmode & am_active) || (_g->automapmode & am_overlay));
-
-    // Now do the drawing
-    if (viewactive)
-      R_RenderPlayerView (&_g->player);
-    if (_g->automapmode & am_active)
-      AM_Drawer();
-
-    ST_Drawer(true, false);
-
-    HU_Drawer();
-  }
-
-  _g->oldgamestate = _g->wipegamestate = _g->gamestate;
-
-  // draw pause pic
-  if (_g->paused) {
-    // Simplified the "logic" here and no need for x-coord caching - POPE
-    V_DrawNamePatch((320 - V_NamePatchWidth("M_PAUSE"))/2, 4,
-                    0, "M_PAUSE", CR_DEFAULT, VPT_STRETCH);
-  }
-
-  // menus go directly to the screen
-  M_Drawer();          // menu is drawn even on top of everything
-
-  D_BuildNewTiccmds();
-
-  // normal update
-  if (!wipe)
-    I_FinishUpdate ();              // page flip or blit buffer
-  else {
-    // wipe update
-    wipe_EndScreen();
-    D_Wipe();
-  }
-
-  I_EndDisplay();
+    I_EndDisplay();
 }
 
 //
@@ -255,31 +255,31 @@ static void D_Display (void)
 
 static void D_DoomLoop(void)
 {
-	for (;;)
-	{
-		// frame syncronous IO operations
-		
-		I_StartFrame();
-					
-		// process one or more tics
-        if (_g->singletics)
-		{
-			I_StartTic ();
-            G_BuildTiccmd (&_g->netcmd);
-			
-            if (_g->advancedemo)
-				D_DoAdvanceDemo ();
+    for (;;)
+    {
+        // frame syncronous IO operations
 
-			M_Ticker ();
-			G_Ticker ();
-			
+        I_StartFrame();
+
+        // process one or more tics
+        if (_g->singletics)
+        {
+            I_StartTic ();
+            G_BuildTiccmd (&_g->netcmd);
+
+            if (_g->advancedemo)
+                D_DoAdvanceDemo ();
+
+            M_Ticker ();
+            G_Ticker ();
+
             _g->gametic++;
             _g->maketic++;
-		}
-		else
-			TryRunTics (); // will run at least one tic
-		
-		// killough 3/16/98: change consoleplayer to displayplayer
+        }
+        else
+            TryRunTics (); // will run at least one tic
+
+        // killough 3/16/98: change consoleplayer to displayplayer
         if (_g->player.mo) // cph 2002/08/10
             S_UpdateSounds(_g->player.mo);// move positional sounds
 
@@ -328,8 +328,8 @@ static void D_UpdateFPS()
 //
 void D_PageTicker(void)
 {
-  if (--_g->pagetic < 0)
-    D_AdvanceDemo();
+    if (--_g->pagetic < 0)
+        D_AdvanceDemo();
 }
 
 //
@@ -352,7 +352,7 @@ static void D_PageDrawer(void)
 //
 void D_AdvanceDemo (void)
 {
-  _g->advancedemo = true;
+    _g->advancedemo = true;
 }
 
 /* killough 11/98: functions to perform demo sequences
@@ -366,15 +366,15 @@ static void D_SetPageName(const char *name)
 
 static void D_DrawTitle1(const char *name)
 {
-  S_StartMusic(mus_intro);
-  _g->pagetic = (TICRATE*30);
-  D_SetPageName(name);
+    S_StartMusic(mus_intro);
+    _g->pagetic = (TICRATE*30);
+    D_SetPageName(name);
 }
 
 static void D_DrawTitle2(const char *name)
 {
-  S_StartMusic(mus_dm2ttl);
-  D_SetPageName(name);
+    S_StartMusic(mus_dm2ttl);
+    D_SetPageName(name);
 }
 
 /* killough 11/98: tabulate demo sequences
@@ -446,18 +446,18 @@ const demostates[][4] =
 
 void D_DoAdvanceDemo(void)
 {
-  _g->player.playerstate = PST_LIVE;  /* not reborn */
-  _g->advancedemo = _g->usergame = _g->paused = false;
-  _g->gameaction = ga_nothing;
+    _g->player.playerstate = PST_LIVE;  /* not reborn */
+    _g->advancedemo = _g->usergame = false;
+    _g->gameaction = ga_nothing;
 
-  _g->pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
-  _g->gamestate = GS_DEMOSCREEN;
+    _g->pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
+    _g->gamestate = GS_DEMOSCREEN;
 
 
-  if (!demostates[++_g->demosequence][_g->gamemode].func)
-      _g->demosequence = 0;
+    if (!demostates[++_g->demosequence][_g->gamemode].func)
+        _g->demosequence = 0;
 
-  demostates[_g->demosequence][_g->gamemode].func(demostates[_g->demosequence][_g->gamemode].name);
+    demostates[_g->demosequence][_g->gamemode].func(demostates[_g->demosequence][_g->gamemode].name);
 }
 
 //
@@ -465,23 +465,9 @@ void D_DoAdvanceDemo(void)
 //
 void D_StartTitle (void)
 {
-  _g->gameaction = ga_nothing;
-  _g->demosequence = -1;
-  D_AdvanceDemo();
-}
-
-//
-// D_AddFile
-//
-// Rewritten by Lee Killough
-//
-// Ty 08/29/98 - add source parm to indicate where this came from
-// CPhipps - static, const char* parameter
-//         - source is an enum
-//         - modified to allocate & use new wadfiles array
-void D_AddFile ()
-{  
-
+    _g->gameaction = ga_nothing;
+    _g->demosequence = -1;
+    D_AdvanceDemo();
 }
 
 //
@@ -535,8 +521,6 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
 			//TNT - MURAL1
 			else if (fileinfo[length].name[0] == 'M' && fileinfo[length].name[1] == 'U' && fileinfo[length].name[2] == 'R'  && fileinfo[length].name[3] == 'A' && fileinfo[length].name[4] == 'L' && fileinfo[length].name[5] == '1' && fileinfo[length].name[6] == 0)
             {
-				cm = 32;
-				sc = 2;
 				*gmode = commercial;
 				_g->gamemission = pack_tnt;
 				_g->gamemode = commercial;
@@ -545,8 +529,6 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
 			//Plutonia - WFALL1
 			else if (fileinfo[length].name[0] == 'W' && fileinfo[length].name[1] == 'F' && fileinfo[length].name[2] == 'A'  && fileinfo[length].name[3] == 'L' && fileinfo[length].name[4] == 'L' && fileinfo[length].name[5] == '1' && fileinfo[length].name[6] == 0)
             {
-				cm = 32;
-				sc = 2;
 				*gmode = commercial;
 				_g->gamemission = pack_plut;
 				_g->gamemode = commercial;
@@ -567,15 +549,15 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
     *hassec = false;
     if (cm>=30)
     {
-      *gmode = commercial;
-      *hassec = sc>=2;
+        *gmode = commercial;
+        *hassec = sc>=2;
     }
     else if (ud>=9)
-      *gmode = retail;
+        *gmode = retail;
     else if (rg>=18)
-      *gmode = registered;
+        *gmode = registered;
     else if (sw>=9)
-      *gmode = shareware;
+        *gmode = shareware;
 }
 
 //
@@ -602,36 +584,31 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
 
 static void IdentifyVersion()
 {
-    if(doom_iwad && (doom_iwad_len > 0))
+    CheckIWAD2(doom_iwad, doom_iwad_len, &_g->gamemode, &_g->haswolflevels);
+
+    /* jff 8/23/98 set gamemission global appropriately in all cases
+     * cphipps 12/1999 - no version output here, leave that to the caller
+     */
+    switch(_g->gamemode)
     {
-        CheckIWAD2(doom_iwad, doom_iwad_len, &_g->gamemode, &_g->haswolflevels);
+        case retail:
+        case registered:
+        case shareware:
+            _g->gamemission = doom;
+            break;
+        case commercial:
+            _g->gamemission = doom2;
+            break;
 
-        /* jff 8/23/98 set gamemission global appropriately in all cases
-         * cphipps 12/1999 - no version output here, leave that to the caller
-         */
-        switch(_g->gamemode)
-        {
-            case retail:
-            case registered:
-            case shareware:
-                _g->gamemission = doom;
-                break;
-            case commercial:
-                _g->gamemission = doom2;
-				break;
+        default:
+            _g->gamemission = none;
+            break;
+    }
 
-            default:
-                _g->gamemission = none;
-                break;
-        }
-
-        if (_g->gamemode == indetermined)
-        {
-            //jff 9/3/98 use logical output routine
-            lprintf(LO_WARN,"Unknown Game Version, may not work\n");
-        }
-
-        D_AddFile();
+    if (_g->gamemode == indetermined)
+    {
+        //jff 9/3/98 use logical output routine
+        lprintf(LO_WARN,"Unknown Game Version, may not work\n");
     }
 }
 
@@ -647,13 +624,13 @@ static void D_DoomMainSetup(void)
 
     // jff 1/24/98 end of set to both working and command line value
 
-    {
-        // CPhipps - localise title variable
-        // print title for every printed line
-        // cph - code cleaned and made smaller
-        const char* doomverstr;
+    // CPhipps - localise title variable
+    // print title for every printed line
+    // cph - code cleaned and made smaller
+    const char* doomverstr;
 
-        switch ( _g->gamemode ) {
+    switch ( _g->gamemode )
+    {
         case retail:
             doomverstr = "The Ultimate DOOM";
             break;
@@ -680,24 +657,24 @@ static void D_DoomMainSetup(void)
         default:
             doomverstr = "Public DOOM";
             break;
-        }
-
-        /* cphipps - the main display. This shows the build date, copyright, and game type */
-
-        lprintf(LO_ALWAYS,"PrBoom (built %s)", version_date);
-        lprintf(LO_ALWAYS, "Playing: %s", doomverstr);
-        lprintf(LO_ALWAYS, "PrBoom is released under the");
-        lprintf(LO_ALWAYS, "GNU GPL v2.0.");
-
-        lprintf(LO_ALWAYS, "You are welcome to");
-        lprintf(LO_ALWAYS, "redistribute it under");
-        lprintf(LO_ALWAYS, "certain conditions.");
-
-        lprintf(LO_ALWAYS, "It comes with ABSOLUTELY\nNO WARRANTY.\nSee the file COPYING for\ndetails.");
-
-        lprintf(LO_ALWAYS, "\nPhew. Thats the nasty legal\nstuff out of the way.\nLets play Doom!\n");
-
     }
+
+    /* cphipps - the main display. This shows the build date, copyright, and game type */
+
+    lprintf(LO_ALWAYS,"PrBoom (built %s)", version_date);
+    lprintf(LO_ALWAYS, "Playing: %s", doomverstr);
+    lprintf(LO_ALWAYS, "PrBoom is released under the");
+    lprintf(LO_ALWAYS, "GNU GPL v2.0.");
+
+    lprintf(LO_ALWAYS, "You are welcome to");
+    lprintf(LO_ALWAYS, "redistribute it under");
+    lprintf(LO_ALWAYS, "certain conditions.");
+
+    lprintf(LO_ALWAYS, "It comes with ABSOLUTELY\nNO WARRANTY.\nSee the file COPYING for\ndetails.");
+
+    lprintf(LO_ALWAYS, "\nPhew. Thats the nasty legal\nstuff out of the way.\nLets play Doom!\n");
+
+
 
     // init subsystems
 

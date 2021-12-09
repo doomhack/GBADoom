@@ -62,7 +62,6 @@ void D_DoAdvanceDemo (void);
 void D_PageTicker(void);
 void D_StartTitle(void);
 void D_DoomMain(void);
-void D_AddFile ();
 
 
 
