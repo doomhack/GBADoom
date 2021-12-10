@@ -352,7 +352,7 @@ typedef struct vissprite_s
 {
   short x1, x2;
   fixed_t gx, gy;              // for line side calculation
-  fixed_t gz, gzt;             // global bottom / top for silhouette clipping
+  fixed_t gz;                   // global bottom for silhouette clipping
   fixed_t startfrac;           // horizontal position of x1
   fixed_t scale;
   fixed_t xiscale;             // negative if flipped

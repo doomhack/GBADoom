@@ -987,7 +987,9 @@ static void R_DrawSprite (const vissprite_t* spr)
 
         }
 
-        if (ds->silhouette & SIL_TOP && spr->gzt > ds->tsilheight)   // top sil
+        fixed_t gzt = spr->gz + (spr->patch->topoffset << FRACBITS);
+
+        if (ds->silhouette & SIL_TOP && gzt > ds->tsilheight)   // top sil
         {
             for (int x=r1; x <= r2; x++)
             {
@@ -1494,8 +1496,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     vis->gx = fx;
     vis->gy = fy;
     vis->gz = fz;
-    vis->gzt = fz + (patch->topoffset << FRACBITS);                          // killough 3/27/98
-    vis->texturemid = vis->gzt - viewz;
+    vis->texturemid = (fz + (patch->topoffset << FRACBITS)) - viewz;
     vis->x1 = x1 < 0 ? 0 : x1;
     vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
 
