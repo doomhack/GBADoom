@@ -67,7 +67,6 @@ void G_DoWorldDone(void);
 void G_Compatibility(void);
 const byte *G_ReadOptions(const byte *demo_p);   /* killough 3/1/98 - cph: const byte* */
 void G_PlayerReborn(int player);
-void G_RestartLevel(void); // CPhipps - menu involked level restart
 void G_DoVictory(void);
 void G_BuildTiccmd (ticcmd_t* cmd); // CPhipps - move decl to header
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */

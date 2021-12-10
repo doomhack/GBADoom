@@ -68,6 +68,8 @@ static const int mapcolor_flat = 88;    // line with no floor/ceiling changes
 static const int mapcolor_sngl = 208;    // single player arrow color
 static const int map_secret_after = 0;
 
+static const int f_w = (SCREENWIDTH*2);
+static const int f_h = SCREENHEIGHT-ST_SCALED_HEIGHT;// to allow runtime setting of width/height
 
 
 
@@ -96,8 +98,8 @@ static const int map_secret_after = 0;
 #define FTOM(x) FixedMul(((x)<<16),_g->scale_ftom)
 #define MTOF(x) (FixedMul((x),_g->scale_mtof)>>16)
 // translates between frame-buffer and map coordinates
-#define CXMTOF(x)  (_g->f_x + MTOF((x)- _g->m_x))
-#define CYMTOF(y)  (_g->f_y + (_g->f_h - MTOF((y)- _g->m_y)))
+#define CXMTOF(x)  (MTOF((x)- _g->m_x))
+#define CYMTOF(y)  ((f_h - MTOF((y)- _g->m_y)))
 
 typedef struct
 {
@@ -136,8 +138,8 @@ static void AM_activateNewScale(void)
 {
     _g->m_x += _g->m_w/2;
     _g->m_y += _g->m_h/2;
-    _g->m_w = FTOM(_g->f_w);
-    _g->m_h = FTOM(_g->f_h);
+    _g->m_w = FTOM(f_w);
+    _g->m_h = FTOM(f_h);
     _g->m_x -= _g->m_w/2;
     _g->m_y -= _g->m_h/2;
     _g->m_x2 =  _g->m_x + _g->m_w;
@@ -177,11 +179,11 @@ static void AM_findMinMaxBoundaries(void)
     _g->max_w = (_g->max_x >>= FRACTOMAPBITS) - (_g->min_x >>= FRACTOMAPBITS);//e6y
     _g->max_h = (_g->max_y >>= FRACTOMAPBITS) - (_g->min_y >>= FRACTOMAPBITS);//e6y
 
-    a = FixedDiv(_g->f_w<<FRACBITS, _g->max_w);
-    b = FixedDiv(_g->f_h<<FRACBITS, _g->max_h);
+    a = FixedDiv(f_w<<FRACBITS, _g->max_w);
+    b = FixedDiv(f_h<<FRACBITS, _g->max_h);
 
     _g->min_scale_mtof = a < b ? a : b;
-    _g->max_scale_mtof = FixedDiv(_g->f_h<<FRACBITS, 2*PLAYERRADIUS);
+    _g->max_scale_mtof = FixedDiv(f_h<<FRACBITS, 2*PLAYERRADIUS);
 }
 
 //
@@ -236,8 +238,8 @@ static void AM_initVariables(void)
 
     _g->m_paninc.x =  _g->m_paninc.y = 0;
 
-    _g->m_w = FTOM(_g->f_w);
-    _g->m_h = FTOM(_g->f_h);
+    _g->m_w = FTOM(f_w);
+    _g->m_h = FTOM(f_h);
 
 
     _g->m_x = (_g->player.mo->x >> FRACTOMAPBITS) - _g->m_w/2;//e6y
@@ -260,10 +262,6 @@ static void AM_initVariables(void)
 // CPhipps - get status bar height from status bar code
 static void AM_LevelInit(void)
 {
-    _g->f_x = _g->f_y = 0;
-    _g->f_w = SCREENWIDTH*2;           // killough 2/7/98: get rid of finit_ vars
-    _g->f_h = SCREENHEIGHT-ST_SCALED_HEIGHT;// to allow runtime setting of width/height
-
     AM_findMinMaxBoundaries();
     _g->scale_mtof = FixedDiv(_g->min_scale_mtof, (int) (0.7*FRACUNIT));
     if (_g->scale_mtof > _g->max_scale_mtof)
@@ -580,9 +578,9 @@ static boolean AM_clipMline(mline_t*  ml, fline_t*  fl)
 #define DOOUTCODE(oc, mx, my) \
     (oc) = 0; \
     if ((my) < 0) (oc) |= TOP; \
-    else if ((my) >= _g->f_h) (oc) |= BOTTOM; \
+    else if ((my) >= f_h) (oc) |= BOTTOM; \
     if ((mx) < 0) (oc) |= LEFT; \
-    else if ((mx) >= _g->f_w) (oc) |= RIGHT;
+    else if ((mx) >= f_w) (oc) |= RIGHT;
 
 
     // do trivial rejects and outcodes
@@ -645,15 +643,15 @@ static boolean AM_clipMline(mline_t*  ml, fline_t*  fl)
         {
             dy = fl->a.y - fl->b.y;
             dx = fl->b.x - fl->a.x;
-            tmp.x = fl->a.x + (dx*(fl->a.y-_g->f_h))/dy;
-            tmp.y = _g->f_h-1;
+            tmp.x = fl->a.x + (dx*(fl->a.y-f_h))/dy;
+            tmp.y = f_h-1;
         }
         else if (outside & RIGHT)
         {
             dy = fl->b.y - fl->a.y;
             dx = fl->b.x - fl->a.x;
-            tmp.y = fl->a.y + (dy*(_g->f_w-1 - fl->a.x))/dx;
-            tmp.x = _g->f_w-1;
+            tmp.y = fl->a.y + (dy*(f_w-1 - fl->a.x))/dx;
+            tmp.x = f_w-1;
         }
         else if (outside & LEFT)
         {
@@ -1027,7 +1025,7 @@ void AM_Drawer (void)
     if (!(_g->automapmode & am_active)) return;
 
     if (!(_g->automapmode & am_overlay)) // cph - If not overlay mode, clear background for the automap
-        V_FillRect(_g->f_x, _g->f_y, _g->f_w, _g->f_h, (byte)mapcolor_back); //jff 1/5/98 background default color
+        V_FillRect(0, 0, f_w, f_h, (byte)mapcolor_back); //jff 1/5/98 background default color
 
     AM_drawWalls();
     AM_drawPlayers();

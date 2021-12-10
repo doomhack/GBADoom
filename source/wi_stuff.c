@@ -777,15 +777,15 @@ void WI_updateStats(void)
   if (_g->acceleratestage && _g->sp_state != 10)
   {
     _g->acceleratestage = 0;
-    _g->cnt_kills = (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills;
-    _g->cnt_items = (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems;
+    _g->cnt_kills = (_g->plrs[0].skills * 100) / _g->wbs->maxkills;
+    _g->cnt_items = (_g->plrs[0].sitems * 100) / _g->wbs->maxitems;
 
     // killough 2/22/98: Make secrets = 100% if maxsecret = 0:
     _g->cnt_secret = (_g->wbs->maxsecret ?
-      (_g->plrs[_g->me].ssecret * 100) / _g->wbs->maxsecret : 100);
+      (_g->plrs[0].ssecret * 100) / _g->wbs->maxsecret : 100);
 
     _g->cnt_total_time = _g->wbs->totaltimes / TICRATE;
-    _g->cnt_time = _g->plrs[_g->me].stime / TICRATE;
+    _g->cnt_time = _g->plrs[0].stime / TICRATE;
     _g->cnt_par = _g->wbs->partime / TICRATE;
     S_StartSound(0, sfx_barexp);
     _g->sp_state = 10;
@@ -798,9 +798,9 @@ void WI_updateStats(void)
     if (!(_g->bcnt&3))
       S_StartSound(0, sfx_pistol);
 
-    if (_g->cnt_kills >= (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills)
+    if (_g->cnt_kills >= (_g->plrs[0].skills * 100) / _g->wbs->maxkills)
     {
-      _g->cnt_kills = (_g->plrs[_g->me].skills * 100) / _g->wbs->maxkills;
+      _g->cnt_kills = (_g->plrs[0].skills * 100) / _g->wbs->maxkills;
       S_StartSound(0, sfx_barexp);
       _g->sp_state++;
     }
@@ -812,9 +812,9 @@ void WI_updateStats(void)
     if (!(_g->bcnt&3))
       S_StartSound(0, sfx_pistol);
 
-    if (_g->cnt_items >= (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems)
+    if (_g->cnt_items >= (_g->plrs[0].sitems * 100) / _g->wbs->maxitems)
     {
-      _g->cnt_items = (_g->plrs[_g->me].sitems * 100) / _g->wbs->maxitems;
+      _g->cnt_items = (_g->plrs[0].sitems * 100) / _g->wbs->maxitems;
       S_StartSound(0, sfx_barexp);
       _g->sp_state++;
     }
@@ -827,10 +827,10 @@ void WI_updateStats(void)
       S_StartSound(0, sfx_pistol);
 
     // killough 2/22/98: Make secrets = 100% if maxsecret = 0:
-    if (_g->cnt_secret >= (_g->wbs->maxsecret ? (_g->plrs[_g->me].ssecret * 100) / _g->wbs->maxsecret : 100))
+    if (_g->cnt_secret >= (_g->wbs->maxsecret ? (_g->plrs[0].ssecret * 100) / _g->wbs->maxsecret : 100))
     {
       _g->cnt_secret = (_g->wbs->maxsecret ?
-        (_g->plrs[_g->me].ssecret * 100) / _g->wbs->maxsecret : 100);
+        (_g->plrs[0].ssecret * 100) / _g->wbs->maxsecret : 100);
       S_StartSound(0, sfx_barexp);
       _g->sp_state++;
     }
@@ -842,8 +842,8 @@ void WI_updateStats(void)
 
     _g->cnt_time += 3;
 
-    if (_g->cnt_time >= _g->plrs[_g->me].stime / TICRATE)
-      _g->cnt_time = _g->plrs[_g->me].stime / TICRATE;
+    if (_g->cnt_time >= _g->plrs[0].stime / TICRATE)
+      _g->cnt_time = _g->plrs[0].stime / TICRATE;
 
     _g->cnt_total_time += 3;
 
@@ -856,7 +856,7 @@ void WI_updateStats(void)
     {
       _g->cnt_par = _g->wbs->partime / TICRATE;
 
-      if ((_g->cnt_time >= _g->plrs[_g->me].stime / TICRATE) && (_g->cnt_total_time >= _g->wbs->totaltimes / TICRATE))
+      if ((_g->cnt_time >= _g->plrs[0].stime / TICRATE) && (_g->cnt_total_time >= _g->wbs->totaltimes / TICRATE))
       {
         S_StartSound(0, sfx_barexp);
         _g->sp_state++;
@@ -1065,7 +1065,6 @@ void WI_initVariables(wbstartstruct_t* wbstartstruct)
 
   _g->acceleratestage = 0;
   _g->cnt = _g->bcnt = 0;
-  _g->me = _g->wbs->pnum;
   _g->plrs = _g->wbs->plyr;
 
   if (!_g->wbs->maxkills)

@@ -345,8 +345,8 @@ static void R_InitFlats(void)
   int i;
 
   _g->firstflat = W_GetNumForName("F_START") + 1;
-  _g->lastflat  = W_GetNumForName("F_END") - 1;
-  _g->numflats  = _g->lastflat - _g->firstflat + 1;
+  int lastflat  = W_GetNumForName("F_END") - 1;
+  _g->numflats  = lastflat - _g->firstflat + 1;
 
   // Create translation table for global animation.
   // killough 4/9/98: make column offsets 32-bit;

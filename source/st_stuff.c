@@ -81,7 +81,7 @@ static int ST_calcPainOffset(void)
 {
   static int lastcalc;
   static int oldhealth = -1;
-  int health = _g->plyr->health > 100 ? 100 : _g->plyr->health;
+  int health = _g->player.health > 100 ? 100 : _g->player.health;
 
   if (health != oldhealth)
     {
@@ -110,7 +110,7 @@ static void ST_updateFaceWidget(void)
     if (priority < 10)
     {
         // dead
-        if (!_g->plyr->health)
+        if (!_g->player.health)
         {
             priority = 9;
             _g->st_faceindex = ST_DEADFACE;
@@ -120,17 +120,17 @@ static void ST_updateFaceWidget(void)
 
     if (priority < 9)
     {
-        if (_g->plyr->bonuscount)
+        if (_g->player.bonuscount)
         {
             // picking up bonus
             doevilgrin = false;
 
             for (i=0;i<NUMWEAPONS;i++)
             {
-                if (_g->oldweaponsowned[i] != _g->plyr->weaponowned[i])
+                if (_g->oldweaponsowned[i] != _g->player.weaponowned[i])
                 {
                     doevilgrin = true;
-                    _g->oldweaponsowned[i] = _g->plyr->weaponowned[i];
+                    _g->oldweaponsowned[i] = _g->player.weaponowned[i];
                 }
             }
             if (doevilgrin)
@@ -147,7 +147,7 @@ static void ST_updateFaceWidget(void)
 	//Restore the face looking at enemies direction in this SVN... Cause it's handy! ~Kippykip
 	if (priority < 8)
     {
-		if (_g->plyr->damagecount && _g->plyr->attacker && _g->plyr->attacker != _g->plyr->mo)
+        if (_g->player.damagecount && _g->player.attacker && _g->player.attacker != _g->player.mo)
 		{
 			// being attacked
 			priority = 7;
@@ -155,28 +155,28 @@ static void ST_updateFaceWidget(void)
 			// haleyjd 10/12/03: classic DOOM problem of missing OUCH face
 			// was due to inversion of this test:
 			// if(plyr->health - st_oldhealth > ST_MUCHPAIN)
-			if(_g->st_oldhealth - _g->plyr->health > ST_MUCHPAIN)
+            if(_g->st_oldhealth - _g->player.health > ST_MUCHPAIN)
 			{
 				_g->st_facecount = ST_TURNCOUNT;
 				_g->st_faceindex = ST_calcPainOffset() + ST_OUCHOFFSET;
 			}
 			else
 			{
-				badguyangle = R_PointToAngle2(_g->plyr->mo->x,
-				_g->plyr->mo->y,
-				_g->plyr->attacker->x,
-				_g->plyr->attacker->y);
+                badguyangle = R_PointToAngle2(_g->player.mo->x,
+                _g->player.mo->y,
+                _g->player.attacker->x,
+                _g->player.attacker->y);
 
-				if (badguyangle > _g->plyr->mo->angle)
+                if (badguyangle > _g->player.mo->angle)
 				{
 					// whether right or left
-					diffang = badguyangle - _g->plyr->mo->angle;
+                    diffang = badguyangle - _g->player.mo->angle;
 					i = diffang > ANG180;
 				}
 				else
 				{
 					// whether left or right
-					diffang = _g->plyr->mo->angle - badguyangle;
+                    diffang = _g->player.mo->angle - badguyangle;
 					i = diffang <= ANG180;
 				} // confusing, aint it?
 
@@ -205,12 +205,12 @@ static void ST_updateFaceWidget(void)
 
     if (priority < 7)
     {
-        if (_g->plyr->damagecount)
+        if (_g->player.damagecount)
         {
             // haleyjd 10/12/03: classic DOOM problem of missing OUCH face
             // was due to inversion of this test:
             // if(plyr->health - st_oldhealth > ST_MUCHPAIN)
-            if(_g->st_oldhealth - _g->plyr->health > ST_MUCHPAIN)
+            if(_g->st_oldhealth - _g->player.health > ST_MUCHPAIN)
             {
                 priority = 7;
                 _g->st_facecount = ST_TURNCOUNT;
@@ -229,7 +229,7 @@ static void ST_updateFaceWidget(void)
     if (priority < 6)
     {
         // rapid firing
-        if (_g->plyr->attackdown)
+        if (_g->player.attackdown)
         {
             if (lastattackdown==-1)
                 lastattackdown = ST_RAMPAGEDELAY;
@@ -249,8 +249,8 @@ static void ST_updateFaceWidget(void)
     if (priority < 5)
     {
         // invulnerability
-        if ((_g->plyr->cheats & CF_GODMODE)
-                || _g->plyr->powers[pw_invulnerability])
+        if ((_g->player.cheats & CF_GODMODE)
+                || _g->player.powers[pw_invulnerability])
         {
             priority = 4;
 
@@ -280,21 +280,21 @@ static void ST_updateWidgets(void)
 
     if(_g->fps_show)
         _g->w_ready.num = &_g->fps_framerate;
-    else if (weaponinfo[_g->plyr->readyweapon].ammo == am_noammo)
+    else if (weaponinfo[_g->player.readyweapon].ammo == am_noammo)
         _g->w_ready.num = &largeammo;
     else
-        _g->w_ready.num = &_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo];
+        _g->w_ready.num = &_g->player.ammo[weaponinfo[_g->player.readyweapon].ammo];
 
 
     // update keycard multiple widgets
     for (i=0;i<3;i++)
     {
-        _g->keyboxes[i] = _g->plyr->cards[i] ? i : -1;
+        _g->keyboxes[i] = _g->player.cards[i] ? i : -1;
 
         //jff 2/24/98 select double key
         //killough 2/28/98: preserve traditional keys by config option
 
-        if (_g->plyr->cards[i+3])
+        if (_g->player.cards[i+3])
             _g->keyboxes[i] = i+3;
     }
 
@@ -306,19 +306,19 @@ void ST_Ticker(void)
 {
   _g->st_randomnumber = M_Random();
   ST_updateWidgets();
-  _g->st_oldhealth = _g->plyr->health;
+  _g->st_oldhealth = _g->player.health;
 }
 
 
 static void ST_doPaletteStuff(void)
 {
     int         palette;
-    int cnt = _g->plyr->damagecount;
+    int cnt = _g->player.damagecount;
 
-    if (_g->plyr->powers[pw_strength])
+    if (_g->player.powers[pw_strength])
     {
         // slowly fade the berzerk out
-        int bzc = 12 - (_g->plyr->powers[pw_strength]>>6);
+        int bzc = 12 - (_g->player.powers[pw_strength]>>6);
         if (bzc > cnt)
             cnt = bzc;
     }
@@ -336,15 +336,15 @@ static void ST_doPaletteStuff(void)
         palette += STARTREDPALS;
     }
     else
-        if (_g->plyr->bonuscount)
+        if (_g->player.bonuscount)
         {
-            palette = (_g->plyr->bonuscount+7)>>3;
+            palette = (_g->player.bonuscount+7)>>3;
             if (palette >= NUMBONUSPALS)
                 palette = NUMBONUSPALS-1;
             palette += STARTBONUSPALS;
         }
         else
-            if (_g->plyr->powers[pw_ironfeet] > 4*32 || _g->plyr->powers[pw_ironfeet] & 8)
+            if (_g->player.powers[pw_ironfeet] > 4*32 || _g->player.powers[pw_ironfeet] & 8)
                 palette = RADIATIONPAL;
             else
                 palette = 0;
@@ -550,8 +550,6 @@ static void ST_initData(void)
 {
     int i;
 
-    _g->plyr = &_g->player;            // killough 3/7/98
-
     _g->st_statusbaron = true;
 
     _g->st_faceindex = 0;
@@ -560,7 +558,7 @@ static void ST_initData(void)
     _g->st_oldhealth = -1;
 
     for (i=0;i<NUMWEAPONS;i++)
-        _g->oldweaponsowned[i] = _g->plyr->weaponowned[i];
+        _g->oldweaponsowned[i] = _g->player.weaponowned[i];
 
     for (i=0;i<3;i++)
         _g->keyboxes[i] = -1;
@@ -577,7 +575,7 @@ static void ST_createWidgets(void)
 		ST_AMMOX,
 		ST_AMMOY,
 		_g->tallnum,
-		&_g->plyr->ammo[weaponinfo[_g->plyr->readyweapon].ammo],
+        &_g->player.ammo[weaponinfo[_g->player.readyweapon].ammo],
 		&_g->st_statusbaron,
 		ST_AMMOWIDTH );
 
@@ -586,7 +584,7 @@ static void ST_createWidgets(void)
 			ST_HEALTHX,
 			ST_HEALTHY,
 			_g->tallnum,
-			&_g->plyr->health,
+            &_g->player.health,
 			&_g->st_statusbaron,
 			_g->tallpercent);
 					  
@@ -595,7 +593,7 @@ static void ST_createWidgets(void)
 			ST_ARMORX,
 			ST_ARMORY,
 			_g->tallnum,
-			&_g->plyr->armorpoints,
+            &_g->player.armorpoints,
 			&_g->st_statusbaron, _g->tallpercent);
 
     // weapons owned
@@ -604,7 +602,7 @@ static void ST_createWidgets(void)
         STlib_initMultIcon(&_g->w_arms[i],
 			ST_ARMSX+(i%3)*ST_ARMSXSPACE,
 			ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-			_g->arms[i], (int*) &_g->plyr->weaponowned[i+1],
+            _g->arms[i], (int*) &_g->player.weaponowned[i+1],
 			&_g->st_statusbaron);
     }
 	
@@ -635,7 +633,7 @@ static void ST_createWidgets(void)
 			ST_AMMO0X,
 			ST_AMMO0Y,
 			_g->shortnum,
-			&_g->plyr->ammo[0],
+            &_g->player.ammo[0],
 			&_g->st_statusbaron,
 			ST_AMMO0WIDTH);
 
@@ -643,7 +641,7 @@ static void ST_createWidgets(void)
 			ST_AMMO1X,
 			ST_AMMO1Y,
 			_g->shortnum,
-			&_g->plyr->ammo[1],
+            &_g->player.ammo[1],
 			&_g->st_statusbaron,
 			ST_AMMO1WIDTH);
 
@@ -651,7 +649,7 @@ static void ST_createWidgets(void)
 			ST_AMMO2X,
 			ST_AMMO2Y,
 			_g->shortnum,
-			&_g->plyr->ammo[2],
+            &_g->player.ammo[2],
 			&_g->st_statusbaron,
 			ST_AMMO2WIDTH);
 
@@ -659,7 +657,7 @@ static void ST_createWidgets(void)
 			ST_AMMO3X,
 			ST_AMMO3Y,
 			_g->shortnum,
-			&_g->plyr->ammo[3],
+            &_g->player.ammo[3],
 			&_g->st_statusbaron,
 			ST_AMMO3WIDTH);
 
@@ -668,7 +666,7 @@ static void ST_createWidgets(void)
 			ST_MAXAMMO0X,
 			ST_MAXAMMO0Y,
 			_g->shortnum,
-			&_g->plyr->maxammo[0],
+            &_g->player.maxammo[0],
 			&_g->st_statusbaron,
 			ST_MAXAMMO0WIDTH);
 
@@ -676,7 +674,7 @@ static void ST_createWidgets(void)
 			ST_MAXAMMO1X,
 			ST_MAXAMMO1Y,
 			_g->shortnum,
-			&_g->plyr->maxammo[1],
+            &_g->player.maxammo[1],
 			&_g->st_statusbaron,
 			ST_MAXAMMO1WIDTH);
 
@@ -684,7 +682,7 @@ static void ST_createWidgets(void)
 			ST_MAXAMMO2X,
 			ST_MAXAMMO2Y,
 			_g->shortnum,
-			&_g->plyr->maxammo[2],
+            &_g->player.maxammo[2],
 			&_g->st_statusbaron,
 			ST_MAXAMMO2WIDTH);
 
@@ -692,7 +690,7 @@ static void ST_createWidgets(void)
 			ST_MAXAMMO3X,
 			ST_MAXAMMO3Y,
 			_g->shortnum,
-			&_g->plyr->maxammo[3],
+            &_g->player.maxammo[3],
 			&_g->st_statusbaron,
 			ST_MAXAMMO3WIDTH);
 			

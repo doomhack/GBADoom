@@ -116,8 +116,6 @@ static void W_AddFile()
 
         if (strncmp(header->identification,"IWAD",4))
             I_Error("W_AddFile: Wad file doesn't have IWAD id");
-
-        _g->numlumps = header->numlumps;
     }
 }
 
@@ -256,12 +254,7 @@ void W_Init(void)
 {
     // CPhipps - start with nothing
 
-    _g->numlumps = 0;
-
     W_AddFile();
-
-    if (!_g->numlumps)
-        I_Error ("W_Init: No files found");
 }
 
 //

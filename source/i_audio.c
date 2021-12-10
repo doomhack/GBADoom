@@ -321,16 +321,6 @@ int I_StartSound(int id, int channel, int vol, int sep)
 	return channel;
 }
 
-void I_ShutdownSound(void)
-{
-    if (_g->sound_inited)
-	{
-		lprintf(LO_INFO, "I_ShutdownSound: ");
-		lprintf(LO_INFO, "\n");
-        _g->sound_inited = false;
-	}
-}
-
 //static SDL_AudioSpec audio;
 
 void I_InitSound(void)

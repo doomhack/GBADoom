@@ -314,21 +314,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     cmd->forwardmove += fudgef((signed char)forward);
     cmd->sidemove += side;
     cmd->angleturn = fudgea(cmd->angleturn);
-
-    // CPhipps - special events (game new/load/save/pause)
-    if (_g->special_event & BT_SPECIAL) {
-        cmd->buttons = _g->special_event;
-        _g->special_event = 0;
-    }
-}
-
-//
-// G_RestartLevel
-//
-
-void G_RestartLevel(void)
-{
-    _g->special_event = BT_SPECIAL | (BTS_RESTARTLEVEL & BT_SPECIALMASK);
 }
 
 #include "z_bmalloc.h"
@@ -402,8 +387,6 @@ static void G_DoLoadLevel (void)
 
     // clear cmd building stuff
     memset (_g->gamekeydown, 0, sizeof(_g->gamekeydown));
-
-    _g->special_event = 0;
 
     // killough 5/13/98: in case netdemo has consoleplayer other than green
     ST_Start();
@@ -529,37 +512,6 @@ void G_Ticker (void)
 
             if (_g->demoplayback)
                 G_ReadDemoTiccmd (cmd);
-        }
-
-
-        if (_g->playeringame)
-        {
-            if (_g->player.cmd.buttons & BT_SPECIAL)
-            {
-                switch (_g->player.cmd.buttons & BT_SPECIALMASK)
-                {
-                case BTS_SAVEGAME:
-                    _g->savegameslot = (_g->player.cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-                    _g->gameaction = ga_savegame;
-                    break;
-
-                    // CPhipps - remote loadgame request
-                case BTS_LOADGAME:
-                    _g->savegameslot =
-                            (_g->player.cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-                    _g->gameaction = ga_loadgame;
-                    _g->command_loadgame = false;
-                    break;
-
-                    // CPhipps - Restart the level
-                case BTS_RESTARTLEVEL:
-                    if (_g->demoplayback)
-                        break;     // CPhipps - Ignore in demos or old games
-                    _g->gameaction = ga_loadlevel;
-                    break;
-                }
-                _g->player.cmd.buttons = 0;
-            }
         }
     }
 

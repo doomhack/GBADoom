@@ -75,10 +75,10 @@ static void P_LoadVertexes (int lump)
 
 static void P_LoadSegs (int lump)
 {
-    _g->numsegs = W_LumpLength(lump) / sizeof(seg_t);
+    int numsegs = W_LumpLength(lump) / sizeof(seg_t);
     _g->segs = (const seg_t *)W_CacheLumpNum(lump);
 
-    if (!_g->numsegs)
+    if (numsegs)
       I_Error("P_LoadSegs: no segs in level");
 }
 

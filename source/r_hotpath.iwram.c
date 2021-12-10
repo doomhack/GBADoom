@@ -1076,7 +1076,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     vis->patch = patch;
 
-    if (_g->viewplayer->powers[pw_invisibility] > 4*32 || _g->viewplayer->powers[pw_invisibility] & 8)
+    if (_g->player.powers[pw_invisibility] > 4*32 || _g->player.powers[pw_invisibility] & 8)
         vis->colormap = NULL;                    // shadow draw
     else if (fixedcolormap)
         vis->colormap = fixedcolormap;           // fixed color
@@ -1096,7 +1096,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
 static void R_DrawPlayerSprites(void)
 {
-  int i, lightlevel = _g->viewplayer->mo->subsector->sector->lightlevel;
+  int i, lightlevel = _g->player.mo->subsector->sector->lightlevel;
   pspdef_t *psp;
 
   // clip to screen bounds
@@ -1104,7 +1104,7 @@ static void R_DrawPlayerSprites(void)
   mceilingclip = negonearray;
 
   // add all active psprites
-  for (i=0, psp=_g->viewplayer->psprites; i<NUMPSPRITES; i++,psp++)
+  for (i=0, psp=_g->player.psprites; i<NUMPSPRITES; i++,psp++)
     if (psp->state)
       R_DrawPSprite (psp, lightlevel);
 }
