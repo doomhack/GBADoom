@@ -723,7 +723,7 @@ static void D_DoomMainSetup(void)
 
     _g->idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
-    _g->fps_show = false;
+    _g->fps_show = true;
 
     I_InitGraphics();
 

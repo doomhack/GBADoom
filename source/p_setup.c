@@ -459,7 +459,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   char  lumpname[9];
   int   lumpnum;
 
-  _g->totallive = _g->totalkills = _g->totalitems = _g->totalsecret = _g->wminfo.maxfrags = 0;
+  _g->totallive = _g->totalkills = _g->totalitems = _g->totalsecret = 0;
   _g->wminfo.partime = 180;
 
   for (i=0; i<MAXPLAYERS; i++)

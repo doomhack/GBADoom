@@ -141,10 +141,6 @@ typedef struct
     unsigned int toptexture:10;
     unsigned int bottomtexture:10;
     unsigned int midtexture:10;
-
-    //short toptexture;      // Texture indices. We do not maintain names here.
-    //short bottomtexture;
-    //short midtexture;
 } side_t;
 
 //
@@ -308,7 +304,7 @@ typedef byte  lighttable_t;
 typedef struct drawseg_s
 {
   const seg_t *curline;
-  int x1, x2;
+  short x1, x2;
   fixed_t scale1, scale2, scalestep;
   int silhouette;                       // 0=none, 1=bottom, 2=top, 3=both
   fixed_t bsilheight;                   // do not clip sprites above this

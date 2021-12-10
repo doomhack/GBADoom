@@ -788,7 +788,6 @@ void G_DoCompleted (void)
     _g->wminfo.maxkills = _g->totalkills;
     _g->wminfo.maxitems = _g->totalitems;
     _g->wminfo.maxsecret = _g->totalsecret;
-    _g->wminfo.maxfrags = 0;
 
     if ( _g->gamemode == commercial )
         _g->wminfo.partime = TICRATE*cpars[_g->gamemap-1];
@@ -912,7 +911,7 @@ void G_UpdateSaveGameStrings()
             {
                 strcpy(_g->savegamestrings[i], "MAP ");
 
-                _itoa(saveslots[i].gamemap, &_g->savegamestrings[i][4], 10);
+                itoa(saveslots[i].gamemap, &_g->savegamestrings[i][4], 10);
             }
             else
             {

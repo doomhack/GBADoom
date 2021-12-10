@@ -198,8 +198,6 @@ typedef struct
   int         sitems;
   int         ssecret;
   int         stime;
-  int         score;  // current score on entry, modified on return
-
 } wbplayerstruct_t;
 
 typedef struct
@@ -216,7 +214,6 @@ typedef struct
   int         maxkills;
   int         maxitems;
   int         maxsecret;
-  int         maxfrags;
 
   // the par time
   int         partime;

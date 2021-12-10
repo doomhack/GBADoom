@@ -115,6 +115,7 @@ int pagelump; // CPhipps - const
 
 boolean singletics; // debug flag to cancel adaptiveness
 boolean advancedemo;
+boolean fps_show;
 
 unsigned int gamma;
 
@@ -123,7 +124,7 @@ unsigned int gamma;
 unsigned int fps_timebefore;
 unsigned int fps_frames;
 unsigned int fps_framerate;
-boolean fps_show;
+
 
 //******************************************************************************
 //doomstat.c
@@ -158,12 +159,6 @@ int  laststage;
 
 boolean         castattacking;
 boolean         castdeath;
-
-//******************************************************************************
-//f_wipe.c
-//******************************************************************************
-
-short y_lookup[SCREENWIDTH];
 
 //******************************************************************************
 //g_game.c
@@ -679,7 +674,6 @@ spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
 int maxframe;
 
 vissprite_t vissprites[MAXVISSPRITES];
-vissprite_t* vissprite_ptrs[MAXVISSPRITES*2];  // killough
 
 
 

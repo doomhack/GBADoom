@@ -48,6 +48,8 @@
 #include "global_data.h"
 #include "i_system_e32.h"
 
+extern short* wipe_y_lookup;
+
 
 #ifdef __arm__
     #include <gba.h>
@@ -80,26 +82,26 @@ static int wipe_doMelt(int ticks)
     {
         for (int i = 0; i < SCREENWIDTH; i++)
         {
-            if (_g->y_lookup[i] < 0)
+            if (wipe_y_lookup[i] < 0)
             {
-                _g->y_lookup[i]++;
+                wipe_y_lookup[i]++;
                 done = false;
                 continue;
             }
 
             // scroll down columns, which are still visible
-            if (_g->y_lookup[i] < SCREENHEIGHT)
+            if (wipe_y_lookup[i] < SCREENHEIGHT)
             {
                 /* cph 2001/07/29 -
                  *  The original melt rate was 8 pixels/sec, i.e. 25 frames to melt
                  *  the whole screen, so make the melt rate depend on SCREENHEIGHT
                  *  so it takes no longer in high res
                  */
-                int dy = (_g->y_lookup[i] < 16) ? _g->y_lookup[i] + 1 : SCREENHEIGHT / 25;
+                int dy = (wipe_y_lookup[i] < 16) ? wipe_y_lookup[i] + 1 : SCREENHEIGHT / 25;
                 // At most dy shall be so that the column is shifted by SCREENHEIGHT (i.e. just
                 // invisible)
-                if (_g->y_lookup[i] + dy >= SCREENHEIGHT)
-                    dy = SCREENHEIGHT - _g->y_lookup[i];
+                if (wipe_y_lookup[i] + dy >= SCREENHEIGHT)
+                    dy = SCREENHEIGHT - wipe_y_lookup[i];
 
                 unsigned short* s = &frontbuffer[i] + ((SCREENHEIGHT - dy - 1) * SCREENPITCH);
 
@@ -108,7 +110,7 @@ static int wipe_doMelt(int ticks)
                 // scroll down the column. Of course we need to copy from the bottom... up to
                 // SCREENHEIGHT - yLookup - dy
 
-                for (int j = SCREENHEIGHT - _g->y_lookup[i] - dy; j; j--)
+                for (int j = SCREENHEIGHT - wipe_y_lookup[i] - dy; j; j--)
                 {
                     *d = *s;
                     d += -SCREENPITCH;
@@ -116,8 +118,8 @@ static int wipe_doMelt(int ticks)
                 }
 
                 // copy new screen. We need to copy only between y_lookup and + dy y_lookup
-                s = &backbuffer[i] +  _g->y_lookup[i] * SCREENPITCH;
-                d = &frontbuffer[i] + _g->y_lookup[i] * SCREENPITCH;
+                s = &backbuffer[i] +  wipe_y_lookup[i] * SCREENPITCH;
+                d = &frontbuffer[i] + wipe_y_lookup[i] * SCREENPITCH;
 
                 for (int j = 0 ; j < dy; j++)
                 {
@@ -126,7 +128,7 @@ static int wipe_doMelt(int ticks)
                     s += SCREENPITCH;
                 }
 
-                _g->y_lookup[i] += dy;
+                wipe_y_lookup[i] += dy;
                 done = false;
             }
         }
@@ -137,17 +139,17 @@ static int wipe_doMelt(int ticks)
 void wipe_initMelt()
 {
     // setup initial column positions (y<0 => not ready to scroll yet)
-    _g->y_lookup[0] = -(M_Random() % 16);
+    wipe_y_lookup[0] = -(M_Random() % 16);
     for (int i = 1; i < SCREENWIDTH; i++)
     {
         int r = (M_Random() % 3) - 1;
 
-        _g->y_lookup[i] = _g->y_lookup[i - 1] + r;
+        wipe_y_lookup[i] = wipe_y_lookup[i - 1] + r;
 
-        if (_g->y_lookup[i] > 0)
-            _g->y_lookup[i] = 0;
-        else if (_g->y_lookup[i] == -16)
-            _g->y_lookup[i] = -15;
+        if (wipe_y_lookup[i] > 0)
+            wipe_y_lookup[i] = 0;
+        else if (wipe_y_lookup[i] == -16)
+            wipe_y_lookup[i] = -15;
     }
 }
 

@@ -110,6 +110,13 @@ const fixed_t* distscale_vram = (const fixed_t*)&vram1_spare[580];
 //484 bytes.
 const angle_t* xtoviewangle_vram = (const angle_t*)&vram1_spare[580+480];
 
+//240 Bytes.
+short* wipe_y_lookup = (short*)&vram1_spare[580+480+484];
+
+//384 Bytes
+vissprite_t** vissprite_ptrs = (vissprite_t**)&vram1_spare[580+480+484+240];
+
+
 #define yslope yslope_vram
 #define distscale distscale_vram
 #define xtoviewangle xtoviewangle_vram
@@ -1107,46 +1114,12 @@ static void R_DrawPlayerSprites(void)
 // Rewritten by Lee Killough to avoid using unnecessary
 // linked lists, and to use faster sorting algorithm.
 //
-
-//#define bcopyp(d, s, n) memcpy(d, s, (n) * sizeof(void *))
-#define bcopyp(d, s, n) BlockCopy(d, s, (n) * sizeof(void *))
-
-// killough 9/2/98: merge sort
-
-static void msort(vissprite_t **s, vissprite_t **t, int n)
+static int compare (const void* l, const void* r)
 {
-  if (n >= 16)
-    {
-      int n1 = n/2, n2 = n - n1;
-      vissprite_t **s1 = s, **s2 = s + n1, **d = t;
+    const vissprite_t* vl = *(const vissprite_t**)l;
+    const vissprite_t* vr = *(const vissprite_t**)r;
 
-      msort(s1, t, n1);
-      msort(s2, t, n2);
-
-      while ((*s1)->scale > (*s2)->scale ?
-             (*d++ = *s1++, --n1) : (*d++ = *s2++, --n2));
-
-      if (n2)
-        bcopyp(d, s2, n2);
-      else
-        bcopyp(d, s1, n1);
-
-      bcopyp(s, t, n);
-    }
-  else
-    {
-      int i;
-      for (i = 1; i < n; i++)
-        {
-          vissprite_t *temp = s[i];
-          if (s[i-1]->scale < temp->scale)
-            {
-              int j = i;
-              while ((s[j] = s[j-1])->scale < temp->scale && --j);
-              s[j] = temp;
-            }
-        }
-    }
+    return vr->scale - vl->scale;
 }
 
 static void R_SortVisSprites (void)
@@ -1156,12 +1129,9 @@ static void R_SortVisSprites (void)
     if (i)
     {
         while (--i>=0)
-            _g->vissprite_ptrs[i] = _g->vissprites+i;
+            vissprite_ptrs[i] = _g->vissprites+i;
 
-        // killough 9/22/98: replace qsort with merge sort, since the keys
-        // are roughly in order to begin with, due to BSP rendering.
-
-        msort(_g->vissprite_ptrs, _g->vissprite_ptrs + num_vissprite, num_vissprite);
+        qsort(vissprite_ptrs, num_vissprite, sizeof (vissprite_t*), compare);
     }
 }
 
@@ -1180,7 +1150,7 @@ static void R_DrawMasked(void)
 
     // draw all vissprites back to front
     for (i = num_vissprite ;--i>=0; )
-        R_DrawSprite(_g->vissprite_ptrs[i]);         // killough
+        R_DrawSprite(vissprite_ptrs[i]);         // killough
 
     // render any remaining masked mid textures
 
@@ -1419,7 +1389,6 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 //
 // R_NewVisSprite
 //
-
 static vissprite_t *R_NewVisSprite(void)
 {
     if (num_vissprite >= MAXVISSPRITES)
@@ -1429,7 +1398,6 @@ static vissprite_t *R_NewVisSprite(void)
 #endif
         return NULL;
     }
-
 
     return _g->vissprites + num_vissprite++;
 }
@@ -2847,10 +2815,6 @@ static void R_ClearPlanes(void)
             _g->freehead = &(*_g->freehead)->next;
 
     _g->lastopening = _g->openings;
-
-    // scale will be unit scale at SCREENWIDTH/2 distance
-    //basexscale = FixedDiv (viewsin,projection);
-    //baseyscale = FixedDiv (viewcos,projection);
 
     basexscale = FixedMul(viewsin,iprojection);
     baseyscale = FixedMul(viewcos,iprojection);

@@ -54,17 +54,17 @@ typedef struct
 {
   // upper right-hand corner
   //  of the number (right-justified)
-  int   x;
-  int   y;
+  short   x;
+  short   y;
 
   // max # of digits in number
-  int width;
+  short width;
 
   // last number value
-  int   oldnum;
+  short   oldnum;
 
   // pointer to current value
-  int*  num;
+  short*  num;
 
   // pointer to boolean stating
   //  whether to update number

@@ -197,7 +197,7 @@ void I_Error (const char *error, ...)
 	
 	va_end(v);
 
-	printf("%s", msg);
+    printf("%s\n", msg);
 
 
     fflush( stderr );
