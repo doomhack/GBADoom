@@ -253,8 +253,8 @@ static const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200
 static const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
 static const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
 
-static const fixed_t pspriteyscale = (((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200;
-static const fixed_t pspriteyiscale = ((UINT_MAX) / ((((SCREENHEIGHT*SCREENWIDTH)/SCREENWIDTH) << FRACBITS) / 200));
+static const fixed_t pspriteyscale = (SCREENHEIGHT << FRACBITS) / 200;
+static const fixed_t pspriteyiscale = ((UINT_MAX) / ((SCREENHEIGHT << FRACBITS) / 200));
 
 
 static const angle_t clipangle = 537395200; //xtoviewangle[0];
@@ -755,12 +755,57 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
     const patch_t *patch = vis->patch;
 
-    for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
+    //Since on the GBA we are drawing in low resolution
+    //The clipping is course.
+    //The effect is better if we draw half from the left and
+    //then half from the right so the edges are correct and
+    //The accumulated error is only half as much.
+
+    int start = vis->x1;
+    int end = vis->x2;
+
+#if 0
+
+    for (dcvars.x=start; dcvars.x<=end; dcvars.x++, frac += vis->xiscale)
     {
         const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
 
         R_DrawMaskedColumn(colfunc, &dcvars, column);
     }
+
+#else
+
+    if(end == SCREENWIDTH-1)
+    {
+        for (dcvars.x=start; dcvars.x<=end; dcvars.x++, frac += vis->xiscale)
+        {
+            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+
+            R_DrawMaskedColumn(colfunc, &dcvars, column);
+        }
+    }
+    else
+    {
+        int midpoint = start + ((end - start) >> 1);
+
+        for (dcvars.x=start ; dcvars.x<=midpoint ; dcvars.x++, frac += vis->xiscale)
+        {
+            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+
+            R_DrawMaskedColumn(colfunc, &dcvars, column);
+        }
+
+        frac = vis->xiscale > 0 ? ((fixed_t)(patch->width-1) << FRACBITS) : 0;
+
+        for (dcvars.x=end ; dcvars.x > midpoint ; dcvars.x--, frac -= vis->xiscale)
+        {
+            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+
+            R_DrawMaskedColumn(colfunc, &dcvars, column);
+        }
+    }
+#endif
+
 }
 
 static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
