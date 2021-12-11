@@ -87,6 +87,7 @@ void V_DrawBackground(const char* flatname)
  * This function draws at GBA resoulution (ie. not pixel doubled)
  * so the st bar and menus don't look like garbage.
  */
+
 void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 {
     y -= patch->topoffset;
@@ -94,10 +95,10 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 
     int   col = 0;
 
-    const int   DX  = (240<<16) / 320;
-    const int   DXI = (320<<16) / 240;
-    const int   DY  = ((SCREENHEIGHT<<16)+(FRACUNIT-1)) / 200;
-    const int   DYI = (200<<16) / SCREENHEIGHT;
+    const int   DX  = (240<<FRACBITS) / 320;
+    const int   DXI = (320<<FRACBITS) / 240;
+    const int   DY  = ((SCREENHEIGHT<<FRACBITS)+(FRACUNIT-1)) / 200;
+    const int   DYI = (200<<FRACBITS) / SCREENHEIGHT;
 
     byte* byte_topleft = (byte*)_g->screens[scrn].data;
     const int byte_pitch = (SCREENPITCH * 2);
@@ -106,10 +107,9 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
     const int right =  ((x + patch->width) *  DX) >> FRACBITS;
     const int bottom = ((y + patch->height) * DY) >> FRACBITS;
 
-
     for (int dc_x=left; dc_x<right; dc_x++, col+=DXI)
     {
-        int colindex = (col>>16);
+        int colindex = (col>>FRACBITS);
 
         if(dc_x < 0)
             continue;
@@ -143,7 +143,7 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
             // This is as fast as it gets.
             while (count--)
             {
-                unsigned short color = source[frac>>FRACBITS];
+                unsigned short color = source[frac >> FRACBITS];
 
                 //The GBA must write in 16bits.
                 if((unsigned int)dest & 1)
