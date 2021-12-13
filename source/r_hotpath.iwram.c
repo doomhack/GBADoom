@@ -1547,13 +1547,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
 
     //const fixed_t iscale = FixedDiv (FRACUNIT, xscale);
-
-    //It simplifies to this.
-    //const fixed_t iscale = tz / 60;
-
-    //This is a cheap divide by 60.
-    //const fixed_t iscale = (((uint_64_t)tz * 0x8889) >> 16) >> 5;
-    const fixed_t iscale = ((tz >> 6) + (tz >> 10)); // -> x/64 + x/1024 is very close to x/60. (Delta -0.4%)
+    const fixed_t iscale = FixedReciprocal(xscale);
 
     if (flip)
     {
