@@ -597,6 +597,41 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
     }
 }
 
+static void R_DrawColumnOdd (const draw_column_vars_t *dcvars)
+{
+    int count = (dcvars->yh - dcvars->yl) + 1;
+
+    // Zero length, column does not exceed a pixel.
+    if (count <= 0)
+        return;
+
+    const byte *source = dcvars->source;
+    const byte *colormap = dcvars->colormap;
+
+    unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dcvars->yl) + dcvars->x;
+
+    const unsigned int		fracstep = (dcvars->iscale << COLEXTRABITS);
+    unsigned int frac = (dcvars->texturemid + (dcvars->yl - centery)*dcvars->iscale) << COLEXTRABITS;
+
+    // Inner loop that does the actual texture mapping,
+    //  e.g. a DDA-lile scaling.
+    // This is as fast as it gets.
+
+    unsigned int l = count;
+
+    while(l--)
+    {
+        unsigned int old = *dest;
+        unsigned int color = colormap[source[frac>>COLBITS]];
+
+        *dest = (old & 0xff) | (color << 8);
+
+        dest+=SCREENWIDTH;
+        frac+=fracstep;
+    }
+
+}
+
 
 
 #define FUZZOFF (SCREENWIDTH)
@@ -668,12 +703,15 @@ static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
 // Masked means: partly transparent, i.e. stored
 //  in posts/runs of opaque pixels.
 //
-static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvars, const column_t *column)
+static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvars, const column_t *column, const boolean oddpixels)
 {
     const fixed_t basetexturemid = dcvars->texturemid;
 
     const int fclip_x = mfloorclip[dcvars->x];
     const int cclip_x = mceilingclip[dcvars->x];
+
+    if(oddpixels)
+        colfunc = R_DrawColumnOdd;
 
     while (column->topdelta != 0xff)
     {
@@ -764,13 +802,25 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     int start = vis->x1;
     int end = vis->x2;
 
-#if 0
+    int len = ((end+1)-start);
+    fixed_t xd = vis->xiscale * (len-1);
+    fixed_t xs = (xd - vis->startfrac) / (((len) * 2) - 1);
 
-    for (dcvars.x=start; dcvars.x<=end; dcvars.x++, frac += vis->xiscale)
+
+    fixed_t xiscale = xs;
+
+#if 1
+
+
+    for (dcvars.x=start; dcvars.x<=end; dcvars.x++, frac += xiscale)
     {
         const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+        R_DrawMaskedColumn(colfunc, &dcvars, column, false);
 
-        R_DrawMaskedColumn(colfunc, &dcvars, column);
+        frac += xiscale;
+
+        const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+        R_DrawMaskedColumn(colfunc, &dcvars, column2, true);
     }
 
 #else
@@ -780,19 +830,27 @@ static void R_DrawVisSprite(const vissprite_t *vis)
         for (dcvars.x=start; dcvars.x<=end; dcvars.x++, frac += vis->xiscale)
         {
             const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+            R_DrawMaskedColumn(colfunc, &dcvars, column, false);
 
-            R_DrawMaskedColumn(colfunc, &dcvars, column);
+            frac += xiscale;
+
+            const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+            R_DrawMaskedColumn(colfunc, &dcvars, column2, true);
         }
     }
     else
     {
         int midpoint = start + ((end - start) >> 1);
 
-        for (dcvars.x=start ; dcvars.x<=midpoint ; dcvars.x++, frac += vis->xiscale)
+        for (dcvars.x=start ; dcvars.x<=midpoint ; dcvars.x++, frac += xiscale)
         {
             const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+            R_DrawMaskedColumn(colfunc, &dcvars, column, false);
 
-            R_DrawMaskedColumn(colfunc, &dcvars, column);
+            frac += xiscale;
+
+            const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+            R_DrawMaskedColumn(colfunc, &dcvars, column2, true);
         }
 
         frac = vis->xiscale > 0 ? ((fixed_t)(patch->width-1) << FRACBITS) : 0;
@@ -800,8 +858,12 @@ static void R_DrawVisSprite(const vissprite_t *vis)
         for (dcvars.x=end ; dcvars.x > midpoint ; dcvars.x--, frac -= vis->xiscale)
         {
             const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+            R_DrawMaskedColumn(colfunc, &dcvars, column, false);
 
-            R_DrawMaskedColumn(colfunc, &dcvars, column);
+            frac += xiscale;
+
+            const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+            R_DrawMaskedColumn(colfunc, &dcvars, column2, true);
         }
     }
 #endif
@@ -927,7 +989,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
             // draw the texture
             const column_t* column = R_GetColumn(texture, xc);
 
-            R_DrawMaskedColumn(R_DrawColumn, &dcvars, column);
+            R_DrawMaskedColumn(R_DrawColumn, &dcvars, column, false);
 
             maskedtexturecol[dcvars.x] = SHRT_MAX; // dropoff overflow
         }
@@ -1141,6 +1203,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
 static void R_DrawPlayerSprites(void)
 {
+
   int i, lightlevel = _g->player.mo->subsector->sector->lightlevel;
   pspdef_t *psp;
 
@@ -1546,14 +1609,15 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
 
 
-    //const fixed_t iscale = FixedDiv (FRACUNIT, xscale);
+    const fixed_t iscale = FixedDiv (FRACUNIT, xscale);
 
     //It simplifies to this.
     //const fixed_t iscale = tz / 60;
 
     //This is a cheap divide by 60.
     //const fixed_t iscale = (((uint_64_t)tz * 0x8889) >> 16) >> 5;
-    const fixed_t iscale = ((tz >> 6) + (tz >> 10)); // -> x/64 + x/1024 is very close to x/60. (Delta -0.4%)
+    //const fixed_t iscale = ((tz >> 6) + (tz >> 10)); // -> x/64 + x/1024 is very close to x/60. (Delta -0.4%)
+
 
     if (flip)
     {
