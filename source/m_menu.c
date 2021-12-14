@@ -88,6 +88,7 @@ void M_EndGame(int choice);
 
 void M_ChangeMessages(int choice);
 void M_ChangeAlwaysRun(int choice);
+void M_ChangeDetail(int choice);
 void M_ChangeGamma(int choice);
 void M_SfxVol(int choice);
 void M_MusicVol(int choice);
@@ -568,6 +569,7 @@ enum
   endgame,
   messages,
   alwaysrun,
+  detail,
   gamma,
   soundvol,
   opt_end
@@ -581,6 +583,7 @@ static const menuitem_t OptionsMenu[]=
   {1,"M_ENDGAM", M_EndGame},
   {1,"M_MESSG",  M_ChangeMessages},
   {1,"M_ARUN",   M_ChangeAlwaysRun},
+  {1,"M_DETAIL", M_ChangeDetail},
   {2,"M_GAMMA",   M_ChangeGamma},
   {1,"M_SVOL",   M_Sound}
 };
@@ -598,6 +601,7 @@ const static menu_t OptionsDef =
 // M_Options
 //
 static const char msgNames[2][9]  = {"M_MSGOFF","M_MSGON"};
+static const char detailNames[2][9]  = {"M_GDLOW","M_GDHIGH"};
 
 
 void M_DrawOptions(void)
@@ -611,7 +615,10 @@ void M_DrawOptions(void)
 
   V_DrawNamePatch(OptionsDef.x + 146, OptionsDef.y+LINEHEIGHT*alwaysrun, 0,
       msgNames[_g->alwaysRun], CR_DEFAULT, VPT_STRETCH);
-	  
+
+  V_DrawNamePatch(OptionsDef.x + 176, OptionsDef.y+LINEHEIGHT*detail, 0,
+      detailNames[_g->highDetail], CR_DEFAULT, VPT_STRETCH);
+
   M_DrawThermo(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma+2,6,_g->gamma);
 }
 
@@ -768,6 +775,20 @@ void M_ChangeAlwaysRun(int choice)
       _g->player.message = RUNOFF; // Ty 03/27/98 - externalized
     else
       _g->player.message = RUNON ; // Ty 03/27/98 - externalized
+
+    G_SaveSettings();
+}
+
+void M_ChangeDetail(int choice)
+{
+    // warning: unused parameter `int choice'
+    choice = 0;
+    _g->highDetail = 1 - _g->highDetail;
+
+    if (!_g->highDetail)
+      _g->player.message = LOWDETAIL; // Ty 03/27/98 - externalized
+    else
+      _g->player.message = HIGHDETAIL ; // Ty 03/27/98 - externalized
 
     G_SaveSettings();
 }

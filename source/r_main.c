@@ -102,6 +102,8 @@ void R_SetupFrame (player_t *player)
         fixedcolormap = 0;
 
     _g->validcount++;
+
+    highDetail = _g->highDetail;
 }
 
 

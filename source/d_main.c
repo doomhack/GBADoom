@@ -725,6 +725,8 @@ static void D_DoomMainSetup(void)
 
     _g->fps_show = true;
 
+    _g->highDetail = false;
+
     I_InitGraphics();
 
     if (timedemo)

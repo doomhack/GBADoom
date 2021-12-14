@@ -97,6 +97,8 @@ extern fixed_t basexscale, baseyscale;
 
 extern fixed_t  viewcos, viewsin;
 
+extern boolean highDetail;
+
 //
 // Utility functions.
 //

@@ -236,6 +236,9 @@ static fixed_t planeheight;
 
 size_t num_vissprite;
 
+boolean highDetail = false;
+
+
 
 //*****************************************
 // Constants
@@ -597,7 +600,56 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
     }
 }
 
+static void R_DrawColumnHiRes(const draw_column_vars_t *dcvars)
+{
+    int count = (dcvars->yh - dcvars->yl) + 1;
 
+    // Zero length, column does not exceed a pixel.
+    if (count <= 0)
+        return;
+
+    const byte *source = dcvars->source;
+    const byte *colormap = dcvars->colormap;
+
+    volatile unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dcvars->yl) + dcvars->x;
+
+    const unsigned int		fracstep = (dcvars->iscale << COLEXTRABITS);
+    unsigned int frac = (dcvars->texturemid + (dcvars->yl - centery)*dcvars->iscale) << COLEXTRABITS;
+
+    // Inner loop that does the actual texture mapping,
+    //  e.g. a DDA-lile scaling.
+    // This is as fast as it gets.
+
+    unsigned int l = count;
+
+    if(!dcvars->odd_pixel)
+    {
+
+        while(l--)
+        {
+            unsigned int old = *dest;
+            unsigned int color = colormap[source[frac>>COLBITS]];
+
+            *dest = ((color & 0xff) | (old & 0xff00));
+
+            dest+=SCREENWIDTH;
+            frac+=fracstep;
+        }
+    }
+    else
+    {
+        while(l--)
+        {
+            unsigned int old = *dest;
+            unsigned int color = colormap[source[frac>>COLBITS]];
+
+            *dest = (old & 0xff) | (color << 8);
+
+            dest+=SCREENWIDTH;
+            frac+=fracstep;
+        }
+    }
+}
 
 #define FUZZOFF (SCREENWIDTH)
 #define FUZZTABLE 50
@@ -720,8 +772,9 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 {
     fixed_t  frac;
 
-    R_DrawColumn_f colfunc;
+    R_DrawColumn_f colfunc = R_DrawColumn;
     draw_column_vars_t dcvars;
+    boolean hires = false;
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
@@ -741,7 +794,12 @@ static void R_DrawVisSprite(const vissprite_t *vis)
                     ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
         }
         else
-            colfunc = R_DrawColumn; // killough 3/14/98, 4/11/98
+        {
+            hires = highDetail;
+
+            if(hires)
+                colfunc = R_DrawColumnHiRes;
+        }
     }
 
     // proff 11/06/98: Changed for high-res
@@ -761,51 +819,41 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     //then half from the right so the edges are correct and
     //The accumulated error is only half as much.
 
-    int start = vis->x1;
-    int end = vis->x2;
+    fixed_t xiscale = vis->xiscale;
 
-#if 0
+    if(hires)
+        xiscale >>= 1;
 
-    for (dcvars.x=start; dcvars.x<=end; dcvars.x++, frac += vis->xiscale)
+    dcvars.x = vis->x1;
+    dcvars.odd_pixel = false;
+
+    while(dcvars.x < SCREENWIDTH-1)
     {
         const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
-
         R_DrawMaskedColumn(colfunc, &dcvars, column);
+
+        frac += xiscale;
+
+        if(((frac >> FRACBITS) >= patch->width) || frac < 0)
+            break;
+
+        dcvars.odd_pixel = true;
+
+        if(!hires)
+            dcvars.x++;
+
+
+        const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+        R_DrawMaskedColumn(colfunc, &dcvars, column2);
+
+        frac += xiscale;
+
+        if(((frac >> FRACBITS) >= patch->width) || frac < 0)
+            break;
+
+        dcvars.x++;
+        dcvars.odd_pixel = false;
     }
-
-#else
-
-    if(end == SCREENWIDTH-1)
-    {
-        for (dcvars.x=start; dcvars.x<=end; dcvars.x++, frac += vis->xiscale)
-        {
-            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
-
-            R_DrawMaskedColumn(colfunc, &dcvars, column);
-        }
-    }
-    else
-    {
-        int midpoint = start + ((end - start) >> 1);
-
-        for (dcvars.x=start ; dcvars.x<=midpoint ; dcvars.x++, frac += vis->xiscale)
-        {
-            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
-
-            R_DrawMaskedColumn(colfunc, &dcvars, column);
-        }
-
-        frac = vis->xiscale > 0 ? ((fixed_t)(patch->width-1) << FRACBITS) : 0;
-
-        for (dcvars.x=end ; dcvars.x > midpoint ; dcvars.x--, frac -= vis->xiscale)
-        {
-            const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
-
-            R_DrawMaskedColumn(colfunc, &dcvars, column);
-        }
-    }
-#endif
-
 }
 
 static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
@@ -1141,6 +1189,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
 static void R_DrawPlayerSprites(void)
 {
+
   int i, lightlevel = _g->player.mo->subsector->sector->lightlevel;
   pspdef_t *psp;
 
@@ -1787,18 +1836,25 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
 static const byte* R_ComposeColumn(const unsigned int texture, const texture_t* tex, int texcolumn, unsigned int iscale)
 {
     //static int total, misses;
+    int colmask;
 
-    int colmask = 0xfffe;
-
-    if(tex->width > 8)
+    if(!highDetail)
     {
-        if(iscale > (4 << FRACBITS))
-            colmask = 0xfff0;
-        else if(iscale > (3 << FRACBITS))
-            colmask = 0xfff8;
-        else if (iscale > (2 << FRACBITS))
-            colmask = 0xfffc;
+        colmask = 0xfffe;
+
+        if(tex->width > 8)
+        {
+            if(iscale > (4 << FRACBITS))
+                colmask = 0xfff0;
+            else if(iscale > (3 << FRACBITS))
+                colmask = 0xfff8;
+            else if (iscale > (2 << FRACBITS))
+                colmask = 0xfffc;
+        }
     }
+    else
+        colmask = 0xffff;
+
 
     const int xc = (texcolumn & colmask) & tex->widthmask;
 
@@ -2911,7 +2967,7 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
             while (count--)
             {
                 unsigned int color = *source++;
-                unsigned short* dest16 = (unsigned short*)dest;
+                volatile unsigned short* dest16 = (volatile unsigned short*)dest;
 
                 unsigned int old = *dest16;
 
