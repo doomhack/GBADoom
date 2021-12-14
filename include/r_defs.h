@@ -425,17 +425,19 @@ typedef struct visplane
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
-  unsigned int modified;
+  boolean modified;
 
-  //byte		pad1;
+  byte		pad1;
+  byte		pad2;
+  byte		pad3;
   // Here lies the rub for all
   //  dynamic resize/change of resolution.
   byte		top[SCREENWIDTH];
-  byte		pad2;
-  byte		pad3;
+  byte		pad4;
+  byte		pad5;
   // See above.
   byte		bottom[SCREENWIDTH];
-  byte		pad4;
+  byte		pad6;
 
 } visplane_t;
 

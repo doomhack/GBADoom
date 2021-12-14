@@ -507,13 +507,12 @@ static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)
 //
 // P_SpawnMobj
 //
-mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
-{
-    mobj_t*     mobj = NULL;
-    const state_t*    st;
-    const mobjinfo_t* info;
 
-    for(int i = 0; i < _g->thingPoolSize; i++)
+static mobj_t* P_NewMobj()
+{
+    mobj_t* mobj = NULL;
+
+    for(int i = _g->thingPoolSize-1; i >= 0; i--)
     {
         if(_g->thingPool[i].type == MT_NOTHING)
         {
@@ -521,7 +520,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
             memset (mobj, 0, sizeof (*mobj));
 
             mobj->flags = MF_POOLED;
-            break;
+            return mobj;
         }
     }
 
@@ -530,6 +529,16 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
         mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
         memset (mobj, 0, sizeof (*mobj));
     }
+
+    return mobj;
+}
+
+mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
+{
+    const state_t*    st;
+    const mobjinfo_t* info;
+
+    mobj_t*     mobj = P_NewMobj();
 
     info = &mobjinfo[type];
     mobj->type = type;

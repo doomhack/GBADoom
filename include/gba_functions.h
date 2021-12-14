@@ -12,27 +12,6 @@
     #include <gba_dma.h>
 #endif
 
-//***********************************************************************
-//The following math functions were taken from the Jaguar Port of Doom
-//here: https://github.com/Arc0re/jaguardoom/blob/master/jagonly.c
-//
-//There may be a licence incompatibility with the iD release
-//and the GPL that prBoom (and this as derived work) is under.
-//***********************************************************************
-
-static CONSTFUNC unsigned UDiv32 (unsigned aa, unsigned bb)
-{
-#ifdef __arm__
-    unsigned int udiv32_arm(unsigned int a, unsigned int b);
-
-    return udiv32_arm(aa, bb);
-#else
-    if(bb == 0)
-        return UINT_MAX;
-
-    return aa / bb;
-#endif
-}
 
 inline static CONSTFUNC int IDiv32 (int a, int b)
 {
