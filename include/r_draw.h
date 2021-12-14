@@ -54,6 +54,8 @@ typedef struct {
   const lighttable_t  *colormap;
   const byte          *translation;
 
+  boolean             odd_pixel;
+
 } draw_column_vars_t;
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars);

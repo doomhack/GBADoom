@@ -70,6 +70,9 @@
 #define RUNOFF      "Take your time."
 #define RUNON       "In a hurry, marine?"
 
+#define HIGHDETAIL  "High Detail."
+#define LOWDETAIL   "Low Detail."
+
 #define NETEND      "you can't end a netgame!\n\n"PRESSKEY
 #define ENDGAME     "are you sure you want to\nend the game?\n\n"PRESSYN
 #define RESTARTLEVEL "restart the level?\n\n"PRESSYN
