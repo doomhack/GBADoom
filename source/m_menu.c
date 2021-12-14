@@ -601,6 +601,7 @@ const static menu_t OptionsDef =
 // M_Options
 //
 static const char msgNames[2][9]  = {"M_MSGOFF","M_MSGON"};
+static const char detailNames[2][9]  = {"M_GDLOW","M_GDHIGH"};
 
 
 void M_DrawOptions(void)
@@ -616,7 +617,7 @@ void M_DrawOptions(void)
       msgNames[_g->alwaysRun], CR_DEFAULT, VPT_STRETCH);
 
   V_DrawNamePatch(OptionsDef.x + 176, OptionsDef.y+LINEHEIGHT*detail, 0,
-      msgNames[_g->highDetail], CR_DEFAULT, VPT_STRETCH);
+      detailNames[_g->highDetail], CR_DEFAULT, VPT_STRETCH);
 
   M_DrawThermo(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma+2,6,_g->gamma);
 }
