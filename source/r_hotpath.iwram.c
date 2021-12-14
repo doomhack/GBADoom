@@ -620,34 +620,29 @@ static void R_DrawColumnHiRes(const draw_column_vars_t *dcvars)
     //  e.g. a DDA-lile scaling.
     // This is as fast as it gets.
 
-    unsigned int l = count;
+    unsigned int mask;
+    unsigned int shift;
 
     if(!dcvars->odd_pixel)
     {
-
-        while(l--)
-        {
-            unsigned int old = *dest;
-            unsigned int color = colormap[source[frac>>COLBITS]];
-
-            *dest = ((color & 0xff) | (old & 0xff00));
-
-            dest+=SCREENWIDTH;
-            frac+=fracstep;
-        }
+        mask = 0xff00;
+        shift = 0;
     }
     else
     {
-        while(l--)
-        {
-            unsigned int old = *dest;
-            unsigned int color = colormap[source[frac>>COLBITS]];
+        mask = 0xff;
+        shift = 8;
+    }
 
-            *dest = (old & 0xff) | (color << 8);
+    while(count--)
+    {
+        unsigned int old = *dest;
+        unsigned int color = colormap[source[frac>>COLBITS]];
 
-            dest+=SCREENWIDTH;
-            frac+=fracstep;
-        }
+        *dest = ((old & mask) | (color << shift));
+
+        dest+=SCREENWIDTH;
+        frac+=fracstep;
     }
 }
 
@@ -2984,11 +2979,6 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
         }
     }
 }
-
-
-
-
-
 
 //
 // P_DivlineSide
