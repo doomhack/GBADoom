@@ -174,21 +174,29 @@ static void P_LoadNodes (int lump)
 
 static void P_LoadThings (int lump)
 {
-  int  i, numthings = W_LumpLength (lump) / sizeof(mapthing_t);
-  const mapthing_t *data = W_CacheLumpNum (lump);
+    int  i, numthings = W_LumpLength (lump) / sizeof(mapthing_t);
+    const mapthing_t *data = W_CacheLumpNum (lump);
 
-  if ((!data) || (!numthings))
-    I_Error("P_LoadThings: no things in level");
+    if ((!data) || (!numthings))
+        I_Error("P_LoadThings: no things in level");
 
-  for (i=0; i<numthings; i++)
+    _g->thingPool = Z_Calloc(numthings, sizeof(mobj_t), PU_LEVEL, NULL);
+    _g->thingPoolSize = numthings;
+
+    for(int i = 0; i < numthings; i++)
     {
-      const mapthing_t* mt = &data[i];
+        _g->thingPool[i].type = MT_NOTHING;
+    }
 
-      if (!P_IsDoomnumAllowed(mt->type))
-        continue;
+    for (i=0; i<numthings; i++)
+    {
+        const mapthing_t* mt = &data[i];
 
-      // Do spawn all other stuff.
-      P_SpawnMapThing(mt);
+        if (!P_IsDoomnumAllowed(mt->type))
+            continue;
+
+        // Do spawn all other stuff.
+        P_SpawnMapThing(mt);
     }
 }
 

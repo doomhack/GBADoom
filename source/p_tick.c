@@ -103,6 +103,24 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
     Z_Free(thinker);
 }
 
+void P_RemoveThingDelayed(thinker_t *thinker)
+{
+
+    thinker_t *next = thinker->next;
+    /* Note that currentthinker is guaranteed to point to us,
+         * and since we're freeing our memory, we had better change that. So
+         * point it to thinker->prev, so the iterator will correctly move on to
+         * thinker->prev->next = thinker->next */
+    (next->prev = thinker->prev)->next = next;
+
+    mobj_t* thing = (mobj_t*)thinker;
+
+    if(thing->flags & MF_POOLED)
+        thing->type = MT_NOTHING;
+    else
+        Z_Free(thinker);
+}
+
 //
 // P_RemoveThinker
 //
@@ -119,8 +137,13 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
 void P_RemoveThinker(thinker_t *thinker)
 {
   thinker->function = P_RemoveThinkerDelayed;
-
 }
+
+void P_RemoveThing(mobj_t *thing)
+{
+  thing->thinker.function = P_RemoveThingDelayed;
+}
+
 
 /* cph 2002/01/13 - iterator for thinker list
  * WARNING: Do not modify thinkers between calls to this functin

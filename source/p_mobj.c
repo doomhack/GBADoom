@@ -508,59 +508,75 @@ static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)
 // P_SpawnMobj
 //
 mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
-  {
-  mobj_t*     mobj;
-  const state_t*    st;
-  const mobjinfo_t* info;
+{
+    mobj_t*     mobj = NULL;
+    const state_t*    st;
+    const mobjinfo_t* info;
 
-  mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
-  memset (mobj, 0, sizeof (*mobj));
-  info = &mobjinfo[type];
-  mobj->type = type;
-  mobj->x = x;
-  mobj->y = y;
-  mobj->radius = info->radius;
-  mobj->height = info->height;                                      // phares
-  mobj->flags  = info->flags;
+    for(int i = 0; i < _g->thingPoolSize; i++)
+    {
+        if(_g->thingPool[i].type == MT_NOTHING)
+        {
+            mobj = &_g->thingPool[i];
+            memset (mobj, 0, sizeof (*mobj));
+
+            mobj->flags = MF_POOLED;
+            break;
+        }
+    }
+
+    if(mobj == NULL)
+    {
+        mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
+        memset (mobj, 0, sizeof (*mobj));
+    }
+
+    info = &mobjinfo[type];
+    mobj->type = type;
+    mobj->x = x;
+    mobj->y = y;
+    mobj->radius = info->radius;
+    mobj->height = info->height;                                      // phares
+    mobj->flags  |= info->flags;
 
     if (type == MT_PLAYER)         // Except in old demos, players
-      mobj->flags |= MF_FRIEND;    // are always friends.
+        mobj->flags |= MF_FRIEND;    // are always friends.
 
-  mobj->health = info->spawnhealth;
+    mobj->health = info->spawnhealth;
 
-  if (_g->gameskill != sk_nightmare)
-    mobj->reactiontime = info->reactiontime;
+    if (_g->gameskill != sk_nightmare)
+        mobj->reactiontime = info->reactiontime;
 
-  // do not set the state with P_SetMobjState,
-  // because action routines can not be called yet
+    // do not set the state with P_SetMobjState,
+    // because action routines can not be called yet
 
-  st = &states[info->spawnstate];
+    st = &states[info->spawnstate];
 
-  mobj->state  = st;
-  mobj->tics   = st->tics;
-  mobj->sprite = st->sprite;
-  mobj->frame  = st->frame;
-  mobj->touching_sectorlist = NULL; // NULL head of sector list // phares 3/13/98
+    mobj->state  = st;
+    mobj->tics   = st->tics;
+    mobj->sprite = st->sprite;
+    mobj->frame  = st->frame;
+    mobj->touching_sectorlist = NULL; // NULL head of sector list // phares 3/13/98
 
-  // set subsector and/or block links
+    // set subsector and/or block links
 
-  P_SetThingPosition (mobj);
+    P_SetThingPosition (mobj);
 
-  mobj->dropoffz =           /* killough 11/98: for tracking dropoffs */
-  mobj->floorz   = mobj->subsector->sector->floorheight;
-  mobj->ceilingz = mobj->subsector->sector->ceilingheight;
+    mobj->dropoffz =           /* killough 11/98: for tracking dropoffs */
+            mobj->floorz   = mobj->subsector->sector->floorheight;
+    mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
-  mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
-    mobj->ceilingz - mobj->height : z;
+    mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
+                                  mobj->ceilingz - mobj->height : z;
 
-  mobj->thinker.function = P_ThinkerFunctionForType(type, mobj);
+    mobj->thinker.function = P_ThinkerFunctionForType(type, mobj);
 
-  mobj->target = mobj->tracer = mobj->lastenemy = NULL;
-  P_AddThinker (&mobj->thinker);
-  if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
-    _g->totallive++;
-  return mobj;
-  }
+    mobj->target = mobj->tracer = mobj->lastenemy = NULL;
+    P_AddThinker (&mobj->thinker);
+    if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+        _g->totallive++;
+    return mobj;
+}
 
 //
 // P_RemoveMobj
@@ -600,7 +616,7 @@ void P_RemoveMobj (mobj_t* mobj)
   }
   // free block
 
-  P_RemoveThinker (&mobj->thinker);
+  P_RemoveThing (mobj);
 }
 
 
@@ -732,112 +748,108 @@ boolean P_IsDoomnumAllowed(int doomnum)
 //
 
 void P_SpawnMapThing (const mapthing_t* mthing)
-  {
-  int     i;
-  //int     bit;
-  mobj_t* mobj;
-  fixed_t x;
-  fixed_t y;
-  fixed_t z;
-  int options = mthing->options; /* cph 2001/07/07 - make writable copy */
+{
+    int     i;
+    mobj_t* mobj;
+    fixed_t x;
+    fixed_t y;
+    fixed_t z;
+    int options = mthing->options; /* cph 2001/07/07 - make writable copy */
 
-  // killough 2/26/98: Ignore type-0 things as NOPs
-  // phares 5/14/98: Ignore Player 5-8 starts (for now)
+    // killough 2/26/98: Ignore type-0 things as NOPs
+    // phares 5/14/98: Ignore Player 5-8 starts (for now)
 
-  switch(mthing->type)
+    switch(mthing->type)
     {
-  case 0:
-  case DEN_PLAYER5:
-  case DEN_PLAYER6:
-  case DEN_PLAYER7:
-  case DEN_PLAYER8:
-    return;
+        case 0:
+        case DEN_PLAYER5:
+        case DEN_PLAYER6:
+        case DEN_PLAYER7:
+        case DEN_PLAYER8:
+            return;
     }
 
-  // killough 11/98: clear flags unused by Doom
-  //
-  // We clear the flags unused in Doom if we see flag mask 256 set, since
-  // it is reserved to be 0 under the new scheme. A 1 in this reserved bit
-  // indicates it's a Doom wad made by a Doom editor which puts 1's in
-  // bits that weren't used in Doom (such as HellMaker wads). So we should
-  // then simply ignore all upper bits.
+    // killough 11/98: clear flags unused by Doom
+    //
+    // We clear the flags unused in Doom if we see flag mask 256 set, since
+    // it is reserved to be 0 under the new scheme. A 1 in this reserved bit
+    // indicates it's a Doom wad made by a Doom editor which puts 1's in
+    // bits that weren't used in Doom (such as HellMaker wads). So we should
+    // then simply ignore all upper bits.
 
-  if (options & MTF_RESERVED)
-  {
-      lprintf(LO_WARN, "P_SpawnMapThing: correcting bad flags (%u) (thing type %d)\n",
-        options, mthing->type);
-    options &= MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE;
-  }
-
-  // check for players specially
-
-  //Only care about start spot for player 1.
-  if(mthing->type == 1)
-  {
-      _g->playerstarts[0] = *mthing;
-      _g->playerstarts[0].options = 1;
-      P_SpawnPlayer (0, &_g->playerstarts[0]);
-      return;
-  }
-
-  // check for apropriate skill level
-
-  /* jff "not single" thing flag */
-  if (options & MTF_NOTSINGLE)
-    return;
-
-  // killough 11/98: simplify
-  if (_g->gameskill == sk_baby || _g->gameskill == sk_easy ?
-      !(options & MTF_EASY) :
-      _g->gameskill == sk_hard || _g->gameskill == sk_nightmare ?
-      !(options & MTF_HARD) : !(options & MTF_NORMAL))
-    return;
-
-  // find which type to spawn
-
-  // killough 8/23/98: use table for faster lookup
-  i = P_FindDoomedNum(mthing->type);
-
-  // phares 5/16/98:
-  // Do not abort because of an unknown thing. Ignore it, but post a
-  // warning message for the player.
-
-  if (i == NUMMOBJTYPES)
+    if (options & MTF_RESERVED)
     {
+        lprintf(LO_WARN, "P_SpawnMapThing: correcting bad flags (%u) (thing type %d)\n",
+                options, mthing->type);
+        options &= MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE;
+    }
+
+    // check for players specially
+
+    //Only care about start spot for player 1.
+    if(mthing->type == 1)
+    {
+        _g->playerstarts[0] = *mthing;
+        _g->playerstarts[0].options = 1;
+        P_SpawnPlayer (0, &_g->playerstarts[0]);
         return;
     }
 
-  x = mthing->x << FRACBITS;
-  y = mthing->y << FRACBITS;
+    // check for apropriate skill level
 
-  if (mobjinfo[i].flags & MF_SPAWNCEILING)
-    z = ONCEILINGZ;
-  else
-    z = ONFLOORZ;
+    /* jff "not single" thing flag */
+    if (options & MTF_NOTSINGLE)
+        return;
 
-  mobj = P_SpawnMobj (x,y,z, i);
-  //mobj->spawnpoint = *mthing;
+    // killough 11/98: simplify
+    if (_g->gameskill == sk_baby || _g->gameskill == sk_easy ?
+            !(options & MTF_EASY) :
+            _g->gameskill == sk_hard || _g->gameskill == sk_nightmare ?
+            !(options & MTF_HARD) : !(options & MTF_NORMAL))
+        return;
 
-  if (mobj->tics > 0)
-    mobj->tics = 1 + (P_Random () % mobj->tics);
+    // find which type to spawn
 
-  if (!(mobj->flags & MF_FRIEND) &&
-      options & MTF_FRIEND)
+    // killough 8/23/98: use table for faster lookup
+    i = P_FindDoomedNum(mthing->type);
+
+    // phares 5/16/98:
+    // Do not abort because of an unknown thing. Ignore it, but post a
+    // warning message for the player.
+
+    if (i == NUMMOBJTYPES)
+        return;
+
+    x = mthing->x << FRACBITS;
+    y = mthing->y << FRACBITS;
+
+    if (mobjinfo[i].flags & MF_SPAWNCEILING)
+        z = ONCEILINGZ;
+    else
+        z = ONFLOORZ;
+
+    mobj = P_SpawnMobj (x,y,z, i);
+
+    if (mobj->tics > 0)
+        mobj->tics = 1 + (P_Random () % mobj->tics);
+
+    if (!(mobj->flags & MF_FRIEND) &&
+            options & MTF_FRIEND)
     {
-      mobj->flags |= MF_FRIEND;            // killough 10/98:
+        mobj->flags |= MF_FRIEND;            // killough 10/98:
     }
 
-  /* killough 7/20/98: exclude friends */
-  if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
-    _g->totalkills++;
+    /* killough 7/20/98: exclude friends */
+    if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+        _g->totalkills++;
 
-  if (mobj->flags & MF_COUNTITEM)
-    _g->totalitems++;
+    if (mobj->flags & MF_COUNTITEM)
+        _g->totalitems++;
 
-  mobj->angle = ANG45 * (mthing->angle/45);
-  if (options & MTF_AMBUSH)
-    mobj->flags |= MF_AMBUSH;
-  }
+    mobj->angle = ANG45 * (mthing->angle/45);
+    if (options & MTF_AMBUSH)
+        mobj->flags |= MF_AMBUSH;
+}
 
 
 //

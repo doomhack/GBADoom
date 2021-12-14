@@ -1412,24 +1412,7 @@ typedef enum {
   MT_MISC84,
   MT_MISC85,
   MT_MISC86,
-  MT_PUSH,    /* controls push source - phares */
-  MT_PULL,    /* controls pull source - phares 3/20/98 */
-
-  /* proff 11/22/98: Andy Baker's stealth monsters (next 12)
-   * cph - moved below the MBF stuff, no need to displace them */
-  MT_STEALTHBABY,
-  MT_STEALTHVILE,
-  MT_STEALTHBRUISER,
-  MT_STEALTHHEAD,
-  MT_STEALTHCHAINGUY,
-  MT_STEALTHSERGEANT,
-  MT_STEALTHKNIGHT,
-  MT_STEALTHIMP,
-  MT_STEALTHFATSO,
-  MT_STEALTHUNDEAD,
-  MT_STEALTHSHOTGUY,
-  MT_STEALTHZOMBIE,
-
+  MT_NOTHING,
   NUMMOBJTYPES  // Counter of how many there are
 } mobjtype_t;
 

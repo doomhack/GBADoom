@@ -506,6 +506,9 @@ const byte *rejectmatrix; // cph - const*
 // Maintain single and multi player starting spots.
 mapthing_t playerstarts[MAXPLAYERS];
 
+mobj_t*      thingPool;
+unsigned int thingPoolSize;
+
 
 //******************************************************************************
 //p_sight.c
@@ -641,7 +644,6 @@ spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
 int maxframe;
 
 vissprite_t vissprites[MAXVISSPRITES];
-
 
 
 //******************************************************************************

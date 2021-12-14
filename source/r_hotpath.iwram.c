@@ -808,12 +808,6 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
     const patch_t *patch = vis->patch;
 
-    //Since on the GBA we are drawing in low resolution
-    //The clipping is course.
-    //The effect is better if we draw half from the left and
-    //then half from the right so the edges are correct and
-    //The accumulated error is only half as much.
-
     fixed_t xiscale = vis->xiscale;
 
     if(hires)
