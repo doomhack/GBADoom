@@ -5,9 +5,7 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
-//#define __arm__
-
-#ifdef __arm__
+#ifdef GBA
     #include <gba_systemcalls.h>
     #include <gba_dma.h>
 #endif
@@ -17,7 +15,7 @@ inline static CONSTFUNC int IDiv32 (int a, int b)
 {
 
     //use bios divide on gba.
-#ifdef __arm__
+#ifdef GBA
     return Div(a, b);
 #else
     return a / b;
@@ -26,7 +24,7 @@ inline static CONSTFUNC int IDiv32 (int a, int b)
 
 inline static void BlockCopy(void* dest, const void* src, const unsigned int len)
 {
-#ifdef __arm__
+#ifdef GBA
     const int words = len >> 2;
 
     DMA3COPY(src, dest, DMA_DST_INC | DMA_SRC_INC | DMA32 | DMA_IMMEDIATE | words)
@@ -37,7 +35,7 @@ inline static void BlockCopy(void* dest, const void* src, const unsigned int len
 
 inline static void CpuBlockCopy(void* dest, const void* src, const unsigned int len)
 {
-#ifdef __arm__
+#ifdef GBA
     const unsigned int words = len >> 2;
 
     CpuFastSet(src, dest, words);
@@ -48,7 +46,7 @@ inline static void CpuBlockCopy(void* dest, const void* src, const unsigned int 
 
 inline static void BlockSet(void* dest, volatile unsigned int val, const unsigned int len)
 {
-#ifdef __arm__
+#ifdef GBA
     const int words = len >> 2;
 
     DMA3COPY(&val, dest, DMA_SRC_FIXED | DMA_DST_INC | DMA32 | DMA_IMMEDIATE | words)
@@ -88,14 +86,14 @@ inline static void* ByteFind(byte* mem, byte val, unsigned int count)
 
 inline static void SaveSRAM(const byte* eeprom, unsigned int size, unsigned int offset)
 {
-#ifdef __arm__
+#ifdef GBA
     ByteCopy(0xE000000 + offset, eeprom, size);
 #endif
 }
 
 inline static void LoadSRAM(byte* eeprom, unsigned int size, unsigned int offset)
 {
-#ifdef __arm__
+#ifdef GBA
     ByteCopy(eeprom, 0xE000000 + offset, size);
 #endif
 }

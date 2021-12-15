@@ -42,7 +42,7 @@
 #include "config.h"
 #endif
 
-#ifndef __arm__
+#ifndef GBA
     #include <time.h>
 #endif
 
@@ -76,7 +76,7 @@
 //in IWRAM.
 //*****************************************
 
-#ifndef __arm__
+#ifndef GBA
 static byte vram1_spare[2560];
 static byte vram2_spare[2560];
 static byte vram3_spare[1024];
@@ -116,6 +116,12 @@ short* wipe_y_lookup = (short*)&vram1_spare[580+480+484];
 //384 Bytes
 vissprite_t** vissprite_ptrs = (vissprite_t**)&vram1_spare[580+480+484+240];
 
+//240 bytes
+short* screenheightarray = (short*)&vram1_spare[580+480+484+240+384];
+
+//240 byes
+short* negonearray = (short*)&vram1_spare[580+480+484+240+384+240];
+
 
 #define yslope yslope_vram
 #define distscale distscale_vram
@@ -126,7 +132,7 @@ vissprite_t** vissprite_ptrs = (vissprite_t**)&vram1_spare[580+480+484+240];
 //GBA has 16kb of Video Memory for columns
 //*****************************************
 
-#ifndef __arm__
+#ifndef GBA
 static byte columnCache[128*128];
 #else
     #define columnCache ((byte*)0x6014000)
@@ -271,7 +277,7 @@ static const fixed_t skyiscale = (FRACUNIT*200)/((SCREENHEIGHT-ST_HEIGHT)+16);
 // will mirror to the upper 8 bits too.
 // it saves an OR and Shift per pixel.
 //********************************************
-#ifdef __arm__
+#ifdef GBA
     typedef byte pixel;
 #else
     typedef unsigned short pixel;
@@ -522,14 +528,16 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 #define COLEXTRABITS 9
 #define COLBITS (FRACBITS + COLEXTRABITS)
 
-inline static void R_DrawColumnPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int frac)
+inline static void R_DrawColumnPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int frac)
 {
-#ifdef __arm__
-    *dest = colormap[source[frac>>COLBITS]];
+    pixel* d = (pixel*)dest;
+
+#ifdef GBA
+    *d = colormap[source[frac>>COLBITS]];
 #else
     unsigned int color = colormap[source[frac>>COLBITS]];
 
-    *dest = (color | (color << 8));
+    *d = (color | (color << 8));
 #endif
 }
 
@@ -695,7 +703,7 @@ static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
 
     do
     {        
-        R_DrawColumnPixel((pixel*)dest, &dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos++;
+        R_DrawColumnPixel(dest, (const byte*)&dest[fuzzoffset[fuzzpos]], colormap, 0); dest += SCREENWIDTH;  fuzzpos++;
 
         if(fuzzpos >= 50)
             fuzzpos = 0;
@@ -782,19 +790,10 @@ static void R_DrawVisSprite(const vissprite_t *vis)
         colfunc = R_DrawFuzzColumn;    // killough 3/14/98
     else
     {
-        if (vis->mobjflags & MF_TRANSLATION)
-        {
-            colfunc = R_DrawTranslatedColumn;
-            dcvars.translation = translationtables +
-                    ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
-        }
-        else
-        {
-            hires = highDetail;
+        hires = highDetail;
 
-            if(hires)
-                colfunc = R_DrawColumnHiRes;
-        }
+        if(hires)
+            colfunc = R_DrawColumnHiRes;
     }
 
     // proff 11/06/98: Changed for high-res
@@ -1266,14 +1265,17 @@ static void R_DrawMasked(void)
 #pragma GCC push_options
 #pragma GCC optimize ("Ofast")
 
-inline static void R_DrawSpanPixel(pixel* dest, const byte* source, const byte* colormap, unsigned int position)
+inline static void R_DrawSpanPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int position)
 {
-#ifdef __arm__
-    *dest = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
+
+ pixel* d = (pixel*)dest;
+
+#ifdef GBA
+    *d = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
 #else
     unsigned int color = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
 
-    *dest = (color | (color << 8));
+    *d = (color | (color << 8));
 #endif
 }
 
@@ -2397,14 +2399,14 @@ static void R_StoreWallRange(const int start, const int stop)
     // save sprite clipping info
     if ((ds_p->silhouette & SIL_TOP || maskedtexture) && !ds_p->sprtopclip)
     {
-        ByteCopy(_g->lastopening, ceilingclip+start, sizeof(short)*(rw_stopx-start));
+        ByteCopy((byte*)_g->lastopening, (const byte*)(ceilingclip+start), sizeof(short)*(rw_stopx-start));
         ds_p->sprtopclip = _g->lastopening - start;
         _g->lastopening += rw_stopx - start;
     }
 
     if ((ds_p->silhouette & SIL_BOTTOM || maskedtexture) && !ds_p->sprbottomclip)
     {
-        ByteCopy(_g->lastopening, floorclip+start, sizeof(short)*(rw_stopx-start));
+        ByteCopy((byte*)_g->lastopening, (const byte*)(floorclip+start), sizeof(short)*(rw_stopx-start));
         ds_p->sprbottomclip = _g->lastopening - start;
         _g->lastopening += rw_stopx - start;
     }
@@ -3298,7 +3300,7 @@ int I_GetTime(void)
 {
     int thistimereply;
 
-#ifndef __arm__
+#ifndef GBA
 
     clock_t now = clock();
 

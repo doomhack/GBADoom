@@ -81,7 +81,7 @@ fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b);
 
 inline static fixed_t CONSTFUNC FixedDiv(fixed_t a, fixed_t b)
 {
-#ifndef __arm__
+#ifndef GBA
     return ((unsigned)D_abs(a)>>14) >= (unsigned)D_abs(b) ? ((a^b)>>31) ^ INT_MAX :
                                                   (fixed_t)(((int_64_t) a << FRACBITS) / b);
 #else

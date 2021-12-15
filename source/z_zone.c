@@ -21,9 +21,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: z_zone.c,v 1.4 1997/02/03 16:47:58 b1 Exp $";
-
 #include "z_zone.h"
 #include "doomdef.h"
 #include "doomtype.h"
@@ -45,7 +42,7 @@ rcsid[] = "$Id: z_zone.c,v 1.4 1997/02/03 16:47:58 b1 Exp $";
 
 const unsigned int maxHeapSize = (256 * 1024);
 
-#ifndef __arm__
+#ifndef GBA
     static int running_count = 0;
 #endif
 
@@ -134,7 +131,7 @@ void Z_Free (void* ptr)
     block->tag = 0;
 
 
-#ifndef __arm__
+#ifndef GBA
     running_count -= block->size;
     printf("Free: %d\n", running_count);
 #endif
@@ -277,7 +274,7 @@ void* Z_Malloc(int size, int tag, void **user)
     // next allocation will start looking here
     mainzone->rover = base->next;
 
-#ifndef __arm__
+#ifndef GBA
     running_count += base->size;
     printf("Alloc: %d (%d)\n", base->size, running_count);
 #endif

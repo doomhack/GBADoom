@@ -73,59 +73,6 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 	dcvars->translation = NULL;
 }
 
-
-
-//
-// R_DrawTranslatedColumn
-// Used to draw player sprites
-//  with the green colorramp mapped to others.
-// Could be used with different translation
-//  tables, e.g. the lighter colored version
-//  of the BaronOfHell, the HellKnight, uses
-//  identical sprites, kinda brightened up.
-//
-
-
-void R_DrawTranslatedColumn (const draw_column_vars_t *dcvars)
-{
-    int count = dcvars->yh - dcvars->yl;
-
-	const byte *source = dcvars->source;
-	const byte *colormap = dcvars->colormap;
-	const byte *translation = dcvars->translation;
-
-    unsigned short* dest = drawvars.byte_topleft + (dcvars->yl*SCREENPITCH) + dcvars->x;
-
-    const fixed_t		fracstep = dcvars->iscale;
-    fixed_t frac = dcvars->texturemid + (dcvars->yl - centery)*fracstep;
- 
-	const unsigned int sw = SCREENWIDTH;
-
-    // Zero length, column does not exceed a pixel.
-    if (count < 0)
-        return;
-
-    // Here we do an additional index re-mapping.
-    do 
-    {
-		// Translation tables are used
-		//  to map certain colorramps to other ones,
-		//  used with PLAY sprites.
-		// Thus the "green" ramp of the player 0 sprite
-		//  is mapped to gray, red, black/indigo. 
-        unsigned short color = colormap[translation[source[frac>>FRACBITS]]];
-
-        *dest = (color | (color << 8));
-		dest += sw;
-	
-		frac += fracstep;
-    } while (count--); 
-} 
-
-
-
-
-
 //
 // R_InitBuffer
 // Creats lookup tables that avoid
@@ -146,4 +93,10 @@ void R_InitBuffer()
     BlockCopy((void*)yslope_vram, yslope, sizeof(yslope));
 
     BlockCopy((void*)distscale_vram, distscale, sizeof(distscale));
+
+    for(int i = 0; i < 120; i++)
+        negonearray[i] = -1;
+
+    for(int i = 0; i < 120; i++)
+        screenheightarray[i] = 128;
 }

@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <cstring>
 
-//#define __arm__
-
-#ifdef __arm__
+#ifdef GBA
 
 extern "C"
 {

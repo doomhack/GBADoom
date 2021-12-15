@@ -3,7 +3,7 @@
 // Copyright 17/02/2019 
 //
 
-#ifndef __arm__
+#ifndef GBA
 
 
 #include "i_system_win.h"

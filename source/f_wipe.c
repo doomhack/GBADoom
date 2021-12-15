@@ -51,7 +51,7 @@
 extern short* wipe_y_lookup;
 
 
-#ifdef __arm__
+#ifdef GBA
     #include <gba.h>
 #endif
 
