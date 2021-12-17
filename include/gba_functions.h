@@ -87,14 +87,14 @@ inline static void* ByteFind(byte* mem, byte val, unsigned int count)
 inline static void SaveSRAM(const byte* eeprom, unsigned int size, unsigned int offset)
 {
 #ifdef GBA
-    ByteCopy(0xE000000 + offset, eeprom, size);
+    ByteCopy((byte*)(0xE000000 + offset), eeprom, size);
 #endif
 }
 
 inline static void LoadSRAM(byte* eeprom, unsigned int size, unsigned int offset)
 {
 #ifdef GBA
-    ByteCopy(eeprom, 0xE000000 + offset, size);
+    ByteCopy(eeprom, (byte*)(0xE000000 + offset), size);
 #endif
 }
 

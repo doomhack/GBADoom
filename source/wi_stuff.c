@@ -932,7 +932,6 @@ void WI_drawStats(void)
 //
 void WI_checkForAccelerate(void)
 {
-  int   i;
   player_t  *player = &_g->player;
 
     if (_g->playeringame)

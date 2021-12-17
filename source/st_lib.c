@@ -242,11 +242,6 @@ void STlib_updateMultIcon
 ( st_multicon_t*  mi,
   boolean   refresh )
 {
-    int w;
-    int h;
-    int x;
-    int y;
-
     if(!mi->p)
         return;
 
@@ -300,23 +295,13 @@ void STlib_updateBinIcon
 ( st_binicon_t*   bi,
   boolean   refresh )
 {
-  int     x;
-  int     y;
-  int     w;
-  int     h;
+    if (*bi->on && (bi->oldval != *bi->val || refresh))
+    {
+        if (*bi->val)
+            V_DrawPatch(bi->x, bi->y, ST_FG, bi->p);
 
-  if (*bi->on && (bi->oldval != *bi->val || refresh))
-  {
-    x = bi->x - bi->p->leftoffset;
-    y = bi->y - bi->p->topoffset;
-    w = bi->p->width;
-    h = bi->p->height;
-
-    if (*bi->val)
-      V_DrawPatch(bi->x, bi->y, ST_FG, bi->p);
-
-    bi->oldval = *bi->val;
-  }
+        bi->oldval = *bi->val;
+    }
 }
 
 void ST_refreshBackground(void)

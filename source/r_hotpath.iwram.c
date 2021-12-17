@@ -815,7 +815,7 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     dcvars.x = vis->x1;
     dcvars.odd_pixel = false;
 
-    while(dcvars.x < SCREENWIDTH-1)
+    while(dcvars.x < SCREENWIDTH)
     {
         const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
         R_DrawMaskedColumn(colfunc, &dcvars, column);
@@ -2953,7 +2953,6 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch)
             byte* dest = desttop_even + (ScreenYToOffset(column->topdelta) << 1);
 
             unsigned int count = column->length;
-
 
             while (count--)
             {

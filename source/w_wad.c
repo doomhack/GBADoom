@@ -80,7 +80,7 @@ void ExtractFileBase (const char *path, char *dest)
     while ((*src) && (*src != '.') && (++length<9))
     {
         *dest++ = toupper(*src);
-        *src++;
+        src++;
     }
     /* cph - length check removed, just truncate at 8 chars.
    * If there are 8 or more chars, we'll copy 8, and no zero termination
@@ -107,10 +107,8 @@ void ExtractFileBase (const char *path, char *dest)
 static void W_AddFile()
 {
     const wadinfo_t* header;
-    filelump_t  *fileinfo;
 
-
-    if(doom_iwad && (doom_iwad_len > 0))
+    if(doom_iwad_len > 0)
     {
         header = (wadinfo_t*)&doom_iwad[0];
 
@@ -127,7 +125,7 @@ static int PUREFUNC FindLumpByName(const char* name, const filelump_t** lump)
     const wadinfo_t* header;
     const filelump_t  *fileinfo;
 
-    if(doom_iwad && (doom_iwad_len > 0))
+    if(doom_iwad_len > 0)
     {
         header = (const wadinfo_t*)&doom_iwad[0];
 
@@ -167,7 +165,7 @@ static const filelump_t* PUREFUNC FindLumpByNum(int num)
     if(num < 0)
         return NULL;
 
-    if(doom_iwad && (doom_iwad_len > 0))
+    if(doom_iwad_len > 0)
     {
         header = (const wadinfo_t*)&doom_iwad[0];
 
