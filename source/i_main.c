@@ -87,6 +87,9 @@ int main(int argc, const char * const * argv)
 
     PrintVer();
 
+    //Call this before Z_Init as maxmod uses malloc.
+    I_Init();
+
     Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
     InitGlobals();

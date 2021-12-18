@@ -330,15 +330,8 @@ void I_InitSound(void)
     mmInitDefault(soundbank_bin, 12);
 #endif
 
-	if (!nomusicparm)
-		I_InitMusic();
-
 	// Finished initialization.
     lprintf(LO_INFO,"I_InitSound: sound ready");
-}
-
-void I_InitMusic(void)
-{
 }
 
 void I_PlaySong(int handle, int looping)

@@ -52,7 +52,6 @@ int I_StartSound(int id, int channel, int vol, int sep);
 //
 //  MUSIC I/O
 //
-void I_InitMusic(void);
 
 // Volume.
 void I_SetMusicVolume(int volume);

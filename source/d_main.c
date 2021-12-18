@@ -703,10 +703,6 @@ static void D_DoomMainSetup(void)
     P_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"I_Init: Set up machine state.");
-    I_Init();
-
-    //jff 9/3/98 use logical output routine
     lprintf(LO_INFO,"S_Init: Setting up sound.");
     S_Init(_g->snd_SfxVolume /* *8 */, _g->snd_MusicVolume /* *8*/ );
 
