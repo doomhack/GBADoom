@@ -97,6 +97,8 @@ short* floorclip = (short*)&vram3_spare[512];
 //240 bytes.
 short* ceilingclip = (short*)&vram3_spare[512+240];
 
+//992 bytes used. 32 byes left.
+
 
 
 //Stuff alloc'd in VRAM1 memory.
@@ -116,11 +118,16 @@ short* wipe_y_lookup = (short*)&vram1_spare[580+480+484];
 //384 Bytes
 vissprite_t** vissprite_ptrs = (vissprite_t**)&vram1_spare[580+480+484+240];
 
-//240 bytes
-short* screenheightarray = (short*)&vram1_spare[580+480+484+240+384];
+//2168 bytes used. 392 bytes left.
 
-//240 byes
-short* negonearray = (short*)&vram1_spare[580+480+484+240+384+240];
+
+//Stuff alloc'd in VRAM2 memory.
+
+//240 bytes
+short* screenheightarray = (short*)&vram2_spare[0];
+
+//240 bytes
+short* negonearray = (short*)&vram2_spare[240];
 
 
 #define yslope yslope_vram
