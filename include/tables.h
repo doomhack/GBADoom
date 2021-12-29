@@ -99,8 +99,6 @@ extern const fixed_t* yslope_vram; //VRAM Copy.
 extern const fixed_t distscale[120];
 extern const fixed_t* distscale_vram; //VRAM Copy.
 
-extern const unsigned char translationtables[1023];
-
 extern short* screenheightarray;
 extern short* negonearray;
 
