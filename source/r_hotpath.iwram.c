@@ -837,6 +837,9 @@ static void R_DrawVisSprite(const vissprite_t *vis)
         if(!hires)
             dcvars.x++;
 
+        if(dcvars.x >= SCREENWIDTH)
+            return;
+
 
         const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
         R_DrawMaskedColumn(colfunc, &dcvars, column2);
