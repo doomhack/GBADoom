@@ -45,7 +45,7 @@ MUSIC		:= music
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-g -Wall -O3 -fgcse-after-reload -gdwarf-4\
-                -mcpu=arm7tdmi -mtune=arm7tdmi -flto\
+                -mcpu=arm7tdmi -mtune=arm7tdmi -flto=8\
                 -fallow-store-data-races\
                 -DGBA\
 		$(ARCH)

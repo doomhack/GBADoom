@@ -838,7 +838,7 @@ static void R_DrawVisSprite(const vissprite_t *vis)
             dcvars.x++;
 
         if(dcvars.x >= SCREENWIDTH)
-            return;
+            break;
 
 
         const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
