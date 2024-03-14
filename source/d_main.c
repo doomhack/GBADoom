@@ -100,7 +100,7 @@ static const char* timedemo = NULL;//"demo1";
  *
  * Called by I/O functions when an event is received.
  * Try event handlers for each code area in turn.
- * cph - in the true spirit of the Boom source, let the 
+ * cph - in the true spirit of the Boom source, let the
  *  short ciruit operator madness begin!
  */
 
@@ -658,6 +658,9 @@ static void D_DoomMainSetup(void)
             doomverstr = "Public DOOM";
             break;
     }
+
+    /* Magic string for save type detection for GBA */
+    lprintf(LO_INFO, "SRAM_Vnnn");
 
     /* cphipps - the main display. This shows the build date, copyright, and game type */
 
