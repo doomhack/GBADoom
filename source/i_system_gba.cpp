@@ -4,6 +4,13 @@
 
 #ifdef GBA
 
+// ********************************************************************
+// GBA save type
+// ********************************************************************
+// This is needed for emulators to know which save type the ROM is using.
+
+static volatile const char save_type[10] = "SRAM_V110";
+
 extern "C"
 {
     #include "doomdef.h"
