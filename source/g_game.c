@@ -836,6 +836,55 @@ void G_ForcedLoadGame(void)
     _g->gameaction = ga_loadgame;
 }
 
+#ifndef _MSC_VER
+// Supports base 2 to 36
+char* itoa(int value, char* buffer, int base) {
+    if (base < 2 || base > 36) {
+        buffer[0] = '\0'; // invalid base
+        return buffer;
+    }
+
+    int i = 0;
+    int isNegative = 0;
+
+    if (value == 0) {
+        buffer[i++] = '0';
+        buffer[i] = '\0';
+        return buffer;
+    }
+
+    if (value < 0 && base == 10) {
+        isNegative = 1;
+        value = -value;
+    }
+
+    while (value != 0) {
+        int rem = value % base;
+        buffer[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+        value = value / base;
+    }
+
+    if (isNegative) {
+        buffer[i++] = '-';
+    }
+
+    buffer[i] = '\0';
+
+    // Inline reverse
+    int start = 0;
+    int end = i - 1;
+    while (start < end) {
+        char temp = buffer[start];
+        buffer[start] = buffer[end];
+        buffer[end] = temp;
+        start++;
+        end--;
+    }
+
+    return buffer;
+}
+#endif
+
 
 //
 // Update the strings displayed in the load-save menu.
