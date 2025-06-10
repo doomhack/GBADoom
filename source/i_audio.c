@@ -325,7 +325,6 @@ int I_StartSound(int id, int channel, int vol, int sep)
 
 void I_InitSound(void)
 {
-
 #ifdef GBA
     mmInitDefault(soundbank_bin, 12);
 #endif
