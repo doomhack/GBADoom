@@ -37,6 +37,7 @@
 #ifdef __GNUG__
 #pragma interface
 #endif
+#include <stddef.h>
 
 boolean I_StartDisplay(void);
 void I_EndDisplay(void);

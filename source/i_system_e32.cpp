@@ -98,8 +98,9 @@ void I_CreateWindow_e32()
 
     window = new DoomWindow();
 
+    #ifndef __APPLE__
     window->setAttribute(Qt::WA_PaintOnScreen);
-
+    #endif
 
 
     window->resize(vid_width * 8, vid_height * 4);

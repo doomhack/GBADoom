@@ -18,6 +18,8 @@
 #define KEYD_START      9
 #define KEYD_SELECT     10
 
+using std::byte;
+
 extern "C"
 {
 

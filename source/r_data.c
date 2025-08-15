@@ -221,6 +221,19 @@ const texture_t* R_GetTexture(int texture)
     return t;
 }
 
+#ifndef _MSC_VER
+#include <ctype.h>
+
+char* strupr(char* str) {
+    char* p = str;
+    while (*p) {
+        *p = toupper((unsigned char)*p);
+        p++;
+    }
+    return str;
+}
+#endif
+
 static int R_GetTextureNumForName(const char* tex_name)
 {
     const int  *maptex1, *maptex2;
