@@ -5,6 +5,7 @@
 
 #ifndef GBA
 
+#include "doomtype.h"
 
 #include "i_system_win.h"
 

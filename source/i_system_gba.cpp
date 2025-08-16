@@ -65,8 +65,8 @@ void I_InitScreen_e32()
 {
     irqInit();
 
-    irqSet( IRQ_VBLANK, VBlankCallback );
-    irqEnable(IRQ_VBLANK);
+    //irqSet( IRQ_VBLANK, VBlankCallback );
+    //irqEnable(IRQ_VBLANK);
 
 
     //Set gamepak wait states and prefetch.
