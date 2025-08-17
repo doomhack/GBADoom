@@ -111,14 +111,7 @@ void D_PostEvent(event_t *ev)
     if (_g->gametic < 3)
         return;
 
-    M_Responder(ev) ||
-            (_g->gamestate == GS_LEVEL && (
-                 C_Responder(ev) ||
-                 ST_Responder(ev) ||
-                 AM_Responder(ev)
-                 )
-             ) ||
-            G_Responder(ev);
+    M_Responder(ev) || (_g->gamestate == GS_LEVEL && (C_Responder(ev) || ST_Responder(ev) || AM_Responder(ev))) || G_Responder(ev);
 
 }
 

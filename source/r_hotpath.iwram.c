@@ -3199,14 +3199,14 @@ void P_MobjThinker (mobj_t* mobj, void*)
     if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
     {
         P_XYMovement(mobj);
-        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
+        if (mobj->thinker.function != (think_t)P_MobjThinker) // cph - Must've been removed
             return;       // killough - mobj was removed
     }
 
     if (mobj->z != mobj->floorz || mobj->momz)
     {
         P_ZMovement(mobj);
-        if (mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
+        if (mobj->thinker.function != (think_t)P_MobjThinker) // cph - Must've been removed
             return;       // killough - mobj was removed
     }
 

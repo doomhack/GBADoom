@@ -514,7 +514,7 @@ int EV_VerticalDoor
     /* For old demos we have to emulate the old buggy behavior and
      * mess up non-T_VerticalDoor actions.
      */
-    if (door->thinker.function == T_VerticalDoor)
+    if (door->thinker.function == (think_t)T_VerticalDoor)
     {
       /* cph - we are writing outval to door->direction iff it is non-zero */
       signed int outval = 0;
@@ -523,7 +523,7 @@ int EV_VerticalDoor
        * monster is trying to open a closing door - so change direction
        * DEMOSYNC: we only read door->direction now if it really is a door.
        */
-      if (door->thinker.function == T_VerticalDoor && door->direction == -1) {
+      if (door->thinker.function == (think_t)T_VerticalDoor && door->direction == -1) {
         outval = 1; /* go back up */
       } else if (player) {
         outval = -1; /* go back down */
@@ -535,9 +535,9 @@ int EV_VerticalDoor
        *  being corrupted by this.
        */
       if (outval) {
-        if (door->thinker.function == T_VerticalDoor) {
+        if (door->thinker.function == (think_t)T_VerticalDoor) {
           door->direction = outval;
-        } else if (door->thinker.function == T_PlatRaise) {
+        } else if (door->thinker.function == (think_t)T_PlatRaise) {
           plat_t* p = (plat_t*)door;
           p->wait = outval;
         } else {
