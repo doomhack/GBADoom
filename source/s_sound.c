@@ -327,7 +327,7 @@ void S_ResumeSound(void)
     }
 }
 
-static boolean S_SoundIsPlaying(int cnum)
+static bool S_SoundIsPlaying(int cnum)
 {
     const channel_t* channel = &_g->channels[cnum];
 

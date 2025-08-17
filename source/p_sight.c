@@ -50,11 +50,11 @@
 //
 // killough 4/20/98: cleaned up, made to use new LOS struct
 
-boolean P_CrossBSPNode(int bspnum);
+bool P_CrossBSPNode(int bspnum);
 
 
 
-boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
+bool P_CheckSight(mobj_t *t1, mobj_t *t2)
 {
   const sector_t *s1 = t1->subsector->sector;
   const sector_t *s2 = t2->subsector->sector;

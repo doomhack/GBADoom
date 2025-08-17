@@ -39,12 +39,10 @@
 
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
-#include "doomtype.h"
 #include "lprintf.h"
-#include "i_main.h"
 
 /* cphipps - enlarged message buffer and made non-static
  * We still have to be careful here, this function can be called after exit

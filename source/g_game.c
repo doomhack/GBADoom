@@ -115,8 +115,8 @@ static const fixed_t forwardmove[2] = {0x19, 0x32};
 static const fixed_t sidemove[2]    = {0x18, 0x28};
 static const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
-static void G_DoSaveGame (boolean menu);
-static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, boolean failonerror);
+static void G_DoSaveGame (bool menu);
+static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, bool failonerror);
 
 
 typedef struct gba_save_data_t
@@ -399,7 +399,7 @@ static void G_DoLoadLevel (void)
 // Get info needed to make ticcmd_ts for the players.
 //
 
-boolean G_Responder (event_t* ev)
+bool G_Responder (event_t* ev)
 {
     // any other key pops up menu if in demos
     //
@@ -880,7 +880,7 @@ void G_UpdateSaveGameStrings()
 
 // killough 3/16/98: add slot info
 // killough 5/15/98: add command-line
-void G_LoadGame(int slot, boolean command)
+void G_LoadGame(int slot, bool command)
 {  
     _g->savegameslot = slot;
     _g->demoplayback = false;
@@ -937,7 +937,7 @@ void G_SaveGame(int slot, const char *description)
     G_DoSaveGame(true);
 }
 
-static void G_DoSaveGame(boolean menu)
+static void G_DoSaveGame(bool menu)
 {
     unsigned int savebuffersize = sizeof(gba_save_data_t) * 8;
 
@@ -1152,7 +1152,7 @@ void G_DeferedPlayDemo (const char* name)
 static int demolumpnum = -1;
 
 //e6y: Check for overrun
-static boolean CheckForOverrun(const byte *start_p, const byte *current_p, size_t maxsize, size_t size, boolean failonerror)
+static bool CheckForOverrun(const byte *start_p, const byte *current_p, size_t maxsize, size_t size, bool failonerror)
 {
     size_t pos = current_p - start_p;
     if (pos + size > maxsize)
@@ -1165,7 +1165,7 @@ static boolean CheckForOverrun(const byte *start_p, const byte *current_p, size_
     return false;
 }
 
-static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, boolean failonerror)
+static const byte* G_ReadDemoHeader(const byte *demo_p, size_t size, bool failonerror)
 {
     skill_t skill;
     int episode, map;
@@ -1344,7 +1344,7 @@ void G_DoPlayDemo(void)
  * Called after a death or level completion to allow demos to be cleaned up
  * Returns true if a new demo loop action will take place
  */
-boolean G_CheckDemoStatus (void)
+bool G_CheckDemoStatus (void)
 {
     if (_g->timingdemo)
     {

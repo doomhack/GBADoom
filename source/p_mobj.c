@@ -494,11 +494,11 @@ static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)
 {
     //Full thinking ability.
     if(type < MT_MISC0)
-        return P_MobjThinker;
+        return (think_t)P_MobjThinker;
 
     //Just state cycles.
     if(mobj->tics != -1)
-        return P_MobjBrainlessThinker;
+        return (think_t)P_MobjBrainlessThinker;
 
     //No thinking at all.
     return NULL;
@@ -728,7 +728,7 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
  * if the thing in question is expected to be available in the gamemode used.
  */
 
-boolean P_IsDoomnumAllowed(int doomnum)
+bool P_IsDoomnumAllowed(int doomnum)
 {
   // Do not spawn cool, new monsters if !commercial
   if (_g->gamemode != commercial)

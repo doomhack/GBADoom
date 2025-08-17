@@ -72,7 +72,7 @@ void HUlib_clearTextLine(hu_textline_t* t)
 // Passed a hu_textline_t, and the values used to initialize
 // Returns nothing
 //
-void HUlib_initTextLine(hu_textline_t* t, int x, int y, const patch_t *f, int sc)
+void HUlib_initTextLine(hu_textline_t* t, int x, int y, const patch_t **f, int sc)
 //jff 2/16/98 add color range parameter
 {
     t->x = x;
@@ -90,7 +90,7 @@ void HUlib_initTextLine(hu_textline_t* t, int x, int y, const patch_t *f, int sc
 // Passed the hu_textline_t and the char to add
 // Returns false if already at length limit, true if the character added
 //
-boolean HUlib_addCharToTextLine(hu_textline_t* t,char ch)
+bool HUlib_addCharToTextLine(hu_textline_t* t,char ch)
 {
     // killough 1/23/98 -- support multiple lines
     if (t->linelen == HU_MAXLINELENGTH)
@@ -185,7 +185,7 @@ void HUlib_eraseTextLine(hu_textline_t* l)
 // Passed a hu_stext_t, and the values used to initialize
 // Returns nothing
 //
-void HUlib_initSText(hu_stext_t* s,int x,int y,int h, const patch_t* font, int startchar, boolean* on)
+void HUlib_initSText(hu_stext_t* s,int x,int y,int h, const patch_t** font, int startchar, bool* on)
 {
 
     int i;
@@ -199,7 +199,7 @@ void HUlib_initSText(hu_stext_t* s,int x,int y,int h, const patch_t* font, int s
                 (
                     &s->l[i],
                     x,
-                    y - i*(font[0].height+1),
+                    y - i*(font[0]->height+1),
                 font,
                 startchar
                 );

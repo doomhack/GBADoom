@@ -1,4 +1,4 @@
-const extern unsigned int reciprocalTable[65537] = {
+const unsigned int reciprocalTable[65537] = {
     0,
     4294967295,
     2147483648,

@@ -43,12 +43,12 @@
 // killough 5/2/98: number of bytes reserved for saving options
 #define GAME_OPTION_SIZE 64
 
-boolean G_Responder(event_t *ev);
-boolean G_CheckDemoStatus(void);
+bool G_Responder(event_t *ev);
+bool G_CheckDemoStatus(void);
 void G_InitNew(skill_t skill, int episode, int map);
 void G_DeferedInitNew(skill_t skill, int episode, int map);
 void G_DeferedPlayDemo(const char *demo); // CPhipps - const
-void G_LoadGame(int slot, boolean is_command); // killough 5/15/98
+void G_LoadGame(int slot, bool is_command); // killough 5/15/98
 void G_ForcedLoadGame(void);           // killough 5/15/98: forced loadgames
 void G_DoLoadGame(void);
 void G_SaveGame(int slot, const char *description); // Called by M_Responder.

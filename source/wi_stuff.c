@@ -292,7 +292,7 @@ static void WI_slamBackground(void)
 //
 // The ticker is used to detect keys
 //  because of timing issues in netgames.
-boolean WI_Responder(event_t* ev)
+bool WI_Responder(event_t* ev)
 {
   return false;
 }
@@ -366,7 +366,7 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
   const char* const c[] )
 {
   int   i;
-  boolean fits = false;
+  bool fits = false;
 
   i = 0;
   do

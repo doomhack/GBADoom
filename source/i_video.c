@@ -82,7 +82,7 @@ void I_StartFrame (void)
 }
 
 
-boolean I_StartDisplay(void)
+bool I_StartDisplay(void)
 {
     unsigned short* backbuffer = I_GetBackBuffer();
 
@@ -156,7 +156,7 @@ void I_FinishUpdate (void)
         _g->newpal = NO_PALETTE_CHANGE;
 	}
 
-    I_FinishUpdate_e32(_g->screens[0].data, _g->current_pallete, SCREENWIDTH, SCREENHEIGHT);
+    I_FinishUpdate_e32((byte*)_g->screens[0].data, _g->current_pallete, SCREENWIDTH, SCREENHEIGHT);
 }
 
 //

@@ -43,10 +43,10 @@
 
 //jff end of external declaration of command line playmode
 
-extern const boolean nosfxparm;
-extern const boolean nomusicparm;
+extern const bool nosfxparm;
+extern const bool nomusicparm;
 
-extern const boolean nodrawers;
+extern const bool nodrawers;
 
 // Called by IO functions when input is detected.
 void D_PostEvent(event_t* ev);

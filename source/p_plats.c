@@ -222,7 +222,7 @@ int EV_DoPlat
     plat->type = type;
     plat->sector = sec;
     plat->sector->floordata = plat; //jff 2/23/98 multiple thinkers
-    plat->thinker.function = T_PlatRaise;
+    plat->thinker.function = (think_t)T_PlatRaise;
     plat->crush = false;
     plat->tag = line->tag;
 
@@ -348,7 +348,7 @@ void P_ActivateInStasis(int tag)
         plat->status = plat->oldstatus==up? down : up;
       else
         plat->status = plat->oldstatus;
-      plat->thinker.function = T_PlatRaise;
+      plat->thinker.function = (think_t)T_PlatRaise;
     }
   }
 }
@@ -391,13 +391,13 @@ void P_AddActivePlat(plat_t* plat)
 {
     platlist_t* old_head = _g->activeplats;
 
-    platlist_t *list = Z_Malloc(sizeof *list, PU_LEVEL, &_g->activeplats);
+    platlist_t *list = Z_Malloc(sizeof *list, PU_LEVEL, (void**)&_g->activeplats);
     list->plat = plat;
     plat->list = list;
     if ((list->next = old_head))
         list->next->prev = &list->next;
 
-    list->prev = old_head;
+    list->prev = &old_head;
 }
 
 //

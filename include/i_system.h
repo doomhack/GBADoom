@@ -38,7 +38,7 @@
 #pragma interface
 #endif
 
-boolean I_StartDisplay(void);
+bool I_StartDisplay(void);
 void I_EndDisplay(void);
 int I_GetTime(void);     /* killough */
 

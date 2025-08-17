@@ -283,7 +283,7 @@ int EV_DoCeiling
     memset(ceiling, 0, sizeof(*ceiling));
     P_AddThinker (&ceiling->thinker);
     sec->ceilingdata = ceiling;               //jff 2/22/98
-    ceiling->thinker.function = T_MoveCeiling;
+    ceiling->thinker.function = (think_t)T_MoveCeiling;
     ceiling->sector = sec;
     ceiling->crush = false;
 
@@ -377,7 +377,7 @@ int P_ActivateInStasisCeiling(const line_t *line)
     if (ceiling->tag == line->tag && ceiling->direction == 0)
     {
       ceiling->direction = ceiling->olddirection;
-      ceiling->thinker.function = T_MoveCeiling;
+      ceiling->thinker.function = (think_t)T_MoveCeiling;
       //jff 4/5/98 return if activated
       rtn=1;
     }
@@ -424,14 +424,14 @@ void P_AddActiveCeiling(ceiling_t* ceiling)
 {
     ceilinglist_t *old_head = _g->activeceilings;
 
-    ceilinglist_t *list = Z_Malloc(sizeof *list, PU_LEVEL, &_g->activeceilings);
+    ceilinglist_t *list = Z_Malloc(sizeof *list, PU_LEVEL, (void**)&_g->activeceilings);
     list->ceiling = ceiling;
     ceiling->list = list;
 
     if ((list->next = old_head))
         list->next->prev = &list->next;
 
-    list->prev = old_head;
+    list->prev = &old_head;
 }
 
 //

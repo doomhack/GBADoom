@@ -59,7 +59,7 @@ typedef struct
 
 typedef struct {
   fixed_t     frac;           /* along trace line */
-  boolean     isaline;
+  bool     isaline;
   union
   {
     mobj_t* thing;
@@ -75,7 +75,7 @@ typedef struct {
   fixed_t maxz,minz;               // cph - z optimisations for 2sided lines
 } los_t;
 
-typedef boolean (*traverser_t)(intercept_t *in);
+typedef bool (*traverser_t)(intercept_t *in);
 
 fixed_t CONSTFUNC P_AproxDistance (fixed_t dx, fixed_t dy);
 int     P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line);
@@ -86,9 +86,9 @@ fixed_t P_InterceptVector2(const divline_t *v2, const divline_t *v1);
 void    P_LineOpening (const line_t *linedef);
 void    P_UnsetThingPosition(mobj_t *thing);
 void    P_SetThingPosition(mobj_t *thing);
-boolean P_BlockLinesIterator (int x, int y, boolean func(const line_t *));
-boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t *));
-boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
-                       int flags, boolean trav(intercept_t *));
+bool P_BlockLinesIterator (int x, int y, bool func(const line_t *));
+bool P_BlockThingsIterator(int x, int y, bool func(mobj_t *));
+bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
+                       int flags, bool trav(intercept_t *));
 
 #endif  /* __P_MAPUTL__ */

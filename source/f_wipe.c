@@ -73,7 +73,7 @@ int wipe_EndScreen(void)
 // 2021-08-08 next-hack: commented and modified to use the dual buffer.
 static int wipe_doMelt(int ticks)
 {
-    boolean done = true;
+    bool done = true;
 
     unsigned short* backbuffer = I_GetBackBuffer();
     unsigned short* frontbuffer = I_GetFrontBuffer();

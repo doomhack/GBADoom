@@ -764,7 +764,7 @@ int P_FindMinSurroundingLight
 // jff 02/05/98 routine added to test for unlockability of
 //  generalized locked doors
 //
-boolean P_CanUnlockGenDoor
+bool P_CanUnlockGenDoor
 ( const line_t* line,
   player_t* player)
 {
@@ -914,7 +914,7 @@ boolean P_CanUnlockGenDoor
 // jff 2/23/98 added to prevent old demos from
 //  succeeding in starting multiple specials on one sector
 //
-boolean PUREFUNC P_SectorActive(special_e t, const sector_t *sec)
+bool PUREFUNC P_SectorActive(special_e t, const sector_t *sec)
 {
     switch (t)             // return whether thinker of same type is active
     {
@@ -1020,7 +1020,7 @@ int P_CheckTag(const line_t *line)
 // jff 3/14/98 added to simplify checks for whether sector is secret
 //  in automap and other places
 //
-boolean PUREFUNC P_IsSecret(const sector_t *sec)
+bool PUREFUNC P_IsSecret(const sector_t *sec)
 {
   return (sec->special==9 || (sec->special&SECRET_MASK));
 }
@@ -1035,7 +1035,7 @@ boolean PUREFUNC P_IsSecret(const sector_t *sec)
 // jff 3/14/98 added to simplify checks for whether sector is secret
 //  in automap and other places
 //
-boolean PUREFUNC P_WasSecret(const sector_t *sec)
+bool PUREFUNC P_WasSecret(const sector_t *sec)
 {
   return (sec->oldspecial==9 || (sec->oldspecial&SECRET_MASK));
 }
@@ -2453,7 +2453,7 @@ void T_Scroll(scroll_t *s)
 static void Add_Scroller(int affectee)
 {
   scroll_t *s = Z_Malloc(sizeof *s, PU_LEVSPEC, 0);
-  s->thinker.function = T_Scroll;
+  s->thinker.function = (think_t)T_Scroll;
   s->affectee = affectee;
   P_AddThinker(&s->thinker);
 }

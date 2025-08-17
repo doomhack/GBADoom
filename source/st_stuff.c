@@ -59,7 +59,7 @@ static void ST_Stop(void);
 
 // Respond to keyboard input events,
 //  intercept cheats.
-boolean ST_Responder(const event_t *ev)
+bool ST_Responder(const event_t *ev)
 {
   // Filter automap on/off.
   if (ev->type == ev_keyup && (ev->data1 & 0xffff0000) == AM_MSGHEADER)
@@ -105,7 +105,7 @@ static void ST_updateFaceWidget(void)
 	angle_t     diffang;
     static int  lastattackdown = -1;
     static int  priority = 0;
-    boolean     doevilgrin;
+    bool     doevilgrin;
 
     if (priority < 10)
     {
@@ -354,7 +354,7 @@ static void ST_doPaletteStuff(void)
     }
 }
 
-static void ST_drawWidgets(boolean refresh)
+static void ST_drawWidgets(bool refresh)
 {
     STlib_updateNum(&_g->w_ready, CR_RED, refresh);
 	
@@ -388,7 +388,7 @@ static void ST_doRefresh(void)
 
 }
 
-static boolean ST_NeedUpdate()
+static bool ST_NeedUpdate()
 {
 	// ready weapon ammo
 	if(_g->w_ready.oldnum != *_g->w_ready.num)
@@ -428,7 +428,7 @@ static boolean ST_NeedUpdate()
     return false;
 }
 
-void ST_Drawer(boolean statusbaron, boolean refresh)
+void ST_Drawer(bool statusbaron, bool refresh)
 {
     /* cph - let status bar on be controlled
    * completely by the call from D_Display
@@ -439,7 +439,7 @@ void ST_Drawer(boolean statusbaron, boolean refresh)
 
     if (statusbaron)
     {
-        boolean needupdate = false;
+        bool needupdate = false;
 
         if(refresh)
         {
@@ -473,7 +473,7 @@ void ST_Drawer(boolean statusbaron, boolean refresh)
 // CPhipps - Loads graphics needed for status bar if doload is true,
 //  unloads them otherwise
 //
-static void ST_loadGraphics(boolean doload)
+static void ST_loadGraphics(bool doload)
 {
     int  i, facenum;
     char namebuf[9];
@@ -703,7 +703,7 @@ static void ST_createWidgets(void)
 			&_g->st_statusbaron);
 }
 
-static boolean st_stopped = true;
+static bool st_stopped = true;
 
 void ST_Start(void)
 {

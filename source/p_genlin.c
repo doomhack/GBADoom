@@ -64,7 +64,7 @@ int EV_DoGenFloor
 {
   int                   secnum;
   int                   rtn;
-  boolean               manual;
+  bool               manual;
   sector_t*             sec;
   floormove_t*          floor;
   unsigned              value = (unsigned)LN_SPECIAL(line) - GenFloorBase;
@@ -114,7 +114,7 @@ manual_floor:
     memset(floor, 0, sizeof(*floor));
     P_AddThinker (&floor->thinker);
     sec->floordata = floor;
-    floor->thinker.function = T_MoveFloor;
+    floor->thinker.function = (think_t)T_MoveFloor;
     floor->crush = Crsh;
     floor->direction = Dirn? 1 : -1;
     floor->sector = sec;
@@ -267,7 +267,7 @@ int EV_DoGenCeiling
 {
   int                   secnum;
   int                   rtn;
-  boolean               manual;
+  bool               manual;
   fixed_t               targheight;
   sector_t*             sec;
   ceiling_t*            ceiling;
@@ -318,7 +318,7 @@ manual_ceiling:
     memset(ceiling, 0, sizeof(*ceiling));
     P_AddThinker (&ceiling->thinker);
     sec->ceilingdata = ceiling; //jff 2/22/98
-    ceiling->thinker.function = T_MoveCeiling;
+    ceiling->thinker.function = (think_t)T_MoveCeiling;
     ceiling->crush = Crsh;
     ceiling->direction = Dirn? 1 : -1;
     ceiling->sector = sec;
@@ -474,7 +474,7 @@ int EV_DoGenLift
   plat_t*         plat;
   int             secnum;
   int             rtn;
-  boolean         manual;
+  bool         manual;
   sector_t*       sec;
   unsigned        value = (unsigned)LN_SPECIAL(line) - GenLiftBase;
 
@@ -527,7 +527,7 @@ manual_lift:
 
     plat->sector = sec;
     plat->sector->floordata = plat;
-    plat->thinker.function = T_PlatRaise;
+    plat->thinker.function = (think_t)T_PlatRaise;
     plat->crush = false;
     plat->tag = line->tag;
 
@@ -629,7 +629,7 @@ int EV_DoGenStairs
   int                   texture;
   int                   ok;
   int                   rtn;
-  boolean               manual;
+  bool               manual;
 
   sector_t*             sec;
   sector_t*             tsec;
@@ -686,7 +686,7 @@ manual_stair:
     memset(floor, 0, sizeof(*floor));
     P_AddThinker (&floor->thinker);
     sec->floordata = floor;
-    floor->thinker.function = T_MoveFloor;
+    floor->thinker.function = (think_t)T_MoveFloor;
     floor->direction = Dirn? 1 : -1;
     floor->sector = sec;
 
@@ -774,7 +774,7 @@ manual_stair:
         P_AddThinker (&floor->thinker);
 
         sec->floordata = floor;
-        floor->thinker.function = T_MoveFloor;
+        floor->thinker.function = (think_t)T_MoveFloor;
         floor->direction = Dirn? 1 : -1;
         floor->sector = sec;
         floor->speed = speed;
@@ -809,7 +809,7 @@ int EV_DoGenCrusher
 {
   int                   secnum;
   int                   rtn;
-  boolean               manual;
+  bool               manual;
   sector_t*             sec;
   ceiling_t*            ceiling;
   unsigned              value = (unsigned)LN_SPECIAL(line) - GenCrusherBase;
@@ -857,7 +857,7 @@ manual_crusher:
     memset(ceiling, 0, sizeof(*ceiling));
     P_AddThinker (&ceiling->thinker);
     sec->ceilingdata = ceiling; //jff 2/22/98
-    ceiling->thinker.function = T_MoveCeiling;
+    ceiling->thinker.function = (think_t)T_MoveCeiling;
     ceiling->crush = true;
     ceiling->direction = -1;
     ceiling->sector = sec;
@@ -908,7 +908,7 @@ int EV_DoGenLockedDoor
   int   secnum,rtn;
   sector_t* sec;
   vldoor_t* door;
-  boolean manual;
+  bool manual;
   unsigned  value = (unsigned)LN_SPECIAL(line) - GenLockedBase;
 
   // parse the bit fields in the line's special type
@@ -954,7 +954,7 @@ manual_locked:
     P_AddThinker (&door->thinker);
     sec->ceilingdata = door; //jff 2/22/98
 
-    door->thinker.function = T_VerticalDoor;
+    door->thinker.function = (think_t)T_VerticalDoor;
     door->sector = sec;
     door->topwait = VDOORWAIT;
     door->line = line;
@@ -1014,7 +1014,7 @@ int EV_DoGenDoor
 {
   int   secnum,rtn;
   sector_t* sec;
-  boolean   manual;
+  bool   manual;
   vldoor_t* door;
   unsigned  value = (unsigned)LN_SPECIAL(line) - GenDoorBase;
 
@@ -1063,7 +1063,7 @@ manual_door:
     P_AddThinker (&door->thinker);
     sec->ceilingdata = door; //jff 2/22/98
 
-    door->thinker.function = T_VerticalDoor;
+    door->thinker.function = (think_t)T_VerticalDoor;
     door->sector = sec;
     // setup delay for door remaining open/closed
     switch(Dely)

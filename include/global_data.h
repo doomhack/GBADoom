@@ -80,7 +80,7 @@ fixed_t scale_ftom;
 
 int lastlevel, lastepisode;
 
-boolean stopped;
+bool stopped;
 
 fixed_t mtof_zoommul; // how far the window zooms each tic (map coords)
 fixed_t ftom_zoommul; // how far the window zooms each tic (fb coords)
@@ -105,9 +105,9 @@ int  demosequence;         // killough 5/2/98: made static
 int  pagetic;
 int pagelump; // CPhipps - const
 
-boolean singletics; // debug flag to cancel adaptiveness
-boolean advancedemo;
-boolean fps_show;
+bool singletics; // debug flag to cancel adaptiveness
+bool advancedemo;
+bool fps_show;
 
 unsigned int gamma;
 
@@ -149,8 +149,8 @@ int             castonmelee;
 int midstage;                 // whether we're in "mid-stage"
 int  laststage;
 
-boolean         castattacking;
-boolean         castdeath;
+bool         castattacking;
+bool         castdeath;
 
 //******************************************************************************
 //g_game.c
@@ -182,7 +182,7 @@ int             longtics;
 
 
 // CPhipps - made lots of key/button state vars static
-boolean gamekeydown[NUMKEYS];
+bool gamekeydown[NUMKEYS];
 int     turnheld;       // for accelerative turning
 
 gamestate_t prevgamestate;
@@ -194,16 +194,16 @@ int     d_map;
 byte  savegameslot;         // Slot to load if gameaction == ga_loadgame
 
 
-boolean secretexit;
+bool secretexit;
 
-boolean         respawnmonsters;
+bool         respawnmonsters;
 
-boolean         usergame;      // ok to save / end game
-boolean         timingdemo;    // if true, exit with report on completion
-boolean         playeringame;
-boolean         demoplayback;
-boolean         singledemo;           // quit after playing a demo from cmdline
-boolean         haswolflevels;// jff 4/18/98 wolf levels present
+bool         usergame;      // ok to save / end game
+bool         timingdemo;    // if true, exit with report on completion
+bool         playeringame;
+bool         demoplayback;
+bool         singledemo;           // quit after playing a demo from cmdline
+bool         haswolflevels;// jff 4/18/98 wolf levels present
 
 
 //******************************************************************************
@@ -218,9 +218,9 @@ hu_textline_t  w_title;
 hu_stext_t     w_message;
 int        message_counter;
 
-boolean    message_on;
-boolean    message_dontfuckwithme;
-boolean    headsupactive;
+bool    message_on;
+bool    message_dontfuckwithme;
+bool    headsupactive;
 
 //******************************************************************************
 //i_audio.c
@@ -276,8 +276,8 @@ short itemOn;           // menu item skull is on (for Big Font menus)
 short skullAnimCounter; // skull animation counter
 short whichSkull;       // which skull to draw (he blinks)
 
-boolean menuactive;    // The menus are up
-boolean messageNeedsInput; // timed message = no input from user
+bool menuactive;    // The menus are up
+bool messageNeedsInput; // timed message = no input from user
 
 char savegamestrings[8][8];
 
@@ -388,14 +388,14 @@ mobj_t*   usething;
 
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
-boolean   floatok;
+bool   floatok;
 
 /* killough 11/98: if "felldown" true, object was pushed down ledge */
-boolean   felldown;
+bool   felldown;
 
-boolean crushchange, nofit;
+bool crushchange, nofit;
 
-boolean telefrag;   /* killough 8/9/98: whether to telefrag at exit */
+bool telefrag;   /* killough 8/9/98: whether to telefrag at exit */
 
 
 
@@ -547,7 +547,7 @@ thinker_t thinkerclasscap[th_all+1];
 //p_user.c
 //******************************************************************************
 
-boolean onground; // whether player is on ground or in air
+bool onground; // whether player is on ground or in air
 
 
 //******************************************************************************
@@ -668,7 +668,7 @@ int mus_playing;
 int idmusnum;
 
 // whether songs are mus_paused
-boolean mus_paused;
+bool mus_paused;
 
 //******************************************************************************
 //st_stuff.c
@@ -726,7 +726,7 @@ st_percent_t  st_armor;
 int      st_oldhealth;
 
 // used for evil grin
-boolean  oldweaponsowned[NUMWEAPONS];
+bool  oldweaponsowned[NUMWEAPONS];
 
  // count until face changes
 int      st_facecount;
@@ -743,7 +743,7 @@ int      st_randomnumber;
 int st_palette;
 
 // whether left-side main status bar is active
-boolean st_statusbaron;
+bool st_statusbaron;
 
 //******************************************************************************
 //v_video.c
@@ -787,7 +787,7 @@ int cnt_kills;
 int cnt_items;
 int cnt_secret;
 
-boolean snl_pointeron;
+bool snl_pointeron;
 
 
 //******************************************************************************

@@ -59,7 +59,7 @@
 
 void    F_StartCast (void);
 void    F_CastTicker (void);
-boolean F_CastResponder (event_t *ev);
+bool F_CastResponder (event_t *ev);
 void    F_CastDrawer (void);
 
 void WI_checkForAccelerate(void);    // killough 3/28/98: used to
@@ -173,7 +173,7 @@ void F_StartFinale (void)
 
 
 
-boolean F_Responder (event_t *event)
+bool F_Responder (event_t *event)
 {
     if (_g->finalestage == 2)
         return F_CastResponder (event);
@@ -461,7 +461,7 @@ stopattack:
 // F_CastResponder
 //
 
-boolean F_CastResponder (event_t* ev)
+bool F_CastResponder (event_t* ev)
 {
     if (ev->type != ev_keydown)
         return false;
@@ -542,7 +542,7 @@ void F_CastDrawer (void)
     spritedef_t*        sprdef;
     spriteframe_t*      sprframe;
     int                 lump;
-    boolean             flip;
+    bool             flip;
 
     // erase the entire screen to a background
     // CPhipps - patch drawing updated
@@ -555,7 +555,7 @@ void F_CastDrawer (void)
     sprframe = &sprdef->spriteframes[ _g->caststate->frame & FF_FRAMEMASK];
     lump = sprframe->lump[0];
 
-    flip = (boolean)SPR_FLIPPED(sprframe, 0);
+    flip = (bool)SPR_FLIPPED(sprframe, 0);
 
     // CPhipps - patch drawing updated
     V_DrawNumPatch(160, 170, 0, lump+_g->firstspritelump, CR_DEFAULT,

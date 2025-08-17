@@ -115,7 +115,7 @@ void M_DrawThermo(int x,int y,int thermWidth,int thermDot);
 void M_WriteText(int x, int y, const char *string);
 int  M_StringWidth(const char *string);
 int  M_StringHeight(const char *string);
-void M_StartMessage(const char *string,void *routine,boolean input);
+void M_StartMessage(const char *string,void *routine,bool input);
 void M_ClearMenus (void);
 
 // phares 3/30/98
@@ -851,7 +851,7 @@ static void M_InitDefaults(void)
 // action based on the state of the system.
 //
 
-boolean M_Responder (event_t* ev)
+bool M_Responder (event_t* ev)
 {
     int    ch;
 
@@ -1134,7 +1134,7 @@ void M_Ticker (void)
 // Message Routines
 //
 
-void M_StartMessage (const char* string,void* routine,boolean input)
+void M_StartMessage (const char* string,void* routine,bool input)
 {
   _g->messageLastMenuActive = _g->menuactive;
   _g->messageToPrint = 1;

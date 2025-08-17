@@ -391,7 +391,7 @@ int P_WeaponCycleDown(player_t *player)
 // (only in demo_compatibility mode -- killough 3/22/98)
 //
 
-boolean P_CheckAmmo(player_t *player)
+bool P_CheckAmmo(player_t *player)
 {
   ammotype_t ammo = weaponinfo[player->readyweapon].ammo;
   int count = 1;  // Regular
@@ -763,7 +763,7 @@ static void P_BulletSlope(mobj_t *mo)
 // P_GunShot
 //
 
-static void P_GunShot(mobj_t *mo, boolean accurate)
+static void P_GunShot(mobj_t *mo, bool accurate)
 {
   int damage = 5*(P_Random()%3+1);
   angle_t angle = mo->angle;

@@ -345,7 +345,7 @@ static void AM_maxOutWindowScale(void)
 //
 // Passed an input event, returns true if its handled
 //
-boolean AM_Responder
+bool AM_Responder
 ( event_t*  ev )
 {
     int rc;
@@ -556,7 +556,7 @@ void AM_Ticker (void)
 // clipping on them in the lines frame coordinates.
 // Returns true if any part of line was not clipped
 //
-static boolean AM_clipMline(mline_t*  ml, fline_t*  fl)
+static bool AM_clipMline(mline_t*  ml, fline_t*  fl)
 {
     enum
     {

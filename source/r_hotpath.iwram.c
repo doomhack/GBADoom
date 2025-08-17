@@ -187,10 +187,10 @@ static int      worldbottom;
 static int didsolidcol; /* True if at least one column was marked solid */
 
 // True if any of the segs textures might be visible.
-static boolean  segtextured;
-static boolean  markfloor;      // False if the back side is the same plane.
-static boolean  markceiling;
-static boolean  maskedtexture;
+static bool  segtextured;
+static bool  markfloor;      // False if the back side is the same plane.
+static bool  markceiling;
+static bool  maskedtexture;
 static int      toptexture;
 static int      bottomtexture;
 static int      midtexture;
@@ -249,7 +249,7 @@ static fixed_t planeheight;
 
 size_t num_vissprite;
 
-boolean highDetail = false;
+bool highDetail = false;
 
 
 
@@ -784,7 +784,7 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
     R_DrawColumn_f colfunc = R_DrawColumn;
     draw_column_vars_t dcvars;
-    boolean hires = false;
+    bool hires = false;
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
@@ -1106,7 +1106,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     int           x1, x2;
     spritedef_t   *sprdef;
     spriteframe_t *sprframe;
-    boolean       flip;
+    bool       flip;
     vissprite_t   *vis;
     vissprite_t   avis;
     int           width;
@@ -1117,7 +1117,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
-    flip = (boolean) SPR_FLIPPED(sprframe, 0);
+    flip = (bool) SPR_FLIPPED(sprframe, 0);
 
     const patch_t* patch = W_CacheLumpNum(sprframe->lump[0]+_g->firstspritelump);
     // calculate edges of the shape
@@ -1537,7 +1537,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
     }
 
-    const boolean flip = (boolean)SPR_FLIPPED(sprframe, rot);
+    const bool flip = (bool)SPR_FLIPPED(sprframe, rot);
     const patch_t* patch = W_CacheLumpNum(sprframe->lump[rot] + _g->firstspritelump);
 
     /* calculate edges of the shape
@@ -2105,7 +2105,7 @@ static void R_RenderSegLoop (int rw_x)
     }
 }
 
-static boolean R_CheckOpenings(const int start)
+static bool R_CheckOpenings(const int start)
 {
     int pos = _g->lastopening - _g->openings;
     int need = (rw_stopx - start)*4 + pos;
@@ -2495,7 +2495,7 @@ static void R_RecalcLineFlags(void)
 // Replaces the old R_Clip*WallSegment functions. It draws bits of walls in those
 // columns which aren't solid, and updates the solidcol[] array appropriately
 
-static void R_ClipWallSegment(int first, int last, boolean solid)
+static void R_ClipWallSegment(int first, int last, bool solid)
 {
     byte *p;
     while (first < last)
@@ -2694,7 +2694,7 @@ static const byte checkcoord[12][4] = // killough -- static const
 };
 
 // killough 1/28/98: static // CPhipps - const parameter, reformatted
-static boolean R_CheckBBox(const short *bspcoord)
+static bool R_CheckBBox(const short *bspcoord)
 {
     angle_t angle1, angle2;
 
@@ -2761,7 +2761,7 @@ static boolean R_CheckBBox(const short *bspcoord)
 
 
 
-static boolean R_RenderBspSubsector(int bspnum)
+static bool R_RenderBspSubsector(int bspnum)
 {
     // Found a subsector?
     if (bspnum & NF_SUBSECTOR)
@@ -3003,7 +3003,7 @@ static int P_DivlineSide(fixed_t x, fixed_t y, const divline_t *node)
 //
 // killough 4/19/98: made static and cleaned up
 
-static boolean P_CrossSubsector(int num)
+static bool P_CrossSubsector(int num)
 {
     const seg_t *seg = _g->segs + _g->subsectors[num].firstline;
     int count;
@@ -3101,7 +3101,7 @@ static boolean P_CrossSubsector(int num)
     return true;
 }
 
-boolean P_CrossBSPNode(int bspnum)
+bool P_CrossBSPNode(int bspnum)
 {
     while (!(bspnum & NF_SUBSECTOR))
     {
@@ -3144,7 +3144,7 @@ void P_ZMovement (mobj_t* mo);
 // Returns true if the mobj is still present.
 //
 
-boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
+bool P_SetMobjState(mobj_t* mobj, statenum_t state)
 {
     const state_t*	st;
 
@@ -3169,14 +3169,14 @@ boolean P_SetMobjState(mobj_t* mobj, statenum_t state)
         {
             if(!(_g->player.cheats & CF_ENEMY_ROCKETS))
             {
-                st->action(mobj);
+                st->action(mobj, NULL);
             }
             else
             {
                 if(mobjinfo[mobj->type].missilestate && (state >= mobjinfo[mobj->type].missilestate) && (state < mobjinfo[mobj->type].painstate))
                     A_CyberAttack(mobj);
                 else
-                    st->action(mobj);
+                    st->action(mobj, NULL);
             }
         }
 
@@ -3283,7 +3283,7 @@ void P_RunThinkers (void)
     {
         thinker_t* th_next = th->next;
         if(th->function)
-            th->function(th);
+            th->function(th, NULL);
 
         th = th_next;
     }

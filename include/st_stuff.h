@@ -232,13 +232,13 @@
 //
 
 // Called by main loop.
-boolean ST_Responder(const event_t* ev);
+bool ST_Responder(const event_t* ev);
 
 // Called by main loop.
 void ST_Ticker(void);
 
 // Called by main loop.
-void ST_Drawer(boolean st_statusbaron, boolean refresh);
+void ST_Drawer(bool st_statusbaron, bool refresh);
 
 // Called when the console player is spawned on each level.
 void ST_Start(void);

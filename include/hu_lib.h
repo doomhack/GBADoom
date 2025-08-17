@@ -92,9 +92,9 @@ typedef struct
   int     h;                    // height in lines
   int     cl;                   // current line number
 
-  // pointer to boolean stating whether to update window
-  boolean*    on;
-  boolean   laston;             // last value of *->on.
+  // pointer to bool stating whether to update window
+  bool*    on;
+  bool   laston;             // last value of *->on.
 
 } hu_stext_t;
 
@@ -110,9 +110,9 @@ typedef struct
   int x,y,w,h;                         // window position and size
   const patch_t *bg;                  // patches for background
 
-  // pointer to boolean stating whether to update window
-  boolean*    on;
-  boolean   laston;             // last value of *->on.
+  // pointer to bool stating whether to update window
+  bool*    on;
+  bool   laston;             // last value of *->on.
 
 } hu_mtext_t;
 
@@ -127,9 +127,9 @@ typedef struct
   // left margin past which I am not to delete characters
   int     lm;
 
-  // pointer to boolean stating whether to update window
-  boolean*    on;
-  boolean   laston;   // last value of *->on;
+  // pointer to bool stating whether to update window
+  bool*    on;
+  bool   laston;   // last value of *->on;
 
 } hu_itext_t;
 
@@ -149,11 +149,11 @@ void HUlib_initTextLine
 (hu_textline_t *t,
   int x,
   int y,
-  const patch_t *f,
+  const patch_t **f,
   int sc);
 
 // returns success
-boolean HUlib_addCharToTextLine(hu_textline_t *t, char ch);
+bool HUlib_addCharToTextLine(hu_textline_t *t, char ch);
 
 // draws tline
 void HUlib_drawTextLine(hu_textline_t *l);
@@ -172,9 +172,9 @@ void HUlib_initSText
   int   x,
   int   y,
   int   h,
-  const patch_t *font,
+  const patch_t **font,
   int   startchar,   //jff 2/16/98 add color range parameter
-  boolean*  on );
+  bool*  on );
 
 // add a text message to an stext widget
 void HUlib_addMessageToSText(hu_stext_t* s, const char* prefix, const char* msg);

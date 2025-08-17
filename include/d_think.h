@@ -47,7 +47,7 @@
  *  action functions cleanly.
  */
 // killough 11/98: convert back to C instead of C++
-typedef  void (*actionf_t)();
+typedef  void (*actionf_t)(void*, void*);
 //typedef  void (*actionf_v)();
 //typedef  void (*actionf_p1)( void* );
 //typedef  void (*actionf_p2)( void*, void* );

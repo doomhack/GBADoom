@@ -46,13 +46,13 @@ ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-g -Wall -O3 -fgcse-after-reload -gdwarf-4\
                 -mcpu=arm7tdmi -mtune=arm7tdmi -flto=8\
-                -fallow-store-data-races -fpermissive\
+		-fallow-store-data-races\
                 -DGBA\
-		$(ARCH)
+		$(ARCH) $(INCLUDE)
 
-CFLAGS	+=	$(INCLUDE) -std=gnu11
+CXXFLAGS:=	$(CFLAGS) -fno-rtti -fno-exceptions -std=c++23
 
-CXXFLAGS:=	$(CFLAGS) -fno-rtti -fno-exceptions
+CFLAGS	+=	-std=gnu23
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) -Wl,-Map,$(notdir $*.map)

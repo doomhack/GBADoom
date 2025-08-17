@@ -225,7 +225,7 @@ typedef struct msecnode_s
   struct msecnode_s *m_tnext;  // next msecnode_t for this thing
   struct msecnode_s *m_sprev;  // prev msecnode_t for this sector
   struct msecnode_s *m_snext;  // next msecnode_t for this sector
-  boolean visited; // killough 4/4/98, 4/7/98: used in search algorithms
+  bool visited; // killough 4/4/98, 4/7/98: used in search algorithms
 } msecnode_t;
 
 //
@@ -396,7 +396,7 @@ typedef struct
   // If false use 0 for any position.
   // Note: as eight entries are available,
   //  we might as well insert the same name eight times.
-  boolean rotate;
+  bool rotate;
 
 } spriteframe_t;
 
@@ -425,7 +425,7 @@ typedef struct visplane
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
-  boolean modified;
+  bool modified;
 
   byte		pad1;
   byte		pad2;

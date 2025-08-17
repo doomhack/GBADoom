@@ -60,7 +60,7 @@
 //
 
 
-boolean PIT_StompThing (mobj_t* thing)
+bool PIT_StompThing (mobj_t* thing)
   {
   fixed_t blockdist;
 
@@ -93,7 +93,7 @@ boolean PIT_StompThing (mobj_t* thing)
 // P_TeleportMove
 //
 
-boolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, boolean boss)
+bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
   {
   int     xl;
   int     xh;
@@ -190,7 +190,7 @@ boolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, boolean boss)
 //
 
 static // killough 3/26/98: make static
-boolean PIT_CrossLine (const line_t* ld)
+bool PIT_CrossLine (const line_t* ld)
   {
   if (!(ld->flags & ML_TWOSIDED) ||
       (ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS)))
@@ -225,7 +225,7 @@ static int untouched(const line_t *ld)
 //
 
 static // killough 3/26/98: make static
-boolean PIT_CheckLine (const line_t* ld)
+bool PIT_CheckLine (const line_t* ld)
 {
   if (_g->tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
    || _g->tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
@@ -308,7 +308,7 @@ boolean PIT_CheckLine (const line_t* ld)
 // PIT_CheckThing
 //
 
-static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
+static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 {
   fixed_t blockdist;
   int damage;
@@ -440,7 +440,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 // sides of the blocking line. If so, return true, otherwise
 // false.
 
-boolean Check_Sides(mobj_t* actor, int x, int y)
+bool Check_Sides(mobj_t* actor, int x, int y)
   {
   int bx,by,xl,xh,yl,yh;
 
@@ -502,7 +502,7 @@ boolean Check_Sides(mobj_t* actor, int x, int y)
 //  numspeciallines
 //
 
-boolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
+bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
   {
   int     xl;
   int     xh;
@@ -580,8 +580,8 @@ boolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
 // Attempt to move to a new position,
 // crossing special lines unless MF_TELEPORT is set.
 //
-boolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
-                  boolean dropoff) // killough 3/15/98: allow dropoff as option
+bool P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
+                  bool dropoff) // killough 3/15/98: allow dropoff as option
 {
     fixed_t oldx;
     fixed_t oldy;
@@ -670,9 +670,9 @@ boolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
 // and false will be returned.
 //
 
-boolean P_ThingHeightClip (mobj_t* thing)
+bool P_ThingHeightClip (mobj_t* thing)
 {
-  boolean   onfloor;
+  bool   onfloor;
 
   onfloor = (thing->z == thing->floorz);
 
@@ -790,7 +790,7 @@ void P_HitSlideLine (const line_t* ld)
 // PTR_SlideTraverse
 //
 
-boolean PTR_SlideTraverse (intercept_t* in)
+bool PTR_SlideTraverse (intercept_t* in)
   {
   const line_t* li;
 
@@ -965,7 +965,7 @@ void P_SlideMove(mobj_t *mo)
 // PTR_AimTraverse
 // Sets linetaget and aimslope when a target is aimed at.
 //
-boolean PTR_AimTraverse (intercept_t* in)
+bool PTR_AimTraverse (intercept_t* in)
 {
     const line_t* li;
     mobj_t* th;
@@ -1059,7 +1059,7 @@ boolean PTR_AimTraverse (intercept_t* in)
 //
 // PTR_ShootTraverse
 //
-boolean PTR_ShootTraverse (intercept_t* in)
+bool PTR_ShootTraverse (intercept_t* in)
   {
   fixed_t x;
   fixed_t y;
@@ -1244,7 +1244,7 @@ void P_LineAttack
 //
 
 
-boolean PTR_UseTraverse (intercept_t* in)
+bool PTR_UseTraverse (intercept_t* in)
   {
   int side;
 
@@ -1291,7 +1291,7 @@ boolean PTR_UseTraverse (intercept_t* in)
 // by Lee Killough
 //
 
-boolean PTR_NoWayTraverse(intercept_t* in)
+bool PTR_NoWayTraverse(intercept_t* in)
   {
   const line_t *ld = in->d.line;
                                            // This linedef
@@ -1351,7 +1351,7 @@ void P_UseLines (player_t*  player)
 // that caused the explosion at "bombspot".
 //
 
-boolean PIT_RadiusAttack (mobj_t* thing)
+bool PIT_RadiusAttack (mobj_t* thing)
   {
   fixed_t dx;
   fixed_t dy;
@@ -1447,7 +1447,7 @@ void P_RadiusAttack(mobj_t* spot,mobj_t* source,int damage)
 // PIT_ChangeSector
 //
 
-boolean PIT_ChangeSector (mobj_t* thing)
+bool PIT_ChangeSector (mobj_t* thing)
   {
   mobj_t* mo;
 
@@ -1511,7 +1511,7 @@ boolean PIT_ChangeSector (mobj_t* thing)
 // sector. Both more accurate and faster.
 //
 
-boolean P_CheckSector(sector_t* sector,boolean crunch)
+bool P_CheckSector(sector_t* sector,bool crunch)
   {
   msecnode_t *n;
 
@@ -1675,7 +1675,7 @@ void P_DelSeclist(msecnode_t* node)
 // at this location, so don't bother with checking impassable or
 // blocking lines.
 
-boolean PIT_GetSectors(const line_t* ld)
+bool PIT_GetSectors(const line_t* ld)
   {
   if (_g->tmbbox[BOXRIGHT]  <= ld->bbox[BOXLEFT]   ||
       _g->tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||

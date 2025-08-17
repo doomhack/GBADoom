@@ -84,14 +84,14 @@ static void D_UpdateFPS(void);
 
 
 //jff 1/22/98 parms for disabling music and sound
-const boolean nosfxparm = false;
-const boolean nomusicparm = false;
+const bool nosfxparm = false;
+const bool nomusicparm = false;
 
 const skill_t startskill = sk_medium;
 const int startepisode = 1;
 const int startmap = 1;
 
-const boolean nodrawers = false;
+const bool nodrawers = false;
 
 static const char* timedemo = NULL;//"demo1";
 
@@ -131,7 +131,7 @@ void D_PostEvent(event_t *ev)
 
 static void D_Wipe(void)
 {
-    boolean done;
+    bool done;
     int wipestart = I_GetTime () - 1;
 
     wipe_initMelt();
@@ -162,8 +162,8 @@ static void D_Wipe(void)
 static void D_Display (void)
 {
 
-    boolean wipe;
-    boolean viewactive = false;
+    bool wipe;
+    bool viewactive = false;
 
     if (nodrawers)                    // for comparative timing / profiling
         return;
@@ -484,7 +484,7 @@ void D_StartTitle (void)
 // the gamemode from it. Also note if DOOM II, whether secret levels exist
 // CPhipps - const char* for iwadname, made static
 
-static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_len, GameMode_t *gmode,boolean *hassec)
+static void CheckIWAD2(const unsigned char* iwad_data, GameMode_t *gmode,bool *hassec)
 {
     const wadinfo_t* header = (const wadinfo_t*)iwad_data;
 
@@ -584,7 +584,7 @@ static void CheckIWAD2(const unsigned char* iwad_data, const unsigned int iwad_l
 
 static void IdentifyVersion()
 {
-    CheckIWAD2(doom_iwad, doom_iwad_len, &_g->gamemode, &_g->haswolflevels);
+    CheckIWAD2(doom_iwad, &_g->gamemode, &_g->haswolflevels);
 
     /* jff 8/23/98 set gamemission global appropriately in all cases
      * cphipps 12/1999 - no version output here, leave that to the caller
@@ -758,10 +758,10 @@ void D_DoomMain(void)
 void GetFirstMap(int *ep, int *map)
 {
     int i,j; // used to generate map name
-    boolean done = false;  // Ty 09/13/98 - to exit inner loops
+    bool done = false;  // Ty 09/13/98 - to exit inner loops
     char test[6];  // MAPxx or ExMx plus terminator for testing
     char name[6];  // MAPxx or ExMx plus terminator for display
-    boolean newlevel = false;  // Ty 10/04/98 - to test for new level
+    bool newlevel = false;  // Ty 10/04/98 - to test for new level
     int ix;  // index for lookup
 
     strcpy(name,""); // initialize

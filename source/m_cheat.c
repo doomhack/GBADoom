@@ -55,7 +55,7 @@ static const c_cheat cheat_def[] =
 
 static const unsigned int num_cheats = sizeof(cheat_def) / sizeof (c_cheat);
 
-static boolean CheckCheats(unsigned int keybuff)
+static bool CheckCheats(unsigned int keybuff)
 {
     for(int i = 0; i < num_cheats; i++)
     {
@@ -71,7 +71,7 @@ static boolean CheckCheats(unsigned int keybuff)
     return false;
 }
 
-boolean C_Responder (event_t *ev)
+bool C_Responder (event_t *ev)
 {
     if(ev->type == ev_keydown)
     {
