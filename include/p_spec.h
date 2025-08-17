@@ -876,32 +876,32 @@ void P_ChangeSwitchTexture
 // p_lights
 
 void T_LightFlash
-( lightflash_t* flash );
+    (lightflash_t* flash , void *);
 
 void T_StrobeFlash
-( strobe_t* flash );
+    (strobe_t* flash , void *);
 
 // jff 8/8/98 add missing thinker for flicker
 void T_FireFlicker
-( fireflicker_t* flick );
+    (fireflicker_t* flick , void *);
 
 void T_Glow
-( glow_t* g );
+    (glow_t* g , void *);
 
 // p_plats
 
 void T_PlatRaise
-( plat_t* plat );
+    (plat_t* plat , void *);
 
 // p_doors
 
 void T_VerticalDoor
-( vldoor_t* door );
+    (vldoor_t* door , void *);
 
 // p_ceilng
 
 void T_MoveCeiling
-( ceiling_t* ceiling );
+    (ceiling_t* ceiling , void *);
 
 // p_floor
 
@@ -914,15 +914,15 @@ result_e T_MovePlane
   int direction );
 
 void T_MoveFloor
-( floormove_t* floor );
+    (floormove_t* floor , void *);
 
 void T_MoveElevator
-( elevator_t* elevator );
+    (elevator_t* elevator , void *);
 
 // p_spec
 
 void T_Scroll
-( scroll_t * );      // killough 3/7/98: scroll effect thinker
+    (scroll_t * , void *);      // killough 3/7/98: scroll effect thinker
 
 ////////////////////////////////////////////////////////////////
 //

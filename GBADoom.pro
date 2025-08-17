@@ -7,9 +7,8 @@ CONFIG += force_debug_info
 
 
 QMAKE_CXXFLAGS += -std=c++23
-
-# For C
 QMAKE_CFLAGS += -std=c2x
+
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings

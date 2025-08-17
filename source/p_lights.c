@@ -56,7 +56,7 @@
 // Passed a fireflicker_t structure containing light levels and timing
 // Returns nothing
 //
-void T_FireFlicker (fireflicker_t* flick)
+void T_FireFlicker (fireflicker_t* flick, void*)
 {
   int amount;
 
@@ -81,7 +81,7 @@ void T_FireFlicker (fireflicker_t* flick)
 // Passed a lightflash_t structure containing light levels and timing
 // Returns nothing
 //
-void T_LightFlash (lightflash_t* flash)
+void T_LightFlash (lightflash_t* flash, void*)
 {
   if (--flash->count)
     return;
@@ -107,7 +107,7 @@ void T_LightFlash (lightflash_t* flash)
 // Passed a strobe_t structure containing light levels and timing
 // Returns nothing
 //
-void T_StrobeFlash (strobe_t*   flash)
+void T_StrobeFlash (strobe_t*   flash, void*)
 {
   if (--flash->count)
     return;
@@ -133,7 +133,7 @@ void T_StrobeFlash (strobe_t*   flash)
 // Returns nothing
 //
 
-void T_Glow(glow_t* g)
+void T_Glow(glow_t* g, void*)
 {
   switch(g->direction)
   {

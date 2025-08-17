@@ -58,7 +58,7 @@
 // jff 02/08/98 all cases with labels beginning with gen added to support
 // generalized line type behaviors.
 
-void T_VerticalDoor (vldoor_t* door)
+void T_VerticalDoor (vldoor_t* door, void*)
 {
   result_e  res;
 

@@ -58,7 +58,7 @@
 // jff 02/08/98 all cases with labels beginning with gen added to support
 // generalized line type behaviors.
 //
-void T_MoveCeiling (ceiling_t* ceiling)
+void T_MoveCeiling (ceiling_t* ceiling, void*)
 {
   result_e  res;
 

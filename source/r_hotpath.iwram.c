@@ -3174,7 +3174,7 @@ bool P_SetMobjState(mobj_t* mobj, statenum_t state)
             else
             {
                 if(mobjinfo[mobj->type].missilestate && (state >= mobjinfo[mobj->type].missilestate) && (state < mobjinfo[mobj->type].painstate))
-                    A_CyberAttack(mobj);
+                    A_CyberAttack(mobj, NULL);
                 else
                     st->action(mobj, NULL);
             }
@@ -3189,7 +3189,7 @@ bool P_SetMobjState(mobj_t* mobj, statenum_t state)
 
 
 
-void P_MobjThinker (mobj_t* mobj)
+void P_MobjThinker (mobj_t* mobj, void*)
 {
     // killough 11/98:
     // removed old code which looked at target references

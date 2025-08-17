@@ -472,7 +472,7 @@ void P_NightmareRespawn(mobj_t* mobj)
 //Thinker function for stuff that doesn't need to do anything
 //interesting.
 //Just cycles through the states. Allows sprite animation to work.
-void P_MobjBrainlessThinker(mobj_t* mobj)
+void P_MobjBrainlessThinker(mobj_t* mobj, void*)
 {
     // cycle through states,
     // calling action functions at transitions

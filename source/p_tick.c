@@ -90,7 +90,7 @@ void P_AddThinker(thinker_t* thinker)
 // that the next step in P_RunThinkers() will get its successor.
 //
 
-void P_RemoveThinkerDelayed(thinker_t *thinker)
+void P_RemoveThinkerDelayed(thinker_t *thinker, void*)
 {
 
     thinker_t *next = thinker->next;
@@ -103,7 +103,7 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
     Z_Free(thinker);
 }
 
-void P_RemoveThingDelayed(thinker_t *thinker)
+void P_RemoveThingDelayed(thinker_t *thinker, void*)
 {
 
     thinker_t *next = thinker->next;

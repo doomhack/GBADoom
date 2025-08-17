@@ -48,8 +48,8 @@ void P_InitThinkers(void);
 void P_AddThinker(thinker_t *thinker);
 void P_RemoveThinker(thinker_t *thinker);
 void P_RemoveThing(mobj_t *thing);
-void P_RemoveThinkerDelayed(thinker_t *thinker);    // killough 4/25/98
-void P_RemoveThingDelayed(thinker_t *thinker);
+void P_RemoveThinkerDelayed(thinker_t *thinker, void *);    // killough 4/25/98
+void P_RemoveThingDelayed(thinker_t *thinker, void *);
 
 
 void P_UpdateThinker(thinker_t *thinker);   // killough 8/29/98

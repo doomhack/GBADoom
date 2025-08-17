@@ -120,6 +120,6 @@ void A_Saw(struct player_s *player, pspdef_t *psp);
 void A_FirePlasma(struct player_s *player, pspdef_t *psp);
 void A_BFGsound(struct player_s *player, pspdef_t *psp);
 void A_FireBFG(struct player_s *player, pspdef_t *psp);
-void A_BFGSpray(struct mobj_s *mo);
+void A_BFGSpray(struct mobj_s *mo, void*);
 
 #endif

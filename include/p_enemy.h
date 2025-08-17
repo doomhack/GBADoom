@@ -54,60 +54,60 @@ typedef struct brain_t
 // allows more extensive changes (see d_deh.c)
 
 // Doesn't work with g++, needs actionf_p1
-void A_Explode(mobj_t* mo);
-void A_Pain(mobj_t* mo);
-void A_PlayerScream(mobj_t* mo);
-void A_Fall(mobj_t* mo);
-void A_XScream(mobj_t* mo);
-void A_Look(mobj_t* mo);
-void A_Chase(mobj_t* mo);
-void A_FaceTarget(mobj_t* mo);
-void A_PosAttack(mobj_t* mo);
-void A_Scream(mobj_t* mo);
-void A_SPosAttack(mobj_t* mo);
-void A_VileChase(mobj_t* mo);
-void A_VileStart(mobj_t* mo);
-void A_VileTarget(mobj_t* mo);
-void A_VileAttack(mobj_t* mo);
-void A_StartFire(mobj_t* mo);
-void A_Fire(mobj_t* mo);
-void A_FireCrackle(mobj_t* mo);
-void A_Tracer(mobj_t* mo);
-void A_SkelWhoosh(mobj_t* mo);
-void A_SkelFist(mobj_t* mo);
-void A_SkelMissile(mobj_t* mo);
-void A_FatRaise(mobj_t* mo);
-void A_FatAttack1(mobj_t* mo);
-void A_FatAttack2(mobj_t* mo);
-void A_FatAttack3(mobj_t* mo);
-void A_BossDeath(mobj_t* mo);
-void A_CPosAttack(mobj_t* mo);
-void A_CPosRefire(mobj_t* mo);
-void A_TroopAttack(mobj_t* mo);
-void A_SargAttack(mobj_t* mo);
-void A_HeadAttack(mobj_t* mo);
-void A_BruisAttack(mobj_t* mo);
-void A_SkullAttack(mobj_t* mo);
-void A_Metal(mobj_t* mo);
-void A_SpidRefire(mobj_t* mo);
-void A_BabyMetal(mobj_t* mo);
-void A_BspiAttack(mobj_t* mo);
-void A_Hoof(mobj_t* mo);
-void A_CyberAttack(mobj_t* mo);
-void A_PainAttack(mobj_t* mo);
-void A_PainDie(mobj_t* mo);
-void A_KeenDie(mobj_t* mo);
-void A_BrainPain(mobj_t* mo);
-void A_BrainScream(mobj_t* mo);
-void A_BrainDie(mobj_t* mo);
-void A_BrainAwake(mobj_t* mo);
-void A_BrainSpit(mobj_t* mo);
-void A_SpawnSound(mobj_t* mo);
-void A_SpawnFly(mobj_t* mo);
-void A_BrainExplode(mobj_t* mo);
-void A_Die(mobj_t* mo);
-void A_Detonate(mobj_t* mo);        /* killough 8/9/98: detonate a bomb or other device */
-void A_Mushroom(mobj_t* mo);        /* killough 10/98: mushroom effect */
+void A_Explode(mobj_t* mo, void *);
+void A_Pain(mobj_t* mo, void *);
+void A_PlayerScream(mobj_t* mo, void *);
+void A_Fall(mobj_t* mo, void *);
+void A_XScream(mobj_t* mo, void *);
+void A_Look(mobj_t* mo, void*);
+void A_Chase(mobj_t* mo, void*);
+void A_FaceTarget(mobj_t* mo, void *);
+void A_PosAttack(mobj_t* mo, void *);
+void A_Scream(mobj_t* mo, void *);
+void A_SPosAttack(mobj_t* mo, void *);
+void A_VileChase(mobj_t* mo, void *);
+void A_VileStart(mobj_t* mo, void *);
+void A_VileTarget(mobj_t* mo, void *);
+void A_VileAttack(mobj_t* mo, void *);
+void A_StartFire(mobj_t* mo, void *);
+void A_Fire(mobj_t* mo, void *);
+void A_FireCrackle(mobj_t* mo, void *);
+void A_Tracer(mobj_t* mo, void *);
+void A_SkelWhoosh(mobj_t* mo, void *);
+void A_SkelFist(mobj_t* mo, void *);
+void A_SkelMissile(mobj_t* mo, void *);
+void A_FatRaise(mobj_t* mo, void *);
+void A_FatAttack1(mobj_t* mo, void *);
+void A_FatAttack2(mobj_t* mo, void *);
+void A_FatAttack3(mobj_t* mo, void *);
+void A_BossDeath(mobj_t* mo, void *);
+void A_CPosAttack(mobj_t* mo, void *);
+void A_CPosRefire(mobj_t* mo, void *);
+void A_TroopAttack(mobj_t* mo, void *);
+void A_SargAttack(mobj_t* mo, void *);
+void A_HeadAttack(mobj_t* mo, void *);
+void A_BruisAttack(mobj_t* mo, void *);
+void A_SkullAttack(mobj_t* mo, void *);
+void A_Metal(mobj_t* mo, void *);
+void A_SpidRefire(mobj_t* mo, void *);
+void A_BabyMetal(mobj_t* mo, void *);
+void A_BspiAttack(mobj_t* mo, void *);
+void A_Hoof(mobj_t* mo, void *);
+void A_CyberAttack(mobj_t* mo, void *);
+void A_PainAttack(mobj_t* mo, void *);
+void A_PainDie(mobj_t* mo, void *);
+void A_KeenDie(mobj_t* mo, void *);
+void A_BrainPain(mobj_t* mo, void *);
+void A_BrainScream(mobj_t* mo, void *);
+void A_BrainDie(mobj_t* mo, void *);
+void A_BrainAwake(mobj_t* mo, void *);
+void A_BrainSpit(mobj_t* mo, void *);
+void A_SpawnSound(mobj_t* mo, void *);
+void A_SpawnFly(mobj_t* mo, void *);
+void A_BrainExplode(mobj_t* mo, void *);
+void A_Die(mobj_t* mo, void *);
+void A_Detonate(mobj_t* mo, void *);        /* killough 8/9/98: detonate a bomb or other device */
+void A_Mushroom(mobj_t* mo, void *);        /* killough 10/98: mushroom effect */
 void A_Spawn(mobj_t* mo);           // killough 11/98
 void A_Turn(mobj_t* mo);            // killough 11/98
 void A_Face(mobj_t* mo);            // killough 11/98
