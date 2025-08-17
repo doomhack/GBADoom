@@ -77,13 +77,6 @@ static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
       psp->state = state;
       psp->tics = state->tics;        // could be 0
 
-      if (state->misc1)
-        {
-          // coordinate set
-          psp->sx = state->misc1 << FRACBITS;
-          psp->sy = state->misc2 << FRACBITS;
-        }
-
       // Call action routine.
       // Modified handling.
       if (state->action)
@@ -277,6 +270,9 @@ int P_CheckCanSwitchWeapon(weapontype_t weapon, player_t* player)
                 return wp_supershotgun;
         }
         break;
+
+        default:
+          return wp_nochange;
     }
 
     return wp_nochange;
@@ -498,7 +494,7 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
 // without lowering it entirely.
 //
 
-void A_ReFire(player_t *player, pspdef_t *psp)
+void A_ReFire(player_t *player, void*)
 {
   // check for fire
   //  (if a weaponchange is pending, let it go through instead)
@@ -516,7 +512,7 @@ void A_ReFire(player_t *player, pspdef_t *psp)
     }
 }
 
-void A_CheckReload(player_t *player, pspdef_t *psp)
+void A_CheckReload(player_t *player, void*)
 {
   if (!P_CheckAmmo(player))
   {
@@ -605,7 +601,7 @@ static void A_FireSomething(player_t* player,int adder)
 // A_GunFlash
 //
 
-void A_GunFlash(player_t *player, pspdef_t *psp)
+void A_GunFlash(player_t *player, void*)
 {
   P_SetMobjState(player->mo, S_PLAY_ATK2);
 
@@ -620,7 +616,7 @@ void A_GunFlash(player_t *player, pspdef_t *psp)
 // A_Punch
 //
 
-void A_Punch(player_t *player, pspdef_t *psp)
+void A_Punch(player_t *player, void*)
 {
   angle_t angle;
   int t, slope, damage = (P_Random()%10+1)<<1;
@@ -657,7 +653,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
 // A_Saw
 //
 
-void A_Saw(player_t *player, pspdef_t *psp)
+void A_Saw(player_t *player, void*)
 {
   int slope, damage = 2*(P_Random()%10+1);
   angle_t angle = player->mo->angle;
@@ -705,7 +701,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
 // A_FireMissile
 //
 
-void A_FireMissile(player_t *player, pspdef_t *psp)
+void A_FireMissile(player_t *player, void*)
 {
   S_StartSound(player->mo, sfx_rlaunc);
   player->ammo[weaponinfo[player->readyweapon].ammo]--;
@@ -716,7 +712,7 @@ void A_FireMissile(player_t *player, pspdef_t *psp)
 // A_FireBFG
 //
 
-void A_FireBFG(player_t *player, pspdef_t *psp)
+void A_FireBFG(player_t *player, void*)
 {
   player->ammo[weaponinfo[player->readyweapon].ammo] -= BFGCELLS;
   P_SpawnPlayerMissile(player->mo, MT_BFG);
@@ -726,7 +722,7 @@ void A_FireBFG(player_t *player, pspdef_t *psp)
 // A_FirePlasma
 //
 
-void A_FirePlasma(player_t *player, pspdef_t *psp)
+void A_FirePlasma(player_t *player, void*)
 {
   S_StartSound(player->mo, sfx_plasma);
   player->ammo[weaponinfo[player->readyweapon].ammo]--;
@@ -781,7 +777,7 @@ static void P_GunShot(mobj_t *mo, bool accurate)
 // A_FirePistol
 //
 
-void A_FirePistol(player_t *player, pspdef_t *psp)
+void A_FirePistol(player_t *player, void*)
 {
   S_StartSound(player->mo, sfx_pistol);
 
@@ -797,7 +793,7 @@ void A_FirePistol(player_t *player, pspdef_t *psp)
 // A_FireShotgun
 //
 
-void A_FireShotgun(player_t *player, pspdef_t *psp)
+void A_FireShotgun(player_t *player, void*)
 {
   int i;
 
@@ -818,7 +814,7 @@ void A_FireShotgun(player_t *player, pspdef_t *psp)
 // A_FireShotgun2
 //
 
-void A_FireShotgun2(player_t *player, pspdef_t *psp)
+void A_FireShotgun2(player_t *player, void*)
 {
   int i;
 
@@ -865,17 +861,17 @@ void A_FireCGun(player_t *player, pspdef_t *psp)
   P_GunShot(player->mo, !player->refire);
 }
 
-void A_Light0(player_t *player, pspdef_t *psp)
+void A_Light0(player_t *player, void*)
 {
   player->extralight = 0;
 }
 
-void A_Light1 (player_t *player, pspdef_t *psp)
+void A_Light1 (player_t *player, void*)
 {
   player->extralight = 1;
 }
 
-void A_Light2 (player_t *player, pspdef_t *psp)
+void A_Light2 (player_t *player, void*)
 {
   player->extralight = 2;
 }
@@ -919,7 +915,7 @@ void A_BFGSpray(mobj_t *mo, void*)
 // A_BFGsound
 //
 
-void A_BFGsound(player_t *player, pspdef_t *psp)
+void A_BFGsound(player_t *player, void*)
 {
   S_StartSound(player->mo, sfx_bfg);
 }

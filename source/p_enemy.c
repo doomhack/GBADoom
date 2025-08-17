@@ -1895,12 +1895,12 @@ void A_BabyMetal(mobj_t *mo, void*)
   A_Chase(mo, NULL);
 }
 
-void A_OpenShotgun2(player_t *player, pspdef_t *psp)
+void A_OpenShotgun2(player_t *player, void*)
 {
   S_StartSound(player->mo, sfx_dbopn);
 }
 
-void A_LoadShotgun2(player_t *player, pspdef_t *psp)
+void A_LoadShotgun2(player_t *player, void*)
 {
   S_StartSound(player->mo, sfx_dbload);
 }
@@ -2133,50 +2133,5 @@ void A_Mushroom(mobj_t *actor, void*)
   mo->momz >>= 1;
   mo->flags &= ~MF_NOGRAVITY;   // Make debris fall under gravity
       }
-}
-
-//
-// killough 11/98
-//
-// The following were inspired by Len Pitre
-//
-// A small set of highly-sought-after code pointers
-//
-
-void A_Spawn(mobj_t *mo)
-{
-  if (mo->state->misc1)
-    {
-      P_SpawnMobj(mo->x, mo->y, (mo->state->misc2 << FRACBITS) + mo->z,
-      mo->state->misc1 - 1);
-    }
-}
-
-void A_Turn(mobj_t *mo)
-{
-  mo->angle += (unsigned int)(((uint_64_t) mo->state->misc1 << 32) / 360);
-}
-
-void A_Face(mobj_t *mo)
-{
-  mo->angle = (unsigned int)(((uint_64_t) mo->state->misc1 << 32) / 360);
-}
-
-void A_Scratch(mobj_t *mo)
-{
-  mo->target && (A_FaceTarget(mo, NULL), P_CheckMeleeRange(mo)) ?
-    mo->state->misc2 ? S_StartSound(mo, mo->state->misc2) : (void) 0,
-    P_DamageMobj(mo->target, mo, mo, mo->state->misc1) : (void) 0;
-}
-
-void A_PlaySound(mobj_t *mo)
-{
-  S_StartSound(mo->state->misc2 ? NULL : mo, mo->state->misc1);
-}
-
-void A_RandomJump(mobj_t *mo)
-{
-  if (P_Random() < mo->state->misc2)
-    P_SetMobjState(mo, mo->state->misc1);
 }
 

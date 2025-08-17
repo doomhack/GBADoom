@@ -108,11 +108,5 @@ void A_BrainExplode(mobj_t* mo, void *);
 void A_Die(mobj_t* mo, void *);
 void A_Detonate(mobj_t* mo, void *);        /* killough 8/9/98: detonate a bomb or other device */
 void A_Mushroom(mobj_t* mo, void *);        /* killough 10/98: mushroom effect */
-void A_Spawn(mobj_t* mo);           // killough 11/98
-void A_Turn(mobj_t* mo);            // killough 11/98
-void A_Face(mobj_t* mo);            // killough 11/98
-void A_Scratch(mobj_t* mo);         // killough 11/98
-void A_PlaySound(mobj_t* mo);       // killough 11/98
-void A_RandomJump(mobj_t* mo);      // killough 11/98
 
 #endif // __P_ENEMY__

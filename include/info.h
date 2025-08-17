@@ -1261,7 +1261,6 @@ typedef struct
   long        tics;         /* number of gametics this frame should last   */
   actionf_t   action;       /* code pointer to function for action if any  */
   statenum_t  nextstate;    /* linked list pointer to next state or zero   */
-  long        misc1, misc2; /* apparently never used in DOOM               */
 } state_t;
 
 /* these are in info.c */
