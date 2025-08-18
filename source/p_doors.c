@@ -541,7 +541,7 @@ int EV_VerticalDoor
           plat_t* p = (plat_t*)door;
           p->wait = outval;
         } else {
-          lprintf(LO_DEBUG, "EV_VerticalDoor: unknown thinker.function in thinker corruption emulation");
+          lprintf("EV_VerticalDoor: unknown thinker.function in thinker corruption emulation");
         }
 
         return 1;
@@ -665,9 +665,7 @@ void P_SpawnDoorCloseIn30 (sector_t* sec)
 // Passed the sector of the door, whose type specified the door action
 // Returns nothing
 //
-void P_SpawnDoorRaiseIn5Mins
-( sector_t* sec,
-  int   secnum )
+void P_SpawnDoorRaiseIn5Mins( sector_t* sec)
 {
   vldoor_t* door;
 

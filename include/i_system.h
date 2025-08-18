@@ -45,6 +45,6 @@ int I_GetTime(void);     /* killough */
 /* cphipps - I_GetVersionString
  * Returns a version string in the given buffer
  */
-const char* I_GetVersionString(char* buf, size_t sz);
+const char* I_GetVersionString(char* buf);
 
 #endif

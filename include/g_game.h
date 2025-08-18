@@ -48,10 +48,10 @@ bool G_CheckDemoStatus(void);
 void G_InitNew(skill_t skill, int episode, int map);
 void G_DeferedInitNew(skill_t skill, int episode, int map);
 void G_DeferedPlayDemo(const char *demo); // CPhipps - const
-void G_LoadGame(int slot, bool is_command); // killough 5/15/98
+void G_LoadGame(int slot); // killough 5/15/98
 void G_ForcedLoadGame(void);           // killough 5/15/98: forced loadgames
 void G_DoLoadGame(void);
-void G_SaveGame(int slot, const char *description); // Called by M_Responder.
+void G_SaveGame(int slot); // Called by M_Responder.
 void G_ExitLevel(void);
 void G_SecretExitLevel(void);
 void G_WorldDone(void);
@@ -59,14 +59,14 @@ void G_EndGame(void); /* cph - make m_menu.c call a G_* function for this */
 void G_Ticker(void);
 void G_ReloadDefaults(void);     // killough 3/1/98: loads game defaults
 void G_DoNewGame(void);
-void G_DoReborn(int playernum);
+void G_DoReborn(void);
 void G_DoPlayDemo(void);
 void G_DoCompleted(void);
 void G_ReadDemoTiccmd(ticcmd_t *cmd);
 void G_DoWorldDone(void);
 void G_Compatibility(void);
 const byte *G_ReadOptions(const byte *demo_p);   /* killough 3/1/98 - cph: const byte* */
-void G_PlayerReborn(int player);
+void G_PlayerReborn(void);
 void G_DoVictory(void);
 void G_BuildTiccmd (ticcmd_t* cmd); // CPhipps - move decl to header
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */

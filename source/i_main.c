@@ -77,11 +77,14 @@ void I_Init(void)
 static void PrintVer(void)
 {
     char vbuf[24];
-    lprintf(LO_INFO,"%s",I_GetVersionString(vbuf,200));
+    lprintf("%s",I_GetVersionString(vbuf));
 }
 
 int main(int argc, const char * const * argv)
 {
+    (void)argc;
+    (void)argv;
+
     /* cphipps - call to video specific startup code */
     I_PreInitGraphics();
 

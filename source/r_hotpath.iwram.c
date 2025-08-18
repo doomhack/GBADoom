@@ -597,20 +597,20 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
 
     switch(r)
     {
-        case 15:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 14:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 13:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 12:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 11:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 10:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 9:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 8:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 7:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 6:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 5:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 4:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 3:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        case 2:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        case 15:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 14:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 13:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 12:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 11:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 10:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 9:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 8:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 7:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 6:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 5:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 4:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 3:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 2:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
         case 1:     R_DrawColumnPixel(dest, source, colormap, frac);
     }
 }
@@ -1324,20 +1324,20 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const d
 
     switch(r)
     {
-        case 15:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 14:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 13:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 12:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 11:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 10:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 9:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 8:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 7:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 6:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 5:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 4:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 3:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        case 2:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
+        case 15:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 14:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 13:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 12:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 11:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 10:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 9:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 8:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 7:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 6:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 5:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 4:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 3:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
+        case 2:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
         case 1:     R_DrawSpanPixel(dest, source, colormap, position, position + step);
     }
 }

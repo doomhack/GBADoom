@@ -115,7 +115,7 @@ static const fixed_t forwardmove[2] = {0x19, 0x32};
 static const fixed_t sidemove[2]    = {0x18, 0x28};
 static const fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
-static void G_DoSaveGame (bool menu);
+static void G_DoSaveGame (void);
 static const byte* G_ReadDemoHeader(const byte* demo_p, size_t size, bool failonerror);
 
 
@@ -461,7 +461,7 @@ void G_Ticker (void)
     P_MapStart();
 
     if(_g->playeringame && _g->player.playerstate == PST_REBORN)
-        G_DoReborn (0);
+        G_DoReborn();
 
     P_MapEnd();
 
@@ -481,7 +481,7 @@ void G_Ticker (void)
             G_DoLoadGame ();
             break;
         case ga_savegame:
-            G_DoSaveGame (false);
+            G_DoSaveGame ();
             break;
         case ga_playdemo:
             G_DoPlayDemo ();
@@ -558,6 +558,9 @@ void G_Ticker (void)
     case GS_DEMOSCREEN:
         D_PageTicker ();
         break;
+
+    default:
+        break;
     }
 }
 
@@ -571,7 +574,7 @@ void G_Ticker (void)
 // Can when a player completes a level.
 //
 
-static void G_PlayerFinishLevel(int player)
+static void G_PlayerFinishLevel()
 {
     player_t *p = &_g->player;
     memset(p->powers, 0, sizeof p->powers);
@@ -589,7 +592,7 @@ static void G_PlayerFinishLevel(int player)
 // almost everything is cleared and initialized
 //
 
-void G_PlayerReborn (int player)
+void G_PlayerReborn ()
 {
     player_t *p;
     int i;
@@ -627,7 +630,7 @@ void G_PlayerReborn (int player)
 // G_DoReborn
 //
 
-void G_DoReborn (int playernum)
+void G_DoReborn ()
 {
     _g->gameaction = ga_loadlevel;      // reload the level from scratch
 }
@@ -676,7 +679,7 @@ void G_DoCompleted (void)
     _g->gameaction = ga_nothing;
 
     if (_g->playeringame)
-        G_PlayerFinishLevel(0);        // take away cards and stuff
+        G_PlayerFinishLevel();        // take away cards and stuff
 
     if (_g->automapmode & am_active)
         AM_Stop();
@@ -770,9 +773,9 @@ void G_DoCompleted (void)
     if (nodrawers && (_g->demoplayback || _g->timingdemo))
     {
         if (_g->gamemode == commercial)
-            lprintf(LO_INFO, "FINISHED: MAP%02d\n", _g->gamemap);
+            lprintf("FINISHED: MAP%02d\n", _g->gamemap);
         else
-            lprintf(LO_INFO, "FINISHED: E%dM%d\n", _g->gameepisode, _g->gamemap);
+            lprintf("FINISHED: E%dM%d\n", _g->gameepisode, _g->gamemap);
     }
 
     WI_Start (&_g->wminfo);
@@ -797,6 +800,7 @@ void G_WorldDone (void)
         case 31:
             if (!_g->secretexit)
                 break;
+        [[fallthrough]];
         case 6:
         case 11:
         case 20:
@@ -880,7 +884,7 @@ void G_UpdateSaveGameStrings()
 
 // killough 3/16/98: add slot info
 // killough 5/15/98: add command-line
-void G_LoadGame(int slot, bool command)
+void G_LoadGame(int slot)
 {  
     _g->savegameslot = slot;
     _g->demoplayback = false;
@@ -931,13 +935,13 @@ void G_DoLoadGame()
 // Description is a 24 byte text string
 //
 
-void G_SaveGame(int slot, const char *description)
+void G_SaveGame(int slot)
 {
     _g->savegameslot = slot;
-    G_DoSaveGame(true);
+    G_DoSaveGame();
 }
 
-static void G_DoSaveGame(bool menu)
+static void G_DoSaveGame()
 {
     unsigned int savebuffersize = sizeof(gba_save_data_t) * 8;
 
@@ -1108,7 +1112,7 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd)
         G_CheckDemoStatus();      // end of demo data stream
     else if (_g->demoplayback && _g->demo_p + (_g->longtics?5:4) > _g->demobuffer + _g->demolength)
     {
-        lprintf(LO_WARN, "G_ReadDemoTiccmd: missing DEMOMARKER\n");
+        lprintf("G_ReadDemoTiccmd: missing DEMOMARKER\n");
         G_CheckDemoStatus();
     }
     else

@@ -384,7 +384,8 @@ static bool P_Move(mobj_t *actor, bool dropoff) /* killough 9/12/98 */
 static bool P_SmartMove(mobj_t *actor)
 {
   mobj_t *target = actor->target;
-  int on_lift, dropoff = false, under_damage;
+  int on_lift, under_damage;
+  bool dropoff = false;
 
   /* killough 9/12/98: Stay on a lift if target is on one */
   on_lift = target && target->health > 0
@@ -1944,11 +1945,15 @@ void P_SpawnBrainTargets(void)  // killough 3/26/98: renamed old function
 
 void A_BrainAwake(mobj_t *mo, void*)
 {
+  (void)mo;
+
   S_StartSound(NULL,sfx_bossit); // killough 3/26/98: only generates sound now
 }
 
 void A_BrainPain(mobj_t *mo, void*)
 {
+  (void)mo;
+
   S_StartSound(NULL,sfx_bospn);
 }
 
@@ -1985,6 +1990,8 @@ void A_BrainExplode(mobj_t *mo, void*)
 
 void A_BrainDie(mobj_t *mo, void*)
 {
+  (void)mo;
+
   G_ExitLevel();
 }
 

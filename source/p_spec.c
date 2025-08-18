@@ -2173,7 +2173,8 @@ void P_PlayerInSpecialSector (player_t* player)
       case 11:
         if (!(_g->leveltime&0x1f))
           _g->player.cheats -= CF_GODMODE; //Vanilla disables GodMode in floor-11
-          P_DamageMobj (player->mo, NULL, NULL, 20);
+
+        P_DamageMobj (player->mo, NULL, NULL, 20);
 
         if (player->health <= 10)
           G_ExitLevel();
@@ -2316,11 +2317,6 @@ void P_SpawnSpecials (void)
 {
   sector_t*   sector;
   int         i;
-  int         episode;
-
-  episode = 1;
-  if (W_CheckNumForName("texture2") >= 0)
-    episode = 2;
 
   //  Init special sectors.
   sector = _g->sectors;
@@ -2382,7 +2378,7 @@ void P_SpawnSpecials (void)
 
       case 14:
         // door raise in 5 minutes
-        P_SpawnDoorRaiseIn5Mins (sector, i);
+        P_SpawnDoorRaiseIn5Mins (sector);
         break;
 
       case 17:

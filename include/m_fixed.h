@@ -130,15 +130,9 @@ inline static CONSTFUNC fixed_t FixedReciprocal(fixed_t v)
 {
     unsigned int val = v < 0 ? -v : v;
 
-    unsigned int shift = 0;
+    const unsigned int shift = shiftTable[val >> FRACBITS];
 
-    while(val > (1 << FRACBITS))
-    {
-        val = (val >> 1u);
-        shift++;
-    }
-
-    fixed_t result = (reciprocalTable[val] >> shift);
+    fixed_t result = (reciprocalTable[val >> shift] >> shift);
 
     return v < 0 ? -result : result;
 }

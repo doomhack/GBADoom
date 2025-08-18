@@ -140,10 +140,11 @@ typedef enum {
 // at the intermission screen, the game final animation, or a demo.
 
 typedef enum {
-  GS_LEVEL,
-  GS_INTERMISSION,
-  GS_FINALE,
-  GS_DEMOSCREEN
+  GS_NOTHING = -1,
+  GS_LEVEL = 0,
+  GS_INTERMISSION = 1,
+  GS_FINALE = 2,
+  GS_DEMOSCREEN = 3
 } gamestate_t;
 
 //

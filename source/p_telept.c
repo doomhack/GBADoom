@@ -50,7 +50,7 @@ static mobj_t* P_TeleportDestination(const line_t* line)
   for (i = -1; (i = P_FindSectorFromLineTag(line, i)) >= 0;) {
     register thinker_t* th = NULL;
     while ((th = P_NextThinker(th)) != NULL)
-      if (th->function == P_MobjThinker) {
+      if (th->function == (think_t)P_MobjThinker) {
         register mobj_t* m = (mobj_t*)th;
         if (m->type == MT_TELEPORTMAN  &&
             m->subsector->sector-_g->sectors == i)
@@ -89,7 +89,7 @@ int EV_Teleport(const line_t *line, int side, mobj_t *thing)
           if (!P_TeleportMove(thing, m->x, m->y, false)) /* killough 8/9/98 */
             return 0;
 
-            thing->z = thing->floorz;
+          thing->z = thing->floorz;
 
           if (player)
             player->viewz = thing->z + player->viewheight;

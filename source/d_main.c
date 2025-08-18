@@ -112,7 +112,6 @@ void D_PostEvent(event_t *ev)
         return;
 
     M_Responder(ev) || (_g->gamestate == GS_LEVEL && (C_Responder(ev) || ST_Responder(ev) || AM_Responder(ev))) || G_Responder(ev);
-
 }
 
 //
@@ -173,7 +172,7 @@ static void D_Display (void)
     if (_g->gamestate != GS_LEVEL) { // Not a level
         switch (_g->oldgamestate)
         {
-            case -1:
+            case GS_NOTHING:
             case GS_LEVEL:
                 V_SetPalette(0); // cph - use default (basic) palette
             default:
@@ -601,7 +600,7 @@ static void IdentifyVersion()
     if (_g->gamemode == indetermined)
     {
         //jff 9/3/98 use logical output routine
-        lprintf(LO_WARN,"Unknown Game Version, may not work\n");
+        lprintf("Unknown Game Version, may not work\n");
     }
 }
 
@@ -654,18 +653,18 @@ static void D_DoomMainSetup(void)
 
     /* cphipps - the main display. This shows the build date, copyright, and game type */
 
-    lprintf(LO_ALWAYS,"PrBoom (built %s)", version_date);
-    lprintf(LO_ALWAYS, "Playing: %s", doomverstr);
-    lprintf(LO_ALWAYS, "PrBoom is released under the");
-    lprintf(LO_ALWAYS, "GNU GPL v2.0.");
+    lprintf("PrBoom (built %s)", version_date);
+    lprintf("Playing: %s", doomverstr);
+    lprintf("PrBoom is released under the");
+    lprintf("GNU GPL v2.0.");
 
-    lprintf(LO_ALWAYS, "You are welcome to");
-    lprintf(LO_ALWAYS, "redistribute it under");
-    lprintf(LO_ALWAYS, "certain conditions.");
+    lprintf("You are welcome to");
+    lprintf("redistribute it under");
+    lprintf("certain conditions.");
 
-    lprintf(LO_ALWAYS, "It comes with ABSOLUTELY\nNO WARRANTY.\nSee the file COPYING for\ndetails.");
+    lprintf("It comes with ABSOLUTELY\nNO WARRANTY.\nSee the file COPYING for\ndetails.");
 
-    lprintf(LO_ALWAYS, "\nPhew. Thats the nasty legal\nstuff out of the way.\nLets play Doom!\n");
+    lprintf("\nPhew. Thats the nasty legal\nstuff out of the way.\nLets play Doom!\n");
 
 
 
@@ -676,38 +675,38 @@ static void D_DoomMainSetup(void)
 
     // CPhipps - move up netgame init
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"D_InitNetGame.");
+    lprintf("D_InitNetGame.");
     D_InitNetGame();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"W_Init: Init WADfiles.");
+    lprintf("W_Init: Init WADfiles.");
     W_Init(); // CPhipps - handling of wadfiles init changed
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"M_Init: Init misc info.");
+    lprintf("M_Init: Init misc info.");
     M_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"R_Init: DOOM refresh daemon.");
+    lprintf("R_Init: DOOM refresh daemon.");
     R_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"P_Init: Init Playloop state.");
+    lprintf("P_Init: Init Playloop state.");
     P_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"S_Init: Setting up sound.");
+    lprintf("S_Init: Setting up sound.");
     S_Init(_g->snd_SfxVolume /* *8 */, _g->snd_MusicVolume /* *8*/ );
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"HU_Init: Setting up HUD.");
+    lprintf("HU_Init: Setting up HUD.");
     HU_Init();
 
     //jff 9/3/98 use logical output routine
-    lprintf(LO_INFO,"ST_Init: Init status bar.");
+    lprintf("ST_Init: Init status bar.");
     ST_Init();
 
-    lprintf(LO_INFO,"G_LoadSettings: Loading settings.");
+    lprintf("G_LoadSettings: Loading settings.");
     G_LoadSettings();
 
     _g->idmusnum = -1; //jff 3/17/98 insure idmus number is blank
@@ -794,7 +793,7 @@ void GetFirstMap(int *ep, int *map)
             }
         }
         //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"Auto-warping to first %slevel: %s\n",
+        lprintf("Auto-warping to first %slevel: %s\n",
                 newlevel ? "new " : "", name);  // Ty 10/04/98 - new level test
     }
 }

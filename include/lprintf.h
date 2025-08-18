@@ -45,7 +45,7 @@ typedef enum                /* Logical output levels */
   LO_ALWAYS=64,
 } OutputLevels;
 
-extern int lprintf(OutputLevels pri, const char *fmt, ...);
+extern int lprintf(const char *fmt, ...);
 
 /* killough 3/20/98: add const
  * killough 4/25/98: add gcc attributes

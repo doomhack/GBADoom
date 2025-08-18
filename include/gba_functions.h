@@ -88,6 +88,10 @@ inline static void SaveSRAM(const byte* eeprom, unsigned int size, unsigned int 
 {
 #ifdef GBA
     ByteCopy((byte*)(0xE000000 + offset), eeprom, size);
+#else
+    (void)eeprom; //Avoid unused parameter warning.
+    (void)size;   //Avoid unused parameter warning.
+    (void)offset; //Avoid unused parameter warning.
 #endif
 }
 
@@ -95,6 +99,10 @@ inline static void LoadSRAM(byte* eeprom, unsigned int size, unsigned int offset
 {
 #ifdef GBA
     ByteCopy(eeprom, (byte*)(0xE000000 + offset), size);
+#else
+    (void)eeprom; //Avoid unused parameter warning.
+    (void)size;   //Avoid unused parameter warning.
+    (void)offset; //Avoid unused parameter warning.
 #endif
 }
 

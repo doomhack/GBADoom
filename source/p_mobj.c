@@ -680,7 +680,7 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
   p = &_g->player;
 
   if (p->playerstate == PST_REBORN)
-    G_PlayerReborn (mthing->type-1);
+    G_PlayerReborn ();
 
   /* cph 2001/08/14 - use the options field of memorised player starts to
    * indicate whether the start really exists in the level.
@@ -788,7 +788,7 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 
     if (options & MTF_RESERVED)
     {
-        lprintf(LO_WARN, "P_SpawnMapThing: correcting bad flags (%u) (thing type %d)\n",
+        lprintf("P_SpawnMapThing: correcting bad flags (%u) (thing type %d)\n",
                 options, mthing->type);
         options &= MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE;
     }

@@ -293,9 +293,13 @@ static int addsfx(int sfxid, int channel, int volume, int sep)
     sound.panning = sep;
 
     mmEffectEx( &sound );
+#else
+    (void)sfxid; // Avoid unused parameter warning
+    (void)volume; // Avoid unused parameter warning
+    (void)sep; // Avoid unused parameter warning
 #endif
 
-	return channel;
+    return channel;
 }
 
 //
@@ -330,7 +334,7 @@ void I_InitSound(void)
 #endif
 
 	// Finished initialization.
-    lprintf(LO_INFO,"I_InitSound: sound ready");
+    lprintf("I_InitSound: sound ready");
 }
 
 void I_PlaySong(int handle, int looping)
@@ -344,6 +348,8 @@ void I_PlaySong(int handle, int looping)
     unsigned int song = musicMap[handle].mm_num;
 
     mmStart(song, mode);
+#else
+    (void)looping; // Avoid unused parameter warning
 #endif
 }
 
@@ -352,6 +358,8 @@ void I_PauseSong (int handle)
 {
 #ifdef GBA
     mmPause();
+#else
+    (void)handle; // Avoid unused parameter warning
 #endif
 }
 
@@ -359,6 +367,8 @@ void I_ResumeSong (int handle)
 {
 #ifdef GBA
     mmResume();
+#else
+    (void)handle; // Avoid unused parameter warning
 #endif
 }
 
@@ -366,6 +376,8 @@ void I_StopSong(int handle)
 {
 #ifdef GBA
     mmStop();
+#else
+    (void)handle; // Avoid unused parameter warning
 #endif
 }
 
@@ -375,5 +387,7 @@ void I_SetMusicVolume(int volume)
     int mmvol = volume * 32;
 
     mmSetModuleVolume(mmvol);
+#else
+    (void)volume; // Avoid unused parameter warning
 #endif
 }

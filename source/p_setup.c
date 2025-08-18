@@ -156,8 +156,7 @@ static void P_LoadNodes (int lump)
   {
     // allow trivial maps
     if (_g->numsubsectors == 1)
-      lprintf(LO_INFO,
-          "P_LoadNodes: trivial map (no nodes, one subsector)\n");
+      lprintf("P_LoadNodes: trivial map (no nodes, one subsector)\n");
     else
       I_Error("P_LoadNodes: no nodes in level");
   }
@@ -226,22 +225,6 @@ static void P_LoadLineDefs (int lump)
     }
 }
 
-// killough 4/4/98: delay using sidedefs until they are loaded
-// killough 5/3/98: reformatted, cleaned up
-
-static void P_LoadLineDefs2(int lump)
-{
-    /*
-  int i = _g->numlines;
-  register line_t *ld = _g->lines;
-  for (;i--;ld++)
-    {
-      ld->frontsector = _g->sides[ld->sidenum[0]].sector; //e6y: Can't be NO_INDEX here
-      ld->backsector  = ld->sidenum[1]!=NO_INDEX ? _g->sides[ld->sidenum[1]].sector : 0;
-    }
-    */
-}
-
 //
 // P_LoadSideDefs
 //
@@ -275,7 +258,7 @@ static void P_LoadSideDefs2(int lump)
             unsigned short sector_num = SHORT(msd->sector);
             if (sector_num >= _g->numsectors)
             {
-                lprintf(LO_WARN,"P_LoadSideDefs2: sidedef %i has out-of-range sector num %u\n", i, sector_num);
+                lprintf("P_LoadSideDefs2: sidedef %i has out-of-range sector num %u\n", i, sector_num);
                 sector_num = 0;
             }
             sd->sector = sec = &_g->sectors[sector_num];
@@ -513,7 +496,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     P_LoadSideDefs  (lumpnum+ML_SIDEDEFS);
     P_LoadLineDefs  (lumpnum+ML_LINEDEFS);
     P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
-    P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);
     P_LoadBlockMap  (lumpnum+ML_BLOCKMAP);
 
 
@@ -561,12 +543,12 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 //
 void P_Init (void)
 {
-    lprintf(LO_INFO, "P_InitSwitchList");
+    lprintf("P_InitSwitchList");
     P_InitSwitchList();
 
-    lprintf(LO_INFO, "P_InitPicAnims");
+    lprintf("P_InitPicAnims");
     P_InitPicAnims();
 
-    lprintf(LO_INFO, "R_InitSprites");
+    lprintf("R_InitSprites");
     R_InitSprites(sprnames);
 }

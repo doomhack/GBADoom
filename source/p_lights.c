@@ -378,20 +378,25 @@ int EV_LightTurnOn(const line_t *line, int bright)
 
   // killough 10/98: replace inefficient search with fast search
   for (i = -1; (i = P_FindSectorFromLineTag(line,i)) >= 0;)
+  {
+    sector_t *temp, *sector = _g->sectors+i;
+    int j, tbright = bright; //jff 5/17/98 search for maximum PER sector
+
+    // bright = 0 means to search for highest light level surrounding sector
+
+    if (!bright)
     {
-      sector_t *temp, *sector = _g->sectors+i;
-      int j, tbright = bright; //jff 5/17/98 search for maximum PER sector
-
-      // bright = 0 means to search for highest light level surrounding sector
-
-      if (!bright)
-  for (j = 0;j < sector->linecount; j++)
-    if ((temp = getNextSector(sector->lines[j],sector)) &&
-        temp->lightlevel > tbright)
-      tbright = temp->lightlevel;
-
-      sector->lightlevel = tbright;
+      for (j = 0;j < sector->linecount; j++)
+      {
+        if ((temp = getNextSector(sector->lines[j],sector)) && temp->lightlevel > tbright)
+            tbright = temp->lightlevel;
+      }
     }
+
+    sector->lightlevel = tbright;
+
+  }
+
   return 1;
 }
 

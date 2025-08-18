@@ -84,7 +84,7 @@ void Z_Init (void)
 
     heapSize += 4;
 
-    lprintf(LO_INFO,"Z_Init: Heapsize is %d bytes.", heapSize);
+    lprintf("Z_Init: Heapsize is %d bytes.", heapSize);
 
     // set the entire zone to one free block
     mainzone->blocklist.next =

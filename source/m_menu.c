@@ -294,8 +294,7 @@ void M_Episode(int choice)
   // Yet another hack...
   if ( (_g->gamemode == registered) && (choice > 2))
     {
-    lprintf( LO_WARN,
-     "M_Episode: 4th episode requires UltimateDOOM\n");
+    lprintf("M_Episode: 4th episode requires UltimateDOOM\n");
     choice = 0;
     }
 
@@ -315,7 +314,7 @@ void M_DrawNewGame(void)
   V_DrawNamePatch(54, 38, 0, "M_SKILL",CR_DEFAULT, VPT_STRETCH);
 }
 
-void M_NewGame(int choice)
+void M_NewGame(int)
 {
     if ( _g->gamemode == commercial )
     {
@@ -333,7 +332,7 @@ static void M_VerifyNightmare(int ch)
     if (ch != key_enter)
         return;
 
-    G_DeferedInitNew(nightmare,_g->epi+1,1);
+    G_DeferedInitNew(sk_nightmare,_g->epi+1,1);
 }
 
 void M_ChooseSkill(int choice)
@@ -446,7 +445,7 @@ void M_LoadSelect(int choice)
   // CPhipps - Modified so savegame filename is worked out only internal
   //  to g_game.c, this only passes the slot.
 
-  G_LoadGame(choice, false); // killough 3/16/98, 5/15/98: add slot, cmd
+  G_LoadGame(choice); // killough 3/16/98, 5/15/98: add slot, cmd
 
   M_ClearMenus ();
 }
@@ -455,7 +454,7 @@ void M_LoadSelect(int choice)
 // Selected from DOOM menu
 //
 
-void M_LoadGame (int choice)
+void M_LoadGame (int)
 {
   /* killough 5/26/98: exclude during demo recordings
    * cph - unless a new demo */
@@ -524,7 +523,7 @@ void M_DrawSave(void)
 //
 static void M_DoSave(int slot)
 {
-  G_SaveGame (slot,_g->savegamestrings[slot]);
+  G_SaveGame (slot);
   M_ClearMenus ();
 }
 
@@ -541,7 +540,7 @@ void M_SaveSelect(int choice)
 //
 // Selected from DOOM menu
 //
-void M_SaveGame (int choice)
+void M_SaveGame (int)
 {
   // killough 10/6/98: allow savegames during single-player demo playback
   if (!_g->usergame && (!_g->demoplayback))
@@ -622,7 +621,7 @@ void M_DrawOptions(void)
   M_DrawThermo(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma+2,6,_g->gamma);
 }
 
-void M_Options(int choice)
+void M_Options(int)
 {
   M_SetupNextMenu(&OptionsDef);
 }
@@ -677,7 +676,7 @@ void M_DrawSound(void)
   M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(music_vol+1),16,_g->snd_MusicVolume);
 }
 
-void M_Sound(int choice)
+void M_Sound(int)
 {
   M_SetupNextMenu(&SoundDef);
 }
@@ -738,7 +737,7 @@ static void M_EndGameResponse(int ch)
   D_StartTitle ();
 }
 
-void M_EndGame(int choice)
+void M_EndGame(int)
 {
   M_StartMessage(ENDGAME,M_EndGameResponse,true); // Ty 03/27/98 - externalized
 }
@@ -748,10 +747,8 @@ void M_EndGame(int choice)
 //    Toggle messages on/off
 //
 
-void M_ChangeMessages(int choice)
+void M_ChangeMessages(int)
 {
-  // warning: unused parameter `int choice'
-  choice = 0;
   _g->showMessages = 1 - _g->showMessages;
 
   if (!_g->showMessages)
@@ -765,10 +762,8 @@ void M_ChangeMessages(int choice)
 }
 
 
-void M_ChangeAlwaysRun(int choice)
+void M_ChangeAlwaysRun(int)
 {
-    // warning: unused parameter `int choice'
-    choice = 0;
     _g->alwaysRun = 1 - _g->alwaysRun;
 
     if (!_g->alwaysRun)
@@ -779,10 +774,8 @@ void M_ChangeAlwaysRun(int choice)
     G_SaveSettings();
 }
 
-void M_ChangeDetail(int choice)
+void M_ChangeDetail(int)
 {
-    // warning: unused parameter `int choice'
-    choice = 0;
     _g->highDetail = 1 - _g->highDetail;
 
     if (!_g->highDetail)

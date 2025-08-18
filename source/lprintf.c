@@ -49,18 +49,16 @@
  */
 #define MAX_MESSAGE_SIZE 128
 
-int lprintf(OutputLevels pri, const char *s, ...)
+int lprintf(const char *s, ...)
 {
-	char msg[MAX_MESSAGE_SIZE];
+    char msg[MAX_MESSAGE_SIZE];
 
-	va_list v;
-	va_start(v,s);
-	
-	vsprintf(msg,s,v);
-	
-	va_end(v);
+    va_list v;
+    va_start(v,s);
 
-    int len = strlen(msg);
+    vsprintf(msg,s,v);
+
+    va_end(v);
 
     printf("%s\n", msg);
 

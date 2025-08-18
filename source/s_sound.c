@@ -92,9 +92,7 @@ void S_Init(int sfxVolume, int musicVolume)
     //jff 1/22/98 skip sound init if sound not enabled
     if (!nosfxparm)
     {
-        int i;
-
-        lprintf(LO_CONFIRM, "S_Init: default sfx volume %d", sfxVolume);
+        lprintf("S_Init: default sfx volume %d", sfxVolume);
 
         S_SetSfxVolume(sfxVolume);
 
@@ -177,7 +175,7 @@ void S_Start(void)
 
 void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume)
 {
-    int priority, cnum, is_pickup;
+    int cnum, is_pickup;
     const sfxinfo_t *sfx;
 
     int sep = NORM_SEP;
@@ -198,7 +196,6 @@ void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume)
     // Initialize sound parameters
     if (sfx->link)
     {
-        priority = sfx->priority;
         volume += sfx->volume;
 
         if (volume < 1)
@@ -207,10 +204,7 @@ void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume)
         if (volume > _g->snd_SfxVolume)
             volume = _g->snd_SfxVolume;
     }
-    else
-    {
-        priority = NORM_PRIORITY;
-    }
+
 
     // Check to see if it is audible, modify the params
     // killough 3/7/98, 4/25/98: code rearranged slightly
@@ -346,9 +340,7 @@ static bool S_SoundIsPlaying(int cnum)
 //
 void S_UpdateSounds(void* listener_p)
 {
-	mobj_t *listener = (mobj_t*) listener_p;
 	int cnum;
-    int sep = NORM_SEP;
 	
 	//jff 1/22/98 return if sound is not enabled
 	if (nosfxparm)

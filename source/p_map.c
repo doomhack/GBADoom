@@ -61,7 +61,7 @@
 
 
 bool PIT_StompThing (mobj_t* thing)
-  {
+{
   fixed_t blockdist;
 
   // phares 9/10/98: moved this self-check to start of routine
@@ -86,7 +86,7 @@ bool PIT_StompThing (mobj_t* thing)
   P_DamageMobj (thing, _g->tmthing, _g->tmthing, 10000); // Stomp!
 
   return true;
-  }
+}
 
 
 //
@@ -580,8 +580,7 @@ bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
 // Attempt to move to a new position,
 // crossing special lines unless MF_TELEPORT is set.
 //
-bool P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
-                  bool dropoff) // killough 3/15/98: allow dropoff as option
+bool P_TryMove(mobj_t* thing,fixed_t x,fixed_t y, bool dropoff)
 {
     fixed_t oldx;
     fixed_t oldy;
@@ -614,18 +613,17 @@ bool P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
        * killough 11/98: Improve symmetry of clipping on stairs
        */
 
-        if (!(thing->flags & (MF_DROPOFF|MF_FLOAT))) {
-            if (!dropoff || (dropoff==2 &&  // large jump down (e.g. dogs)
-                             (_g->tmfloorz-_g->tmdropoffz > 128*FRACUNIT ||
-                              !thing->target || thing->target->z >_g->tmdropoffz)))
-            {
-                if (_g->tmfloorz - _g->tmdropoffz > 24*FRACUNIT)
-                    return false;
-            }
-            else { /* dropoff allowed -- check for whether it fell more than 24 */
-                _g->felldown = !(thing->flags & MF_NOGRAVITY) &&
-                        thing->z - _g->tmfloorz > 24*FRACUNIT;
-            }
+        if (!(thing->flags & (MF_DROPOFF|MF_FLOAT)))
+        {
+          if (!dropoff)
+          {
+            if (_g->tmfloorz - _g->tmdropoffz > 24*FRACUNIT)
+              return false;
+          }
+          else
+          { /* dropoff allowed -- check for whether it fell more than 24 */
+            _g->felldown = !(thing->flags & MF_NOGRAVITY) && thing->z - _g->tmfloorz > 24*FRACUNIT;
+          }
         }
     }
 
@@ -1060,7 +1058,7 @@ bool PTR_AimTraverse (intercept_t* in)
 // PTR_ShootTraverse
 //
 bool PTR_ShootTraverse (intercept_t* in)
-  {
+{
   fixed_t x;
   fixed_t y;
   fixed_t z;
@@ -1074,25 +1072,25 @@ bool PTR_ShootTraverse (intercept_t* in)
   fixed_t thingbottomslope;
 
   if (in->isaline)
-    {
+  {
     const line_t *li = in->d.line;
 
     if (LN_SPECIAL(li))
       P_ShootSpecialLine (_g->shootthing, li);
 
-      if (li->flags & ML_TWOSIDED)
-  {  // crosses a two sided (really 2s) line
-    P_LineOpening (li);
-    dist = FixedMul(_g->attackrange, in->frac);
+    if (li->flags & ML_TWOSIDED)
+    {  // crosses a two sided (really 2s) line
+      P_LineOpening (li);
+      dist = FixedMul(_g->attackrange, in->frac);
 
-    // killough 11/98: simplify
+      // killough 11/98: simplify
 
-    if ((LN_FRONTSECTOR(li)->floorheight==LN_BACKSECTOR(li)->floorheight ||
-         (slope = FixedDiv(_g->openbottom - _g->shootz , dist)) <= _g->aimslope) &&
-        (LN_FRONTSECTOR(li)->ceilingheight==LN_BACKSECTOR(li)->ceilingheight ||
-         (slope = FixedDiv (_g->opentop - _g->shootz , dist)) >= _g->aimslope))
-      return true;      // shot continues
-  }
+      if ((LN_FRONTSECTOR(li)->floorheight==LN_BACKSECTOR(li)->floorheight ||
+          (slope = FixedDiv(_g->openbottom - _g->shootz , dist)) <= _g->aimslope) &&
+          (LN_FRONTSECTOR(li)->ceilingheight==LN_BACKSECTOR(li)->ceilingheight ||
+          (slope = FixedDiv (_g->opentop - _g->shootz , dist)) >= _g->aimslope))
+        return true;      // shot continues
+    }
 
     // hit line
     // position a bit closer
@@ -1103,7 +1101,7 @@ bool PTR_ShootTraverse (intercept_t* in)
     z = _g->shootz + FixedMul (_g->aimslope, FixedMul(frac, _g->attackrange));
 
     if (LN_FRONTSECTOR(li)->ceilingpic == _g->skyflatnum)
-      {
+    {
       // don't shoot the sky!
 
       if (z > LN_FRONTSECTOR(li)->ceilingheight)
@@ -1112,13 +1110,9 @@ bool PTR_ShootTraverse (intercept_t* in)
       // it's a sky hack wall
 
       if  (LN_BACKSECTOR(li) && LN_BACKSECTOR(li)->ceilingpic == _g->skyflatnum)
-
-        // fix bullet-eaters -- killough:
-        // WARNING: Almost all demos will lose sync without this
-        // demo_compatibility flag check!!! killough 1/18/98
-      if (LN_BACKSECTOR(li)->ceilingheight < z)
-        return false;
-      }
+        if (LN_BACKSECTOR(li)->ceilingheight < z)
+          return false;
+    }
 
     // Spawn bullet puffs.
 
@@ -1127,7 +1121,7 @@ bool PTR_ShootTraverse (intercept_t* in)
     // don't go any farther
 
     return false;
-    }
+  }
 
   // shoot a thing
 
@@ -1172,7 +1166,7 @@ bool PTR_ShootTraverse (intercept_t* in)
 
   // don't go any farther
   return false;
-  }
+}
 
 
 //
