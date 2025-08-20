@@ -1313,7 +1313,7 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const d
 }
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
-{    
+{
     const fixed_t distance = FixedMul(planeheight, yslope[y]);
     dsvars->step = ((FixedMul(distance>>1,basexscale) << 10) & 0xffff0000) | ((FixedMul(distance>>1,baseyscale) >> 6) & 0x0000ffff);
 
@@ -1382,7 +1382,7 @@ static void R_DoDrawPlane(visplane_t *pl)
             // killough 10/98: Use sky scrolling offset
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
             {
-                if ((dcvars.yl = pl->top[x]) != -1 && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
+                if ((dcvars.yl = pl->limits[x].top) != -1 && dcvars.yl <= (dcvars.yh = pl->limits[x].bottom)) // dropoff overflow
                 {
                     int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT);
 
@@ -1405,11 +1405,11 @@ static void R_DoDrawPlane(visplane_t *pl)
 
             const int stop = pl->maxx + 1;
 
-            pl->top[pl->minx-1] = pl->top[stop] = 0xff; // dropoff overflow
+            pl->limits[pl->minx-1].top = pl->limits[stop].top = 0xff; // dropoff overflow
 
             for (x = pl->minx ; x <= stop ; x++)
             {
-                R_MakeSpans(x,pl->top[x-1],pl->bottom[x-1], pl->top[x],pl->bottom[x], &dsvars);
+                R_MakeSpans(x,pl->limits[x-1].top,pl->limits[x-1].bottom, pl->limits[x].top,pl->limits[x].bottom, &dsvars);
             }
         }
     }
@@ -1666,7 +1666,8 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
     check->minx = SCREENWIDTH; // Was SCREENWIDTH -- killough 11/98
     check->maxx = -1;
 
-    BlockSet(check->top, UINT_MAX, sizeof(check->top));
+    for(int i = 0; i < SCREENWIDTH; i++)
+      check->limits[i].top = 0xff;
 
     check->modified = false;
 
@@ -1689,7 +1690,8 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->minx = start;
     new_pl->maxx = stop;
 
-    BlockSet(new_pl->top, UINT_MAX, sizeof(new_pl->top));
+    for(int i = 0; i < SCREENWIDTH; i++)
+      new_pl->limits[i].top = 0xff;
 
     new_pl->modified = false;
 
@@ -1714,7 +1716,7 @@ static visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
     else
         unionh  = pl->maxx, intrh  = stop;
 
-    for (x=intrl ; x <= intrh && pl->top[x] == 0xff; x++) // dropoff overflow
+    for (x=intrl ; x <= intrh && pl->limits[x].top == 0xff; x++) // dropoff overflow
         ;
 
     if (x > intrh) { /* Can use existing plane; extend range */
@@ -1946,8 +1948,10 @@ static void R_RenderSegLoop (int rw_x)
 
             if (top <= bottom)
             {
-                ceilingplane->top[rw_x] = top;
-                ceilingplane->bottom[rw_x] = bottom;
+                ceilingplane->limits[rw_x].limits = ((top) | (bottom << 8));
+
+                //ceilingplane->limits[rw_x].top = top;
+                //ceilingplane->limits[rw_x].bottom = bottom;
                 ceilingplane->modified = true;
             }
             cc_rwx = bottom;
@@ -1962,8 +1966,10 @@ static void R_RenderSegLoop (int rw_x)
 
             if (top <= fc_rwx-1)
             {
-                floorplane->top[rw_x] = top;
-                floorplane->bottom[rw_x] = fc_rwx-1;
+                floorplane->limits[rw_x].limits = ((top) | ((fc_rwx-1) << 8));
+
+                //floorplane->limits[rw_x].top = top;
+                //floorplane->limits[rw_x].bottom = fc_rwx-1;
                 floorplane->modified = true;
             }
 
