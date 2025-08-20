@@ -419,25 +419,27 @@ typedef struct
 // Go to http://classicgaming.com/doom/editing/ to find out -- killough
 //
 
+typedef union visplane_limits_t
+{
+    struct
+    {
+        byte top, bottom;
+    };
+    unsigned short limits;
+} visplane_limits_t;
+
 typedef struct visplane
 {
   struct visplane *next;        // Next visplane in hash chain -- killough
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
-  bool modified;
 
-  byte		pad1;
-  byte		pad2;
-  byte		pad3;
-  // Here lies the rub for all
-  //  dynamic resize/change of resolution.
-  byte		top[SCREENWIDTH];
-  byte		pad4;
-  byte		pad5;
-  // See above.
-  byte		bottom[SCREENWIDTH];
-  byte		pad6;
+  unsigned int pad1;
+  visplane_limits_t limits[SCREENWIDTH];
+  unsigned int pad2;
+
+  bool modified;
 
 } visplane_t;
 
