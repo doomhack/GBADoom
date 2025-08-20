@@ -299,18 +299,23 @@ inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
     return (fixed_t)((int_64_t) a*b >> FRACBITS);
 }
 
+static inline CONSTFUNC int min(int x, int y)
+{
+    return x < y ? x : y;
+}
+
+static inline CONSTFUNC int max(int x, int y)
+{
+    return x > y ? x : y;
+}
+
 // killough 5/3/98: reformatted
 
 static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 {
-    den = den >> 8;
+    const unsigned int ans = FixedApproxDiv(num << 3, den >> 8) >> FRACBITS;
 
-    if (den == 0)
-        return SLOPERANGE;
-
-    const unsigned int ans = FixedApproxDiv(num << 3, den) >> FRACBITS;
-
-    return (ans <= SLOPERANGE) ? ans : SLOPERANGE;
+    return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
 //
@@ -503,9 +508,6 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 //  be used. It has also been used with Wolfenstein 3D.
 //
 
-#pragma GCC push_options
-#pragma GCC optimize ("Ofast")
-
 #define COLEXTRABITS 9
 #define COLBITS (FRACBITS + COLEXTRABITS)
 
@@ -693,10 +695,6 @@ static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
 
     _g->fuzzpos = fuzzpos;
 }
-
-#pragma GCC pop_options
-
-
 
 //
 // R_DrawMaskedColumn
@@ -1246,8 +1244,6 @@ static void R_DrawMasked(void)
 //  and the inner loop has to step in texture space u and v.
 //
 
-#pragma GCC push_options
-#pragma GCC optimize ("Ofast")
 
 inline static void R_DrawSpanPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int position, unsigned int position2)
 {
@@ -1315,8 +1311,6 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const d
         case 1:     R_DrawSpanPixel(dest, source, colormap, position, position + step);
     }
 }
-
-#pragma GCC pop_options
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {    
@@ -1906,10 +1900,13 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
 #define HEIGHTBITS 12
 #define HEIGHTUNIT (1<<HEIGHTBITS)
 
+
+//Optimise me
 static void R_RenderSegLoop (int rw_x)
 {
-    draw_column_vars_t dcvars;
     fixed_t  texturecolumn = 0;   // shut up compiler warning
+
+    draw_column_vars_t dcvars;
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
@@ -1925,47 +1922,8 @@ static void R_RenderSegLoop (int rw_x)
         int cc_rwx = ceilingclip[rw_x];
         int fc_rwx = floorclip[rw_x];
 
-        // no space above wall?
-        int bottom,top = cc_rwx+1;
-
-        if (yl < top)
-            yl = top;
-
-        if (markceiling)
-        {
-            bottom = yl-1;
-
-            if (bottom >= fc_rwx)
-                bottom = fc_rwx-1;
-
-            if (top <= bottom)
-            {
-                ceilingplane->top[rw_x] = top;
-                ceilingplane->bottom[rw_x] = bottom;
-                ceilingplane->modified = true;
-            }
-            // SoM: this should be set here
-            cc_rwx = bottom;
-        }
-
-        bottom = fc_rwx-1;
-        if (yh > bottom)
-            yh = bottom;
-
-        if (markfloor)
-        {
-
-            top  = yh < cc_rwx ? cc_rwx : yh;
-
-            if (++top <= bottom)
-            {
-                floorplane->top[rw_x] = top;
-                floorplane->bottom[rw_x] = bottom;
-                floorplane->modified = true;
-            }
-            // SoM: This should be set here to prevent overdraw
-            fc_rwx = top;
-        }
+        if (yl <= cc_rwx)
+          yl = cc_rwx + 1;
 
         // texturecolumn and lighting are independent of wall tiers
         if (segtextured)
@@ -1973,24 +1931,52 @@ static void R_RenderSegLoop (int rw_x)
             // calculate texture offset
             angle_t angle =(rw_centerangle+xtoviewangle[rw_x])>>ANGLETOFINESHIFT;
 
-            texturecolumn = rw_offset-FixedMul(finetangent[angle],rw_distance);
-
-            texturecolumn >>= FRACBITS;
+            texturecolumn = (rw_offset-FixedMul(finetangent[angle],rw_distance)) >> FRACBITS;
 
             dcvars.x = rw_x;
 
             dcvars.iscale = FixedReciprocal((unsigned)rw_scale);
         }
 
+        if (markceiling)
+        {
+            int bottom = min(yl, fc_rwx) - 1;
+
+            int top = cc_rwx+1;
+
+            if (top <= bottom)
+            {
+                ceilingplane->top[rw_x] = top;
+                ceilingplane->bottom[rw_x] = bottom;
+                ceilingplane->modified = true;
+            }
+            cc_rwx = bottom;
+        }
+
+        if (yh >= fc_rwx)
+            yh = fc_rwx - 1;
+
+        if (markfloor)
+        {
+            int top = max(yh, cc_rwx) + 1;
+
+            if (top <= fc_rwx-1)
+            {
+                floorplane->top[rw_x] = top;
+                floorplane->bottom[rw_x] = fc_rwx-1;
+                floorplane->modified = true;
+            }
+
+            fc_rwx = top;
+        }
+
         // draw the wall tiers
         if (midtexture)
         {
-
-            dcvars.yl = yl;     // single sided line
-            dcvars.yh = yh;
             dcvars.texturemid = rw_midtexturemid;
-            //
 
+            dcvars.yl = yl;
+            dcvars.yh = yh;
             R_DrawSegTextureColumn(midtexture, texturecolumn, &dcvars);
 
             cc_rwx = viewheight;
@@ -1998,63 +1984,49 @@ static void R_RenderSegLoop (int rw_x)
         }
         else
         {
-
-            // two sided line
             if (toptexture)
             {
                 // top wall
-                int mid = pixhigh>>HEIGHTBITS;
+                int mid = min((pixhigh >> HEIGHTBITS), fc_rwx - 1);
                 pixhigh += pixhighstep;
-
-                if (mid >= fc_rwx)
-                    mid = fc_rwx-1;
 
                 if (mid >= yl)
                 {
                     dcvars.yl = yl;
                     dcvars.yh = mid;
                     dcvars.texturemid = rw_toptexturemid;
-
                     R_DrawSegTextureColumn(toptexture, texturecolumn, &dcvars);
-
                     cc_rwx = mid;
                 }
                 else
-                    cc_rwx = yl-1;
+                    cc_rwx = yl - 1;
             }
-            else  // no top wall
+            else
             {
-
                 if (markceiling)
                     cc_rwx = yl-1;
             }
 
             if (bottomtexture)          // bottom wall
             {
-                int mid = (pixlow+HEIGHTUNIT-1)>>HEIGHTBITS;
+                int mid = max(((pixlow + HEIGHTUNIT - 1) >> HEIGHTBITS), cc_rwx + 1);
                 pixlow += pixlowstep;
-
-                // no space above wall?
-                if (mid <= cc_rwx)
-                    mid = cc_rwx+1;
 
                 if (mid <= yh)
                 {
                     dcvars.yl = mid;
                     dcvars.yh = yh;
                     dcvars.texturemid = rw_bottomtexturemid;
-
                     R_DrawSegTextureColumn(bottomtexture, texturecolumn, &dcvars);
-
                     fc_rwx = mid;
                 }
                 else
-                    fc_rwx = yh+1;
+                    fc_rwx = yh + 1;
             }
             else        // no bottom wall
             {
                 if (markfloor)
-                    fc_rwx = yh+1;
+                    fc_rwx = yh + 1;
             }
 
             // cph - if we completely blocked further sight through this column,
@@ -2097,6 +2069,9 @@ static bool R_CheckOpenings(const int start)
 // A wall segment will be drawn
 //  between start and stop pixels (inclusive).
 //
+
+void (*rsl)(int) = R_RenderSegLoop;
+
 static void R_StoreWallRange(const int start, const int stop)
 {
     fixed_t hyp;
@@ -2110,7 +2085,6 @@ static void R_StoreWallRange(const int start, const int stop)
 #endif
         return;
     }
-
 
     linedata_t* linedata = &_g->linedata[curline->linenum];
 
@@ -2148,7 +2122,8 @@ static void R_StoreWallRange(const int start, const int stop)
     if (stop > start)
     {
         ds_p->scale2 = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[stop]);
-        ds_p->scalestep = rw_scalestep = IDiv32(ds_p->scale2-rw_scale, stop-start);
+
+        ds_p->scalestep = rw_scalestep = FixedDiv(ds_p->scale2-rw_scale, (stop-start) << FRACBITS);
     }
     else
         ds_p->scale2 = ds_p->scale1;
@@ -2357,7 +2332,8 @@ static void R_StoreWallRange(const int start, const int stop)
     }
 
     didsolidcol = 0;
-    R_RenderSegLoop(rw_x);
+    //R_RenderSegLoop(rw_x);
+    rsl(rw_x);
 
     /* cph - if a column was made solid by this wall, we _must_ save full clipping info */
     if (backsector && didsolidcol)
@@ -2469,6 +2445,8 @@ static void R_RecalcLineFlags(void)
 // Replaces the old R_Clip*WallSegment functions. It draws bits of walls in those
 // columns which aren't solid, and updates the solidcol[] array appropriately
 
+void (*swr)(int, int) = R_StoreWallRange;
+
 static void R_ClipWallSegment(int first, int last, bool solid)
 {
     byte *p;
@@ -2489,7 +2467,8 @@ static void R_ClipWallSegment(int first, int last, bool solid)
             else
                 to = p - solidcol;
 
-            R_StoreWallRange(first, to-1);
+            swr(first, to-1);
+            //R_StoreWallRange(first, to-1);
 
             if (solid)
             {
