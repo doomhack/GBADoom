@@ -434,12 +434,13 @@ typedef struct visplane
   short picnum, lightlevel;
   short minx, maxx;
   fixed_t height;
+  byte modified;
 
-  unsigned int pad1;
+  byte pad1[3];
+
   visplane_limits_t limits[SCREENWIDTH];
-  unsigned int pad2;
 
-  bool modified;
+  unsigned int pad2;
 
 } visplane_t;
 
