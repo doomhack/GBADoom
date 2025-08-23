@@ -102,4 +102,7 @@ extern const fixed_t* distscale_vram; //VRAM Copy.
 extern short* screenheightarray;
 extern short* negonearray;
 
+extern fixed_t* tmpbbox;
+
+
 #endif

@@ -3,8 +3,8 @@
 
 //Uncomment which edition you want to compile
 //#include "iwad/doom1.c"
-#include "iwad/doomu.c"
-//#include "iwad/doom2.c"
+//#include "iwad/doomu.c"
+#include "iwad/doom2.c"
 //#include "iwad/tnt.c"
 //#include "iwad/plutonia.c"
 //#include "iwad/sigil.c"

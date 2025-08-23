@@ -67,10 +67,10 @@
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
 {
     dcvars->x = dcvars->yl = dcvars->yh = 0;
-	dcvars->iscale = dcvars->texturemid = 0;
-	dcvars->source = NULL;
+    dcvars->iscale = dcvars->texturemid = 0;
+    dcvars->source = NULL;
     dcvars->colormap = colormaps;
-	dcvars->translation = NULL;
+    dcvars->translation = NULL;
 }
 
 //
@@ -99,4 +99,6 @@ void R_InitBuffer()
 
     for(int i = 0; i < 120; i++)
         screenheightarray[i] = 128;
+
+    _g->tmbbox = tmpbbox;
 }

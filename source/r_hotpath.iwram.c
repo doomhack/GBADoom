@@ -97,7 +97,10 @@ short* floorclip = (short*)&vram3_spare[512];
 //240 bytes.
 short* ceilingclip = (short*)&vram3_spare[512+240];
 
-//992 bytes used. 32 byes left.
+//16 bytes
+fixed_t* tmpbbox = (fixed_t*)&vram3_spare[512+240+240];
+
+//1008 bytes used. 16 byes left.
 
 
 
@@ -329,26 +332,10 @@ static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 
 static PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
 {
-    fixed_t dx = (fixed_t)node->dx << FRACBITS;
-    fixed_t dy = (fixed_t)node->dy << FRACBITS;
+    const fixed_t nx = x - ((fixed_t)node->x << FRACBITS);
+    const fixed_t ny = y - ((fixed_t)node->y << FRACBITS);
 
-    fixed_t nx = (fixed_t)node->x << FRACBITS;
-    fixed_t ny = (fixed_t)node->y << FRACBITS;
-
-    if (!dx)
-        return x <= nx ? node->dy > 0 : node->dy < 0;
-
-    if (!dy)
-        return y <= ny ? node->dx < 0 : node->dx > 0;
-
-    x -= nx;
-    y -= ny;
-
-    // Try to quickly decide by looking at sign bits.
-    if ((dy ^ dx ^ x ^ y) < 0)
-        return (dy ^ x) < 0;  // (left is negative)
-
-    return FixedMul(y, node->dx) >= FixedMul(node->dy, x);
+    return FixedMul(ny, node->dx) >= FixedMul(node->dy, nx);
 }
 
 //
@@ -1126,7 +1113,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     if (flip)
     {
         vis->xiscale = - pspriteiscale;
-        vis->startfrac = (width<<FRACBITS)-1;
+        vis->startfrac = ((width<<FRACBITS)-1);
     }
     else
     {
@@ -1244,19 +1231,16 @@ static void R_DrawMasked(void)
 //  and the inner loop has to step in texture space u and v.
 //
 
-
 inline static void R_DrawSpanPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int position, unsigned int position2)
 {
-    unsigned int p1 = colormap[source[((position >> 4) & 0x0fc0) | (position >> 26)]];
-    unsigned int p2 = colormap[source[((position2 >> 4) & 0x0fc0) | (position2 >> 26)]];
+    const unsigned int p1 = colormap[source[(position & 0x0fc0) | (position >> 22)]];
+    const unsigned int p2 = colormap[source[(position2 & 0x0fc0) | (position2 >> 22)]];
 
     *dest = (p1 | (p2 << 8));
 }
 
-static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const draw_span_vars_t *dsvars)
+static void R_DrawSpan(unsigned int y, unsigned int x1, const unsigned int count, const draw_span_vars_t *dsvars)
 {
-    unsigned int count = (x2 - x1);
-
     const byte *source = dsvars->source;
     const byte *colormap = dsvars->colormap;
 
@@ -1265,68 +1249,52 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, unsigned int x2, const d
     const unsigned int step = dsvars->step;
     unsigned int position = dsvars->position;
 
-    unsigned int l = (count >> 4);
+    unsigned int l = (count >> 3);
 
     while(l--)
     {
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
 
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
     }
 
-    unsigned int r = (count & 15);
+    const unsigned int r = (count & 7);
 
     switch(r)
     {
-        case 15:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 14:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 13:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 12:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 11:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 10:    R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 9:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 8:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 7:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 6:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 5:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 4:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 3:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 2:     R_DrawSpanPixel(dest, source, colormap, position, position + step); dest++; position+=step*2; [[fallthrough]];
-        case 1:     R_DrawSpanPixel(dest, source, colormap, position, position + step);
+        case 7:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
+        case 6:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
+        case 5:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
+        case 4:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
+        case 3:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
+        case 2:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
+        case 1:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4);
     }
 }
 
 static void R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {
     const fixed_t distance = FixedMul(planeheight, yslope[y]);
-    dsvars->step = ((FixedMul(distance>>1,basexscale) << 10) & 0xffff0000) | ((FixedMul(distance>>1,baseyscale) >> 6) & 0x0000ffff);
-
-    fixed_t length = FixedMul (distance, distscale[x1]);
-    angle_t angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
+    const fixed_t length = FixedMul (distance, distscale[x1]);
+    const angle_t angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
+    const unsigned int count = (x2 - x1);
 
     // killough 2/28/98: Add offsets
-    unsigned int xfrac =  viewx + FixedMul(finecosine[angle], length);
-    unsigned int yfrac = -viewy - FixedMul(finesine[angle],   length);
+    const unsigned int xfrac =  viewx + FixedMul(finecosine[angle], length);
+    const unsigned int yfrac = -viewy - FixedMul(finesine[angle],   length);
 
     dsvars->position = ((xfrac << 10) & 0xffff0000) | ((yfrac >> 6)  & 0x0000ffff);
 
-    R_DrawSpan(y, x1, x2, dsvars);
+    //UV steps are half-steps as we draw at full resolution. Shifts have been reduced/increased by 1
+    dsvars->step = ((FixedMul(distance,basexscale) << 9) & 0xffff0000) | ((FixedMul(distance,baseyscale) >> 7) & 0x0000ffff);
+
+    R_DrawSpan(y, x1, count, dsvars);
 }
 
 //
@@ -1557,13 +1525,12 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     vis->x1 = x1 < 0 ? 0 : x1;
     vis->x2 = x2 >= SCREENWIDTH ? SCREENWIDTH-1 : x2;
 
-
-    //const fixed_t iscale = FixedDiv (FRACUNIT, xscale);
     const fixed_t iscale = FixedReciprocal(xscale);
 
+    //Add 1/2 iscale here to center on pixel?
     if (flip)
     {
-        vis->startfrac = (patch->width<<FRACBITS)-1;
+        vis->startfrac = ((patch->width<<FRACBITS)-1);
         vis->xiscale = -iscale;
     }
     else
@@ -1947,13 +1914,8 @@ static void R_RenderSegLoop (int rw_x)
             int top = cc_rwx+1;
 
             if (top <= bottom)
-            {
                 ceilingplane->limits[rw_x].limits = ((top) | (bottom << 8));
 
-                //ceilingplane->limits[rw_x].top = top;
-                //ceilingplane->limits[rw_x].bottom = bottom;
-                ceilingplane->modified = true;
-            }
             cc_rwx = bottom;
         }
 
@@ -1965,13 +1927,7 @@ static void R_RenderSegLoop (int rw_x)
             int top = max(yh, cc_rwx) + 1;
 
             if (top <= fc_rwx-1)
-            {
                 floorplane->limits[rw_x].limits = ((top) | ((fc_rwx-1) << 8));
-
-                //floorplane->limits[rw_x].top = top;
-                //floorplane->limits[rw_x].bottom = fc_rwx-1;
-                floorplane->modified = true;
-            }
 
             fc_rwx = top;
         }
@@ -2054,6 +2010,12 @@ static void R_RenderSegLoop (int rw_x)
 
         floorclip[rw_x] = fc_rwx;
         ceilingclip[rw_x] = cc_rwx;
+
+        if(markceiling)
+          ceilingplane->modified = true;
+
+        if(markfloor)
+          floorplane->modified = true;
     }
 }
 

@@ -227,13 +227,22 @@ static int untouched(const line_t *ld)
 static // killough 3/26/98: make static
 bool PIT_CheckLine (const line_t* ld)
 {
-  if (_g->tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-   || _g->tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-   || _g->tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-   || _g->tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
-    return true; // didn't hit it
+  const fixed_t* tmbbox = _g->tmbbox;
+  const fixed_t* ldbbox = ld->bbox;
 
-  if (P_BoxOnLineSide(_g->tmbbox, ld) != -1)
+  if (tmbbox[BOXLEFT] >= ldbbox[BOXRIGHT])
+    return true;
+
+  if (tmbbox[BOXRIGHT] <= ldbbox[BOXLEFT])
+    return true;
+
+  if (tmbbox[BOXBOTTOM] >= ldbbox[BOXTOP])
+    return true;
+
+  if (tmbbox[BOXTOP] <= ldbbox[BOXBOTTOM])
+    return true;
+
+  if (P_BoxOnLineSide(tmbbox, ld) != -1)
     return true; // didn't hit it
 
   // A line has been hit
@@ -310,14 +319,13 @@ bool PIT_CheckLine (const line_t* ld)
 
 static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 {
-  fixed_t blockdist;
-  int damage;
-
   // killough 11/98: add touchy things
   if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)))
     return true;
 
-  blockdist = thing->radius + _g->tmthing->radius;
+  mobj_t* tmthing = _g->tmthing;
+
+  const fixed_t blockdist = thing->radius + tmthing->radius;
 
   if (D_abs(thing->x - _g->tmx) >= blockdist || D_abs(thing->y - _g->tmy) >= blockdist)
     return true; // didn't hit it
@@ -329,24 +337,24 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   // don't clip against self
 
-  if (thing == _g->tmthing)
+  if (thing == tmthing)
     return true;
 
   // check for skulls slamming into things
 
-  if (_g->tmthing->flags & MF_SKULLFLY)
+  if (tmthing->flags & MF_SKULLFLY)
     {
       // A flying skull is smacking something.
       // Determine damage amount, and the skull comes to a dead stop.
 
-      int damage = ((P_Random()%8)+1)*mobjinfo[_g->tmthing->type].damage;
+      int damage = ((P_Random()%8)+1)*mobjinfo[tmthing->type].damage;
 
-      P_DamageMobj (thing, _g->tmthing, _g->tmthing, damage);
+      P_DamageMobj (thing, tmthing, tmthing, damage);
 
-      _g->tmthing->flags &= ~MF_SKULLFLY;
-      _g->tmthing->momx = _g->tmthing->momy = _g->tmthing->momz = 0;
+      tmthing->flags &= ~MF_SKULLFLY;
+      tmthing->momx = tmthing->momy = tmthing->momz = 0;
 
-      P_SetMobjState (_g->tmthing, mobjinfo[_g->tmthing->type].spawnstate);
+      P_SetMobjState (tmthing, mobjinfo[tmthing->type].spawnstate);
 
       return false;   // stop moving
     }
@@ -354,52 +362,58 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // missiles can hit other things
   // killough 8/10/98: bouncing non-solid things can hit other things too
 
-  if (_g->tmthing->flags & MF_MISSILE)
-    {
+  if (tmthing->flags & MF_MISSILE)
+  {
       // see if it went over / under
 
-      if (_g->tmthing->z > thing->z + thing->height)
-  return true;    // overhead
+      if (tmthing->z > thing->z + thing->height)
+        return true;    // overhead
 
-      if (_g->tmthing->z+_g->tmthing->height < thing->z)
-  return true;    // underneath
+      if (tmthing->z+tmthing->height < thing->z)
+        return true;    // underneath
 
-      if (_g->tmthing->target && (_g->tmthing->target->type == thing->type ||
-    (_g->tmthing->target->type == MT_KNIGHT && thing->type == MT_BRUISER)||
-    (_g->tmthing->target->type == MT_BRUISER && thing->type == MT_KNIGHT)))
+      if (tmthing->target && (tmthing->target->type == thing->type ||
+          (tmthing->target->type == MT_KNIGHT && thing->type == MT_BRUISER)||
+          (tmthing->target->type == MT_BRUISER && thing->type == MT_KNIGHT)))
       {
-  if (thing == _g->tmthing->target)
-    return true;                // Don't hit same species as originator.
-  else
-    if (thing->type != MT_PLAYER) // Explode, but do no damage.
-        return false;         // Let players missile other players.
+
+        if (thing == tmthing->target)
+          return true;                // Don't hit same species as originator.
+        else
+          if (thing->type != MT_PLAYER) // Explode, but do no damage.
+            return false;         // Let players missile other players.
       }
 
       // killough 8/10/98: if moving thing is not a missile, no damage
       // is inflicted, and momentum is reduced if object hit is solid.
 
-      if (!(_g->tmthing->flags & MF_MISSILE)) {
-  if (!(thing->flags & MF_SOLID)) {
-      return true;
-  } else {
-      _g->tmthing->momx = -_g->tmthing->momx;
-      _g->tmthing->momy = -_g->tmthing->momy;
-      if (!(_g->tmthing->flags & MF_NOGRAVITY))
+      if (!(tmthing->flags & MF_MISSILE))
+      {
+        if (!(thing->flags & MF_SOLID))
         {
-    _g->tmthing->momx >>= 2;
-    _g->tmthing->momy >>= 2;
+          return true;
         }
-      return false;
-  }
+        else
+        {
+          tmthing->momx = -tmthing->momx;
+          tmthing->momy = -tmthing->momy;
+
+        if (!(tmthing->flags & MF_NOGRAVITY))
+        {
+          tmthing->momx >>= 2;
+          tmthing->momy >>= 2;
+        }
+        return false;
+        }
       }
 
       if (!(thing->flags & MF_SHOOTABLE))
-  return !(thing->flags & MF_SOLID); // didn't do any damage
+        return !(thing->flags & MF_SOLID); // didn't do any damage
 
       // damage / explode
 
-      damage = ((P_Random()%8)+1)*mobjinfo[_g->tmthing->type].damage;
-      P_DamageMobj (thing, _g->tmthing, _g->tmthing->target, damage);
+      int damage = ((P_Random()%8)+1)*mobjinfo[tmthing->type].damage;
+      P_DamageMobj (thing, tmthing, tmthing->target, damage);
 
       // don't traverse any more
       return false;
@@ -408,12 +422,12 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // check for special pickup
 
   if (thing->flags & MF_SPECIAL)
-    {
+  {
       unsigned int solid = thing->flags & MF_SOLID;
-      if (_g->tmthing->flags & MF_PICKUP)
-  P_TouchSpecialThing(thing, _g->tmthing); // can remove thing
+      if (tmthing->flags & MF_PICKUP)
+        P_TouchSpecialThing(thing, tmthing); // can remove thing
       return !solid;
-    }
+  }
 
   // killough 3/16/98: Allow non-solid moving objects to move through solid
   // ones, by allowing the moving thing (tmthing) to move if it's non-solid,
@@ -421,10 +435,7 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // killough 4/11/98: Treat no-clipping things as not blocking
   // ...but not in demo_compatibility mode
 
-  return !(thing->flags & MF_SOLID)
-    || ((thing->flags & MF_NOCLIP || !(_g->tmthing->flags & MF_SOLID)));
-
-  // return !(thing->flags & MF_SOLID);   // old code -- killough
+  return !(thing->flags & MF_SOLID) || ((thing->flags & MF_NOCLIP || !(tmthing->flags & MF_SOLID)));
 }
 
 // This routine checks for Lost Souls trying to be spawned      // phares
@@ -542,7 +553,23 @@ bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
   if ( _g->tmthing->flags & MF_NOCLIP )
     return true;
 
-  // Check things first, possibly picking things up.
+
+  // Check lines first.
+  //A player/monster is more likly to be blocked by a
+  //line than a thing. This means we can reduce the number
+  //of thing tests.
+
+  xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
+  yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy)>>MAPBLOCKSHIFT;
+  yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy)>>MAPBLOCKSHIFT;
+
+  for (bx=xl ; bx<=xh ; bx++)
+    for (by=yl ; by<=yh ; by++)
+      if (!P_BlockLinesIterator (bx,by,PIT_CheckLine))
+        return false; // doesn't fit
+
+
   // The bounding box is extended by MAXRADIUS
   // because mobj_ts are grouped into mapblocks
   // based on their origin point, and can overlap
@@ -558,18 +585,6 @@ bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
     for (by=yl ; by<=yh ; by++)
       if (!P_BlockThingsIterator(bx,by,PIT_CheckThing))
         return false;
-
-  // check lines
-
-  xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
-  xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
-  yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy)>>MAPBLOCKSHIFT;
-  yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy)>>MAPBLOCKSHIFT;
-
-  for (bx=xl ; bx<=xh ; bx++)
-    for (by=yl ; by<=yh ; by++)
-      if (!P_BlockLinesIterator (bx,by,PIT_CheckLine))
-        return false; // doesn't fit
 
   return true;
   }

@@ -44,13 +44,14 @@ MUSIC		:= music
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -O3 -fgcse-after-reload -gdwarf-4\
+CFLAGS	:=	-g -Wall -O2 -gdwarf-4\
                 -mcpu=arm7tdmi -mtune=arm7tdmi -flto=8\
-		-fallow-store-data-races\
-                -DGBA\
+		-fgcse-after-reload -fallow-store-data-races\
+		-ffast-math -finline-limit=5\
+		-DGBA\
 		$(ARCH) $(INCLUDE)
 
-CXXFLAGS:=	$(CFLAGS) -fno-rtti -fno-exceptions -std=c++23
+CXXFLAGS:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-threadsafe-statics -std=c++23
 
 CFLAGS	+=	-std=gnu23
 

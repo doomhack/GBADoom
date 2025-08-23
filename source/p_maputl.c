@@ -342,9 +342,8 @@ bool P_BlockLinesIterator(int x, int y, bool func(const line_t*))
     if (x<0 || y<0 || x>=_g->bmapwidth || y>=_g->bmapheight)
         return true;
 
-    const int offset = _g->blockmap[y*_g->bmapwidth+x];
+    const int offset = _g->blockmap[y*_g->bmapwidth+x] + 1;
     const short* list = _g->blockmaplump+offset;     // original was reading         // phares
-
 
     // delmiting 0 as linedef 0     // phares
 
@@ -352,24 +351,24 @@ bool P_BlockLinesIterator(int x, int y, bool func(const line_t*))
     // Most demos go out of sync, and maybe other problems happen, if we
     // don't consider linedef 0. For safety this should be qualified.
 
-    list++;     // skip 0 starting delimiter                      // phares
+    //list++;     // skip 0 starting delimiter                      // phares
 
     const int vcount = _g->validcount;
+    linedata_t *linedata = _g->linedata;
+    const line_t *lines = _g->lines;
 
     for ( ; *list != -1 ; list++)                                   // phares
     {
         const int lineno = *list;
 
-        linedata_t *lt = &_g->linedata[lineno];
+        linedata_t *lt = &linedata[lineno];
 
         if (lt->validcount == vcount)
             continue;       // line has already been checked
 
         lt->validcount = vcount;
 
-        const line_t *ld = &_g->lines[lineno];
-
-        if (!func(ld))
+        if (!func(&lines[lineno]))
             return false;
     }
 
@@ -388,6 +387,7 @@ bool P_BlockThingsIterator(int x, int y, bool func(mobj_t*))
     for (mobj = _g->blocklinks[y*_g->bmapwidth+x]; mobj; mobj = mobj->bnext)
       if (!func(mobj))
         return false;
+
   return true;
 }
 

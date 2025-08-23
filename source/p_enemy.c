@@ -84,8 +84,7 @@ void P_ZBumpCheck(mobj_t *);                                        // phares
 //
 // killough 5/5/98: reformatted, cleaned up
 
-static void P_RecursiveSound(sector_t *sec, int soundblocks,
-           mobj_t *soundtarget)
+static void P_RecursiveSound(sector_t *sec, int soundblocks, mobj_t *soundtarget)
 {
   int i;
 
@@ -428,6 +427,7 @@ static bool P_TryWalk(mobj_t *actor)
 {
   if (!P_SmartMove(actor))
     return false;
+
   actor->movecount = P_Random()&15;
   return true;
 }
@@ -443,60 +443,118 @@ static bool P_TryWalk(mobj_t *actor)
 
 static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 {
-  int xdir, ydir, tdir;
-  int olddir = actor->movedir;
-  int turnaround = olddir;
+    const int olddir = actor->movedir;
+    const int turnaround = (olddir != DI_NODIR) ? (olddir ^ 4) : DI_NODIR;
+    unsigned int tried_dir = 0;
 
-  if (turnaround != DI_NODIR)         // find reverse direction
-    turnaround ^= 4;
+    if (actor->stuckcount > 0)
+    {
+      actor->stuckcount--;
+      return;
+    }
 
-  xdir =
-    deltax >  10*FRACUNIT ? DI_EAST :
-    deltax < -10*FRACUNIT ? DI_WEST : DI_NODIR;
+    // pick candidate directions
+    int xdir = (deltax >  10*FRACUNIT) ? DI_EAST :
+           (deltax < -10*FRACUNIT) ? DI_WEST : DI_NODIR;
 
-  ydir =
-    deltay < -10*FRACUNIT ? DI_SOUTH :
-    deltay >  10*FRACUNIT ? DI_NORTH : DI_NODIR;
+    int ydir = (deltay < -10*FRACUNIT) ? DI_SOUTH :
+           (deltay >  10*FRACUNIT) ? DI_NORTH : DI_NODIR;
 
-  // try direct route
-  if (xdir != DI_NODIR && ydir != DI_NODIR && turnaround !=
-      (actor->movedir = deltay < 0 ? deltax > 0 ? DI_SOUTHEAST : DI_SOUTHWEST :
-       deltax > 0 ? DI_NORTHEAST : DI_NORTHWEST) && P_TryWalk(actor))
-    return;
+    // try diagonal first
+    if (xdir != DI_NODIR && ydir != DI_NODIR)
+    {
+        actor->movedir = (deltay < 0) ?
+                            (deltax > 0 ? DI_SOUTHEAST : DI_SOUTHWEST) :
+                            (deltax > 0 ? DI_NORTHEAST : DI_NORTHWEST);
 
-  // try other directions
-  if (P_Random() > 200 || D_abs(deltay)>D_abs(deltax))
-    tdir = xdir, xdir = ydir, ydir = tdir;
+        if (actor->movedir != turnaround && P_TryWalk(actor))
+            return;
 
-  if ((xdir == turnaround ? xdir = DI_NODIR : xdir) != DI_NODIR &&
-      (actor->movedir = xdir, P_TryWalk(actor)))
-    return;         // either moved forward or attacked
+        tried_dir |= (1 << actor->movedir);
+    }
 
-  if ((ydir == turnaround ? ydir = DI_NODIR : ydir) != DI_NODIR &&
-      (actor->movedir = ydir, P_TryWalk(actor)))
-    return;
+    // maybe swap priorities
+    if (P_Random() > 200 || D_abs(deltay) > D_abs(deltax))
+    {
+        int tmp = xdir;
+        xdir = ydir;
+        ydir = tmp;
+    }
 
-  // there is no direct path to the player, so pick another direction.
-  if (olddir != DI_NODIR && (actor->movedir = olddir, P_TryWalk(actor)))
-    return;
+    // try xdir
+    if (xdir != DI_NODIR && xdir != turnaround)
+    {
+        actor->movedir = xdir;
 
-  // randomly determine direction of search
-  if (P_Random() & 1)
-  {
-      for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
-          if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
-              return;
-  }
-  else
-  {
-      for (tdir = DI_SOUTHEAST; tdir >= DI_EAST; tdir--)
-          if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
-              return;
-  }
+        if (P_TryWalk(actor))
+            return;
 
-  if ((actor->movedir = turnaround) != DI_NODIR && !P_TryWalk(actor))
+        tried_dir |= (1 << xdir);
+    }
+
+    // try ydir
+    if (ydir != DI_NODIR && ydir != turnaround)
+    {
+        actor->movedir = ydir;
+
+        if (P_TryWalk(actor))
+            return;
+
+        tried_dir |= (1 << ydir);
+    }
+
+    // try olddir
+    if (olddir != DI_NODIR)
+    {
+        actor->movedir = olddir;
+
+        if (P_TryWalk(actor))
+            return;
+
+        tried_dir |= (1 << olddir);
+    }
+
+    // fallback: random order
+    if (P_Random() & 1)
+    {
+        for (int tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
+        {
+            if (tdir != turnaround && !(tried_dir & (1 << tdir)))
+            {
+                actor->movedir = tdir;
+
+                if (P_TryWalk(actor))
+                    return;
+            }
+        }
+    }
+    else
+    {
+        for (int tdir = DI_SOUTHEAST; tdir >= DI_EAST; tdir--)
+        {
+            if (tdir != turnaround && !(tried_dir & (1 << tdir)))
+            {
+                actor->movedir = tdir;
+
+                if (P_TryWalk(actor))
+                    return;
+            }
+        }
+    }
+
+    // last resort: turnaround
+    if (turnaround != DI_NODIR)
+    {
+        actor->movedir = turnaround;
+
+        if (P_TryWalk(actor))
+            return;
+    }
+
     actor->movedir = DI_NODIR;
+    actor->stuckcount = P_Random() & 15;
 }
+
 
 //
 // killough 11/98:

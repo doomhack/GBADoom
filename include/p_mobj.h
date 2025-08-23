@@ -300,6 +300,9 @@ typedef struct mobj_s
     // matter what (even if shot by another object)
     unsigned short               threshold:8;
 
+    //If a mobj can't move anywhere.
+    unsigned short               stuckcount:4;
+
 
     // killough 9/9/98: How long a monster pursues a target.
     unsigned short      pursuecount;

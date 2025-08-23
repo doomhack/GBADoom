@@ -333,7 +333,7 @@ int ls_y; // Lost Soul position for Lost Soul checks      // phares
 // The tm* items are used to hold information globally, usually for
 // line or object intersection checking
 
-fixed_t   tmbbox[4];  // bounding box for line intersection checks
+fixed_t   *tmbbox;  // bounding box for line intersection checks
 fixed_t   tmfloorz;   // floor you'd hit if free to fall
 fixed_t   tmceilingz; // ceiling of sector you're in
 fixed_t   tmdropoffz; // dropoff on other side of line you're crossing

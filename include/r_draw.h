@@ -43,9 +43,10 @@
 
 // Packaged into a struct - POPE
 typedef struct {
-  int                 x;
-  int                 yl;
-  int                 yh;
+  byte                x;
+  bool                odd_pixel;
+  byte                yl;
+  byte                yh;
   fixed_t             iscale;
   fixed_t             texturemid;
 
@@ -53,9 +54,6 @@ typedef struct {
 
   const lighttable_t  *colormap;
   const byte          *translation;
-
-  bool             odd_pixel;
-
 } draw_column_vars_t;
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars);
