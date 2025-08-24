@@ -44,10 +44,10 @@ MUSIC		:= music
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -O2 -gdwarf-4\
+CFLAGS	:=	-g -Wall -O3 -gdwarf-4\
                 -mcpu=arm7tdmi -mtune=arm7tdmi -flto=8\
 		-fgcse-after-reload -fallow-store-data-races\
-		-ffast-math -finline-limit=5\
+		-ffast-math\
 		-DGBA\
 		$(ARCH) $(INCLUDE)
 

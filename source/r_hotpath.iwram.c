@@ -366,67 +366,45 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 //  tantoangle[] table.
 //
 
-
-CONSTFUNC angle_t R_PointToAngle2(fixed_t vx, fixed_t vy, fixed_t x, fixed_t y)
+CONSTFUNC angle_t R_PointToAngle2(const fixed_t vx, const fixed_t vy, fixed_t x, fixed_t y)
 {
     x -= vx;
     y -= vy;
 
-    if ( (!x) && (!y) )
+    if (!x && !y)
         return 0;
 
-    if (x>= 0)
-    {
-        // x >=0
-        if (y>= 0)
-        {
-            if (x>y)
-                return tantoangle[ SlopeDiv(y,x)];
-            else
-                return ANG90-1-tantoangle[ SlopeDiv(x,y)];
-        }
-        else
-        {
-            // y<0
-            y = -y;
+    const int absx = (x < 0) ? -x : x;
+    const int absy = (y < 0) ? -y : y;
 
-            if (x>y)
-                return -tantoangle[SlopeDiv(y,x)];
-            else
-                return ANG270+tantoangle[ SlopeDiv(x,y)];
-        }
+    angle_t base;
+    int slope;
+
+    if (absx > absy)
+    {
+        slope = SlopeDiv(absy, absx);
+        base = tantoangle[slope];
     }
     else
     {
-        // x<0
-        x = -x;
-
-        if (y>= 0)
-        {
-            // y>= 0
-            if (x>y)
-                return ANG180-1-tantoangle[ SlopeDiv(y,x)];
-            else
-                return ANG90+ tantoangle[ SlopeDiv(x,y)];
-        }
-        else
-        {
-            // y<0
-            y = -y;
-
-            if (x>y)
-                return ANG180+tantoangle[ SlopeDiv(y,x)];
-            else
-                return ANG270-1-tantoangle[ SlopeDiv(x,y)];
-        }
+        slope = SlopeDiv(absx, absy);
+        base = ANG90 - 1 - tantoangle[slope];
     }
-}
 
-static CONSTFUNC angle_t R_PointToAngle(fixed_t x, fixed_t y)
-{
-    return R_PointToAngle2(viewx, viewy, x, y);
-}
+    if (x >= 0)
+    {
+        if (y < 0) base = -base;   // quadrant IV
+    }
+    else
+    {
+        if (y >= 0)
+          base = ANG90 + (ANG90 - base); // quadrant II
+        else
+          base = ANG180 + base; // quadrant III
+    }
 
+    return base;
+}
 
 // killough 5/2/98: move from r_main.c, made static, simplified
 
@@ -498,14 +476,14 @@ static const lighttable_t* R_LoadColorMap(int lightlevel)
 #define COLEXTRABITS 9
 #define COLBITS (FRACBITS + COLEXTRABITS)
 
-inline static void R_DrawColumnPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int frac)
+inline static void __attribute__((always_inline )) R_DrawColumnPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int frac)
 {
     pixel* d = (pixel*)dest;
 
 #ifdef GBA
-    *d = colormap[source[frac>>COLBITS]];
+    *d = colormap[source[frac]];
 #else
-    unsigned int color = colormap[source[frac>>COLBITS]];
+    unsigned int color = colormap[source[frac]];
 
     *d = (color | (color << 8));
 #endif
@@ -535,46 +513,46 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
 
     while(l--)
     {
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
 
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
 
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
 
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
-        R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
+        R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep;
     }
 
     unsigned int r = (count & 15);
 
     switch(r)
     {
-        case 15:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 14:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 13:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 12:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 11:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 10:    R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 9:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 8:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 7:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 6:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 5:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 4:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 3:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 2:     R_DrawColumnPixel(dest, source, colormap, frac); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
-        case 1:     R_DrawColumnPixel(dest, source, colormap, frac);
+        case 15:    R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 14:    R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 13:    R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 12:    R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 11:    R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 10:    R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 9:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 8:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 7:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 6:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 5:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 4:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 3:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 2:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS); dest+=SCREENWIDTH; frac+=fracstep; [[fallthrough]];
+        case 1:     R_DrawColumnPixel(dest, source, colormap, frac >> COLBITS);
     }
 }
 
@@ -1231,7 +1209,7 @@ static void R_DrawMasked(void)
 //  and the inner loop has to step in texture space u and v.
 //
 
-inline static void R_DrawSpanPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int position, unsigned int position2)
+inline static void __attribute__((always_inline )) R_DrawSpanPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int position, unsigned int position2)
 {
     const unsigned int p1 = colormap[source[(position & 0x0fc0) | (position >> 22)]];
     const unsigned int p2 = colormap[source[(position2 & 0x0fc0) | (position2 >> 22)]];
@@ -1469,7 +1447,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (sprframe->rotate)
     {
         // choose a different rotation based on player view
-        angle_t ang = R_PointToAngle(fx, fy);
+        angle_t ang = R_PointToAngle2(viewx, viewy, fx, fy);
         rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
     }
 
@@ -2038,8 +2016,6 @@ static bool R_CheckOpenings(const int start)
 //  between start and stop pixels (inclusive).
 //
 
-void (*rsl)(int) = R_RenderSegLoop;
-
 static void R_StoreWallRange(const int start, const int stop)
 {
     fixed_t hyp;
@@ -2300,8 +2276,7 @@ static void R_StoreWallRange(const int start, const int stop)
     }
 
     didsolidcol = 0;
-    //R_RenderSegLoop(rw_x);
-    rsl(rw_x);
+    R_RenderSegLoop(rw_x);
 
     /* cph - if a column was made solid by this wall, we _must_ save full clipping info */
     if (backsector && didsolidcol)
@@ -2413,8 +2388,6 @@ static void R_RecalcLineFlags(void)
 // Replaces the old R_Clip*WallSegment functions. It draws bits of walls in those
 // columns which aren't solid, and updates the solidcol[] array appropriately
 
-void (*swr)(int, int) = R_StoreWallRange;
-
 static void R_ClipWallSegment(int first, int last, bool solid)
 {
     byte *p;
@@ -2435,8 +2408,7 @@ static void R_ClipWallSegment(int first, int last, bool solid)
             else
                 to = p - solidcol;
 
-            swr(first, to-1);
-            //R_StoreWallRange(first, to-1);
+            R_StoreWallRange(first, to-1);
 
             if (solid)
             {
@@ -2461,20 +2433,11 @@ static void R_ClipWallSegment(int first, int last, bool solid)
 
 static void R_AddLine (const seg_t *line)
 {
-    int      x1;
-    int      x2;
-    angle_t  angle1;
-    angle_t  angle2;
-    angle_t  span;
-    angle_t  tspan;
-
-    curline = line;
-
-    angle1 = R_PointToAngle (line->v1.x, line->v1.y);
-    angle2 = R_PointToAngle (line->v2.x, line->v2.y);
+    angle_t angle1 = R_PointToAngle2(viewx, viewy, line->v1.x, line->v1.y);
+    angle_t angle2 = R_PointToAngle2(viewx, viewy, line->v2.x, line->v2.y);
 
     // Clip to view edges.
-    span = angle1 - angle2;
+    const angle_t span = angle1 - angle2;
 
     // Back side, i.e. backface culling
     if (span >= ANG180)
@@ -2485,7 +2448,7 @@ static void R_AddLine (const seg_t *line)
     angle1 -= viewangle;
     angle2 -= viewangle;
 
-    tspan = angle1 + clipangle;
+    angle_t tspan = angle1 + clipangle;
     if (tspan > 2*clipangle)
     {
         tspan -= 2*clipangle;
@@ -2515,8 +2478,8 @@ static void R_AddLine (const seg_t *line)
     angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
 
     // killough 1/31/98: Here is where "slime trails" can SOMETIMES occur:
-    x1 = viewangletox[angle1];
-    x2 = viewangletox[angle2];
+    const int x1 = viewangletox[angle1];
+    const int x2 = viewangletox[angle2];
 
     // Does not cross a pixel?
     if (x1 >= x2)       // killough 1/31/98 -- change == to >= for robustness
@@ -2524,7 +2487,7 @@ static void R_AddLine (const seg_t *line)
 
     backsector = SG_BACKSECTOR(line);
 
-    /* cph - roll up linedef properties in flags */
+    curline = line;
     linedef = &_g->lines[curline->linenum];
     linedata_t* linedata = &_g->linedata[linedef->lineno];
 
@@ -2532,11 +2495,9 @@ static void R_AddLine (const seg_t *line)
         R_RecalcLineFlags();
 
     if (linedata->r_flags & RF_IGNORE)
-    {
         return;
-    }
-    else
-        R_ClipWallSegment (x1, x2, linedata->r_flags & RF_CLOSED);
+
+    R_ClipWallSegment (x1, x2, linedata->r_flags & RF_CLOSED);
 }
 
 //
@@ -2632,8 +2593,8 @@ static bool R_CheckBBox(const short *bspcoord)
             return true;
 
         check = checkcoord[boxpos];
-        angle1 = R_PointToAngle (((fixed_t)bspcoord[check[0]]<<FRACBITS), ((fixed_t)bspcoord[check[1]]<<FRACBITS)) - viewangle;
-        angle2 = R_PointToAngle (((fixed_t)bspcoord[check[2]]<<FRACBITS), ((fixed_t)bspcoord[check[3]]<<FRACBITS)) - viewangle;
+        angle1 = R_PointToAngle2(viewx, viewy, ((fixed_t)bspcoord[check[0]]<<FRACBITS), ((fixed_t)bspcoord[check[1]]<<FRACBITS)) - viewangle;
+        angle2 = R_PointToAngle2(viewx, viewy, ((fixed_t)bspcoord[check[2]]<<FRACBITS), ((fixed_t)bspcoord[check[3]]<<FRACBITS)) - viewangle;
     }
 
     // cph - replaced old code, which was unclear and badly commented

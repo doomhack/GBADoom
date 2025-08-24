@@ -79,6 +79,11 @@ void I_InitScreen_e32()
 
     // cascade into tm3
     REG_TM3CNT_H = TM_CASCADE | TM_ENABLE;
+
+    //Set pallete for text mode.
+    unsigned short* pal_ram = (unsigned short*)0x5000000;
+    pal_ram[0] = RGB5(0,0,0);
+    pal_ram[241] = RGB5(31,0,0);
 }
 
 //**************************************************************************************
