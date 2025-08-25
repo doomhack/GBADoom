@@ -378,16 +378,15 @@ CONSTFUNC angle_t R_PointToAngle2(const fixed_t vx, const fixed_t vy, fixed_t x,
     const int absy = (y < 0) ? -y : y;
 
     angle_t base;
-    int slope;
 
     if (absx > absy)
     {
-        slope = SlopeDiv(absy, absx);
+        const int slope = SlopeDiv(absy, absx);
         base = tantoangle[slope];
     }
     else
     {
-        slope = SlopeDiv(absx, absy);
+        const int slope = SlopeDiv(absx, absy);
         base = ANG90 - 1 - tantoangle[slope];
     }
 
@@ -497,6 +496,13 @@ static void R_DrawColumn (const draw_column_vars_t *dcvars)
     if (count <= 0)
         return;
 
+
+    if(dcvars->yh > viewheight)
+    {
+        lprintf("R_DrawColumn: yh too large (%d)\n", dcvars->yh);
+        return;
+    }
+
     const byte *source = dcvars->source;
     const byte *colormap = dcvars->colormap;
 
@@ -569,7 +575,7 @@ static void R_DrawColumnHiRes(const draw_column_vars_t *dcvars)
 
     volatile unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dcvars->yl) + dcvars->x;
 
-    const unsigned int		fracstep = (dcvars->iscale << COLEXTRABITS);
+    const unsigned int fracstep = (dcvars->iscale << COLEXTRABITS);
     unsigned int frac = (dcvars->texturemid + (dcvars->yl - centery)*dcvars->iscale) << COLEXTRABITS;
 
     // Inner loop that does the actual texture mapping,
@@ -593,7 +599,7 @@ static void R_DrawColumnHiRes(const draw_column_vars_t *dcvars)
     while(count--)
     {
         unsigned int old = *dest;
-        unsigned int color = colormap[source[frac>>COLBITS]];
+        const unsigned int color = colormap[source[frac>>COLBITS]];
 
         *dest = ((old & mask) | (color << shift));
 
@@ -1328,7 +1334,7 @@ static void R_DoDrawPlane(visplane_t *pl)
             // killough 10/98: Use sky scrolling offset
             for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
             {
-                if ((dcvars.yl = pl->limits[x].top) != -1 && dcvars.yl <= (dcvars.yh = pl->limits[x].bottom)) // dropoff overflow
+                if ((dcvars.yl = pl->limits[x].top) != 0xff && dcvars.yl <= (dcvars.yh = pl->limits[x].bottom)) // dropoff overflow
                 {
                     int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT);
 
@@ -1610,11 +1616,12 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
     check->lightlevel = lightlevel;
     check->minx = SCREENWIDTH; // Was SCREENWIDTH -- killough 11/98
     check->maxx = -1;
+    check->modified = false;
 
     for(int i = 0; i < SCREENWIDTH; i++)
       check->limits[i].top = 0xff;
 
-    check->modified = false;
+    //BlockSet(check->limits, 0x00ff00ff, SCREENWIDTH << 1);
 
     return check;
 }
@@ -1634,11 +1641,13 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->lightlevel = pl->lightlevel;
     new_pl->minx = start;
     new_pl->maxx = stop;
+    new_pl->modified = false;
+
 
     for(int i = 0; i < SCREENWIDTH; i++)
       new_pl->limits[i].top = 0xff;
 
-    new_pl->modified = false;
+    //BlockSet(new_pl->limits, 0x00ff00ff, SCREENWIDTH << 1);
 
     return new_pl;
 }
@@ -1846,7 +1855,6 @@ static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_col
 
 #define HEIGHTBITS 12
 #define HEIGHTUNIT (1<<HEIGHTBITS)
-
 
 //Optimise me
 static void R_RenderSegLoop (int rw_x)

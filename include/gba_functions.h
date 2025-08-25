@@ -51,7 +51,14 @@ inline static void BlockSet(void* dest, volatile unsigned int val, const unsigne
 
     DMA3COPY(&val, dest, DMA_SRC_FIXED | DMA_DST_INC | DMA32 | DMA_IMMEDIATE | words)
 #else
-    memset(dest, val, len & 0xfffffffc);
+
+    unsigned int count = len >> 2;
+    unsigned int* d = (unsigned int*)dest;
+
+    do
+    {
+        *d++ = val;
+    } while(--count);
 #endif
 }
 
