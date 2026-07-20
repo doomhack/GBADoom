@@ -72,15 +72,15 @@ Type the following:
 And copy it to the **source\\iwad\\** directory.
 Alternatively just run the **build_XXXX.bat** files and it'll create it in the source\iwad\ path.
 
-3) Open C:\DevKitPro\Projects\GBADoom\source\doom_iwad.h in text editor or code editor of your choice.
-4) Change the first line to #include "iwad/**yourfile**.c" e.g.
+3) Open C:\DevKitPro\Projects\GBADoom\source\doom_iwad.c in text editor or code editor of your choice.
+4) Uncomment the line #include "iwad/**yourfile**.c" that points to your wad file, and comment the other ones, e.g.
 #include "iwad/doom1.c"
 #include "iwad/doom.c"
 #include "iwad/doom2.c"
 #include "iwad/tnt.c"
 #include "iwad/plutonia.c"
 
-5) Run msys2.bat and type **make**
+5) Run msys2.bat. It should run **make** automatically, but if it doesn't, type **make**
 You may need to edit the msys2.bat with notepad and change the path to go to your real "**msys2\msys2_shell.bat**" file within it if it doesn't work.
 
 6) The project should build GBADoom.gba and GBADoom.elf. It will take about 5 minutes or so. You may see a lot of warning messages on the screen. These are normal.
