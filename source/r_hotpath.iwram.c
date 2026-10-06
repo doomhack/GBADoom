@@ -308,6 +308,19 @@ static inline __attribute__((always_inline)) fixed_t FixedMulInline(fixed_t a, f
 
 #define FixedMul FixedMulInline
 
+//Same hack for FixedReciprocal. GCC won't inline the m_fixed.h version
+//into functions with a different optimize attribute.
+static inline __attribute__((always_inline)) fixed_t FixedReciprocalInline(const fixed_t v)
+{
+    unsigned int val = v < 0 ? -v : v;
+
+    const unsigned int shift = shiftTable[val >> FRACBITS];
+
+    const fixed_t result = (reciprocalTable[val >> shift] >> shift);
+
+    return v < 0 ? -result : result;
+}
+
 
 static inline __attribute__((always_inline)) int min(int x, int y)
 {
@@ -1220,10 +1233,10 @@ static void R_DrawMasked(void)
 //  and the inner loop has to step in texture space u and v.
 //
 
-inline static void R_DrawSpanPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int position, unsigned int position2)
+inline static void R_DrawSpanPixel(unsigned short* dest, const byte* source, const byte* colormap, unsigned int position, unsigned int position2, unsigned int mask)
 {
-    const unsigned int p1 = colormap[source[(position & 0x0fc0) | (position >> 22)]];
-    const unsigned int p2 = colormap[source[(position2 & 0x0fc0) | (position2 >> 22)]];
+    const unsigned int p1 = colormap[source[((position >> 4) & mask) | (position >> 26)]];
+    const unsigned int p2 = colormap[source[((position2 >> 4) & mask) | (position2 >> 26)]];
 
     *dest = (p1 | (p2 << 8));
 }
@@ -1238,32 +1251,43 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, const unsigned int count
     const unsigned int step = dsvars->step;
     unsigned int position = dsvars->position;
 
+    //Keep the mask in a register so the shift folds into the AND.
+    //(and rd, rmask, rpos, lsr #4) instead of (lsr) + (and #imm).
+    unsigned int mask = 0x0fc0;
+
+#ifdef GBA
+    __asm__("" : "+r"(mask));
+#endif
+
     unsigned int l = (count >> 3);
 
-    while(l--)
+    if(l)
     {
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+        do
+        {
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
 
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
-        R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2;
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
+            R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2;
+        } while(--l);
     }
 
     const unsigned int r = (count & 7);
 
     switch(r)
     {
-        case 7:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
-        case 6:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
-        case 5:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
-        case 4:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
-        case 3:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
-        case 2:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4); dest++; position+=step*2; [[fallthrough]];
-        case 1:     R_DrawSpanPixel(dest, source, colormap, position >> 4, (position + step) >> 4);
+        case 7:     R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2; [[fallthrough]];
+        case 6:     R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2; [[fallthrough]];
+        case 5:     R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2; [[fallthrough]];
+        case 4:     R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2; [[fallthrough]];
+        case 3:     R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2; [[fallthrough]];
+        case 2:     R_DrawSpanPixel(dest, source, colormap, position, position + step, mask); dest++; position+=step*2; [[fallthrough]];
+        case 1:     R_DrawSpanPixel(dest, source, colormap, position, position + step, mask);
     }
 }
 
@@ -1826,10 +1850,8 @@ static const byte* R_ComposeColumn(const unsigned int texture, const texture_t* 
     return colcache;
 }
 
-static void R_DrawSegTextureColumn(unsigned int texture, int texcolumn, draw_column_vars_t* dcvars)
+static void R_DrawSegTextureColumn(unsigned int texture, const texture_t* tex, int texcolumn, draw_column_vars_t* dcvars)
 {
-    const texture_t* tex = R_GetOrLoadTexture(texture);
-
     if(tex->overlapped == 0)
     {
         const column_t* column = R_GetColumn(tex, texcolumn);
@@ -1865,40 +1887,96 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
 
     dcvars.colormap = R_LoadColorMap(rw_lightlevel);
 
-    for ( ; rw_x < rw_stopx ; rw_x++)
+    //Copy the per-seg state into locals so it isn't reloaded
+    //(and stepped values stored back) on every column.
+    const int stopx = rw_stopx;
+
+    short* const fclip = floorclip;
+    short* const cclip = ceilingclip;
+    const angle_t* const xtoangle = xtoviewangle;
+
+    const bool textured = segtextured;
+    const bool markc = markceiling;
+    const bool markf = markfloor;
+
+    visplane_t* const cplane = ceilingplane;
+    visplane_t* const fplane = floorplane;
+
+    const angle_t centerangle = rw_centerangle;
+    const fixed_t offset = rw_offset;
+    const fixed_t distance = rw_distance;
+
+    fixed_t scale = rw_scale;
+    const fixed_t scalestep = rw_scalestep;
+
+    fixed_t tfrac = topfrac;
+    const fixed_t tstep = topstep;
+    fixed_t bfrac = bottomfrac;
+    const fixed_t bstep = bottomstep;
+
+    fixed_t phigh = pixhigh;
+    const fixed_t phighstep = pixhighstep;
+    fixed_t plow = pixlow;
+    const fixed_t plowstep = pixlowstep;
+
+    const unsigned int midtex = midtexture;
+    const unsigned int toptex = toptexture;
+    const unsigned int bottomtex = bottomtexture;
+
+    const fixed_t midtexturemid = rw_midtexturemid;
+    const fixed_t toptexturemid = rw_toptexturemid;
+    const fixed_t bottomtexturemid = rw_bottomtexturemid;
+
+    //Look textures up once per seg rather than per column.
+    const texture_t* const midtex_t = midtex ? R_GetOrLoadTexture(midtex) : NULL;
+    const texture_t* const toptex_t = toptex ? R_GetOrLoadTexture(toptex) : NULL;
+    const texture_t* const bottomtex_t = bottomtex ? R_GetOrLoadTexture(bottomtex) : NULL;
+
+    short* const maskedcol = maskedtexture ? maskedtexturecol : NULL;
+
+    bool solid = false;
+
+    //The loop always runs at least once (rw_stopx = stop + 1, stop >= start).
+    if(markc)
+        cplane->modified = true;
+
+    if(markf)
+        fplane->modified = true;
+
+    for ( ; rw_x < stopx ; rw_x++)
     {
         // mark floor / ceiling areas
 
-        int yh = bottomfrac>>HEIGHTBITS;
-        int yl = (topfrac+HEIGHTUNIT-1)>>HEIGHTBITS;
+        int yh = bfrac>>HEIGHTBITS;
+        int yl = (tfrac+HEIGHTUNIT-1)>>HEIGHTBITS;
 
-        int cc_rwx = ceilingclip[rw_x];
-        int fc_rwx = floorclip[rw_x];
+        int cc_rwx = cclip[rw_x];
+        int fc_rwx = fclip[rw_x];
 
         if (yl <= cc_rwx)
           yl = cc_rwx + 1;
 
         // texturecolumn and lighting are independent of wall tiers
-        if (segtextured)
+        if (textured)
         {
             // calculate texture offset
-            angle_t angle =(rw_centerangle+xtoviewangle[rw_x])>>ANGLETOFINESHIFT;
+            angle_t angle =(centerangle+xtoangle[rw_x])>>ANGLETOFINESHIFT;
 
-            texturecolumn = (rw_offset-FixedMul(finetangent[angle],rw_distance)) >> FRACBITS;
+            texturecolumn = (offset-FixedMul(finetangent[angle],distance)) >> FRACBITS;
 
             dcvars.x = rw_x;
 
-            dcvars.iscale = FixedReciprocal((unsigned)rw_scale);
+            dcvars.iscale = FixedReciprocalInline((unsigned)scale);
         }
 
-        if (markceiling)
+        if (markc)
         {
             int bottom = min(yl, fc_rwx) - 1;
 
             int top = cc_rwx+1;
 
             if (top <= bottom)
-                ceilingplane->limits[rw_x].limits = ((top) | (bottom << 8));
+                cplane->limits[rw_x].limits = ((top) | (bottom << 8));
 
             cc_rwx = bottom;
         }
@@ -1906,42 +1984,42 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
         if (yh >= fc_rwx)
             yh = fc_rwx - 1;
 
-        if (markfloor)
+        if (markf)
         {
             int top = max(yh, cc_rwx) + 1;
 
             if (top <= fc_rwx-1)
-                floorplane->limits[rw_x].limits = ((top) | ((fc_rwx-1) << 8));
+                fplane->limits[rw_x].limits = ((top) | ((fc_rwx-1) << 8));
 
             fc_rwx = top;
         }
 
         // draw the wall tiers
-        if (midtexture)
+        if (midtex)
         {
-            dcvars.texturemid = rw_midtexturemid;
+            dcvars.texturemid = midtexturemid;
 
             dcvars.yl = yl;
             dcvars.yh = yh;
-            R_DrawSegTextureColumn(midtexture, texturecolumn, &dcvars);
+            R_DrawSegTextureColumn(midtex, midtex_t, texturecolumn, &dcvars);
 
             cc_rwx = viewheight;
             fc_rwx = -1;
         }
         else
         {
-            if (toptexture)
+            if (toptex)
             {
                 // top wall
-                int mid = min((pixhigh >> HEIGHTBITS), fc_rwx - 1);
-                pixhigh += pixhighstep;
+                int mid = min((phigh >> HEIGHTBITS), fc_rwx - 1);
+                phigh += phighstep;
 
                 if (mid >= yl)
                 {
                     dcvars.yl = yl;
                     dcvars.yh = mid;
-                    dcvars.texturemid = rw_toptexturemid;
-                    R_DrawSegTextureColumn(toptexture, texturecolumn, &dcvars);
+                    dcvars.texturemid = toptexturemid;
+                    R_DrawSegTextureColumn(toptex, toptex_t, texturecolumn, &dcvars);
                     cc_rwx = mid;
                 }
                 else
@@ -1949,21 +2027,21 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
             }
             else
             {
-                if (markceiling)
+                if (markc)
                     cc_rwx = yl-1;
             }
 
-            if (bottomtexture)          // bottom wall
+            if (bottomtex)          // bottom wall
             {
-                int mid = max(((pixlow + HEIGHTUNIT - 1) >> HEIGHTBITS), cc_rwx + 1);
-                pixlow += pixlowstep;
+                int mid = max(((plow + HEIGHTUNIT - 1) >> HEIGHTBITS), cc_rwx + 1);
+                plow += plowstep;
 
                 if (mid <= yh)
                 {
                     dcvars.yl = mid;
                     dcvars.yh = yh;
-                    dcvars.texturemid = rw_bottomtexturemid;
-                    R_DrawSegTextureColumn(bottomtexture, texturecolumn, &dcvars);
+                    dcvars.texturemid = bottomtexturemid;
+                    R_DrawSegTextureColumn(bottomtex, bottomtex_t, texturecolumn, &dcvars);
                     fc_rwx = mid;
                 }
                 else
@@ -1971,36 +2049,33 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
             }
             else        // no bottom wall
             {
-                if (markfloor)
+                if (markf)
                     fc_rwx = yh + 1;
             }
 
             // cph - if we completely blocked further sight through this column,
             // add this info to the solid columns array for r_bsp.c
-            if ((markceiling || markfloor) && (fc_rwx <= cc_rwx + 1))
+            if ((markc || markf) && (fc_rwx <= cc_rwx + 1))
             {
                 solidcol[rw_x] = 1;
-                didsolidcol = 1;
+                solid = true;
             }
 
             // save texturecol for backdrawing of masked mid texture
-            if (maskedtexture)
-                maskedtexturecol[rw_x] = texturecolumn;
+            if (maskedcol)
+                maskedcol[rw_x] = texturecolumn;
         }
 
-        rw_scale += rw_scalestep;
-        topfrac += topstep;
-        bottomfrac += bottomstep;
+        scale += scalestep;
+        tfrac += tstep;
+        bfrac += bstep;
 
-        floorclip[rw_x] = fc_rwx;
-        ceilingclip[rw_x] = cc_rwx;
-
-        if(markceiling)
-          ceilingplane->modified = true;
-
-        if(markfloor)
-          floorplane->modified = true;
+        fclip[rw_x] = fc_rwx;
+        cclip[rw_x] = cc_rwx;
     }
+
+    if(solid)
+        didsolidcol = 1;
 }
 
 static bool R_CheckOpenings(const int start)
