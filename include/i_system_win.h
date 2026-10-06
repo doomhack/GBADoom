@@ -53,6 +53,9 @@ class DoomWindow : public QWidget
     {
         Q_UNUSED(event)
 
+        if(!pl)
+            return;
+
         QPainter p(this);
 
         QImage i((uchar*)pb, 240, 160, QImage::Format_Indexed8);

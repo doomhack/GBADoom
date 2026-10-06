@@ -343,7 +343,8 @@ void I_ProcessKeyEvents()
 
 //**************************************************************************************
 
-#define MAX_MESSAGE_SIZE 1024
+//Console is 30x20 chars. Keep this small - I_Error can be called deep in the stack.
+#define MAX_MESSAGE_SIZE 256
 
 void I_Error (const char *error, ...)
 {
@@ -354,11 +355,12 @@ void I_Error (const char *error, ...)
     va_list v;
     va_start(v, error);
 
-    vsprintf(msg, error, v);
+    vsnprintf(msg, sizeof(msg), error, v);
 
     va_end(v);
 
-    printf("%s", msg);
+    //fputs, not printf: stdout is unbuffered so printf goes via __sbprintf (~2.3KB stack).
+    fputs(msg, stdout);
 
     while(true)
     {

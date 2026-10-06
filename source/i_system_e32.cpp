@@ -34,10 +34,6 @@ QApplication * app = NULL;
 unsigned char* pb = NULL;
 unsigned char* pl = NULL;
 
-
-unsigned char* thearray = NULL;
-int thesize;
-
 unsigned short backbuffer[120 *160];
 unsigned short frontbuffer[120 *160];
 
@@ -128,34 +124,6 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
     window->repaint();
 
     app->processEvents();
-
-    int arrayCount = thesize;
-
-    if(arrayCount == 0)
-        return;
-
-    //dump the _g->viewangletox var
-    QFile f("C:\\temp\\gfx_stbar.c");
-    f.open(QIODevice::ReadWrite);
-
-    f.write("const byte gfx_stbar[");
-    f.write(QString::number(arrayCount).toLatin1().constData());
-
-    f.write("] =\n{\n");
-
-    for(int i = 0; i < arrayCount; i++)
-    {
-        f.write(QString::number(thearray[i]).toLatin1().constData());
-        f.write(",");
-
-        if((i%16) == 0)
-            f.write("\n");
-    }
-
-    f.write("\n};\n");
-
-    f.close();
-
 }
 
 //**************************************************************************************

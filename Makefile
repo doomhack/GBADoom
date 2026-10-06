@@ -59,6 +59,15 @@ ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 #---------------------------------------------------------------------------------
+# Link with gbadoom.ld (moves newlib data out of IWRAM) instead of gba_cart.ld.
+# Replaces the %.elf rule from gba_rules; gbadoom.specs is gba.specs minus -T.
+#---------------------------------------------------------------------------------
+%.elf:
+	$(SILENTMSG) linking cartridge
+	$(ADD_COMPILE_COMMAND) end
+	$(SILENTCMD)$(LD) $(LDFLAGS) -specs=$(TOPDIR)/gbadoom.specs -T $(TOPDIR)/gbadoom.ld $(OFILES) $(LIBPATHS) $(LIBS) -o $@
+
+#---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
 LIBS	:= -lmm -lgba
@@ -80,6 +89,7 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 			$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
@@ -147,7 +157,7 @@ else
 
 $(OUTPUT).gba	:	$(OUTPUT).elf
 
-$(OUTPUT).elf	:	$(OFILES)
+$(OUTPUT).elf	:	$(OFILES) $(TOPDIR)/gbadoom.ld $(TOPDIR)/gbadoom.specs
 
 $(OFILES_SOURCES) : $(HFILES)
 

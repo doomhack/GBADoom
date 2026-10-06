@@ -512,11 +512,13 @@ static void __attribute__((flatten, optimize("O3"))) R_DrawColumn (const draw_co
         return;
 
 
+#ifndef GBA
     if(dcvars->yh > viewheight)
     {
         lprintf("R_DrawColumn: yh too large (%d)\n", dcvars->yh);
         return;
     }
+#endif
 
     const byte *source = dcvars->source;
     const byte *colormap = dcvars->colormap;
@@ -1617,8 +1619,8 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
     check->maxx = -1;
     check->modified = false;
 
-    for(int i = 0; i < SCREENWIDTH; i++)
-      check->limits[i].top = 0xff;
+    //Set top = 0xff, bottom = 0 for each column.
+    BlockSet(check->limits, 0x00ff00ff, sizeof(check->limits));
 
     return check;
 }
@@ -1640,8 +1642,8 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
     new_pl->maxx = stop;
     new_pl->modified = false;
 
-    for(int i = 0; i < SCREENWIDTH; i++)
-      new_pl->limits[i].top = 0xff;
+    //Set top = 0xff, bottom = 0 for each column.
+    BlockSet(new_pl->limits, 0x00ff00ff, sizeof(new_pl->limits));
 
     return new_pl;
 }
@@ -2671,11 +2673,15 @@ static bool R_RenderBspSubsector(int bspnum)
 //Non recursive version.
 //constant stack space used and easier to
 //performance profile.
-#define MAX_BSP_DEPTH 128
+#define MAX_BSP_DEPTH 64
+
+//Each entry is (node << 1) | side. Only nodes are pushed and
+//node numbers are < NF_SUBSECTOR, so this fits in 16 bits.
+#define BSP_PUSH(n, s) (stack[sp++] = (unsigned short)(((n) << 1) | (s)))
 
 static void R_RenderBSPNode(int bspnum)
 {
-    int stack[MAX_BSP_DEPTH];
+    unsigned short stack[MAX_BSP_DEPTH];
     int sp = 0;
 
     const mapnode_t* bsp;
@@ -2692,8 +2698,7 @@ static void R_RenderBSPNode(int bspnum)
             bsp = &nodes[bspnum];
             side = R_PointOnSide (viewx, viewy, bsp);
 
-            stack[sp++] = bspnum;
-            stack[sp++] = side;
+            BSP_PUSH(bspnum, side);
 
             bspnum = bsp->children[side];
         }
@@ -2705,8 +2710,9 @@ static void R_RenderBSPNode(int bspnum)
         }
 
         //Back sides.
-        side = stack[--sp];
-        bspnum = stack[--sp];
+        --sp;
+        side = stack[sp] & 1;
+        bspnum = stack[sp] >> 1;
         bsp = &nodes[bspnum];
 
         // Possibly divide back space.
@@ -2721,8 +2727,9 @@ static void R_RenderBSPNode(int bspnum)
             }
 
             //Back side next.
-            side = stack[--sp];
-            bspnum = stack[--sp];
+            --sp;
+            side = stack[sp] & 1;
+            bspnum = stack[sp] >> 1;
 
             bsp = &nodes[bspnum];
         }
@@ -2730,6 +2737,8 @@ static void R_RenderBSPNode(int bspnum)
         bspnum = bsp->children[side^1];
     }
 }
+
+#undef BSP_PUSH
 
 
 static void R_ClearDrawSegs(void)

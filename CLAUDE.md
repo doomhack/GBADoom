@@ -1,0 +1,74 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+GBADoom is a port of PrBoom (itself based on id Software's DOOM) to the Game Boy Advance. The renderer, monster AI, and game logic are mostly intact from PrBoom; engine enhancements like dehacked and limit-removing have been reverted to vanilla behavior to fit GBA memory/performance constraints. There is no multiplayer and demo compatibility is broken.
+
+The same source tree also builds as a Windows desktop app (via Qt) for faster iteration than testing on GBA hardware/emulator alone.
+
+## Building
+
+**GBA target (DevKitArm + make):**
+```
+make            # requires DEVKITARM env var set, run from msys2 shell (see msys2.bat)
+make clean
+```
+Produces `GBADoom.elf` and `GBADoom.gba`.
+
+**Windows/Qt target:** open `GBADoom.pro` in Qt Creator (MinGW 32-bit or MSVC 32-bit). This is the primary way to iterate on gameplay/rendering logic without a GBA emulator — it builds the same source files as regular C/C++ against Qt for windowing/input instead of libgba.
+
+**Before a GBA build will produce a working game**, an IWAD must be baked in:
+1. Use `GbaWadUtil\GbaWadUtil.exe -in <wad> -cfile <name>.wad.c` (or run one of `GbaWadUtil\build_*.bat`) to convert a Doom/Doom2/Ultimate/TNT/Plutonia IWAD into a C source file.
+2. Copy the generated file to `source/iwad/`.
+3. Edit `source/doom_iwad.h` to `#include "iwad/<name>.c"` for the desired IWAD.
+`source/doom_iwad.c` exposes the embedded WAD as `doom_iwad[]` / `doom_iwad_len`.
+
+There is no automated test suite — verification is done by running the game (Qt build for quick checks, GBA emulator/hardware for platform-accurate checks).
+
+## Architecture
+
+### Single global state block (`_g`)
+
+Almost all state that would traditionally be a file-static or a loose global is instead a field on one big `globals_t` struct (`include/global_data.h`), allocated once at startup and accessed everywhere through a single pointer, `_g`:
+
+```c
+globals_t* _g = NULL;
+_g = Z_Malloc(sizeof(globals_t), PU_STATIC, NULL);   // source/global_data.c
+```
+
+- New persistent state should be added as a field inside the `globals_t` struct in `global_data.h` (grouped under the comment banner for the `.c` file that owns it), not as a new global variable.
+- Default/non-zero initial values go in `include/global_init.h`, which is `#include`d inside `InitGlobals()` and executes as a flat sequence of `_g->field = value;` statements (everything else is zero-initialized via `memset`).
+- This design exists for GBA memory-layout control (one contiguous allocation, easy to know its size/placement) rather than convenience — don't reintroduce plain globals or `static` locals for state that needs to persist across frames.
+
+### Fixed-size pools instead of dynamic allocation
+
+Gameplay-critical collections are fixed-size arrays sized by constants in the relevant header (`MAXPLATS`, `MAXCEILINGS` in `p_spec.h`; `MAXDRAWSEGS`, `MAXVISSPRITES`, `MAXOPENINGS` in `r_defs.h`; `MAXVISPLANES` in `r_plane.h`; `MAXINTERCEPTS` in `p_maputl.h`), rather than linked lists or realloc'd buffers. When touching code in these subsystems (active plats/ceilings, visplanes, vissprites, drawsegs, line intercepts), respect the fixed capacity and add/keep overflow checks — there have been real bugs here from treating these as unbounded (see recent history around active plat/ceiling lists).
+
+### GBA vs. desktop platform split
+
+- Platform-specific code is isolated behind `#ifdef GBA` inside otherwise-shared source files (see `include/gba_functions.h` for the pattern: `IDiv32`, `BlockCopy`, `BlockSet`, `SaveSRAM`/`LoadSRAM` all have a GBA BIOS/DMA implementation and a portable fallback).
+- `i_system_gba.cpp` / `i_video` GBA paths back the GBA build; `i_system_e32.cpp`/`i_system_e32.h` is a legacy/unused Psion-era backend kept around but not part of the active platform matrix; the Qt (`i_system_win.h`) backend backs the Windows dev build.
+- `GBADoom.pro` (Qt build) and the `Makefile`/DevKitArm build compile mostly the same `source/*.c` list — check both when adding or removing a source file, since the Qt `.pro` file lists sources/headers explicitly rather than globbing.
+
+### IWRAM-critical rendering path
+
+`source/r_hotpath.iwram.c` contains the hot inner-loop rendering code and is compiled with special handling because **the whole file must fit in the GBA's small IWRAM region**: the Makefile has dedicated `%.iwram.o` rules that force `-fno-lto -marm` (ARM mode, no whole-program LTO) instead of the default Thumb+LTO flags used elsewhere, and the file itself forces `#pragma GCC optimize ("Os")` under `#ifdef GBA` to keep code size down. Be careful about adding code here — growing this file risks it no longer fitting in IWRAM.
+
+### Screen geometry
+
+`SCREENWIDTH`/`SCREENHEIGHT` (120x160, portrait — matches the GBA screen rotated for Doom's taller-than-wide view) and `MAX_SCREENWIDTH`/`MAX_SCREENHEIGHT` are defined in `include/doomdef.h` and used throughout renderer sizing constants; don't hardcode 120/160 elsewhere.
+
+### Fixed-point math
+
+Doom's original fixed-point (`fixed_t`, `include/m_fixed.h`) and angle/trig tables (`include/tables.h`) are unchanged in spirit but have GBA-specific optimizations (e.g. BIOS divide via `IDiv32`, precomputed reciprocal tables in `m_recip.c`) — prefer the existing fixed-point helpers over introducing floating point, which is slow-to-absent on the GBA's ARM7TDMI.
+
+### Source layout
+
+- `source/`, `include/` — engine and game code (prBoom/Doom lineage, heavily trimmed and GBA-adapted).
+- `source/iwad/` — generated IWAD C headers (not checked in by default; generated per the build steps above).
+- `GbaWadUtil/` — the external tool (and prebuilt IWADs/binaries) used to convert `.wad` files into embeddable C source.
+- `music/` — source music assets consumed by `mmutil` to build `soundbank.bin`/`soundbank.h` (Maxmod).
+- `data/` — binary data directory wired into the Makefile's `BINFILES` mechanism.
+- `build/` — GBA build output/object directory (generated).
