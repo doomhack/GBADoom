@@ -26,6 +26,8 @@ private:
 
     bool ProcessPNames();
     bool RemoveUnusedLumps();
+    bool ProcessSounds();
+    bool ProcessMusic();
 
     int GetTextureNumForName(const char* tex_name);
 

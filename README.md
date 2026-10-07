@@ -12,6 +12,12 @@ In the WAD file a vertex is stored as two short values. (X and Y). When it is lo
 
 Usage: GbaWadUtil -in iwad_file_path -out gba_iwad_path -cfile iwad_cfile_path.
 
+To attach the WAD to a GBADoom ROM without rebuilding it:
+
+GbaWadUtil -in iwad_file_path -rom gbadoom_rom_path -romout output_rom_path
+
+The ROM must be built with IWAD header support (ends with a "GBADOOM-IWAD-HDR" header). Anything already after the header is replaced, so a ROM with a WAD attached can be patched again with a different WAD.
+
 
 I plan to add PWAD support so that an IWAD and 1 or more PWADS can be converted to a GBA IWAD.
 

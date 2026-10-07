@@ -1,5 +1,10 @@
 #include "wadprocessor.h"
 #include "doomtypes.h"
+#include "mus2mid.h"
+#include "gusbank.h"
+
+#include <cmath>
+#include <vector>
 
 WadProcessor::WadProcessor(WadFile& wad, QObject *parent)
     : QObject(parent), wadFile(wad)
@@ -14,6 +19,8 @@ bool WadProcessor::ProcessWad()
     Lump mapLump;
 
     RemoveUnusedLumps();
+    ProcessSounds();
+    ProcessMusic();
 
     int lumpNum = wadFile.GetLumpByName("MAP01", mapLump);
 
@@ -479,14 +486,179 @@ bool WadProcessor::RemoveUnusedLumps()
 
         wadFile.GetLumpByNum(i, l);
 
-        if(     l.name.startsWith("D_") ||
-                l.name.startsWith("DP") ||
-                l.name.startsWith("DS") ||
-                l.name.startsWith("GENMIDI"))
+        if(     l.name.startsWith("DP") ||
+                l.name.startsWith("GENMIDI") ||
+                l.name.startsWith("DMXGUS"))
         {
             wadFile.RemoveLump(i);
             i--;
         }
+    }
+
+    return true;
+}
+
+static double BesselI0(double x)
+{
+    double sum = 1.0, term = 1.0;
+
+    for(int k = 1; k < 64; k++)
+    {
+        term *= (x / (2 * k)) * (x / (2 * k));
+        sum += term;
+
+        if(term < 1e-12 * sum)
+            break;
+    }
+
+    return sum;
+}
+
+//Kaiser windowed sinc resampler. Lowpasses at the lower of the two Nyquist
+//frequencies, so 22050Hz sounds don't alias when they're brought down.
+static QByteArray ResampleSound(const std::vector<double>& in, double rate, double outRate)
+{
+    const double step = rate / outRate;
+    const double cutoff = 0.5 * qMin(1.0, outRate / rate) * 0.95; //Cycles per input sample.
+    const double halfWidth = 16.0 / (2.0 * cutoff);                //16 zero crossings each side.
+    const double beta = 8.6;
+    const double i0beta = BesselI0(beta);
+
+    //Kernel tabulated by distance from the output position, then linearly interpolated.
+    const int tableSteps = 256;
+    std::vector<double> kernel(int(halfWidth * tableSteps) + 2, 0.0);
+
+    for(size_t i = 0; i < kernel.size(); i++)
+    {
+        const double x = double(i) / tableSteps;
+
+        if(x >= halfWidth)
+            break;
+
+        const double r = x / halfWidth;
+        const double window = BesselI0(beta * std::sqrt(1.0 - r * r)) / i0beta;
+        const double sinc = (x == 0.0) ? 2.0 * cutoff : std::sin(2.0 * M_PI * cutoff * x) / (M_PI * x);
+
+        kernel[i] = sinc * window;
+    }
+
+    const qint64 inCount = qint64(in.size());
+    const qint64 outCount = qint64(std::ceil(inCount / step));
+
+    QByteArray out(outCount, 0);
+
+    for(qint64 n = 0; n < outCount; n++)
+    {
+        const double t = n * step;
+
+        const qint64 first = qMax<qint64>(0, qint64(std::ceil(t - halfWidth)));
+        const qint64 last = qMin<qint64>(inCount - 1, qint64(std::floor(t + halfWidth)));
+
+        double sum = 0.0;
+
+        for(qint64 k = first; k <= last; k++)
+        {
+            const double pos = std::fabs(t - k) * tableSteps;
+            const size_t i = size_t(pos);
+
+            if(i + 1 >= kernel.size())
+                continue;
+
+            const double frac = pos - i;
+
+            sum += in[k] * (kernel[i] + (kernel[i + 1] - kernel[i]) * frac);
+        }
+
+        out[n] = char(qBound(-128L, std::lround(sum), 127L));
+    }
+
+    return out;
+}
+
+//DMX sound lumps: drop the 16 bytes of padding either side and resample to signed
+//8 bit at the GBA mixer's rate, so it can mix them without interpolating. The 8 byte
+//header (format, rate, sample count) stays, with the new rate and count.
+bool WadProcessor::ProcessSounds()
+{
+    for(quint32 i = 0; i < wadFile.LumpCount(); i++)
+    {
+        Lump l;
+
+        wadFile.GetLumpByNum(i, l);
+
+        if(!l.name.startsWith("DS") || l.length < 8)
+            continue;
+
+        const quint8* p = reinterpret_cast<const quint8*>(l.data.constData());
+
+        if(qFromLittleEndian<quint16>(p) != 3)
+            continue;
+
+        const quint16 rate = qFromLittleEndian<quint16>(p + 2);
+        quint32 count = qFromLittleEndian<quint32>(p + 4);
+
+        count = qMin<quint32>(count, l.length - 8);
+
+        quint32 first = 0;
+
+        if(count > 32)
+        {
+            first = 16;
+            count -= 32;
+        }
+
+        if(!rate || !count)
+            continue;
+
+        std::vector<double> samples(count);
+
+        for(quint32 j = 0; j < count; j++)
+            samples[j] = double(p[8 + first + j]) - 128.0;
+
+        const QByteArray resampled = ResampleSound(samples, rate, GUSBANK_RATE);
+
+        char header[8];
+        qToLittleEndian<quint16>(3, header);
+        qToLittleEndian<quint16>(GUSBANK_RATE, header + 2);
+        qToLittleEndian<quint32>(resampled.size(), header + 4);
+
+        Lump newLump;
+        newLump.name = l.name;
+        newLump.data = QByteArray(header, sizeof(header)) + resampled;
+        newLump.length = newLump.data.size();
+
+        wadFile.ReplaceLump(i, newLump);
+    }
+
+    return true;
+}
+
+//MUS music lumps become type 0 MIDI for libtimidity.
+bool WadProcessor::ProcessMusic()
+{
+    for(quint32 i = 0; i < wadFile.LumpCount(); i++)
+    {
+        Lump l;
+
+        wadFile.GetLumpByNum(i, l);
+
+        if(!l.name.startsWith("D_") || l.data.startsWith("MThd"))
+            continue;
+
+        Lump newLump;
+        newLump.name = l.name;
+        newLump.data = ConvertMusToMidi(l.data);
+        newLump.length = newLump.data.size();
+
+        if(!newLump.length)
+        {
+            qWarning("%s is not a MUS lump. Removed.", qPrintable(l.name));
+            wadFile.RemoveLump(i);
+            i--;
+            continue;
+        }
+
+        wadFile.ReplaceLump(i, newLump);
     }
 
     return true;

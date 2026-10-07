@@ -1,0 +1,79 @@
+===========================================================================
+Advanced engine needed  : Any source port with Timidity support (most)
+Primary purpose         : Single play
+===========================================================================
+Title                   : Gravis Ultrasound patches
+Filename                : dgguspat.zip
+Release date            : 2013-03-04
+Author                  : Simon Howard (fraggle)
+Email Address           : fraggle@gmail.com
+Other Files By Author   : greenfish.wad
+
+Description             : This is the standard set of patch files that were
+                          originally distributed with the Gravis Ultrasound
+                          (GUS) driver. If you want to play a modern source
+                          port and have it sound like a GUS, you'll find
+                          these helpful.
+
+                          The GUS patches have long been distributed under
+                          this filename. Timidity supports GUS patch (.PAT)
+			  files, so I've generated several Timidity
+			  configuration files that can be used with these
+			  patches. More information is below.
+
+Additional Credits to   : Gravis, Tom Klok, Sebastien Bacquet, Jaydee
+===========================================================================
+* Configuration files *
+
+The included dmx2timid.py is a Python script that will convert a DMXGUS
+lump into a Timidity configuration file.
+
+Several pre-made Timidity configuration files are included:
+
+timidity.cfg
+ - This is the simplest configuration; it simply maps all the instruments
+   from Doom's DMXGUSC lump into MIDI instruments. This is probably the
+   "best sounding" configuration, but is historically inaccurate, because
+   it uses more instruments than would ever be possible to use with a
+   real GUS. If you just want to use the GUS patches, use this.
+
+The following configurations are for if you're nostalgic and want
+Timidity to sound like a real GUS:
+
+timid_d1.cfg
+ - This simulates what DOS Doom would sound like if you had a GUS with
+   the maximum 1024KB of RAM.
+
+timid_d2.cfg
+ - This simulates what DOS Doom 2 would sound like if you had a GUS with
+   the maximum 1024KB of RAM.
+
+timid768.cfg
+ - Simulates what Doom 1/2 would sound like if your GUS had 768KB of RAM.
+
+timid512.cfg
+ - Simulates what Doom 1/2 would sound like if your GUS had 512KB of RAM.
+
+timid256.cfg
+ - Simulates what Doom 1/2 would sound like if your GUS had 256KB of RAM.
+
+gus1mIId.cfg
+ - Sebastien Bacquet's optimized 1024KB configuration for Doom 2's music.
+   Simulates playing with -file gus1mIId.wad.
+
+jaydmx.cfg
+ - Jaydee's optimized 1024KB configuration for Doom 2's mustic.
+   Simulates playing with -file jaydmx.wad.
+
+ht_gus1m.cfg
+ - Tom Klok's optimized 1024KB configuration for Heretic's music.
+   Simulates playing with -file ht_gus1m.wad.
+
+* Copyright / Permissions *
+
+I claim no copyright on any of this. Anything I have contributed here, I
+release to the public domain.
+
+* Where to get the file that this text file describes *
+
+The Usual: ftp://archives.3dgamers.com/pub/idgames/ and mirrors
