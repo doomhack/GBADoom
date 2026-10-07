@@ -1,1 +1,1 @@
-gbawadutil.exe -in doomu.wad -cfile ..\source\iwad\sigil.c -pwad sigil.wad
+gbawadutil.exe -in doomu.wad -cfile ..\source\iwad\sigil.c -pwad sigil.wad -gus dgguspat\timidity.cfg

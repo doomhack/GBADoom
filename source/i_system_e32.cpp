@@ -124,6 +124,8 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
     window->repaint();
 
     app->processEvents();
+
+    I_UpdateSound();
 }
 
 //**************************************************************************************

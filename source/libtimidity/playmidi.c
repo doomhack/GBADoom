@@ -28,26 +28,22 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * playmidi.c -- random stuff in need of rearrangement
+ *
+ * GBADoom: mono, fixed point, and events come from the ROM MIDI stream
+ * (readmidi.c) instead of a pre-built event list.
  */
-
-#ifdef HAVE_TIMI_CONFIG_H
-#include "timi_config.h"
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "timidity_internal.h"
 #include "instrum.h"
 #include "playmidi.h"
-#include "output.h"
+#include "readmidi.h"
+#include "resample.h"
 #include "mix.h"
 #include "timi_tables.h"
 
 static void adjust_amplification(MidSong *song)
 {
-  song->master_volume = (float)(song->amplification) / (float)100.0;
+  song->master_volume = (song->amplification << 8) / 100;
 }
 
 static void reset_voices(MidSong *song)
@@ -74,19 +70,18 @@ static void reset_midi(MidSong *song)
     {
       reset_controllers(song, i);
       /* The rest of these are unaffected by the Reset All Controllers event */
-      song->channel[i].program=song->default_program;
-      song->channel[i].panning=NO_PANNING;
+      song->channel[i].program=0;
       song->channel[i].pitchsens=2;
-      song->channel[i].bank=0; /* tone bank or drum set */
+      song->channel[i].mono=0;
     }
   reset_voices(song);
 }
 
-static void select_sample(MidSong *song, int v, MidInstrument *ip, int vel)
+static void select_sample(MidSong *song, int v, const MidInstrument *ip)
 {
   sint32 f, cdiff, diff;
   int s,i;
-  MidSample *sp, *closest;
+  const MidSample *sp, *closest;
 
   s=ip->samples;
   sp=ip->sample;
@@ -130,198 +125,113 @@ static void select_sample(MidSong *song, int v, MidInstrument *ip, int vel)
 
 static void recompute_freq(MidSong *song, int v)
 {
-  int 
-    sign=(song->voice[v].sample_increment < 0), /* for bidirectional loops */
-    pb=song->channel[song->voice[v].channel].pitchbend;
-  double a;
+  MidVoice *vp = &song->voice[v];
+  MidChannel *cp = &song->channel[vp->channel];
+  int
+    sign=(vp->sample_increment < 0), /* for bidirectional loops */
+    pb=cp->pitchbend;
+  sint32 a;
 
-  if (!song->voice[v].sample->sample_rate)
+  if (!vp->sample->pitch_ratio)
     return;
 
-  if (song->voice[v].vibrato_control_ratio)
-    {
-      /* This instrument has vibrato. Invalidate any precomputed
-         sample_increments. */
-
-      int i=MID_VIBRATO_SAMPLE_INCREMENTS;
-      while (i--)
-	song->voice[v].vibrato_sample_increment[i]=0;
-    }
-
   if (pb==0x2000 || pb<0 || pb>0x3FFF)
-    song->voice[v].frequency = song->voice[v].orig_frequency;
+    vp->frequency = vp->orig_frequency;
   else
     {
       pb-=0x2000;
-      if (!(song->channel[song->voice[v].channel].pitchfactor))
+      if (!(cp->pitchfactor))
 	{
 	  /* Damn. Somebody bent the pitch. */
-	  sint32 i=pb*song->channel[song->voice[v].channel].pitchsens;
-	  if (pb<0)
-	    i=-i;
-	  song->channel[song->voice[v].channel].pitchfactor=
-	    (float)(bend_fine[(i>>5) & 0xFF] * bend_coarse[i>>13]);
+	  cp->pitchfactor = bend_factor(pb * cp->pitchsens);
 	}
-      if (pb>0)
-	song->voice[v].frequency=
-	  (sint32)(song->channel[song->voice[v].channel].pitchfactor *
-		  (double)(song->voice[v].orig_frequency));
-      else
-	song->voice[v].frequency=
-	  (sint32)((double)(song->voice[v].orig_frequency) /
-		  song->channel[song->voice[v].channel].pitchfactor);
+
+      vp->frequency = (sint32)(((long long)vp->orig_frequency * cp->pitchfactor) >> 24);
     }
 
-  a = TIM_FSCALE(((double)(song->voice[v].sample->sample_rate) *
-		  (double)(song->voice[v].frequency)) /
-		 ((double)(song->voice[v].sample->root_freq) *
-		  (double)(song->rate)),
-		 FRACTION_BITS);
+  a = freq_to_increment(vp->sample, vp->frequency);
 
   if (sign)
     a = -a; /* need to preserve the loop direction */
 
-  song->voice[v].sample_increment = (sint32)(a);
+  vp->sample_increment = a;
 }
 
-static void recompute_amp(MidSong *song, int v)
+void recompute_amp(MidSong *song, int v)
 {
+  MidVoice *vp = &song->voice[v];
   sint32 tempamp;
 
-  /* TODO: use fscale */
+  tempamp= (vp->velocity *
+	    song->channel[vp->channel].volume *
+	    song->channel[vp->channel].expression); /* 21 bits */
 
-  tempamp= (song->voice[v].velocity *
-	    song->channel[song->voice[v].channel].volume * 
-	    song->channel[song->voice[v].channel].expression); /* 21 bits */
-
-  if (!(song->encoding & PE_MONO))
-    {
-      if (song->voice[v].panning > 60 && song->voice[v].panning < 68)
-	{
-	  song->voice[v].panned=PANNED_CENTER;
-
-	  song->voice[v].left_amp=
-	    TIM_FSCALENEG((double)(tempamp) * song->voice[v].sample->volume * song->master_volume,
-			  21);
-	}
-      else if (song->voice[v].panning<5)
-	{
-	  song->voice[v].panned = PANNED_LEFT;
-
-	  song->voice[v].left_amp=
-	    TIM_FSCALENEG((double)(tempamp) * song->voice[v].sample->volume * song->master_volume,
-			  20);
-	}
-      else if (song->voice[v].panning>123)
-	{
-	  song->voice[v].panned = PANNED_RIGHT;
-
-	  song->voice[v].left_amp= /* left_amp will be used */
-	    TIM_FSCALENEG((double)(tempamp) * song->voice[v].sample->volume * song->master_volume,
-			  20);
-	}
-      else
-	{
-	  song->voice[v].panned = PANNED_MYSTERY;
-
-	  song->voice[v].left_amp=
-	    TIM_FSCALENEG((double)(tempamp) * song->voice[v].sample->volume * song->master_volume,
-			  27);
-	  song->voice[v].right_amp = song->voice[v].left_amp * (song->voice[v].panning);
-	  song->voice[v].left_amp *= (float)(127 - song->voice[v].panning);
-	}
-    }
-  else
-    {
-      song->voice[v].panned = PANNED_CENTER;
-
-      song->voice[v].left_amp=
-	TIM_FSCALENEG((double)(tempamp) * song->voice[v].sample->volume * song->master_volume,
-		      21);
-    }
+  /* Mono: tempamp * volume (4.12) * master_volume (8.8) / 2^21, in 16.16 */
+  vp->left_amp = (sint32)(((long long)tempamp * vp->sample->volume * song->master_volume) >> 25);
 }
 
 static void start_note(MidSong *song, MidEvent *e, int i)
 {
-  MidInstrument *ip;
-  int j;
+  MidInstrument ip;
+  MidVoice *vp = &song->voice[i];
 
   if (ISDRUMCHANNEL(song, e->channel))
     {
-      if (!(ip=song->drumset[song->channel[e->channel].bank]->instrument[e->a]))
-	{
-	  if (!(ip=song->drumset[0]->instrument[e->a]))
-	    return; /* No instrument? Then we can't play. */
-	}
-      if (ip->samples != 1)
-	{
-	  //DEBUG_MSG("Strange: percussion instrument with %d samples!\n", ip->samples);
-	}
+      if (!get_instrument(song, 1, e->a, &ip))
+	return; /* No instrument? Then we can't play. */
 
-      if (ip->sample->note_to_use) /* Do we have a fixed pitch? */
-	song->voice[i].orig_frequency = freq_table[(int)(ip->sample->note_to_use)];
+      if (ip.sample->note_to_use) /* Do we have a fixed pitch? */
+	vp->orig_frequency = freq_table[(int)(ip.sample->note_to_use)];
       else
-	song->voice[i].orig_frequency = freq_table[e->a & 0x7F];
+	vp->orig_frequency = freq_table[e->a & 0x7F];
 
       /* drums are supposed to have only one sample */
-      song->voice[i].sample = ip->sample;
+      vp->sample = ip.sample;
     }
   else
     {
-      if (song->channel[e->channel].program == SPECIAL_PROGRAM)
-	ip=song->default_instrument;
-      else if (!(ip=song->tonebank[song->channel[e->channel].bank]->
-		 instrument[song->channel[e->channel].program]))
-	{
-	  if (!(ip=song->tonebank[0]->instrument[song->channel[e->channel].program]))
-	    return; /* No instrument? Then we can't play. */
-	}
+      if (!get_instrument(song, 0, song->channel[e->channel].program, &ip))
+	return; /* No instrument? Then we can't play. */
 
-      if (ip->sample->note_to_use) /* Fixed-pitch instrument? */
-	song->voice[i].orig_frequency = freq_table[(int)(ip->sample->note_to_use)];
+      if (ip.sample->note_to_use) /* Fixed-pitch instrument? */
+	vp->orig_frequency = freq_table[(int)(ip.sample->note_to_use)];
       else
-	song->voice[i].orig_frequency = freq_table[e->a & 0x7F];
-      select_sample(song, i, ip, e->b);
+	vp->orig_frequency = freq_table[e->a & 0x7F];
+      select_sample(song, i, &ip);
     }
 
-  song->voice[i].status = VOICE_ON;
-  song->voice[i].channel = e->channel;
-  song->voice[i].note = e->a;
-  song->voice[i].velocity = e->b;
-  song->voice[i].sample_offset = 0;
-  song->voice[i].sample_increment = 0; /* make sure it isn't negative */
+  vp->status = VOICE_ON;
+  vp->channel = e->channel;
+  vp->note = e->a;
+  vp->velocity = e->b;
+  vp->sample_offset = 0;
+  vp->sample_increment = 0; /* make sure it isn't negative */
 
-  song->voice[i].tremolo_phase = 0;
-  song->voice[i].tremolo_phase_increment = song->voice[i].sample->tremolo_phase_increment;
-  song->voice[i].tremolo_sweep = song->voice[i].sample->tremolo_sweep_increment;
-  song->voice[i].tremolo_sweep_position = 0;
+  vp->tremolo_phase = 0;
+  vp->tremolo_phase_increment = vp->sample->tremolo_phase_increment;
+  vp->tremolo_sweep = vp->sample->tremolo_sweep_increment;
+  vp->tremolo_sweep_position = 0;
+  vp->tremolo_volume = 32768;
 
-  song->voice[i].vibrato_sweep = song->voice[i].sample->vibrato_sweep_increment;
-  song->voice[i].vibrato_sweep_position = 0;
-  song->voice[i].vibrato_control_ratio = song->voice[i].sample->vibrato_control_ratio;
-  song->voice[i].vibrato_control_counter = song->voice[i].vibrato_phase = 0;
-  for (j=0; j<MID_VIBRATO_SAMPLE_INCREMENTS; j++)
-    song->voice[i].vibrato_sample_increment[j] = 0;
-
-  if (song->channel[e->channel].panning != NO_PANNING)
-    song->voice[i].panning = song->channel[e->channel].panning;
-  else
-    song->voice[i].panning = song->voice[i].sample->panning;
+  vp->vibrato_sweep = vp->sample->vibrato_sweep_increment;
+  vp->vibrato_sweep_position = 0;
+  vp->vibrato_control_ratio = vp->sample->vibrato_control_ratio;
+  vp->vibrato_control_counter = vp->vibrato_phase = 0;
 
   recompute_freq(song, i);
   recompute_amp(song, i);
-  if (song->voice[i].sample->modes & MODES_ENVELOPE)
+  if (vp->sample->modes & MODES_ENVELOPE)
     {
       /* Ramp up from 0 */
-      song->voice[i].envelope_stage = 0;
-      song->voice[i].envelope_volume = 0;
-      song->voice[i].control_counter = 0;
+      vp->envelope_stage = 0;
+      vp->envelope_volume = 0;
+      vp->control_counter = 0;
       recompute_envelope(song, i);
       apply_envelope_to_amp(song, i);
     }
   else
     {
-      song->voice[i].envelope_increment = 0;
+      vp->envelope_increment = 0;
       apply_envelope_to_amp(song, i);
     }
 }
@@ -334,7 +244,7 @@ static void kill_note(MidSong *song, int i)
 /* Only one instance of a note can be playing on a single channel. */
 static void note_on(MidSong *song)
 {
-  int i = song->voices, lowest=-1;
+  int i = MID_MAX_VOICES, lowest=-1;
   sint32 lv=0x7FFFFFFF, v;
   MidEvent *e = song->current_event;
 
@@ -342,7 +252,7 @@ static void note_on(MidSong *song)
     {
       if (song->voice[i].status == VOICE_FREE)
 	lowest=i; /* Can't get a lower volume than silence */
-      else if (song->voice[i].channel==e->channel && 
+      else if (song->voice[i].channel==e->channel &&
 	       (song->voice[i].note==e->a || song->channel[song->voice[i].channel].mono))
 	kill_note(song, i);
     }
@@ -355,16 +265,13 @@ static void note_on(MidSong *song)
     }
 
   /* Look for the decaying note with the lowest volume */
-  i = song->voices;
+  i = MID_MAX_VOICES;
   while (i--)
     {
       if ((song->voice[i].status != VOICE_ON) &&
 	  (song->voice[i].status != VOICE_DIE))
 	{
 	  v = song->voice[i].left_mix;
-	  if ((song->voice[i].panned == PANNED_MYSTERY)
-	      && (song->voice[i].right_mix > v))
-	    v = song->voice[i].right_mix;
 	  if (v<lv)
 	    {
 	      lv=v;
@@ -380,12 +287,9 @@ static void note_on(MidSong *song)
 	 in the first place... Still, this needs to be fixed. Perhaps
 	 we could use a reserve of voices to play dying notes only. */
 
-      song->cut_notes++;
       song->voice[lowest].status=VOICE_FREE;
       start_note(song,e,lowest);
     }
-  else
-    song->lost_notes++;
 }
 
 static void finish_note(MidSong *song, int i)
@@ -409,7 +313,7 @@ static void finish_note(MidSong *song, int i)
 
 static void note_off(MidSong *song)
 {
-  int i = song->voices;
+  int i = MID_MAX_VOICES;
   MidEvent *e = song->current_event;
 
   while (i--)
@@ -430,15 +334,14 @@ static void note_off(MidSong *song)
 /* Process the All Notes Off event */
 static void all_notes_off(MidSong *song)
 {
-  int i = song->voices;
+  int i = MID_MAX_VOICES;
   int c = song->current_event->channel;
 
-  //DEBUG_MSG("All notes off on channel %d\n", c);
   while (i--)
     if (song->voice[i].status == VOICE_ON &&
 	song->voice[i].channel == c)
       {
-	if (song->channel[c].sustain) 
+	if (song->channel[c].sustain)
 	  song->voice[i].status = VOICE_SUSTAINED;
 	else
 	  finish_note(song, i);
@@ -448,11 +351,11 @@ static void all_notes_off(MidSong *song)
 /* Process the All Sounds Off event */
 static void all_sounds_off(MidSong *song)
 {
-  int i = song->voices;
+  int i = MID_MAX_VOICES;
   int c = song->current_event->channel;
 
   while (i--)
-    if (song->voice[i].channel == c && 
+    if (song->voice[i].channel == c &&
 	song->voice[i].status != VOICE_FREE &&
 	song->voice[i].status != VOICE_DIE)
       {
@@ -463,7 +366,7 @@ static void all_sounds_off(MidSong *song)
 static void adjust_pressure(MidSong *song)
 {
   MidEvent *e = song->current_event;
-  int i = song->voices;
+  int i = MID_MAX_VOICES;
 
   while (i--)
     if (song->voice[i].status == VOICE_ON &&
@@ -479,7 +382,7 @@ static void adjust_pressure(MidSong *song)
 
 static void drop_sustain(MidSong *song)
 {
-  int i = song->voices;
+  int i = MID_MAX_VOICES;
   int c = song->current_event->channel;
 
   while (i--)
@@ -490,7 +393,7 @@ static void drop_sustain(MidSong *song)
 static void adjust_pitchbend(MidSong *song)
 {
   int c = song->current_event->channel;
-  int i = song->voices;
+  int i = MID_MAX_VOICES;
 
   while (i--)
     if (song->voice[i].status != VOICE_FREE && song->voice[i].channel == c)
@@ -502,7 +405,7 @@ static void adjust_pitchbend(MidSong *song)
 static void adjust_volume(MidSong *song)
 {
   int c = song->current_event->channel;
-  int i = song->voices;
+  int i = MID_MAX_VOICES;
 
   while (i--)
     if (song->voice[i].channel == c &&
@@ -513,272 +416,154 @@ static void adjust_volume(MidSong *song)
       }
 }
 
-static void seek_forward(MidSong *song, sint32 until_time)
+/* Handle the event in song->event. Returns 0 at the end of the song. */
+static int process_event(MidSong *song)
 {
-  reset_voices(song);
-  while (song->current_event->time < until_time)
+  MidEvent *e = song->current_event;
+
+  switch(e->type)
     {
-      switch(song->current_event->type)
-	{
-	  /* All notes stay off. Just handle the parameter changes. */
+      /* Effects affecting a single note */
+    case ME_NOTEON:
+      if (!(e->b)) /* Velocity 0? */
+	note_off(song);
+      else
+	note_on(song);
+      break;
 
-	case ME_PITCH_SENS:
-	  song->channel[song->current_event->channel].pitchsens =
-	    song->current_event->a;
-	  song->channel[song->current_event->channel].pitchfactor = 0;
-	  break;
+    case ME_NOTEOFF:
+      note_off(song);
+      break;
 
-	case ME_PITCHWHEEL:
-	  song->channel[song->current_event->channel].pitchbend =
-	    song->current_event->a + song->current_event->b * 128;
-	  song->channel[song->current_event->channel].pitchfactor = 0;
-	  break;
+    case ME_KEYPRESSURE:
+      adjust_pressure(song);
+      break;
 
-	case ME_MAINVOLUME:
-	  song->channel[song->current_event->channel].volume =
-	    song->current_event->a;
-	  break;
+      /* Effects affecting a single channel */
+    case ME_PITCH_SENS:
+      song->channel[e->channel].pitchsens = e->a;
+      song->channel[e->channel].pitchfactor = 0;
+      break;
 
-	case ME_PAN:
-	  song->channel[song->current_event->channel].panning =
-	    song->current_event->a;
-	  break;
+    case ME_PITCHWHEEL:
+      song->channel[e->channel].pitchbend = e->a + e->b * 128;
+      song->channel[e->channel].pitchfactor = 0;
+      /* Adjust pitch for notes already playing */
+      adjust_pitchbend(song);
+      break;
 
-	case ME_EXPRESSION:
-	  song->channel[song->current_event->channel].expression =
-	    song->current_event->a;
-	  break;
+    case ME_MAINVOLUME:
+      song->channel[e->channel].volume = e->a;
+      adjust_volume(song);
+      break;
 
-	case ME_PROGRAM:
-	  if (ISDRUMCHANNEL(song, song->current_event->channel))
-	    /* Change drum set */
-	    song->channel[song->current_event->channel].bank =
-	      song->current_event->a;
-	  else
-	    song->channel[song->current_event->channel].program =
-	      song->current_event->a;
-	  break;
+    case ME_EXPRESSION:
+      song->channel[e->channel].expression = e->a;
+      adjust_volume(song);
+      break;
 
-	case ME_SUSTAIN:
-	  song->channel[song->current_event->channel].sustain =
-	    song->current_event->a;
-	  break;
+    case ME_PROGRAM:
+      /* Drum channels only have drumset 0. */
+      if (!ISDRUMCHANNEL(song, e->channel))
+	song->channel[e->channel].program = e->a;
+      break;
 
-	case ME_RESET_CONTROLLERS:
-	  reset_controllers(song, song->current_event->channel);
-	  break;
+    case ME_SUSTAIN:
+      song->channel[e->channel].sustain = e->a;
+      if (!e->a)
+	drop_sustain(song);
+      break;
 
-	case ME_TONE_BANK:
-	  song->channel[song->current_event->channel].bank =
-	    song->current_event->a;
-	  break;
+    case ME_RESET_CONTROLLERS:
+      reset_controllers(song, e->channel);
+      break;
 
-	case ME_EOT:
-	  song->current_sample = song->current_event->time;
-	  return;
-	}
-      song->current_event++;
+    case ME_ALL_NOTES_OFF:
+      all_notes_off(song);
+      break;
+
+    case ME_ALL_SOUNDS_OFF:
+      all_sounds_off(song);
+      break;
+
+    case ME_EOT:
+      /* Doom music loops back to the start. Unless no time has passed,
+	 which would loop forever. */
+      if (!song->loop || e->time == song->loop_time)
+	return 0;
+
+      song->loop_time = e->time;
+      midi_stream_rewind(song);
+      break;
     }
-  /*song->current_sample=song->current_event->time;*/
-  if (song->current_event != song->events)
-    song->current_event--;
-  song->current_sample=until_time;
+
+  midi_stream_next(song);
+  return 1;
 }
 
-static void skip_to(MidSong *song, sint32 until_time)
+int mid_song_start(MidSong *song, const void *midi, unsigned int size, int loop)
 {
-  if (song->current_sample > until_time)
-    song->current_sample = 0;
-
+  song->playing = 0;
   reset_midi(song);
-  song->current_event = song->events;
 
-  if (until_time)
-    seek_forward(song, until_time);
-}
-
-static void do_compute_data(MidSong *song, sint32 count)
-{
-  int i;
-  memset(song->common_buffer, 0,
-	 (song->encoding & PE_MONO) ? (count * 4) : (count * 8));
-  for (i = 0; i < song->voices; i++)
-    {
-      if(song->voice[i].status != VOICE_FREE)
-	mix_voice(song, song->common_buffer, i, count);
-    }
-  song->current_sample += count;
-}
-
-/* count=0 means flush remaining buffered data to output device, then
-   flush the device itself */
-static void compute_data(MidSong *song, sint8 **stream, sint32 count)
-{
-  int channels;
-
-  if ( song->encoding & PE_MONO )
-    channels = 1;
-  else
-    channels = 2;
-
-  while (count) {
-    sint32 block = count;
-    if (block > song->buffer_size)
-      block = song->buffer_size;
-    do_compute_data(song, block);
-    song->write(*stream, song->common_buffer, channels * block);
-    *stream += song->bytes_per_sample * block;
-    count -= block;
-  }
-}
-
-void mid_song_start(MidSong *song)
-{
-  song->playing = 1;
-  adjust_amplification(song);
-  skip_to(song, 0);
-}
-
-void mid_song_seek(MidSong *song, uint32 ms)
-{
-  skip_to(song, (ms * (song->rate / 100)) / 10);
-}
-
-uint32 mid_song_get_total_time(MidSong *song)
-{
-  MidEvent *last_event = &song->events[song->groomed_event_count - 1];
-  /* We want last_event->time * 1000 / song->rate */
-  uint32 retvalue = (last_event->time / song->rate) * 1000;
-  retvalue       += (last_event->time % song->rate) * 1000 / song->rate;
-  return retvalue;
-}
-
-uint32 mid_song_get_time(MidSong *song)
-{
-  uint32 retvalue = (song->current_sample / song->rate) * 1000;
-  retvalue       += (song->current_sample % song->rate) * 1000 / song->rate;
-  return retvalue;
-}
-
-char *mid_song_get_meta(MidSong *song, MidSongMetaId what)
-{
-  return (what < 0 || what >= MID_META_MAX)? NULL : song->meta_data[what];
-}
-
-size_t mid_song_read_wave(MidSong *song, sint8 *ptr, size_t size)
-{
-  sint32 start_sample, end_sample, samples;
-
-  if (!song->playing)
+  if (!song->bank || !midi_stream_open(song, (const uint8 *)midi, size))
     return 0;
 
-  samples = size / song->bytes_per_sample;
+  song->loop = loop;
+  song->loop_time = -1;
+  song->current_sample = 0;
+  song->current_event = &song->event;
 
-  start_sample = song->current_sample;
-  end_sample = song->current_sample+samples;
-  while ( song->current_sample < end_sample ) {
-    /* Handle all events that should happen at this time */
-    while (song->current_event->time <= song->current_sample) {
-      switch(song->current_event->type) {
-	/* Effects affecting a single note */
-	case ME_NOTEON:
-	  if (!(song->current_event->b)) /* Velocity 0? */
-	    note_off(song);
-	  else
-	    note_on(song);
-	  break;
+  midi_stream_next(song);
 
-	case ME_NOTEOFF:
-	  note_off(song);
-	  break;
+  song->playing = 1;
+  return 1;
+}
 
-	case ME_KEYPRESSURE:
-	  adjust_pressure(song);
-	  break;
+void mid_song_stop(MidSong *song)
+{
+  song->playing = 0;
+  reset_voices(song);
+}
 
-	/* Effects affecting a single channel */
-	case ME_PITCH_SENS:
-	  song->channel[song->current_event->channel].pitchsens =
-	    song->current_event->a;
-	  song->channel[song->current_event->channel].pitchfactor = 0;
-	  break;
+void mid_song_render(MidSong *song, sint32 *buf, sint32 count)
+{
+  sint32 end_sample;
+  int i;
 
-	case ME_PITCHWHEEL:
-	  song->channel[song->current_event->channel].pitchbend =
-	    song->current_event->a + song->current_event->b * 128;
-	  song->channel[song->current_event->channel].pitchfactor = 0;
-	  /* Adjust pitch for notes already playing */
-	  adjust_pitchbend(song);
-	  break;
+  if (!song->playing)
+    return;
 
-	case ME_MAINVOLUME:
-	  song->channel[song->current_event->channel].volume =
-	    song->current_event->a;
-	  adjust_volume(song);
-	  break;
+  end_sample = song->current_sample + count;
 
-	case ME_PAN:
-	  song->channel[song->current_event->channel].panning =
-	    song->current_event->a;
-	  break;
+  while (song->current_sample < end_sample)
+    {
+      sint32 block;
 
-	case ME_EXPRESSION:
-	  song->channel[song->current_event->channel].expression =
-	    song->current_event->a;
-	  adjust_volume(song);
-	  break;
+      /* Handle all events that should happen at this time */
+      while (song->playing && song->current_event->time <= song->current_sample)
+	{
+	  if (!process_event(song))
+	    song->playing = 0;
+	}
 
-	case ME_PROGRAM:
-	  if (ISDRUMCHANNEL(song, song->current_event->channel)) {
-	    /* Change drum set */
-	    song->channel[song->current_event->channel].bank =
-	      song->current_event->a;
-	  }
-	  else
-	    song->channel[song->current_event->channel].program =
-	      song->current_event->a;
-	  break;
+      if (song->playing && song->current_event->time < end_sample)
+	block = song->current_event->time - song->current_sample;
+      else
+	block = end_sample - song->current_sample;
 
-	case ME_SUSTAIN:
-	  song->channel[song->current_event->channel].sustain =
-	    song->current_event->a;
-	  if (!song->current_event->a)
-	    drop_sustain(song);
-	  break;
+      for (i = 0; i < MID_MAX_VOICES; i++)
+	{
+	  if(song->voice[i].status != VOICE_FREE)
+	    mix_voice(song, buf, i, block);
+	}
 
-	case ME_RESET_CONTROLLERS:
-	  reset_controllers(song, song->current_event->channel);
-	  break;
+      buf += block;
+      song->current_sample += block;
 
-	case ME_ALL_NOTES_OFF:
-	  all_notes_off(song);
-	  break;
-
-	case ME_ALL_SOUNDS_OFF:
-	  all_sounds_off(song);
-	  break;
-
-	case ME_TONE_BANK:
-	  song->channel[song->current_event->channel].bank =
-	    song->current_event->a;
-	  break;
-
-	case ME_EOT:
-	  /* Give the last notes a couple of seconds to decay  */
-	  //DEBUG_MSG("Playing time: ~%d seconds\n", song->current_sample/song->rate+2);
-	  //DEBUG_MSG("Notes cut: %d\n", song->cut_notes);
-	  //DEBUG_MSG("Notes lost totally: %d\n", song->lost_notes);
-	  song->playing = 0;
-	  return (song->current_sample - start_sample) * song->bytes_per_sample;
-        }
-      song->current_event++;
+      if (!song->playing)
+	break;
     }
-    if (song->current_event->time > end_sample)
-      compute_data(song, &ptr, end_sample-song->current_sample);
-    else
-      compute_data(song, &ptr, song->current_event->time-song->current_sample);
-  }
-  return samples * song->bytes_per_sample;
 }
 
 void mid_song_set_volume(MidSong *song, int volume)
@@ -792,7 +577,7 @@ void mid_song_set_volume(MidSong *song, int volume)
   else
     song->amplification = volume;
   adjust_amplification(song);
-  for (i = 0; i < song->voices; i++)
+  for (i = 0; i < MID_MAX_VOICES; i++)
     if (song->voice[i].status != VOICE_FREE)
       {
 	recompute_amp(song, i);

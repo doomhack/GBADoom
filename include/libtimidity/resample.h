@@ -32,9 +32,17 @@
 #define TIMIDITY_RESAMPLE_H
 
 #define resample_voice TIMI_NAMESPACE(resample_voice)
-#define pre_resample TIMI_NAMESPACE(pre_resample)
+#define freq_to_increment TIMI_NAMESPACE(freq_to_increment)
+#define bend_factor TIMI_NAMESPACE(bend_factor)
 
-extern sample_t *resample_voice(MidSong *song, int v, sint32 *countptr);
-extern void pre_resample(MidSong *song, MidSample *sp);
+/* Resample count samples of voice v and add them, scaled by amp, to buf.
+   Returns the number of samples mixed, less than count if the voice ended. */
+extern sint32 resample_voice(MidSong *song, int v, sint32 *buf, sint32 count, sint32 amp);
+
+/* Sample increment (FRACTION_BITS) to play sp at frequency (milli-Hz). */
+extern sint32 freq_to_increment(const MidSample *sp, sint32 frequency);
+
+/* 8.24 factor for a pitch bend of i (semitones << 13), up or down. */
+extern sint32 bend_factor(sint32 i);
 
 #endif /* TIMIDITY_RESAMPLE_H */

@@ -2,7 +2,9 @@
 #define DOOM_IWAD_H
 
 //Bump this (and GbaWadUtil's copy) when the processed IWAD format changes.
-#define DOOM_IWAD_VERSION 1
+//2: DS lumps kept as signed 8 bit, D_ lumps converted to MIDI, GUSBANK added.
+//3: DS lumps resampled to the mixer rate (GUSBANK_RATE).
+#define DOOM_IWAD_VERSION 3
 
 typedef struct
 {

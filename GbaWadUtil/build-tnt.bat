@@ -1,1 +1,1 @@
-gbawadutil.exe -in tnt.wad -cfile ..\source\iwad\tnt.c
+gbawadutil.exe -in tnt.wad -cfile ..\source\iwad\tnt.c -gus dgguspat\timidity.cfg

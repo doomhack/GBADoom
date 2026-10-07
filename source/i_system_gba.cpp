@@ -31,8 +31,6 @@ extern "C"
 #include <gba_input.h>
 #include <gba_timers.h>
 
-#include <maxmod.h>
-
 #define DCNT_PAGE 0x0010
 
 #define VID_PAGE1 VRAM
@@ -50,24 +48,10 @@ extern "C"
 //**************************************************************************************
 
 
-//*******************************************************************************
-//VBlank handler.
-//*******************************************************************************
-
-void VBlankCallback()
-{
-    mmVBlank();
-    mmFrame();
-}
-
-
 void I_InitScreen_e32()
 {
+    //The VBlank interrupt is the sound mixer's (i_audio.c).
     irqInit();
-
-    //irqSet( IRQ_VBLANK, VBlankCallback );
-    //irqEnable(IRQ_VBLANK);
-
 
     //Set gamepak wait states and prefetch.
     REG_WAITCNT = 0x46DA;

@@ -28,8 +28,7 @@
  *
  * DESCRIPTION:
  *      Startup and quit functions. Handles signals, inits the
- *      memory management, then calls D_DoomMain. Also contains
- *      I_Init which does other system-related startup stuff.
+ *      memory management, then calls D_DoomMain.
  *
  *-----------------------------------------------------------------------------
  */
@@ -59,12 +58,6 @@
  * cphipps - much made static
  */
 
-void I_Init(void)
-{
-    if (!(nomusicparm && nosfxparm))
-        I_InitSound();
-}
-
 static void PrintVer(void)
 {
     char vbuf[24];
@@ -80,9 +73,6 @@ int main(int argc, const char * const * argv)
     I_PreInitGraphics();
 
     PrintVer();
-
-    //Call this before Z_Init as maxmod uses malloc.
-    I_Init();
 
     Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 

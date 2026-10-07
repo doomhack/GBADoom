@@ -65,7 +65,7 @@
 
 
 // number of channels available
-static const unsigned int numChannels = 8;
+static const unsigned int numChannels = MAX_CHANNELS;
 
 //
 // Internals.
@@ -84,19 +84,16 @@ static int S_getChannel(void *origin, const sfxinfo_t *sfxinfo, int is_pickup);
 
 void S_Init(int sfxVolume, int musicVolume)
 {
+    //The mixer reads the WAD, so it starts here, after W_Init().
+    if (!(nomusicparm && nosfxparm))
+        I_InitSound();
+
     //jff 1/22/98 skip sound init if sound not enabled
     if (!nosfxparm)
     {
         lprintf("S_Init: default sfx volume %d", sfxVolume);
 
         S_SetSfxVolume(sfxVolume);
-
-        // Allocating the internal channels for mixing
-        // (the maximum numer of sounds rendered
-        // simultaneously) within zone memory.
-        // CPhipps - calloc
-        _g->channels =
-                (channel_t *) calloc(numChannels,sizeof(channel_t));
     }
 
     // CPhipps - music init reformatted

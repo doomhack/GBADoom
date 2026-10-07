@@ -36,6 +36,4 @@
 #ifndef __I_MAIN__
 #define __I_MAIN__
 
-void I_Init(void);
-
 #endif

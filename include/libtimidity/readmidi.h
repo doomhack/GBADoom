@@ -31,8 +31,17 @@
 #ifndef TIMIDITY_READMIDI_H
 #define TIMIDITY_READMIDI_H
 
-#define read_midi_file TIMI_NAMESPACE(read_midi_file)
+#define midi_stream_open TIMI_NAMESPACE(midi_stream_open)
+#define midi_stream_rewind TIMI_NAMESPACE(midi_stream_rewind)
+#define midi_stream_next TIMI_NAMESPACE(midi_stream_next)
 
-extern MidEvent *read_midi_file(MidIStream *stream, MidSong *song, sint32 *count, sint32 *sp);
+/* Check the header of a type 0 MIDI file and point the stream at its track. */
+extern int midi_stream_open(MidSong *song, const uint8 *midi, uint32 size);
+
+/* Back to the start of the track. Event times carry on from where they were. */
+extern void midi_stream_rewind(MidSong *song);
+
+/* Read the next event (time in samples) into song->event. ME_EOT at the end. */
+extern void midi_stream_next(MidSong *song);
 
 #endif /* TIMIDITY_READMIDI_H */

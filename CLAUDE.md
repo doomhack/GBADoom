@@ -21,8 +21,9 @@ Produces `GBADoom.elf` and `GBADoom.gba`.
 
 **The GBA build contains no IWAD.** `make` produces an engine-only ROM that ends with a 32-byte IWAD header (`doom_iwad_header_t` in `include/doom_iwad.h`, emitted by the `.iwad` section at the end of `gbadoom.ld`). Attach a WAD with:
 ```
-GbaWadUtil -in <wad> -rom GBADoom.gba -romout <game>.gba
+GbaWadUtil -in <wad> -gus GbaWadUtil/dgguspat/timid_d2.cfg -rom GBADoom.gba -romout <game>.gba
 ```
+(`timid_d1.cfg` for Doom/Ultimate Doom/Sigil. Without `-gus` there is no `GUSBANK` lump and the music is silent.)
 GbaWadUtil finds the header by its magic (`GBADOOM-IWAD-HDR`, 32-byte aligned), writes version/length, drops anything already after it and appends the processed WAD, so a ROM that already has a WAD can be re-patched. `doom_iwad` is a link-time address right after the header; `doom_iwad_len` reads the header. `IdentifyVersion()` errors at startup if no WAD is attached or `DOOM_IWAD_VERSION` doesn't match — bump it (and `romIwadVersion` in GbaWadUtil's `main.cpp`) whenever the processed WAD format changes.
 
 **The Qt build still compiles the IWAD in:** use `GbaWadUtil -in <wad> -cfile <name>.c` (or `GbaWadUtil\build_*.bat`), copy the output to `source/iwad/`, and pick it in `source/doom_iwad.c` (the `#include` there is `#ifndef GBA`).
@@ -58,6 +59,15 @@ Gameplay-critical collections are fixed-size arrays sized by constants in the re
 
 `source/r_hotpath.iwram.c` contains the hot inner-loop rendering code and is compiled with special handling because **the whole file must fit in the GBA's small IWRAM region**: the Makefile has dedicated `%.iwram.o` rules that force `-fno-lto -marm` (ARM mode, no whole-program LTO) instead of the default Thumb+LTO flags used elsewhere, and the file itself forces `#pragma GCC optimize ("Os")` under `#ifdef GBA` to keep code size down. Be careful about adding code here — growing this file risks it no longer fitting in IWRAM.
 
+### Sound
+
+Music and sound effects both come from the WAD, mixed in software to one mono signed 8-bit stream at 13379 Hz (224 samples per GBA frame):
+
+- GbaWadUtil converts `D_*` MUS lumps to type 0 MIDI, resamples `DS*` lumps to signed 8-bit at 13379 Hz (windowed sinc, so sound effects mix without interpolation), and with `-gus <cfg>` builds a `GUSBANK` lump: GUS patches from `GbaWadUtil/dgguspat/`, preprocessed for the fixed output rate (format in `include/gusbank.h`; keep it in step with GbaWadUtil's copy).
+- `source/libtimidity/` is a fixed-point, mono port of libtimidity that reads the bank and streams MIDI from ROM (no event list in RAM).
+- `source/s_mix.c` mixes music and up to 8 sfx voices; the inner loops are in `source/s_mix.iwram.c`, and libtimidity's per-voice driver is in IWRAM too (`TIMI_IWRAM`).
+- `source/i_audio.c`: on the GBA, Timer 0 (1254 cycles) + DMA1 feed Direct Sound A, and the mixer runs in the VBlank interrupt (so changes from the game thread mask `REG_IME`). The Qt build plays the same output through waveOut (`source/i_audio_win.c`).
+
 ### Screen geometry
 
 `SCREENWIDTH`/`SCREENHEIGHT` (120x160, portrait — matches the GBA screen rotated for Doom's taller-than-wide view) and `MAX_SCREENWIDTH`/`MAX_SCREENHEIGHT` are defined in `include/doomdef.h` and used throughout renderer sizing constants; don't hardcode 120/160 elsewhere.
@@ -71,6 +81,6 @@ Doom's original fixed-point (`fixed_t`, `include/m_fixed.h`) and angle/trig tabl
 - `source/`, `include/` — engine and game code (prBoom/Doom lineage, heavily trimmed and GBA-adapted).
 - `source/iwad/` — generated IWAD C headers (not checked in by default; generated per the build steps above).
 - `GbaWadUtil/` — the external tool (and prebuilt IWADs/binaries) used to convert `.wad` files into embeddable C source.
-- `music/` — source music assets consumed by `mmutil` to build `soundbank.bin`/`soundbank.h` (Maxmod).
+- `source/libtimidity/`, `include/libtimidity/` — the music player (see Sound).
 - `data/` — binary data directory wired into the Makefile's `BINFILES` mechanism.
 - `build/` — GBA build output/object directory (generated).

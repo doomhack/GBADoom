@@ -41,6 +41,9 @@ typedef struct
 } event_t;
 
 void D_PostEvent(event_t* ev);
+
+//Refill the waveOut buffers (i_audio.c).
+void I_UpdateSound(void);
 }
 
 extern unsigned char* pb;

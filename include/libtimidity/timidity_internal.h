@@ -38,140 +38,48 @@
 #undef  TIMI_NAMESPACE
 #define TIMI_NAMESPACE(x) _timi_ ## x
 
-#if defined(__OS2__) || defined(__EMX__)
-#include <os2.h>
+/* Code that runs for every voice for every control ratio chunk goes in
+   IWRAM on the GBA: Thumb code from ROM is several times slower. */
+#ifdef GBA
+#define TIMI_IWRAM __attribute__((section(".iwram"), long_call, noinline, target("arm"), optimize("Os")))
+#else
+#define TIMI_IWRAM
 #endif
+
 #include "timidity.h"
 #include "options.h"
 
-#if defined(_MSC_VER) && !defined(__cplusplus) && !defined(HAVE_TIMI_CONFIG_H)
-#define inline __inline
-#endif
-#ifndef HAVE_TIMI_CONFIG_H
-#include "timi_endian.h"
-#endif
-
-/* Instrument files are little-endian, MIDI files big-endian, so we
-   need to do some conversions. */
-#if defined(__VBCC__) && defined(__M68K__)
-uint16 XCHG_SHORT(__reg("d0") uint16) =
-    "\trol.w\t#8,d0";
-sint32 XCHG_LONG (__reg("d0") sint32) =
-    "\trol.w\t#8,d0\n"
-    "\tswap\td0\n"
-    "\trol.w\t#8,d0";
-
-#elif defined(__WATCOMC__) && defined(__386__)
-extern uint16 XCHG_SHORT(uint16);
-extern sint32 XCHG_LONG (sint32);
-#ifndef __SW_3 /* 486+ */
-#pragma aux XCHG_LONG = \
-    "bswap eax"  \
-    parm   [eax] \
-    modify [eax];
-#else  /* 386-only */
-#pragma aux XCHG_LONG = \
-    "xchg al, ah"  \
-    "ror  eax, 16" \
-    "xchg al, ah"  \
-    parm   [eax]   \
-    modify [eax];
-#endif
-#pragma aux XCHG_SHORT = \
-    "xchg al, ah" \
-    parm   [ax]   \
-    modify [ax];
-
-#else
-#define XCHG_SHORT(x) ((((x)&0xFF)<<8) | (((x)>>8)&0xFF))
-#ifdef __i486__
-# define XCHG_LONG(x) \
-     ({ sint32 __value; \
-        asm ("bswap %1; movl %1,%0" : "=g" (__value) : "r" (x)); \
-       __value; })
-#else
-# define XCHG_LONG(x) ((((x)&0xFF)<<24) | \
-		      (((x)&0xFF00)<<8) | \
-		      (((x)&0xFF0000)>>8) | \
-		      (((x)>>24)&0xFF))
-#endif
-#endif
-
-#if !defined(WORDS_BIGENDIAN)
-#define SWAPLE16(x) x
-#define SWAPLE32(x) x
-#define SWAPBE16(x) XCHG_SHORT(x)
-#define SWAPBE32(x) XCHG_LONG(x)
-#else
-#define SWAPBE16(x) x
-#define SWAPBE32(x) x
-#define SWAPLE16(x) XCHG_SHORT(x)
-#define SWAPLE32(x) XCHG_LONG(x)
-#endif
-
-#if defined(__SYMBIAN32__)
-	#define DEBUG_MSG(x, y, z)
-#else
-
-#if defined(__GNUC__) && !(defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
-/* this is more compatible with very old gcc */
-#ifdef TIMIDITY_DEBUG
-#define DEBUG_MSG(fmt, args...) fprintf(stderr, fmt, ##args)
-#else
-#define DEBUG_MSG(fmt, args...)
-#endif
-#else /* use C99 varargs macros */
-#ifdef TIMIDITY_DEBUG
-#define DEBUG_MSG(...) fprintf(stderr, __VA_ARGS__)
-#else
-#define DEBUG_MSG(...)
-#endif
-#endif
-
-#endif //__SYMBIAN32__
-
-
 #define MID_VIBRATO_SAMPLE_INCREMENTS 32
 
-/* Maximum polyphony. */
-#define MID_MAX_VOICES	48
-
-typedef sint16 sample_t;
+/* Samples are signed 8 bit, normalised to full scale. The player treats
+   them as the top byte of a 16 bit sample. */
+typedef sint8 sample_t;
 typedef sint32 final_volume_t;
 
-typedef struct _MidSample MidSample;
-struct _MidSample
+/* Samples live in ROM, in the GUSBANK lump. */
+typedef gusbank_sample_t MidSample;
+
+typedef struct _MidInstrument MidInstrument;
+struct _MidInstrument
 {
-  sint32
-    loop_start, loop_end, data_length,
-    sample_rate,
-    low_freq, high_freq, root_freq;
-  sint32 envelope_rate[6], envelope_offset[6];
-  float volume;
-  sample_t *data;
-  sint32
-    tremolo_sweep_increment, tremolo_phase_increment,
-    vibrato_sweep_increment, vibrato_control_ratio;
-  uint8 tremolo_depth, vibrato_depth, modes;
-  sint8 panning, note_to_use;
+  int samples;
+  const MidSample *sample;
 };
 
 typedef struct _MidChannel MidChannel;
 struct _MidChannel
 {
-  int bank, program, volume, sustain, panning, pitchbend, expression;
-  int mono;	/* one note only on this channel -- not implemented yet */
-  int pitchsens;
-  /* chorus, reverb... Coming soon to a 300-MHz, eight-way superscalar
-     processor near you */
-  float pitchfactor; /* precomputed pitch bend factor to save some fdiv's */
+  sint32 pitchfactor; /* 8.24 pitch bend factor, 0 = needs computing */
+  sint32 pitchbend;
+  uint8 program, volume, sustain, expression;
+  uint8 pitchsens, mono;
 };
 
 typedef struct _MidVoice MidVoice;
 struct _MidVoice
 {
   uint8 status, channel, note, velocity;
-  MidSample *sample;
+  const MidSample *sample;
   sint32
     orig_frequency, frequency,
     sample_offset, sample_increment,
@@ -180,34 +88,13 @@ struct _MidVoice
     tremolo_phase, tremolo_phase_increment,
     vibrato_sweep, vibrato_sweep_position;
 
-  final_volume_t left_mix, right_mix;
+  final_volume_t left_mix;
 
-  float left_amp, right_amp, tremolo_volume;
-    sint32 vibrato_sample_increment[MID_VIBRATO_SAMPLE_INCREMENTS];
-  int
+  sint32 left_amp;       /* 16.16 */
+  sint32 tremolo_volume; /* 1.15 */
+  sint32
     vibrato_phase, vibrato_control_ratio, vibrato_control_counter,
-    envelope_stage, control_counter, panning, panned;
-};
-
-typedef struct _MidInstrument MidInstrument;
-struct _MidInstrument
-{
-  int samples;
-  MidSample *sample;
-};
-
-typedef struct _MidToneBankElement MidToneBankElement;
-struct _MidToneBankElement
-{
-  char *name;
-  int note, amp, pan, strip_loop, strip_envelope, strip_tail;
-};
-
-typedef struct _MidToneBank MidToneBank;
-struct _MidToneBank
-{
-  MidToneBankElement *tone;
-  MidInstrument *instrument[128];
+    envelope_stage, control_counter;
 };
 
 typedef struct _MidEvent MidEvent;
@@ -217,51 +104,32 @@ struct _MidEvent
   uint8 channel, type, a, b;
 };
 
-typedef struct _MidEventList MidEventList;
-struct _MidEventList
-{
-  MidEvent event;
-  struct _MidEventList *next;
-};
-
 struct _MidSong
 {
-  int oom; /* malloc() failed */
+  const uint8 *bank; /* GUSBANK lump */
   int playing;
-  sint32 rate;
-  sint32 encoding;
-  int bytes_per_sample;
-  float master_volume;
+  int loop;
+  sint32 loop_time; /* Time the song last looped. */
   sint32 amplification;
-  MidToneBank *tonebank[128];
-  MidToneBank *drumset[128];
-  MidInstrument *default_instrument;
-  int default_program;
-  void (*write) (void *dp, sint32 *lp, sint32 c);
-  int buffer_size;
-  sample_t *resample_buffer;
-  sint32 *common_buffer;
-  /* These would both fit into 32 bits, but they are often added in
-     large multiples, so it's simpler to have two roomy ints */
-  /* samples per MIDI delta-t */
-  sint32 sample_increment;
-  sint32 sample_correction;
+  sint32 master_volume; /* 8.8 */
+  sint32 drumchannels;
+  sint32 current_sample;
+
+  /* The next event to process. Events are read from ROM as they are due. */
+  MidEvent event;
+  MidEvent *current_event;
+
+  /* MIDI stream state (readmidi.c) */
+  const uint8 *midi_track, *midi_pos, *midi_end;
+  sint32 divisions;
+  sint32 sample_increment, sample_correction, sample_cum;
+  sint32 event_time;
+  uint8 laststatus, lastchan, nrpn, counting_time;
+  uint8 rpn_msb[16], rpn_lsb[16];
+  uint8 current_program[16], current_set[16];
+
   MidChannel channel[16];
   MidVoice voice[MID_MAX_VOICES];
-  int voices;
-  sint32 drumchannels;
-  sint32 control_ratio;
-  sint32 lost_notes;
-  sint32 cut_notes;
-  sint32 samples;
-  MidEvent *events;
-  MidEvent *current_event;
-  MidEventList *evlist;
-  sint32 current_sample;
-  sint32 event_count;
-  sint32 at;
-  sint32 groomed_event_count;
-  char *meta_data[MID_META_MAX];
 };
 
 #endif /* TIMIDITY_INTERNAL_H */

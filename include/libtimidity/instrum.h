@@ -31,27 +31,21 @@
 #ifndef TIMIDITY_INSTRUM_H
 #define TIMIDITY_INSTRUM_H
 
-/* Bits in modes: */
-#define MODES_16BIT	(1<<0)
-#define MODES_UNSIGNED	(1<<1)
+/* Bits in the modes field. GbaWadUtil has already converted 16 bit,
+   unsigned and reversed samples. */
 #define MODES_LOOPING	(1<<2)
 #define MODES_PINGPONG	(1<<3)
-#define MODES_REVERSE	(1<<4)
 #define MODES_SUSTAIN	(1<<5)
 #define MODES_ENVELOPE	(1<<6)
 
-/* A hack to delay instrument loading until after reading the
-   entire MIDI file. */
-#define MAGIC_LOAD_INSTRUMENT ((MidInstrument *)(-1))
+#define bank_valid TIMI_NAMESPACE(bank_valid)
+#define get_instrument TIMI_NAMESPACE(get_instrument)
 
-#define SPECIAL_PROGRAM -1
+extern int bank_valid(const void *bank, unsigned int size);
 
-#define load_missing_instruments TIMI_NAMESPACE(load_missing_instruments)
-#define free_instruments TIMI_NAMESPACE(free_instruments)
-#define set_default_instrument TIMI_NAMESPACE(set_default_instrument)
+/* Look up a melodic program (dr == 0) or drum note (dr == 1) in the bank. */
+extern int get_instrument(const MidSong *song, int dr, int i, MidInstrument *ip);
 
-extern int load_missing_instruments(MidSong *song);
-extern void free_instruments(MidSong *song);
-extern int set_default_instrument(MidSong *song, const char *name);
+#define sample_data(song, sp) ((const sample_t *)((song)->bank + (sp)->data_offset))
 
 #endif /* TIMIDITY_INSTRUM_H */

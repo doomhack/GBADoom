@@ -10,6 +10,7 @@
 #include "hu_stuff.h"
 #include "r_defs.h"
 #include "i_sound.h"
+#include "s_mix.h"
 #include "m_menu.h"
 #include "p_spec.h"
 #include "p_enemy.h"
@@ -229,7 +230,26 @@ bool    headsupactive;
 int lasttimereply;
 int basetime;
 
+// DS lump for each sfx id, -1 if missing.
+short sfx_lumps[NUMSFX];
 
+//******************************************************************************
+//s_mix.c
+//******************************************************************************
+
+// libtimidity song state (MidSong, Z_Malloc'd: its size is private to libtimidity).
+struct _MidSong* mix_song;
+
+snd_sfx_voice_t mix_sfx[SND_SFX_VOICES];
+
+bool mix_music_paused;
+
+#ifdef GBA
+// Double buffered output for Direct Sound A. Words for DMA alignment. The
+// padding is because DMA can read a FIFO's worth past the end before VBlank restarts it.
+int32_t mix_out[2][(SND_MIX_SAMPLES + 16) / 4];
+unsigned int mix_out_index;
+#endif
 
 //******************************************************************************
 //i_video.c
@@ -648,7 +668,7 @@ vissprite_t vissprites[MAXVISSPRITES];
 //******************************************************************************
 
 // the set of channels available
-channel_t *channels;
+channel_t channels[MAX_CHANNELS];
 
 // These are not used, but should be (menu).
 // Maximum volume of a sound effect.

@@ -26,6 +26,10 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 INCLUDEPATH += "include"
+INCLUDEPATH += "include/libtimidity"
+
+# waveOut for the mixer (i_audio.c).
+win32: LIBS += -lwinmm
 
 INCLUDEPATH += "C:\devkitPro\libgba\include"
 
@@ -42,12 +46,20 @@ SOURCES += \
         source/hu_lib.c \
         source/hu_stuff.c \
         source/i_audio.c \
+        source/i_audio_win.c \
         source/i_main.c \
         source/i_system.c \
         source/i_system_e32.cpp \
         source/i_system_gba.cpp \
         source/i_video.c \
         source/info.c \
+        source/libtimidity/instrum.c \
+        source/libtimidity/mix.c \
+        source/libtimidity/playmidi.c \
+        source/libtimidity/readmidi.c \
+        source/libtimidity/resample.c \
+        source/libtimidity/timi_tables.c \
+        source/libtimidity/timidity.c \
         source/lprintf.c \
         source/m_bbox.c \
         source/m_cheat.c \
@@ -80,6 +92,8 @@ SOURCES += \
         source/r_patch.c \
         source/r_plane.c \
         source/r_things.c \
+        source/s_mix.c \
+        source/s_mix.iwram.c \
         source/s_sound.c \
         source/sounds.c \
         source/st_gfx.c \
@@ -121,6 +135,7 @@ HEADERS += \
     include/gba_functions.h \
     include/global_data.h \
     include/global_init.h \
+    include/gusbank.h \
     include/hu_lib.h \
     include/hu_stuff.h \
     include/i_main.h \
@@ -131,6 +146,15 @@ HEADERS += \
     include/i_system_win.h \
     include/i_video.h \
     include/info.h \
+    include/libtimidity/instrum.h \
+    include/libtimidity/mix.h \
+    include/libtimidity/options.h \
+    include/libtimidity/playmidi.h \
+    include/libtimidity/readmidi.h \
+    include/libtimidity/resample.h \
+    include/libtimidity/timi_tables.h \
+    include/libtimidity/timidity.h \
+    include/libtimidity/timidity_internal.h \
     include/lprintf.h \
     include/m_bbox.h \
     include/m_cheat.h \
@@ -160,6 +184,7 @@ HEADERS += \
     include/r_sky.h \
     include/r_state.h \
     include/r_things.h \
+    include/s_mix.h \
     include/s_sound.h \
     include/sounds.h \
     include/st_gfx.h \

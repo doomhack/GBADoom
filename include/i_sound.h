@@ -69,6 +69,11 @@ void I_PlaySong(int handle, int looping);
 // Stops a song over 3 seconds.
 void I_StopSong(int handle);
 
+#ifndef GBA
+// Qt build: keep the audio device fed. Called every frame.
+void I_UpdateSound(void);
+#endif
+
 // CPhipps - put these in config file
 extern const int snd_samplerate;
 

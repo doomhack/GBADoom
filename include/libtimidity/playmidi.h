@@ -54,9 +54,6 @@
 
 #define ME_EOT		99
 
-/* Causes the instrument's default panning to be used. */
-#define NO_PANNING -1
-
 /* Voice status options: */
 #define VOICE_FREE 0
 #define VOICE_ON 1
@@ -64,13 +61,11 @@
 #define VOICE_OFF 3
 #define VOICE_DIE 4
 
-/* Voice panned options: */
-#define PANNED_MYSTERY 0
-#define PANNED_LEFT 1
-#define PANNED_RIGHT 2
-#define PANNED_CENTER 3
-/* Anything but PANNED_MYSTERY only uses the left volume */
-
 #define ISDRUMCHANNEL(s, c) (((s)->drumchannels & (1<<(c))))
+
+#define recompute_amp TIMI_NAMESPACE(recompute_amp)
+
+/* Mono output: sets left_amp (16.16) from velocity, volume and expression. */
+extern void recompute_amp(MidSong *song, int v);
 
 #endif /* TIMIDITY_PLAYMIDI_H */
