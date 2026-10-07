@@ -19,6 +19,7 @@ bool WadProcessor::ProcessWad()
     Lump mapLump;
 
     RemoveUnusedLumps();
+    ProcessTextureColumns();
     ProcessSounds();
     ProcessMusic();
 
@@ -87,7 +88,6 @@ bool WadProcessor::ProcessLevel(quint32 lumpNum)
     ProcessLines(lumpNum);
     ProcessSegs(lumpNum);
     ProcessSides(lumpNum);
-    ProcessPNames();
 
     return true;
 }
@@ -424,56 +424,324 @@ int WadProcessor::GetTextureNumForName(const char* tex_name)
     return 0;
 }
 
-bool WadProcessor::ProcessPNames()
+//Composite every texture into 128 byte columns (the renderer wraps
+//texture rows at 128), dedupe them and write:
+//  TEXCOLS: u32 numtextures, u32 tableofs[numtextures], then for each
+//           texture u16 colid[width], u16 runid[width]. Offsets are
+//           from the lump start.
+//  COLPOOL: the unique columns, 128 bytes each.
+//  COLRUNS: the unique run lists for masked drawing: (topdelta, length)
+//           byte pairs of the rows patches cover, ended by (0xff, 0xff).
+//           A runid is the list's offset / 2.
+//Every texture gets a table, in TEXTURE1/TEXTURE2 order, so switches and
+//animations (which just swap texture numbers) need nothing special.
+//After this the wall patches and PNAMES are not needed and are removed.
+bool WadProcessor::ProcessTextureColumns()
 {
-    Lump pnamesLump;
-    qint32 lumpNum = wadFile.GetLumpByName("PNAMES", pnamesLump);
+    static const int colHeight = 128;
 
-    if(lumpNum == -1)
+    Lump pnamesLump;
+    if(wadFile.GetLumpByName("PNAMES", pnamesLump) == -1)
         return false;
 
-    const char* pnamesData = (const char*)pnamesLump.data.constData();
+    const char* pnamesData = pnamesLump.data.constData();
+    const quint32 pnameCount = *((const quint32*)pnamesData);
 
-    quint32 count = *((quint32*)pnamesData);
+    QVector<QByteArray> patches(pnameCount);
 
-    pnamesData += 4; //Fist 4 bytes are count.
-
-    QStringList pnamesUpper;
-
-    for(quint32 i = 0; i < count; i++)
+    for(quint32 i = 0; i < pnameCount; i++)
     {
         char n[9] = {0};
-        strncpy(n, &pnamesData[i*8], 8);
+        strncpy(n, &pnamesData[4 + i*8], 8);
 
-
-        QLatin1String nl(n);
-        QString newName(nl);
-
-       pnamesUpper.push_back(newName.toUpper());
+        Lump patchLump;
+        if(wadFile.GetLumpByName(QString(QLatin1String(n)), patchLump) != -1)
+            patches[i] = patchLump.data;
     }
 
-    char* newPnames = new char[(count * 8) + 4];
-    memset(newPnames, 0, (count * 8) + 4);
+    QList<QByteArray> texLumps;
 
-    *((quint32*)newPnames) = count; //Write count of pnames.
+    Lump tex1lump;
+    if(wadFile.GetLumpByName("TEXTURE1", tex1lump) == -1)
+        return false;
 
-    char* newPnames2 = &newPnames[4]; //Start of name list.
+    texLumps.append(tex1lump.data);
 
-    for(quint32 i = 0; i < count; i++)
+    Lump tex2lump;
+    if(wadFile.GetLumpByName("TEXTURE2", tex2lump) != -1)
+        texLumps.append(tex2lump.data);
+
+    QByteArray pool;
+    QHash<QByteArray, quint16> poolIds;
+
+    QByteArray runs;
+    QHash<QByteArray, quint16> runIds;
+
+    QVector<quint32> tableOfs;
+    QByteArray tables;
+
+    quint32 totalColumns = 0;
+
+    for(const QByteArray& texLump : texLumps)
     {
-        QByteArray pl = pnamesUpper[i].toLatin1();
+        const char* maptex = texLump.constData();
+        const qint32 numTextures = *((const qint32*)maptex);
+        const qint32* directory = ((const qint32*)maptex) + 1;
 
-        strncpy(&newPnames2[i*8], pl.constData(), 8);
+        for(qint32 t = 0; t < numTextures; t++)
+        {
+            const maptexture_t* mtexture = (const maptexture_t*)(maptex + directory[t]);
+
+            const int width = mtexture->width;
+            const int height = qMin<int>(mtexture->height, colHeight);
+
+            if(mtexture->height > colHeight)
+                qWarning("Texture %.8s is %d high. Rows past %d are dropped.", mtexture->name, mtexture->height, colHeight);
+
+            tableOfs.append(tables.size());
+
+            QByteArray texRunIds;
+
+            for(int x = 0; x < width; x++)
+            {
+                QByteArray col(colHeight, 0);
+                quint8* dest = (quint8*)col.data();
+
+                bool covered[colHeight] = {false};
+
+                //Same compositing as R_DrawColumnInCache in GBADoom.
+                for(int p = 0; p < mtexture->patchcount; p++)
+                {
+                    const mappatch_t* mpatch = &mtexture->patches[p];
+
+                    if(mpatch->patch < 0 || mpatch->patch >= (int)pnameCount || patches[mpatch->patch].isEmpty())
+                        continue;
+
+                    const quint8* patch = (const quint8*)patches[mpatch->patch].constData();
+                    const int patchWidth = *((const qint16*)patch);
+
+                    const int px = x - mpatch->originx;
+
+                    if(px < 0 || px >= patchWidth)
+                        continue;
+
+                    const quint8* post = patch + ((const qint32*)(patch + 8))[px];
+
+                    while(post[0] != 0xff)
+                    {
+                        const quint8* source = post + 3;
+                        int count = post[1];
+                        int position = mpatch->originy + post[0];
+
+                        if(position < 0)
+                        {
+                            source -= position;
+                            count += position;
+                            position = 0;
+                        }
+
+                        if(position + count > height)
+                            count = height - position;
+
+                        if(count > 0)
+                        {
+                            memcpy(dest + position, source, count);
+
+                            for(int y = position; y < position + count; y++)
+                                covered[y] = true;
+                        }
+
+                        post += post[1] + 4;
+                    }
+                }
+
+                //Run list of the covered rows, for masked drawing.
+                QByteArray colRuns;
+
+                for(int y = 0; y < height; )
+                {
+                    if(!covered[y])
+                    {
+                        y++;
+                        continue;
+                    }
+
+                    int start = y;
+
+                    while(y < height && covered[y])
+                        y++;
+
+                    colRuns.append(char(start));
+                    colRuns.append(char(y - start));
+                }
+
+                colRuns.append(char(0xff));
+                colRuns.append(char(0xff));
+
+                quint16 runId;
+
+                auto rit = runIds.constFind(colRuns);
+
+                if(rit != runIds.constEnd())
+                {
+                    runId = rit.value();
+                }
+                else
+                {
+                    if((runs.size() / 2) > 0xffff)
+                    {
+                        qCritical("Too many unique texture run lists.");
+                        return false;
+                    }
+
+                    runId = runs.size() / 2;
+                    runIds.insert(colRuns, runId);
+                    runs.append(colRuns);
+                }
+
+                texRunIds.append((const char*)&runId, sizeof(runId));
+
+                //Fill holes with the nearest covered pixel (above on a tie),
+                //like the pad bytes around patch posts, so the edge rows the
+                //column drawer can overrun into look right.
+                for(int y = 0; y < height; y++)
+                {
+                    if(covered[y])
+                        continue;
+
+                    for(int d = 1; d < height; d++)
+                    {
+                        if(y - d >= 0 && covered[y - d])
+                        {
+                            dest[y] = dest[y - d];
+                            break;
+                        }
+
+                        if(y + d < height && covered[y + d])
+                        {
+                            dest[y] = dest[y + d];
+                            break;
+                        }
+                    }
+                }
+
+                //Repeat short textures so they tile.
+                for(int y = height; height > 0 && y < colHeight; y++)
+                    dest[y] = dest[y % height];
+
+                quint16 id;
+
+                auto it = poolIds.constFind(col);
+
+                if(it != poolIds.constEnd())
+                {
+                    id = it.value();
+                }
+                else
+                {
+                    if(poolIds.size() > 0xffff)
+                    {
+                        qCritical("Too many unique texture columns.");
+                        return false;
+                    }
+
+                    id = poolIds.size();
+                    poolIds.insert(col, id);
+                    pool.append(col);
+                }
+
+                tables.append((const char*)&id, sizeof(id));
+            }
+
+            tables.append(texRunIds);
+
+            totalColumns += width;
+        }
     }
 
-    Lump newLump;
-    newLump.name = "PNAMES";
-    newLump.length = (count * 8) + 4;
-    newLump.data = QByteArray(reinterpret_cast<const char*>(newPnames), newLump.length);
+    const quint32 numTextures = tableOfs.size();
+    const quint32 headerSize = 4 + (numTextures * 4);
 
-    delete[] newPnames;
+    QByteArray texCols;
+    texCols.append((const char*)&numTextures, 4);
 
-    wadFile.ReplaceLump(lumpNum, newLump);
+    for(quint32 i = 0; i < numTextures; i++)
+    {
+        quint32 ofs = headerSize + tableOfs[i];
+        texCols.append((const char*)&ofs, 4);
+    }
+
+    texCols.append(tables);
+
+    Lump texColsLump;
+    texColsLump.name = "TEXCOLS";
+    texColsLump.length = texCols.size();
+    texColsLump.data = texCols;
+
+    Lump poolLump;
+    poolLump.name = "COLPOOL";
+    poolLump.length = pool.size();
+    poolLump.data = pool;
+
+    Lump runsLump;
+    runsLump.name = "COLRUNS";
+    runsLump.length = runs.size();
+    runsLump.data = runs;
+
+    wadFile.InsertLump(wadFile.LumpCount(), texColsLump);
+    wadFile.InsertLump(wadFile.LumpCount(), poolLump);
+    wadFile.InsertLump(wadFile.LumpCount(), runsLump);
+
+    qInfo("Texture columns: %u textures, %u columns, %d unique, COLPOOL %d bytes, TEXCOLS %d bytes, COLRUNS %d bytes.",
+          numTextures, totalColumns, int(poolIds.size()), int(pool.size()), int(texCols.size()), int(runs.size()));
+
+    return RemovePatches();
+}
+
+//Remove PNAMES and everything in the patch namespace (P_START..P_END,
+//including P1_START etc. inside it). Only textures use them, and those
+//now come from COLPOOL.
+bool WadProcessor::RemovePatches()
+{
+    static const QRegularExpression startMarker("^P[P0-9]?_START$");
+    static const QRegularExpression endMarker("^P[P0-9]?_END$");
+
+    int depth = 0;
+    quint32 removed = 0;
+    quint32 removedBytes = 0;
+
+    for(quint32 i = 0; i < wadFile.LumpCount(); i++)
+    {
+        Lump l;
+
+        wadFile.GetLumpByNum(i, l);
+
+        const QString name = l.name.toUpper();
+
+        bool remove = (depth > 0) || (name == "PNAMES");
+
+        if(startMarker.match(name).hasMatch())
+        {
+            depth++;
+            remove = true;
+        }
+        else if(endMarker.match(name).hasMatch())
+        {
+            depth = qMax(depth - 1, 0);
+            remove = true;
+        }
+
+        if(remove)
+        {
+            removed++;
+            removedBytes += l.length;
+
+            wadFile.RemoveLump(i);
+            i--;
+        }
+    }
+
+    qInfo("Removed %u patch lumps, %u bytes.", removed, removedBytes);
 
     return true;
 }

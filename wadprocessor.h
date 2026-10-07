@@ -24,7 +24,8 @@ private:
     bool ProcessSegs(quint32 lumpNum);
     bool ProcessSides(quint32 lumpNum);
 
-    bool ProcessPNames();
+    bool RemovePatches();
+    bool ProcessTextureColumns();
     bool RemoveUnusedLumps();
     bool ProcessSounds();
     bool ProcessMusic();
