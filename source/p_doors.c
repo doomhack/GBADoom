@@ -72,24 +72,24 @@ void T_VerticalDoor (vldoor_t* door, void*)
           case blazeRaise:
           case genBlazeRaise:
             door->direction = -1; // time to go back down
-            S_StartSound2(&door->sector->soundorg,sfx_bdcls);
+            P_StartSectorSound(door->sector, sfx_bdcls);
             break;
 
           case normal:
           case genRaise:
             door->direction = -1; // time to go back down
-            S_StartSound2(&door->sector->soundorg,sfx_dorcls);
+            P_StartSectorSound(door->sector, sfx_dorcls);
             break;
 
           case close30ThenOpen:
           case genCdO:
             door->direction = 1;  // time to go back up
-            S_StartSound2(&door->sector->soundorg,sfx_doropn);
+            P_StartSectorSound(door->sector, sfx_doropn);
             break;
 
           case genBlazeCdO:
             door->direction = 1;  // time to go back up
-            S_StartSound2(&door->sector->soundorg,sfx_bdopn);
+            P_StartSectorSound(door->sector, sfx_bdopn);
             break;
 
           default:
@@ -107,7 +107,7 @@ void T_VerticalDoor (vldoor_t* door, void*)
           case raiseIn5Mins:
             door->direction = 1;  // time to raise then
             door->type = normal;  // door acts just like normal 1 DR door now
-            S_StartSound2(&door->sector->soundorg,sfx_doropn);
+            P_StartSectorSound(door->sector, sfx_doropn);
             break;
 
           default:
@@ -194,12 +194,12 @@ void T_VerticalDoor (vldoor_t* door, void*)
           case blazeRaise:
           case genBlazeRaise:
             door->direction = 1;
-          S_StartSound2(&door->sector->soundorg,sfx_bdopn);
+          P_StartSectorSound(door->sector, sfx_bdopn);
 	      break;
 
           default:             // other types bounce off the obstruction
             door->direction = 1;
-            S_StartSound2(&door->sector->soundorg,sfx_doropn);
+            P_StartSectorSound(door->sector, sfx_doropn);
             break;
         }
       }
@@ -377,20 +377,20 @@ int EV_DoDoor
         door->topheight -= 4*FRACUNIT;
         door->direction = -1;
         door->speed = VDOORSPEED * 4;
-        S_StartSound2(&door->sector->soundorg,sfx_bdcls);
+        P_StartSectorSound(door->sector, sfx_bdcls);
         break;
 
       case dclose:
         door->topheight = P_FindLowestCeilingSurrounding(sec);
         door->topheight -= 4*FRACUNIT;
         door->direction = -1;
-        S_StartSound2(&door->sector->soundorg,sfx_dorcls);
+        P_StartSectorSound(door->sector, sfx_dorcls);
         break;
 
       case close30ThenOpen:
         door->topheight = sec->ceilingheight;
         door->direction = -1;
-        S_StartSound2(&door->sector->soundorg,sfx_dorcls);
+        P_StartSectorSound(door->sector, sfx_dorcls);
         break;
 
       case blazeRaise:
@@ -400,7 +400,7 @@ int EV_DoDoor
         door->topheight -= 4*FRACUNIT;
         door->speed = VDOORSPEED * 4;
         if (door->topheight != sec->ceilingheight)
-          S_StartSound2(&door->sector->soundorg,sfx_bdopn);
+          P_StartSectorSound(door->sector, sfx_bdopn);
         break;
 
       case normal:
@@ -409,7 +409,7 @@ int EV_DoDoor
         door->topheight = P_FindLowestCeilingSurrounding(sec);
         door->topheight -= 4*FRACUNIT;
         if (door->topheight != sec->ceilingheight)
-          S_StartSound2(&door->sector->soundorg,sfx_doropn);
+          P_StartSectorSound(door->sector, sfx_doropn);
         break;
 
       default:
@@ -556,11 +556,11 @@ int EV_VerticalDoor
   {
     case 117: // blazing door raise
     case 118: // blazing door open
-      S_StartSound2(&sec->soundorg,sfx_bdopn);
+      P_StartSectorSound(sec, sfx_bdopn);
       break;
 
     default:  // normal or locked door sound
-      S_StartSound2(&sec->soundorg,sfx_doropn);
+      P_StartSectorSound(sec, sfx_doropn);
       break;
   }
 
@@ -594,7 +594,7 @@ int EV_VerticalDoor
     case 33:
     case 34:
       door->type = dopen;
-      LN_SPECIAL(line) = 0;
+      LN_CLEARSPECIAL(line);
       break;
 
     case 117: // blazing door raise
@@ -603,7 +603,7 @@ int EV_VerticalDoor
       break;
     case 118: // blazing door open
       door->type = blazeOpen;
-      LN_SPECIAL(line) = 0;
+      LN_CLEARSPECIAL(line);
       door->speed = VDOORSPEED*4;
       break;
 

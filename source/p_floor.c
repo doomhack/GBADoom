@@ -239,7 +239,7 @@ void T_MoveFloor(floormove_t* floor, void*)
                 );
 
     if (!(_g->leveltime&7))     // make the floormove sound
-        S_StartSound2(&floor->sector->soundorg, sfx_stnmov);
+        P_StartSectorSound(floor->sector, sfx_stnmov);
 
     if (res == pastdest)    // if destination height is reached
     {
@@ -255,7 +255,7 @@ void T_MoveFloor(floormove_t* floor, void*)
             case genFloorChg0:
                 floor->sector->special = floor->newspecial;
                 //jff add to fix bug in special transfers from changes
-                floor->sector->oldspecial = floor->oldspecial;
+                floor->sector->oldsecret = floor->oldsecret;
                 //fall thru
             case genFloorChg:
                 floor->sector->floorpic = floor->texture;
@@ -271,14 +271,14 @@ void T_MoveFloor(floormove_t* floor, void*)
             case lowerAndChange:
                 floor->sector->special = floor->newspecial;
                 //jff add to fix bug in special transfers from changes
-                floor->sector->oldspecial = floor->oldspecial;
+                floor->sector->oldsecret = floor->oldsecret;
                 floor->sector->floorpic = floor->texture;
                 break;
             case genFloorChgT:
             case genFloorChg0:
                 floor->sector->special = floor->newspecial;
                 //jff add to fix bug in special transfers from changes
-                floor->sector->oldspecial = floor->oldspecial;
+                floor->sector->oldsecret = floor->oldsecret;
                 //fall thru
             case genFloorChg:
                 floor->sector->floorpic = floor->texture;
@@ -292,7 +292,7 @@ void T_MoveFloor(floormove_t* floor, void*)
         P_RemoveThinker(&floor->thinker);//remove this floor from list of movers
 
         // make floor stop sound
-        S_StartSound2(&floor->sector->soundorg, sfx_pstop);
+        P_StartSectorSound(floor->sector, sfx_pstop);
     }
 }
 
@@ -359,7 +359,7 @@ void T_MoveElevator(elevator_t* elevator, void*)
 
     // make floor move sound
     if (!(_g->leveltime&7))
-        S_StartSound2(&elevator->sector->soundorg, sfx_stnmov);
+        P_StartSectorSound(elevator->sector, sfx_stnmov);
 
     if (res == pastdest)            // if destination height acheived
     {
@@ -368,7 +368,7 @@ void T_MoveElevator(elevator_t* elevator, void*)
         P_RemoveThinker(&elevator->thinker);    // remove elevator from actives
 
         // make floor stop sound
-        S_StartSound2(&elevator->sector->soundorg, sfx_pstop);
+        P_StartSectorSound(elevator->sector, sfx_pstop);
     }
 }
 
@@ -524,7 +524,7 @@ int EV_DoFloor
             sec->floorpic = LN_FRONTSECTOR(line)->floorpic;
             sec->special = LN_FRONTSECTOR(line)->special;
             //jff 3/14/98 transfer both old and new special
-            sec->oldspecial = LN_FRONTSECTOR(line)->oldspecial;
+            sec->oldsecret = LN_FRONTSECTOR(line)->oldsecret;
             break;
 
         case raiseToTexture:
@@ -576,7 +576,7 @@ int EV_DoFloor
             // --> should not affect compatibility <--
             floor->newspecial = sec->special;
             //jff 3/14/98 transfer both old and new special
-            floor->oldspecial = sec->oldspecial;
+            floor->oldsecret = sec->oldsecret;
 
             //jff 5/23/98 use model subroutine to unify fixes and handling
             sec = P_FindModelFloorSector(floor->floordestheight,sec-_g->sectors);
@@ -585,7 +585,7 @@ int EV_DoFloor
                 floor->texture = sec->floorpic;
                 floor->newspecial = sec->special;
                 //jff 3/14/98 transfer both old and new special
-                floor->oldspecial = sec->oldspecial;
+                floor->oldsecret = sec->oldsecret;
             }
             break;
         default:
@@ -630,7 +630,7 @@ int EV_DoChange
         case trigChangeOnly:
             sec->floorpic = LN_FRONTSECTOR(line)->floorpic;
             sec->special = LN_FRONTSECTOR(line)->special;
-            sec->oldspecial = LN_FRONTSECTOR(line)->oldspecial;
+            sec->oldsecret = LN_FRONTSECTOR(line)->oldsecret;
             break;
         case numChangeOnly:
             secm = P_FindModelFloorSector(sec->floorheight,secnum);
@@ -638,7 +638,7 @@ int EV_DoChange
             {
                 sec->floorpic = secm->floorpic;
                 sec->special = secm->special;
-                sec->oldspecial = secm->oldspecial;
+                sec->oldsecret = secm->oldsecret;
             }
             break;
         default:

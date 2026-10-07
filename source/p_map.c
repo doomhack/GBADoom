@@ -47,6 +47,19 @@
 #include "global_data.h"
 
 
+// Update floorz/ceilingz from the last P_CheckPosition and remember
+// whether the thing is hanging over a tall dropoff (killough 11/98).
+static void P_SetThingFloorCeiling(mobj_t* thing)
+{
+    thing->floorz = _g->tmfloorz;
+    thing->ceilingz = _g->tmceilingz;
+
+    if (_g->tmfloorz - _g->tmdropoffz > 24*FRACUNIT)
+        thing->flags |= MF_OVERDROPOFF;
+    else
+        thing->flags &= ~MF_OVERDROPOFF;
+}
+
 //
 // TELEPORT MOVE
 //
@@ -70,7 +83,7 @@ bool PIT_StompThing (mobj_t* thing)
     if (!(thing->flags & MF_SHOOTABLE)) // Can't shoot it? Can't stomp it!
         return true;
 
-    blockdist = thing->radius + _g->tmthing->radius;
+    blockdist = P_RADIUS(thing) + P_RADIUS(_g->tmthing);
 
     if (D_abs(thing->x - _g->tmx) >= blockdist || D_abs(thing->y - _g->tmy) >= blockdist)
         return true; // didn't hit it
@@ -98,7 +111,7 @@ bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
     int     bx;
     int     by;
 
-    subsector_t*  newsubsec;
+    sector_t*  newsec;
 
     /* killough 8/9/98: make telefragging more consistent, preserve compatibility */
     _g->telefrag = P_MobjIsPlayer(thing) || boss;
@@ -110,12 +123,12 @@ bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
     _g->tmx = x;
     _g->tmy = y;
 
-    _g->tmbbox[BOXTOP] = y + _g->tmthing->radius;
-    _g->tmbbox[BOXBOTTOM] = y - _g->tmthing->radius;
-    _g->tmbbox[BOXRIGHT] = x + _g->tmthing->radius;
-    _g->tmbbox[BOXLEFT] = x - _g->tmthing->radius;
+    _g->tmbbox[BOXTOP] = y + P_RADIUS(_g->tmthing);
+    _g->tmbbox[BOXBOTTOM] = y - P_RADIUS(_g->tmthing);
+    _g->tmbbox[BOXRIGHT] = x + P_RADIUS(_g->tmthing);
+    _g->tmbbox[BOXLEFT] = x - P_RADIUS(_g->tmthing);
 
-    newsubsec = R_PointInSubsector (x,y);
+    newsec = R_PointInSector (x,y);
     _g->ceilingline = NULL;
 
     // The base floor/ceiling is from the subsector
@@ -123,8 +136,8 @@ bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
     // Any contacted lines the step closer together
     // will adjust them.
 
-    _g->tmfloorz = _g->tmdropoffz = newsubsec->sector->floorheight;
-    _g->tmceilingz = newsubsec->sector->ceilingheight;
+    _g->tmfloorz = _g->tmdropoffz = newsec->floorheight;
+    _g->tmceilingz = newsec->ceilingheight;
 
     _g->validcount++;
     _g->numspechit = 0;
@@ -146,9 +159,7 @@ bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
 
     P_UnsetThingPosition (thing);
 
-    thing->floorz = _g->tmfloorz;
-    thing->ceilingz = _g->tmceilingz;
-    thing->dropoffz = _g->tmdropoffz;        // killough 11/98
+    P_SetThingFloorCeiling(thing);
 
     thing->x = x;
     thing->y = y;
@@ -208,10 +219,10 @@ static int untouched(const line_t *ld)
 {
     fixed_t x, y, tmbbox[4];
     return
-            (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+_g->tmthing->radius) <= ld->bbox[BOXLEFT] ||
-            (tmbbox[BOXLEFT] = x-_g->tmthing->radius) >= ld->bbox[BOXRIGHT] ||
-            (tmbbox[BOXTOP] = (y=_g->tmthing->y)+_g->tmthing->radius) <= ld->bbox[BOXBOTTOM] ||
-            (tmbbox[BOXBOTTOM] = y-_g->tmthing->radius) >= ld->bbox[BOXTOP] ||
+            (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+P_RADIUS(_g->tmthing)) <= ld->bbox[BOXLEFT] ||
+            (tmbbox[BOXLEFT] = x-P_RADIUS(_g->tmthing)) >= ld->bbox[BOXRIGHT] ||
+            (tmbbox[BOXTOP] = (y=_g->tmthing->y)+P_RADIUS(_g->tmthing)) <= ld->bbox[BOXBOTTOM] ||
+            (tmbbox[BOXBOTTOM] = y-P_RADIUS(_g->tmthing)) >= ld->bbox[BOXTOP] ||
             P_BoxOnLineSide(tmbbox, ld) != -1;
 }
 
@@ -321,7 +332,7 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
     mobj_t* tmthing = _g->tmthing;
 
-    const fixed_t blockdist = thing->radius + tmthing->radius;
+    const fixed_t blockdist = P_RADIUS(thing) + P_RADIUS(tmthing);
 
     if (D_abs(thing->x - _g->tmx) >= blockdist || D_abs(thing->y - _g->tmy) >= blockdist)
         return true; // didn't hit it
@@ -517,19 +528,19 @@ bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
     int     yh;
     int     bx;
     int     by;
-    subsector_t*  newsubsec;
+    sector_t*  newsec;
 
     _g->tmthing = thing;
 
     _g->tmx = x;
     _g->tmy = y;
 
-    _g->tmbbox[BOXTOP] = y + _g->tmthing->radius;
-    _g->tmbbox[BOXBOTTOM] = y - _g->tmthing->radius;
-    _g->tmbbox[BOXRIGHT] = x + _g->tmthing->radius;
-    _g->tmbbox[BOXLEFT] = x - _g->tmthing->radius;
+    _g->tmbbox[BOXTOP] = y + P_RADIUS(_g->tmthing);
+    _g->tmbbox[BOXBOTTOM] = y - P_RADIUS(_g->tmthing);
+    _g->tmbbox[BOXRIGHT] = x + P_RADIUS(_g->tmthing);
+    _g->tmbbox[BOXLEFT] = x - P_RADIUS(_g->tmthing);
 
-    newsubsec = R_PointInSubsector (x,y);
+    newsec = R_PointInSector (x,y);
     _g->floorline = _g->blockline = _g->ceilingline = NULL; // killough 8/1/98
 
     // Whether object can get out of a sticky situation:
@@ -541,8 +552,8 @@ bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
     // Any contacted lines the step closer together
     // will adjust them.
 
-    _g->tmfloorz = _g->tmdropoffz = newsubsec->sector->floorheight;
-    _g->tmceilingz = newsubsec->sector->ceilingheight;
+    _g->tmfloorz = _g->tmdropoffz = newsec->floorheight;
+    _g->tmceilingz = newsec->ceilingheight;
     _g->validcount++;
     _g->numspechit = 0;
 
@@ -645,9 +656,7 @@ bool P_TryMove(mobj_t* thing,fixed_t x,fixed_t y, bool dropoff)
 
     oldx = thing->x;
     oldy = thing->y;
-    thing->floorz = _g->tmfloorz;
-    thing->ceilingz = _g->tmceilingz;
-    thing->dropoffz = _g->tmdropoffz;      // killough 11/98: keep track of dropoffs
+    P_SetThingFloorCeiling(thing);
     thing->x = x;
     thing->y = y;
 
@@ -691,9 +700,7 @@ bool P_ThingHeightClip (mobj_t* thing)
    * killough 11/98: Answer: see below (upset balance if hanging off ledge)
    */
 
-    thing->floorz = _g->tmfloorz;
-    thing->ceilingz = _g->tmceilingz;
-    thing->dropoffz = _g->tmdropoffz;    /* killough 11/98: remember dropoffs */
+    P_SetThingFloorCeiling(thing);
 
     if (onfloor)
     {
@@ -875,14 +882,14 @@ void P_SlideMove(mobj_t *mo)
         // trace along the three leading corners
 
         if (mo->momx > 0)
-            leadx = mo->x + mo->radius, trailx = mo->x - mo->radius;
+            leadx = mo->x + P_RADIUS(mo), trailx = mo->x - P_RADIUS(mo);
         else
-            leadx = mo->x - mo->radius, trailx = mo->x + mo->radius;
+            leadx = mo->x - P_RADIUS(mo), trailx = mo->x + P_RADIUS(mo);
 
         if (mo->momy > 0)
-            leady = mo->y + mo->radius, traily = mo->y - mo->radius;
+            leady = mo->y + P_RADIUS(mo), traily = mo->y - P_RADIUS(mo);
         else
-            leady = mo->y - mo->radius, traily = mo->y + mo->radius;
+            leady = mo->y - P_RADIUS(mo), traily = mo->y + P_RADIUS(mo);
 
         _g->bestslidefrac = FRACUNIT+1;
 
@@ -1382,7 +1389,7 @@ bool PIT_RadiusAttack (mobj_t* thing)
     dy = D_abs(thing->y - _g->bombspot->y);
 
     dist = dx>dy ? dx : dy;
-    dist = (dist - thing->radius) >> FRACBITS;
+    dist = (dist - P_RADIUS(thing)) >> FRACBITS;
 
     if (dist < 0)
         dist = 0;
@@ -1511,268 +1518,30 @@ bool PIT_ChangeSector (mobj_t* thing)
 
 //
 // P_CheckSector
-// jff 3/19/98 added to just check monsters on the periphery
-// of a moving sector instead of all in bounding box of the
-// sector. Both more accurate and faster.
+// Clip every thing in the blockmap blocks the sector covers
+// (vanilla P_ChangeSector). MAXRADIUS pads the box so things
+// centred just outside the sector are still checked.
 //
 
 bool P_CheckSector(sector_t* sector,bool crunch)
 {
-    msecnode_t *n;
+    fixed_t bbox[4];
+
+    P_SectorBBox(sector, bbox);
+
+    const int xl = (bbox[BOXLEFT]   - _g->bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
+    const int xh = (bbox[BOXRIGHT]  - _g->bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
+    const int yl = (bbox[BOXBOTTOM] - _g->bmaporgy - MAXRADIUS) >> MAPBLOCKSHIFT;
+    const int yh = (bbox[BOXTOP]    - _g->bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
 
     _g->nofit = false;
     _g->crushchange = crunch;
 
-    // killough 4/4/98: scan list front-to-back until empty or exhausted,
-    // restarting from beginning after each thing is processed. Avoids
-    // crashes, and is sure to examine all things in the sector, and only
-    // the things which are in the sector, until a steady-state is reached.
-    // Things can arbitrarily be inserted and removed and it won't mess up.
-    //
-    // killough 4/7/98: simplified to avoid using complicated counter
-
-    // Mark all things invalid
-
-    for (n=sector->touching_thinglist; n; n=n->m_snext)
-        n->visited = false;
-
-    do
-        for (n=sector->touching_thinglist; n; n=n->m_snext)  // go through list
-            if (!n->visited)               // unprocessed thing found
-            {
-                n->visited  = true;          // mark thing as processed
-                if (!(n->m_thing->flags & MF_NOBLOCKMAP)) //jff 4/7/98 don't do these
-                    PIT_ChangeSector(n->m_thing);    // process it
-                break;                 // exit and start over
-            }
-    while (n);  // repeat from scratch until all things left are marked valid
+    for (int x = xl; x <= xh; x++)
+        for (int y = yl; y <= yh; y++)
+            P_BlockThingsIterator(x, y, PIT_ChangeSector);
 
     return _g->nofit;
-}
-
-// phares 3/16/98
-//
-// P_AddSecnode() searches the current list to see if this sector is
-// already there. If not, it adds a sector node at the head of the list of
-// sectors this object appears in. This is called when creating a list of
-// nodes that will get linked in later. Returns a pointer to the new node.
-
-msecnode_t* P_AddSecnode(sector_t* s, mobj_t* thing, msecnode_t* nextnode)
-{
-    msecnode_t* node;
-
-    node = nextnode;
-    while (node)
-    {
-        if (node->m_sector == s)   // Already have a node for this sector?
-        {
-            node->m_thing = thing; // Yes. Setting m_thing says 'keep it'.
-            return(nextnode);
-        }
-        node = node->m_tnext;
-    }
-
-    // Couldn't find an existing node for this sector. Add one at the head
-    // of the list.
-
-    node = Z_Malloc(sizeof(msecnode_t), PU_LEVEL, NULL);
-
-    // killough 4/4/98, 4/7/98: mark new nodes unvisited.
-    node->visited = 0;
-
-    node->m_sector = s;       // sector
-    node->m_thing  = thing;     // mobj
-    node->m_tprev  = NULL;    // prev node on Thing thread
-    node->m_tnext  = nextnode;  // next node on Thing thread
-    if (nextnode)
-        nextnode->m_tprev = node; // set back link on Thing
-
-    // Add new node at head of sector thread starting at s->touching_thinglist
-
-    node->m_sprev  = NULL;    // prev node on sector thread
-    node->m_snext  = s->touching_thinglist; // next node on sector thread
-    if (s->touching_thinglist)
-        node->m_snext->m_sprev = node;
-    s->touching_thinglist = node;
-    return(node);
-}
-
-
-// P_DelSecnode() deletes a sector node from the list of
-// sectors this object appears in. Returns a pointer to the next node
-// on the linked list, or NULL.
-
-msecnode_t* P_DelSecnode(msecnode_t* node)
-{
-    msecnode_t* tp;  // prev node on thing thread
-    msecnode_t* tn;  // next node on thing thread
-    msecnode_t* sp;  // prev node on sector thread
-    msecnode_t* sn;  // next node on sector thread
-
-    if (node)
-    {
-        // Unlink from the Thing thread. The Thing thread begins at
-        // sector_list and not from mobj_t->touching_sectorlist.
-
-        tp = node->m_tprev;
-        tn = node->m_tnext;
-        if (tp)
-            tp->m_tnext = tn;
-        if (tn)
-            tn->m_tprev = tp;
-
-        // Unlink from the sector thread. This thread begins at
-        // sector_t->touching_thinglist.
-
-        sp = node->m_sprev;
-        sn = node->m_snext;
-        if (sp)
-            sp->m_snext = sn;
-        else
-            node->m_sector->touching_thinglist = sn;
-        if (sn)
-            sn->m_sprev = sp;
-
-        // Return this node to the freelist
-
-        Z_Free(node);
-        return(tn);
-    }
-    return(NULL);
-}                             // phares 3/13/98
-
-// Delete an entire sector list
-
-void P_DelSeclist(msecnode_t* node)
-
-{
-    while (node)
-        node = P_DelSecnode(node);
-}
-
-
-// phares 3/14/98
-//
-// PIT_GetSectors
-// Locates all the sectors the object is in by looking at the lines that
-// cross through it. You have already decided that the object is allowed
-// at this location, so don't bother with checking impassable or
-// blocking lines.
-
-bool PIT_GetSectors(const line_t* ld)
-{
-    if (_g->tmbbox[BOXRIGHT]  <= ld->bbox[BOXLEFT]   ||
-            _g->tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||
-            _g->tmbbox[BOXTOP]    <= ld->bbox[BOXBOTTOM] ||
-            _g->tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
-        return true;
-
-    if (P_BoxOnLineSide(_g->tmbbox, ld) != -1)
-        return true;
-
-    // This line crosses through the object.
-
-    // Collect the sector(s) from the line and add to the
-    // sector_list you're examining. If the Thing ends up being
-    // allowed to move to this position, then the sector_list
-    // will be attached to the Thing's mobj_t at touching_sectorlist.
-
-    _g->sector_list = P_AddSecnode(LN_FRONTSECTOR(ld),_g->tmthing,_g->sector_list);
-
-    /* Don't assume all lines are 2-sided, since some Things
-   * like MT_TFOG are allowed regardless of whether their radius takes
-   * them beyond an impassable linedef.
-   *
-   * killough 3/27/98, 4/4/98:
-   * Use sidedefs instead of 2s flag to determine two-sidedness.
-   * killough 8/1/98: avoid duplicate if same sector on both sides
-   * cph - DEMOSYNC? */
-
-    if (LN_BACKSECTOR(ld) && LN_BACKSECTOR(ld) != LN_FRONTSECTOR(ld))
-        _g->sector_list = P_AddSecnode(LN_BACKSECTOR(ld), _g->tmthing, _g->sector_list);
-
-    return true;
-}
-
-
-// phares 3/14/98
-//
-// P_CreateSecNodeList alters/creates the sector_list that shows what sectors
-// the object resides in.
-
-void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
-{
-    int xl;
-    int xh;
-    int yl;
-    int yh;
-    int bx;
-    int by;
-    msecnode_t* node;
-    mobj_t* saved_tmthing = _g->tmthing; /* cph - see comment at func end */
-
-    // First, clear out the existing m_thing fields. As each node is
-    // added or verified as needed, m_thing will be set properly. When
-    // finished, delete all nodes where m_thing is still NULL. These
-    // represent the sectors the Thing has vacated.
-
-    node = _g->sector_list;
-    while (node)
-    {
-        node->m_thing = NULL;
-        node = node->m_tnext;
-    }
-
-    _g->tmthing = thing;
-
-    _g->tmx = x;
-    _g->tmy = y;
-
-    _g->tmbbox[BOXTOP]  = y + _g->tmthing->radius;
-    _g->tmbbox[BOXBOTTOM] = y - _g->tmthing->radius;
-    _g->tmbbox[BOXRIGHT]  = x + _g->tmthing->radius;
-    _g->tmbbox[BOXLEFT]   = x - _g->tmthing->radius;
-
-    _g->validcount++; // used to make sure we only process a line once
-
-    xl = (_g->tmbbox[BOXLEFT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
-    xh = (_g->tmbbox[BOXRIGHT] - _g->bmaporgx)>>MAPBLOCKSHIFT;
-    yl = (_g->tmbbox[BOXBOTTOM] - _g->bmaporgy)>>MAPBLOCKSHIFT;
-    yh = (_g->tmbbox[BOXTOP] - _g->bmaporgy)>>MAPBLOCKSHIFT;
-
-    for (bx=xl ; bx<=xh ; bx++)
-        for (by=yl ; by<=yh ; by++)
-            P_BlockLinesIterator(bx,by,PIT_GetSectors);
-
-    // Add the sector of the (x,y) point to sector_list.
-
-    _g->sector_list = P_AddSecnode(thing->subsector->sector,thing,_g->sector_list);
-
-    // Now delete any nodes that won't be used. These are the ones where
-    // m_thing is still NULL.
-
-    node = _g->sector_list;
-    while (node)
-    {
-        if (node->m_thing == NULL)
-        {
-            if (node == _g->sector_list)
-                _g->sector_list = node->m_tnext;
-            node = P_DelSecnode(node);
-        }
-        else
-            node = node->m_tnext;
-    }
-
-    /* cph -
-   * This is the strife we get into for using global variables. tmthing
-   *  is being used by several different functions calling
-   *  P_BlockThingIterator, including functions that can be called *from*
-   *  P_BlockThingIterator. Using a global tmthing is not reentrant.
-   * OTOH for Boom/MBF demos we have to preserve the buggy behavior.
-   *  Fun. We restore its previous value unless we're in a Boom/MBF demo.
-   */
-    _g->tmthing = saved_tmthing;
 }
 
 /* cphipps 2004/08/30 - 

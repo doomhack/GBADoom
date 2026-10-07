@@ -191,7 +191,7 @@ void P_XYMovement (mobj_t* mo)
     if ((mo->flags & MF_CORPSE) &&
             (mo->momx > FRACUNIT/4 || mo->momx < -FRACUNIT/4 ||
              mo->momy > FRACUNIT/4 || mo->momy < -FRACUNIT/4) &&
-            mo->floorz != mo->subsector->sector->floorheight)
+            mo->floorz != mo->sector->floorheight)
         return;  // do not stop sliding if halfway off a step with some momentum
 
     // killough 11/98:
@@ -392,7 +392,7 @@ void P_NightmareRespawn(mobj_t* mobj)
     fixed_t      x;
     fixed_t      y;
     fixed_t      z;
-    subsector_t* ss;
+    sector_t*    sec;
     mobj_t*      mo;
 
     /* haleyjd: stupid nightmare respawning bug fix
@@ -429,7 +429,7 @@ void P_NightmareRespawn(mobj_t* mobj)
 
     mo = P_SpawnMobj (mobj->x,
                       mobj->y,
-                      mobj->subsector->sector->floorheight,
+                      mobj->sector->floorheight,
                       MT_TFOG);
 
     // initiate teleport sound
@@ -438,9 +438,9 @@ void P_NightmareRespawn(mobj_t* mobj)
 
     // spawn a teleport fog at the new spot
 
-    ss = R_PointInSubsector (x,y);
+    sec = R_PointInSector (x,y);
 
-    mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG);
+    mo = P_SpawnMobj (x, y, sec->floorheight , MT_TFOG);
 
     S_StartSound (mo, sfx_telept);
 
@@ -542,7 +542,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
     mobj->type = type;
     mobj->x = x;
     mobj->y = y;
-    mobj->radius = info->radius;
+    mobj->radius = info->radius >> FRACBITS;
     mobj->height = info->height;                                      // phares
     mobj->flags  |= info->flags;
 
@@ -561,24 +561,20 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 
     mobj->state  = st;
     mobj->tics   = st->tics;
-    mobj->sprite = st->sprite;
-    mobj->frame  = st->frame;
-    mobj->touching_sectorlist = NULL; // NULL head of sector list // phares 3/13/98
 
     // set subsector and/or block links
 
     P_SetThingPosition (mobj);
 
-    mobj->dropoffz =           /* killough 11/98: for tracking dropoffs */
-            mobj->floorz   = mobj->subsector->sector->floorheight;
-    mobj->ceilingz = mobj->subsector->sector->ceilingheight;
+    mobj->floorz   = mobj->sector->floorheight;
+    mobj->ceilingz = mobj->sector->ceilingheight;
 
     mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
                                   mobj->ceilingz - mobj->height : z;
 
     mobj->thinker.function = P_ThinkerFunctionForType(type, mobj);
 
-    mobj->target = mobj->tracer = mobj->lastenemy = NULL;
+    mobj->target = mobj->tracer = NULL;
     P_AddThinker (&mobj->thinker);
     if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
         _g->totallive++;
@@ -592,14 +588,6 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 void P_RemoveMobj (mobj_t* mobj)
 {
     P_UnsetThingPosition (mobj);
-
-    // Delete all nodes on the current sector_list               phares 3/16/98
-
-    if (_g->sector_list)
-    {
-        P_DelSeclist(_g->sector_list);
-        _g->sector_list = NULL;
-    }
 
     // stop any playing sound
 
@@ -619,7 +607,6 @@ void P_RemoveMobj (mobj_t* mobj)
     {
         P_SetTarget(&mobj->target,    NULL);
         P_SetTarget(&mobj->tracer,    NULL);
-        P_SetTarget(&mobj->lastenemy, NULL);
     }
     // free block
 

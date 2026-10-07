@@ -88,7 +88,7 @@ void T_MoveCeiling (ceiling_t* ceiling, void*)
           case genSilentCrusher:
             break;
           default:
-            S_StartSound2(&ceiling->sector->soundorg,sfx_stnmov);
+            P_StartSectorSound(ceiling->sector, sfx_stnmov);
             break;
         }
       }
@@ -109,7 +109,7 @@ void T_MoveCeiling (ceiling_t* ceiling, void*)
           case genCeilingChg0:
             ceiling->sector->special = ceiling->newspecial;
             //jff 3/14/98 transfer old special field as well
-            ceiling->sector->oldspecial = ceiling->oldspecial; [[fallthrough]];
+            ceiling->sector->oldsecret = ceiling->oldsecret; [[fallthrough]];
           case genCeilingChg:
             ceiling->sector->ceilingpic = ceiling->texture;
             P_RemoveActiveCeiling(ceiling);
@@ -117,7 +117,7 @@ void T_MoveCeiling (ceiling_t* ceiling, void*)
 
           // crushers reverse direction at the top
           case silentCrushAndRaise:
-            S_StartSound2(&ceiling->sector->soundorg,sfx_pstop); [[fallthrough]];
+            P_StartSectorSound(ceiling->sector, sfx_pstop); [[fallthrough]];
           case genSilentCrusher: [[fallthrough]];
           case genCrusher:  [[fallthrough]];
           case fastCrushAndRaise:  [[fallthrough]];
@@ -152,7 +152,7 @@ void T_MoveCeiling (ceiling_t* ceiling, void*)
           case genSilentCrusher:
             break;
           default:
-            S_StartSound2(&ceiling->sector->soundorg,sfx_stnmov);
+            P_StartSectorSound(ceiling->sector, sfx_stnmov);
         }
       }
 
@@ -173,7 +173,7 @@ void T_MoveCeiling (ceiling_t* ceiling, void*)
           // make platform stop at bottom of all crusher strokes
           // except generalized ones, reset speed, start back up
           case silentCrushAndRaise:
-            S_StartSound2(&ceiling->sector->soundorg,sfx_pstop); [[fallthrough]];
+            P_StartSectorSound(ceiling->sector, sfx_pstop); [[fallthrough]];
           case crushAndRaise:
             ceiling->speed = CEILSPEED; [[fallthrough]];
           case fastCrushAndRaise:
@@ -186,7 +186,7 @@ void T_MoveCeiling (ceiling_t* ceiling, void*)
           case genCeilingChg0:
             ceiling->sector->special = ceiling->newspecial;
             //jff add to fix bug in special transfers from changes
-            ceiling->sector->oldspecial = ceiling->oldspecial; [[fallthrough]];
+            ceiling->sector->oldsecret = ceiling->oldsecret; [[fallthrough]];
           case genCeilingChg:
             ceiling->sector->ceilingpic = ceiling->texture;
             P_RemoveActiveCeiling(ceiling);

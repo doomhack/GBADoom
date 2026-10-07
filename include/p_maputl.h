@@ -88,6 +88,7 @@ void    P_UnsetThingPosition(mobj_t *thing);
 void    P_SetThingPosition(mobj_t *thing);
 bool P_BlockLinesIterator (int x, int y, bool func(const line_t *));
 bool P_BlockThingsIterator(int x, int y, bool func(mobj_t *));
+void P_SectorBBox(const sector_t* sec, fixed_t* bbox);
 bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
                        int flags, bool trav(intercept_t *));
 

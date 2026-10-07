@@ -288,7 +288,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         return;
 
     // Identify by sprite.
-    switch (special->sprite)
+    switch (special->state->sprite)
     {
     // armor
     case SPR_ARM1:
@@ -728,7 +728,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     if (player)
     {
         // end of game hell hack
-        if (target->subsector->sector->special == 11 && damage >= target->health)
+        if (target->sector->special == 11 && damage >= target->health)
             damage = target->health - 1;
 
         // Below certain threshold,
@@ -792,19 +792,6 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     if (source && source != target && source->type != MT_VILE &&
             (!target->threshold || target->type == MT_VILE))
     {
-        /* if not intent on another player, chase after this one
-       *
-       * killough 2/15/98: remember last enemy, to prevent
-       * sleeping early; 2/21/98: Place priority on players
-       * killough 9/9/98: cleaned up, made more consistent:
-       */
-
-        if (!target->lastenemy || target->lastenemy->health <= 0 ||
-                (
-                    !((target->flags ^ target->lastenemy->flags) & MF_FRIEND) &&
-                    target->target != source)) // remember last enemy - killough
-            P_SetTarget(&target->lastenemy, target->target);
-
         P_SetTarget(&target->target, source);       // killough 11/98
         target->threshold = BASETHRESHOLD;
         if (target->state == &states[mobjinfo[target->type].spawnstate]

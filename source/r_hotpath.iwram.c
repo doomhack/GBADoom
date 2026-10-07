@@ -135,15 +135,41 @@ short* negonearray = (short*)&vram2_spare[240];
 #define xtoviewangle xtoviewangle_vram
 
 //*****************************************
-//Column cache stuff.
-//GBA has 16kb of Video Memory for columns
+//Column and flat cache stuff.
+//GBA has 16kb of OBJ Video Memory (unused
+//as OBJs are disabled). The first 8kb holds
+//composite texture columns. The last 8kb
+//holds 2 flats, as VRAM is faster than ROM.
 //*****************************************
 
+#define COLUMN_CACHE_ENTRIES 64
+
+#define FLAT_SIZE 4096
+#define FLAT_CACHE_SLOTS 2
+
 #ifndef GBA
-static byte columnCache[128*128];
+static byte columnCache[COLUMN_CACHE_ENTRIES*128];
+static byte flatCache[FLAT_CACHE_SLOTS*FLAT_SIZE];
 #else
     #define columnCache ((byte*)0x6014000)
+    #define flatCache ((byte*)0x6016000)
 #endif
+
+//Lump held in each flat cache slot.
+static int flatCacheLump[FLAT_CACHE_SLOTS] = {-1, -1};
+
+//Screen area (in pixel pairs) drawn with each flat this frame.
+//Used to pick which flats to cache for the next frame.
+#define MAX_FLAT_STATS 16
+
+typedef struct flat_stat_t
+{
+    int lump;
+    unsigned int area;
+} flat_stat_t;
+
+static flat_stat_t flatStats[MAX_FLAT_STATS];
+static unsigned int numFlatStats;
 
 
 
@@ -364,21 +390,21 @@ static PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
 }
 
 //
-// R_PointInSubsector
+// R_PointInSector
 //
 // killough 5/2/98: reformatted, cleaned up
 
-subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
+sector_t *R_PointInSector(fixed_t x, fixed_t y)
 {
     int nodenum = numnodes-1;
 
     // special case for trivial maps (single subsector, no nodes)
     if (numnodes == 0)
-        return _g->subsectors;
+        return SS_SECTOR(_g->subsectors);
 
     while (!(nodenum & NF_SUBSECTOR))
         nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
-    return &_g->subsectors[nodenum & ~NF_SUBSECTOR];
+    return SS_SECTOR(&_g->subsectors[nodenum & ~NF_SUBSECTOR]);
 }
 
 //
@@ -1149,7 +1175,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 static void R_DrawPlayerSprites(void)
 {
 
-  int i, lightlevel = _g->player.mo->subsector->sector->lightlevel;
+  int i, lightlevel = _g->player.mo->sector->lightlevel;
   pspdef_t *psp;
 
   // clip to screen bounds
@@ -1331,6 +1357,150 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2
 
 
 
+//*******************************************
+// Flat cache.
+// Flats are read from VRAM if cached as this
+// avoids the ROM wait states on each texel.
+//*******************************************
+
+static const byte* R_GetFlat(int lump)
+{
+    for(unsigned int i = 0; i < FLAT_CACHE_SLOTS; i++)
+    {
+        if(flatCacheLump[i] == lump)
+            return &flatCache[i*FLAT_SIZE];
+    }
+
+    return W_CacheLumpNum(lump);
+}
+
+static void R_AddFlatStat(int lump, unsigned int area)
+{
+    for(unsigned int i = 0; i < numFlatStats; i++)
+    {
+        if(flatStats[i].lump == lump)
+        {
+            flatStats[i].area += area;
+            return;
+        }
+    }
+
+    if(numFlatStats < MAX_FLAT_STATS)
+    {
+        flatStats[numFlatStats].lump = lump;
+        flatStats[numFlatStats].area = area;
+        numFlatStats++;
+    }
+}
+
+static void R_LoadFlat(unsigned int slot, int lump)
+{
+    if(W_LumpLength(lump) < FLAT_SIZE)
+        return;
+
+    const byte* src = W_CacheLumpNum(lump);
+    byte* dest = &flatCache[slot*FLAT_SIZE];
+
+    if(((size_t)src & 3) == 0)
+    {
+        BlockCopy(dest, src, FLAT_SIZE);
+    }
+    else
+    {
+        //Unaligned lump. VRAM needs 16bit writes.
+        unsigned short* d = (unsigned short*)dest;
+
+        for(unsigned int i = 0; i < FLAT_SIZE; i += 2)
+            *d++ = src[i] | (src[i+1] << 8);
+    }
+
+    flatCacheLump[slot] = lump;
+}
+
+//Copying a flat into VRAM costs roughly the same as the
+//ROM wait states saved drawing this many pixel pairs.
+#define FLAT_COPY_AREA 1536
+
+//Cache the (up to) two flats that covered the most screen area
+//this frame, ready for the next frame. Flats already cached get a
+//bonus so similar sized flats don't thrash the cache.
+static void R_UpdateFlatCache(void)
+{
+    int want[FLAT_CACHE_SLOTS];
+    unsigned int wantArea[FLAT_CACHE_SLOTS];
+
+    for(unsigned int s = 0; s < FLAT_CACHE_SLOTS; s++)
+    {
+        want[s] = -1;
+        wantArea[s] = FLAT_COPY_AREA; //Not worth caching below this.
+    }
+
+    for(unsigned int i = 0; i < numFlatStats; i++)
+    {
+        const int lump = flatStats[i].lump;
+        unsigned int area = flatStats[i].area;
+
+        for(unsigned int s = 0; s < FLAT_CACHE_SLOTS; s++)
+        {
+            if(flatCacheLump[s] == lump)
+                area += FLAT_COPY_AREA;
+        }
+
+        //Insert into the sorted wanted list.
+        for(unsigned int w = 0; w < FLAT_CACHE_SLOTS; w++)
+        {
+            if(area > wantArea[w])
+            {
+                for(unsigned int j = FLAT_CACHE_SLOTS-1; j > w; j--)
+                {
+                    want[j] = want[j-1];
+                    wantArea[j] = wantArea[j-1];
+                }
+
+                want[w] = lump;
+                wantArea[w] = area;
+                break;
+            }
+        }
+    }
+
+    numFlatStats = 0;
+
+    //Keep slots that already hold a wanted flat.
+    bool keep[FLAT_CACHE_SLOTS];
+
+    for(unsigned int s = 0; s < FLAT_CACHE_SLOTS; s++)
+    {
+        keep[s] = false;
+
+        for(unsigned int w = 0; w < FLAT_CACHE_SLOTS; w++)
+        {
+            if(want[w] != -1 && flatCacheLump[s] == want[w])
+            {
+                keep[s] = true;
+                want[w] = -1;
+            }
+        }
+    }
+
+    //Load the rest into the remaining slots.
+    for(unsigned int w = 0; w < FLAT_CACHE_SLOTS; w++)
+    {
+        if(want[w] == -1)
+            continue;
+
+        for(unsigned int s = 0; s < FLAT_CACHE_SLOTS; s++)
+        {
+            if(!keep[s])
+            {
+                R_LoadFlat(s, want[w]);
+                keep[s] = true;
+                break;
+            }
+        }
+    }
+}
+
 // New function, by Lee Killough
 
 static void R_DoDrawPlane(visplane_t *pl)
@@ -1379,7 +1549,9 @@ static void R_DoDrawPlane(visplane_t *pl)
 
             draw_span_vars_t dsvars;
 
-            dsvars.source = W_CacheLumpNum(_g->firstflat + flattranslation[pl->picnum]);
+            const int lump = _g->firstflat + flattranslation[pl->picnum];
+
+            dsvars.source = R_GetFlat(lump);
             dsvars.colormap = R_LoadColorMap(pl->lightlevel);
 
             planeheight = D_abs(pl->height-viewz);
@@ -1388,10 +1560,20 @@ static void R_DoDrawPlane(visplane_t *pl)
 
             pl->limits[pl->minx-1].top = pl->limits[stop].top = 0xff; // dropoff overflow
 
+            unsigned int area = 0;
+
             for (x = pl->minx ; x <= stop ; x++)
             {
-                R_MakeSpans(x,pl->limits[x-1].top,pl->limits[x-1].bottom, pl->limits[x].top,pl->limits[x].bottom, &dsvars);
+                const unsigned int top = pl->limits[x].top;
+                const unsigned int bottom = pl->limits[x].bottom;
+
+                if(top != 0xff)
+                    area += (bottom - top) + 1;
+
+                R_MakeSpans(x,pl->limits[x-1].top,pl->limits[x-1].bottom, top, bottom, &dsvars);
             }
+
+            R_AddFlatStat(lump, area);
         }
     }
 }
@@ -1475,8 +1657,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         return;
 
     // decide which patch to use for sprite relative to player
-    const spritedef_t* sprdef = &_g->sprites[thing->sprite];
-    const spriteframe_t* sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+    const spritedef_t* sprdef = &_g->sprites[thing->state->sprite];
+    const spriteframe_t* sprframe = &sprdef->spriteframes[thing->state->frame & FF_FRAMEMASK];
 
     unsigned int rot = 0;
 
@@ -1561,7 +1743,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         vis->colormap = NULL;             // shadow draw
     else if (fixedcolormap)
         vis->colormap = fixedcolormap;      // fixed map
-    else if (thing->frame & FF_FULLBRIGHT)
+    else if (thing->state->frame & FF_FULLBRIGHT)
         vis->colormap = fullcolormap;     // full bright  // killough 3/20/98
     else
     {      // diminished light
@@ -1574,9 +1756,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 // During BSP traversal, this adds sprites by sector.
 //
 // killough 9/18/98: add lightlevel as parameter, fixing underwater lighting
-static void R_AddSprites(subsector_t* subsec, int lightlevel)
+static void R_AddSprites(sector_t* sec, int lightlevel)
 {
-  sector_t* sec=subsec->sector;
   mobj_t *thing;
 
   // BSP is traversed by subsector.
@@ -1735,7 +1916,7 @@ static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy,
 #define CACHE_WAYS 4
 
 #define CACHE_MASK (CACHE_WAYS-1)
-#define CACHE_STRIDE (128 / CACHE_WAYS)
+#define CACHE_STRIDE (COLUMN_CACHE_ENTRIES / CACHE_WAYS)
 #define CACHE_KEY_MASK (CACHE_STRIDE-1)
 
 #define CACHE_ENTRY(c, t) ((c << 16 | t))
@@ -1766,7 +1947,7 @@ static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int colum
         cc+=CACHE_STRIDE;
         i+=CACHE_STRIDE;
 
-    } while(i < 128);
+    } while(i < COLUMN_CACHE_ENTRIES);
 
 
     //No space. Random eviction.
@@ -2114,7 +2295,7 @@ static void R_StoreWallRange(const int start, const int stop)
     linedata_t* linedata = &_g->linedata[curline->linenum];
 
     // mark the segment as visible for auto map
-    linedata->r_flags |= ML_MAPPED;
+    linedata->r_mapped = 1;
 
     sidedef = &_g->sides[curline->sidenum];
     linedef = &_g->lines[curline->linenum];
@@ -2417,7 +2598,7 @@ static void R_RecalcLineFlags(void)
 
     const side_t* side = &_g->sides[curline->sidenum];
 
-    linedata->r_validcount = (_g->gametic & 0xffff);
+    linedata->r_validcount = (_g->gametic & RF_VALIDMASK);
 
     /* First decide if the line is closed, normal, or invisible */
     if (!(linedef->flags & ML_TWOSIDED)
@@ -2439,7 +2620,7 @@ static void R_RecalcLineFlags(void)
                     frontsector->ceilingpic!=_g->skyflatnum)
                 )
             )
-        linedata->r_flags = (RF_CLOSED | (linedata->r_flags & ML_MAPPED));
+        linedata->r_flags = RF_CLOSED;
     else
     {
         // Reject empty lines used for triggers
@@ -2455,9 +2636,9 @@ static void R_RecalcLineFlags(void)
                 || backsector->floorpic != frontsector->floorpic
                 || backsector->lightlevel != frontsector->lightlevel)
         {
-            linedata->r_flags = (linedata->r_flags & ML_MAPPED); return;
+            linedata->r_flags = 0; return;
         } else
-            linedata->r_flags = (RF_IGNORE | (linedata->r_flags & ML_MAPPED));
+            linedata->r_flags = RF_IGNORE;
     }
 }
 
@@ -2572,7 +2753,7 @@ static void R_AddLine (const seg_t *line)
     linedef = &_g->lines[curline->linenum];
     linedata_t* linedata = &_g->linedata[linedef->lineno];
 
-    if (linedata->r_validcount != (_g->gametic & 0xffff))
+    if (linedata->r_validcount != (_g->gametic & RF_VALIDMASK))
         R_RecalcLineFlags();
 
     if (linedata->r_flags & RF_IGNORE)
@@ -2593,10 +2774,10 @@ static void R_Subsector(int num)
 {
     int         count;
     const seg_t       *line;
-    subsector_t *sub;
+    const subsector_t *sub;
 
     sub = &_g->subsectors[num];
-    frontsector = sub->sector;
+    frontsector = SS_SECTOR(sub);
     count = sub->numlines;
     line = &_g->segs[sub->firstline];
 
@@ -2625,7 +2806,7 @@ static void R_Subsector(int num)
         ceilingplane = NULL;
     }
 
-    R_AddSprites(sub, frontsector->lightlevel);
+    R_AddSprites(frontsector, frontsector->lightlevel);
     while (count--)
     {
         R_AddLine (line);
@@ -2855,6 +3036,8 @@ static void R_DrawPlanes (void)
             pl = pl->next;
         }
     }
+
+    R_UpdateFlatCache();
 }
 
 //
@@ -3130,8 +3313,6 @@ bool P_SetMobjState(mobj_t* mobj, statenum_t state)
         st = &states[state];
         mobj->state = st;
         mobj->tics = st->tics;
-        mobj->sprite = st->sprite;
-        mobj->frame = st->frame;
 
         // Modified handling.
         // Call action functions when the state is set

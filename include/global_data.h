@@ -354,9 +354,6 @@ const line_t *spechit[4];                // new code -- killough
 
 int numspechit;
 
-// Temporary holder for thing_sectorlist threads
-msecnode_t* sector_list;                             // phares 3/16/98
-
 /* killough 8/2/98: make variables static */
 fixed_t   bestslidefrac;
 const line_t*   bestslideline;
@@ -458,7 +455,7 @@ sector_t *sectors;
 
 
 int      numsubsectors;
-subsector_t *subsectors;
+const subsector_t *subsectors;    // ROM (SSECTORS lump)
 
 
 

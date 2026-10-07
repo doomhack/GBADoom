@@ -119,7 +119,7 @@ manual_floor:
         floor->texture = sec->floorpic;
         floor->newspecial = sec->special;
         //jff 3/14/98 transfer old special field too
-        floor->oldspecial = sec->oldspecial;
+        floor->oldsecret = sec->oldsecret;
         floor->type = genFloor;
 
         // set the speed of motion
@@ -202,13 +202,13 @@ manual_floor:
                     case FChgZero:  // zero type
                         floor->newspecial = 0;
                         //jff 3/14/98 change old field too
-                        floor->oldspecial = 0;
+                        floor->oldsecret = 0;
                         floor->type = genFloorChg0;
                         break;
                     case FChgTyp:   // copy type
                         floor->newspecial = sec->special;
                         //jff 3/14/98 change old field too
-                        floor->oldspecial = sec->oldspecial;
+                        floor->oldsecret = sec->oldsecret;
                         floor->type = genFloorChgT;
                         break;
                     case FChgTxt:   // leave type be
@@ -227,13 +227,13 @@ manual_floor:
                 case FChgZero:    // zero type
                     floor->newspecial = 0;
                     //jff 3/14/98 change old field too
-                    floor->oldspecial = 0;
+                    floor->oldsecret = 0;
                     floor->type = genFloorChg0;
                     break;
                 case FChgTyp:     // copy type
                     floor->newspecial = LN_FRONTSECTOR(line)->special;
                     //jff 3/14/98 change old field too
-                    floor->oldspecial = LN_FRONTSECTOR(line)->oldspecial;
+                    floor->oldsecret = LN_FRONTSECTOR(line)->oldsecret;
                     floor->type = genFloorChgT;
                     break;
                 case FChgTxt:     // leave type be
@@ -323,7 +323,7 @@ manual_ceiling:
         ceiling->texture = sec->ceilingpic;
         ceiling->newspecial = sec->special;
         //jff 3/14/98 change old field too
-        ceiling->oldspecial = sec->oldspecial;
+        ceiling->oldsecret = sec->oldsecret;
         ceiling->tag = sec->tag;
         ceiling->type = genCeiling;
 
@@ -410,13 +410,13 @@ manual_ceiling:
                     case CChgZero:  // type is zeroed
                         ceiling->newspecial = 0;
                         //jff 3/14/98 change old field too
-                        ceiling->oldspecial = 0;
+                        ceiling->oldsecret = 0;
                         ceiling->type = genCeilingChg0;
                         break;
                     case CChgTyp:   // type is copied
                         ceiling->newspecial = sec->special;
                         //jff 3/14/98 change old field too
-                        ceiling->oldspecial = sec->oldspecial;
+                        ceiling->oldsecret = sec->oldsecret;
                         ceiling->type = genCeilingChgT;
                         break;
                     case CChgTxt:   // type is left alone
@@ -435,13 +435,13 @@ manual_ceiling:
                 case CChgZero:    // type is zeroed
                     ceiling->newspecial = 0;
                     //jff 3/14/98 change old field too
-                    ceiling->oldspecial = 0;
+                    ceiling->oldsecret = 0;
                     ceiling->type = genCeilingChg0;
                     break;
                 case CChgTyp:     // type is copied
                     ceiling->newspecial = LN_FRONTSECTOR(line)->special;
                     //jff 3/14/98 change old field too
-                    ceiling->oldspecial = LN_FRONTSECTOR(line)->oldspecial;
+                    ceiling->oldsecret = LN_FRONTSECTOR(line)->oldsecret;
                     ceiling->type = genCeilingChgT;
                     break;
                 case CChgTxt:     // type is left alone
@@ -599,7 +599,7 @@ manual_lift:
             break;
         }
 
-        S_StartSound2(&sec->soundorg,sfx_pstart);
+        P_StartSectorSound(sec, sfx_pstart);
         P_AddActivePlat(plat); // add this plat to the list of active plats
 
         if (manual)
@@ -790,7 +790,7 @@ manual_stair:
     }
     // retriggerable generalized stairs build up or down alternately
     if (rtn)
-        LN_SPECIAL(line) ^= StairDirection; // alternate dir on succ activations
+        LN_FLIPSTAIRS(line); // alternate dir on succ activations
     return rtn;
 }
 
@@ -990,7 +990,7 @@ manual_locked:
         // killough 4/15/98: fix generalized door opening sounds
         // (previously they always had the blazing door close sound)
 
-        S_StartSound2(&door->sector->soundorg,   // killough 4/15/98
+        P_StartSectorSound(door->sector,   // killough 4/15/98
                       door->speed >= VDOORSPEED*4 ? sfx_bdopn : sfx_doropn);
 
         if (manual)
@@ -1113,7 +1113,7 @@ manual_door:
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4*FRACUNIT;
             if (door->topheight != sec->ceilingheight)
-                S_StartSound2(&door->sector->soundorg,Sped>=SpeedFast ? sfx_bdopn : sfx_doropn);
+                P_StartSectorSound(door->sector, Sped>=SpeedFast ? sfx_bdopn : sfx_doropn);
             door->type = Sped>=SpeedFast? genBlazeRaise : genRaise;
             break;
         case ODoor:
@@ -1121,20 +1121,20 @@ manual_door:
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4*FRACUNIT;
             if (door->topheight != sec->ceilingheight)
-                S_StartSound2(&door->sector->soundorg,Sped>=SpeedFast ? sfx_bdopn : sfx_doropn);
+                P_StartSectorSound(door->sector, Sped>=SpeedFast ? sfx_bdopn : sfx_doropn);
             door->type = Sped>=SpeedFast? genBlazeOpen : genOpen;
             break;
         case CdODoor:
             door->topheight = sec->ceilingheight;
             door->direction = -1;
-            S_StartSound2(&door->sector->soundorg,Sped>=SpeedFast ? sfx_bdcls : sfx_dorcls);
+            P_StartSectorSound(door->sector, Sped>=SpeedFast ? sfx_bdcls : sfx_dorcls);
             door->type = Sped>=SpeedFast? genBlazeCdO : genCdO;
             break;
         case CDoor:
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4*FRACUNIT;
             door->direction = -1;
-            S_StartSound2(&door->sector->soundorg,Sped>=SpeedFast ? sfx_bdcls : sfx_dorcls);
+            P_StartSectorSound(door->sector, Sped>=SpeedFast ? sfx_bdcls : sfx_dorcls);
             door->type = Sped>=SpeedFast? genBlazeClose : genClose;
             break;
         default:

@@ -542,7 +542,7 @@ typedef struct
   bwhere_e where;
   int   btexture;
   int   btimer;
-  degenmobj_t* soundorg;
+  const sector_t* soundsec;   // sector to play the button sound from
 
 } button_t;
 
@@ -651,7 +651,7 @@ typedef struct
 
   //jff 02/04/98 add these to support ceiling changers
   int newspecial;
-  int oldspecial; //jff 3/14/98 add to fix bug in change transfers
+  int oldsecret; //jff 3/14/98 add to fix bug in change transfers
   short texture;
 
   // 1 = up, 0 = waiting, -1 = down
@@ -672,7 +672,7 @@ typedef struct
   sector_t* sector;
   int direction;
   int newspecial;
-  int oldspecial;   //jff 3/14/98 add to fix bug in change transfers
+  int oldsecret;   //jff 3/14/98 add to fix bug in change transfers
   short texture;
   fixed_t floordestheight;
   fixed_t speed;
@@ -845,6 +845,8 @@ bool P_CanUnlockGenDoor
 bool P_SectorActive
 ( special_e t,
   const sector_t* s );
+
+void P_StartSectorSound(const sector_t* sec, int sfx_id);
 
 bool P_IsSecret
 ( const sector_t *sec );

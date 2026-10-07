@@ -84,22 +84,11 @@ static void P_LoadSegs (int lump)
 
 static void P_LoadSubsectors (int lump)
 {
-    /* cph 2006/07/29 - make data a const mapsubsector_t *, so the loop below is simpler & gives no constness warnings */
-    const mapsubsector_t *data;
-    int  i;
+    _g->numsubsectors = W_LumpLength (lump) / sizeof(subsector_t);
+    _g->subsectors = W_CacheLumpNum(lump);
 
-    _g->numsubsectors = W_LumpLength (lump) / sizeof(mapsubsector_t);
-    _g->subsectors = Z_Calloc(_g->numsubsectors,sizeof(subsector_t),PU_LEVEL,0);
-    data = (const mapsubsector_t *)W_CacheLumpNum(lump);
-
-    if ((!data) || (!_g->numsubsectors))
+    if ((!_g->subsectors) || (!_g->numsubsectors))
         I_Error("P_LoadSubsectors: no subsectors in level");
-
-    for (i=0; i<_g->numsubsectors; i++)
-    {
-        _g->subsectors[i].numlines  = (unsigned short)SHORT(data[i].numsegs );
-        _g->subsectors[i].firstline = (unsigned short)SHORT(data[i].firstseg);
-    }
 }
 
 //
@@ -128,11 +117,10 @@ static void P_LoadSectors (int lump)
 
         ss->lightlevel = SHORT(ms->lightlevel);
         ss->special = SHORT(ms->special);
-        ss->oldspecial = SHORT(ms->special);
+        ss->oldsecret = P_IsSecret(ss);
         ss->tag = SHORT(ms->tag);
 
         ss->thinglist = NULL;
-        ss->touching_thinglist = NULL;            // phares 3/14/98
     }
 }
 
@@ -207,17 +195,10 @@ static void P_LoadThings (int lump)
 
 static void P_LoadLineDefs (int lump)
 {
-    int  i;
-
     _g->numlines = W_LumpLength (lump) / sizeof(line_t);
     _g->lines = W_CacheLumpNum (lump);
 
     _g->linedata = Z_Calloc(_g->numlines,sizeof(linedata_t),PU_LEVEL,0);
-
-    for (i=0; i<_g->numlines; i++)
-    {
-        _g->linedata[i].special = _g->lines[i].const_special;
-    }
 }
 
 //
@@ -351,23 +332,12 @@ static int P_GroupLines (void)
 {
     register const line_t *li;
     register sector_t *sector;
-    int i,j, total = _g->numlines;
+    int i, total = _g->numlines;
 
-    // figgi
+    // SS_SECTOR uses the first seg's front sector.
     for (i=0 ; i<_g->numsubsectors ; i++)
     {
-        const seg_t *seg = &_g->segs[_g->subsectors[i].firstline];
-        _g->subsectors[i].sector = NULL;
-        for(j=0; j<_g->subsectors[i].numlines; j++)
-        {
-            if(seg->sidenum != NO_INDEX)
-            {
-                _g->subsectors[i].sector = _g->sides[seg->sidenum].sector;
-                break;
-            }
-            seg++;
-        }
-        if(_g->subsectors[i].sector == NULL)
+        if(_g->segs[_g->subsectors[i].firstline].frontsectornum >= _g->numsectors)
             I_Error("P_GroupLines: Subsector a part of no sector!\n");
     }
 
@@ -402,21 +372,6 @@ static int P_GroupLines (void)
         P_AddLineToSector(li, LN_FRONTSECTOR(li));
         if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
             P_AddLineToSector(li, LN_BACKSECTOR(li));
-    }
-
-    for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)
-    {
-        fixed_t bbox[4];
-        M_ClearBox(bbox);
-
-        for(int l = 0; l < sector->linecount; l++)
-        {
-            M_AddToBox (bbox, sector->lines[l]->v1.x, sector->lines[l]->v1.y);
-            M_AddToBox (bbox, sector->lines[l]->v2.x, sector->lines[l]->v2.y);
-        }
-
-        sector->soundorg.x = bbox[BOXRIGHT]/2+bbox[BOXLEFT]/2;
-        sector->soundorg.y = bbox[BOXTOP]/2+bbox[BOXBOTTOM]/2;
     }
 
     return total; // this value is needed by the reject overrun emulation code

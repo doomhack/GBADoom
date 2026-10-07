@@ -159,7 +159,7 @@ static void P_StartButton
             _g->buttonlist[i].btimer = time;
             /* use sound origin of line itself - no need to compatibility-wrap
        * as the popout code gets it wrong whatever its value */
-            _g->buttonlist[i].soundorg = &LN_FRONTSECTOR(line)->soundorg;
+            _g->buttonlist[i].soundsec = LN_FRONTSECTOR(line);
             return;
         }
 
@@ -191,7 +191,7 @@ void P_ChangeSwitchTexture (const line_t* line, int useAgain)
 
     /* don't zero line->special until after exit switch test */
     if (!useAgain)
-        LN_SPECIAL(line) = 0;
+        LN_CLEARSPECIAL(line);
 
     /* search for a texture to change */
     texture = NULL;
@@ -239,7 +239,7 @@ void P_ChangeSwitchTexture (const line_t* line, int useAgain)
         break;
     }
 
-    S_StartSound2(&LN_FRONTSECTOR(line)->soundorg, sound);
+    P_StartSectorSound(LN_FRONTSECTOR(line), sound);
 
     if (useAgain)
         P_StartButton(line, position, _g->switchlist[i], BUTTONTIME);
@@ -357,7 +357,7 @@ P_UseSpecialLine
             case PushOnce:
                 if (!side)
                     if (linefunc(line))
-                        LN_SPECIAL(line) = 0;
+                        LN_CLEARSPECIAL(line);
                 return true;
             case PushMany:
                 if (!side)

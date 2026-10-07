@@ -125,7 +125,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks, mobj_t *soundtarget
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     _g->validcount++;
-    P_RecursiveSound(emitter->subsector->sector, 0, target);
+    P_RecursiveSound(emitter->sector, 0, target);
 }
 
 //
@@ -250,7 +250,7 @@ static bool P_CheckMissileRange(mobj_t *actor)
 
 static bool P_IsOnLift(const mobj_t *actor)
 {
-    const sector_t *sec = actor->subsector->sector;
+    const sector_t *sec = actor->sector;
 
     // Short-circuit: it's on a lift which is active.
     if (sec->floordata && ((thinker_t *) sec->floordata)->function==(think_t)T_PlatRaise)
@@ -267,18 +267,18 @@ static bool P_IsOnLift(const mobj_t *actor)
  * Returns nonzero if the object is under damage based on
  * their current position. Returns 1 if the damage is moderate,
  * -1 if it is serious. Used for AI.
+ *
+ * Only checks the sector the actor's centre is in.
  */
 
 static int P_IsUnderDamage(mobj_t *actor)
 {
-    const struct msecnode_s *seclist;
-    const ceiling_t *cl;             // Crushing ceiling
-    int dir = 0;
-    for (seclist=actor->touching_sectorlist; seclist; seclist=seclist->m_tnext)
-        if ((cl = seclist->m_sector->ceilingdata) &&
-                cl->thinker.function == (think_t)T_MoveCeiling)
-            dir |= cl->direction;
-    return dir;
+    const ceiling_t *cl = actor->sector->ceilingdata; // Crushing ceiling
+
+    if (cl && cl->thinker.function == (think_t)T_MoveCeiling)
+        return cl->direction;
+
+    return 0;
 }
 
 //
@@ -386,7 +386,7 @@ static bool P_SmartMove(mobj_t *actor)
 
     /* killough 9/12/98: Stay on a lift if target is on one */
     on_lift = target && target->health > 0
-            && target->subsector->sector->tag==actor->subsector->sector->tag && P_IsOnLift(actor);
+            && target->sector->tag==actor->sector->tag && P_IsOnLift(actor);
 
 
 
@@ -603,10 +603,10 @@ static bool PIT_AvoidDropoff(const line_t *line)
 
                 static fixed_t P_AvoidDropoff(mobj_t *actor)
         {
-                int yh=((_g->tmbbox[BOXTOP]   = actor->y+actor->radius)-_g->bmaporgy)>>MAPBLOCKSHIFT;
-                int yl=((_g->tmbbox[BOXBOTTOM]= actor->y-actor->radius)-_g->bmaporgy)>>MAPBLOCKSHIFT;
-                int xh=((_g->tmbbox[BOXRIGHT] = actor->x+actor->radius)-_g->bmaporgx)>>MAPBLOCKSHIFT;
-                int xl=((_g->tmbbox[BOXLEFT]  = actor->x-actor->radius)-_g->bmaporgx)>>MAPBLOCKSHIFT;
+                int yh=((_g->tmbbox[BOXTOP]   = actor->y+P_RADIUS(actor))-_g->bmaporgy)>>MAPBLOCKSHIFT;
+                int yl=((_g->tmbbox[BOXBOTTOM]= actor->y-P_RADIUS(actor))-_g->bmaporgy)>>MAPBLOCKSHIFT;
+                int xh=((_g->tmbbox[BOXRIGHT] = actor->x+P_RADIUS(actor))-_g->bmaporgx)>>MAPBLOCKSHIFT;
+                int xl=((_g->tmbbox[BOXLEFT]  = actor->x-P_RADIUS(actor))-_g->bmaporgx)>>MAPBLOCKSHIFT;
                 int bx, by;
 
                 _g->floorz = actor->z;            // remember floor height
@@ -641,7 +641,7 @@ static bool PIT_AvoidDropoff(const line_t *line)
                 // 1) Stay a certain distance away from a friend, to avoid being in their way
                 // 2) Take advantage over an enemy without missiles, by keeping distance
 
-                if (actor->floorz - actor->dropoffz > FRACUNIT*24 &&
+                if ((actor->flags & MF_OVERDROPOFF) &&
                     actor->z <= actor->floorz &&
                     !(actor->flags & (MF_DROPOFF|MF_FLOAT)) &&
                     P_AvoidDropoff(actor)) /* Move away from dropoff */
@@ -781,7 +781,7 @@ static bool PIT_AvoidDropoff(const line_t *line)
 
                 void A_Look(mobj_t *actor, void*)
         {
-                mobj_t *targ = actor->subsector->sector->soundtarget;
+                mobj_t *targ = actor->sector->soundtarget;
                 actor->threshold = 0; // any shot will wake up
 
                 /* killough 7/18/98:
@@ -1342,7 +1342,7 @@ static bool PIT_AvoidDropoff(const line_t *line)
         int radius = _g->corpsehit->radius; // save temporarily
 
         _g->corpsehit->height = mobjinfo[_g->corpsehit->type].height;
-        _g->corpsehit->radius = mobjinfo[_g->corpsehit->type].radius;
+        _g->corpsehit->radius = mobjinfo[_g->corpsehit->type].radius >> FRACBITS;
         _g->corpsehit->flags |= MF_SOLID;
 
         check = P_CheckPosition(_g->corpsehit,_g->corpsehit->x,_g->corpsehit->y);
@@ -1406,13 +1406,15 @@ static bool PIT_AvoidDropoff(const line_t *line)
                     P_SetMobjState(_g->corpsehit,info->raisestate);
 
                     _g->corpsehit->height = info->height; // fix Ghost bug
-                    _g->corpsehit->radius = info->radius; // fix Ghost bug
+                    _g->corpsehit->radius = info->radius >> FRACBITS; // fix Ghost bug
 
                     /* killough 7/18/98:
                     * friendliness is transferred from AV to raised corpse
+                    * Keep MF_POOLED so P_RemoveThing doesn't Z_Free a thingPool entry.
                     */
                     _g->corpsehit->flags =
-                            (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
+                            (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND) |
+                            (_g->corpsehit->flags & MF_POOLED);
 
                     if (!((_g->corpsehit->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
                         _g->totallive++;
@@ -1421,7 +1423,6 @@ static bool PIT_AvoidDropoff(const line_t *line)
                     P_SetTarget(&_g->corpsehit->target, NULL);  // killough 11/98
 
 
-                    P_SetTarget(&_g->corpsehit->lastenemy, NULL);
                     _g->corpsehit->flags &= ~MF_JUSTHIT;
 
 
@@ -1691,8 +1692,8 @@ static void A_PainShootSkull(mobj_t *actor, angle_t angle)
     // ceiling of its new sector, or below the floor. If so, kill it.
 
     if ((newmobj->z >
-         (newmobj->subsector->sector->ceilingheight - newmobj->height)) ||
-            (newmobj->z < newmobj->subsector->sector->floorheight))
+         (newmobj->sector->ceilingheight - newmobj->height)) ||
+            (newmobj->z < newmobj->sector->floorheight))
     {
         // kill it immediately
         P_DamageMobj(newmobj,actor,actor,10000);
@@ -2069,7 +2070,8 @@ void A_BrainSpit(mobj_t *mo, void*)
     // spawn brain missile
     newmobj = P_SpawnMissile(mo, targ, MT_SPAWNSHOT);
     P_SetTarget(&newmobj->target, targ);
-    newmobj->reactiontime = (short)(((targ->y-mo->y)/newmobj->momy)/newmobj->state->tics);
+    int flytime = ((targ->y-mo->y)/newmobj->momy)/newmobj->state->tics;
+    newmobj->reactiontime = (flytime > 255) ? 255 : flytime;
 
     // killough 7/18/98: brain friendliness is transferred
     newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);

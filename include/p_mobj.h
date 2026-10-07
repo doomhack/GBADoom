@@ -206,6 +206,8 @@
 
 #define MF_POOLED      (unsigned int)(0x0000000010000000)
 #define MF_UNUSED       (unsigned int)(0x0000000020000000)
+// Standing over a dropoff of more than 24 units (replaces killough's dropoffz).
+#define MF_OVERDROPOFF  (unsigned int)(0x0000000040000000)
 
 #define MF_FRIEND       (unsigned int)(0x0000000080000000)
 
@@ -244,25 +246,19 @@ typedef struct mobj_s
 
     //More drawing info: to determine current sprite.
     angle_t             angle;  // orientation
-    unsigned short      sprite; // used to find patch_t and flip value
-    unsigned short      frame;  // might be ORed with FF_FULLBRIGHT
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
     struct mobj_s*      bnext;
     struct mobj_s**     bprev; // killough 8/11/98: change to ptr-to-ptr
 
-    struct subsector_s* subsector;
+    struct sector_s*    sector;     // Sector the thing's centre is in.
 
     // The closest interval over all contacted Sectors.
     fixed_t             floorz;
     fixed_t             ceilingz;
 
-    // killough 11/98: the lowest floor over all contacted Sectors.
-    fixed_t             dropoffz;
-
     // For movement checking.
-    fixed_t             radius;
     fixed_t             height;
 
     // Momentums, used to update position.
@@ -270,11 +266,6 @@ typedef struct mobj_s
     fixed_t             momy;
     fixed_t             momz;
 
-    short               health;
-
-    unsigned short      type;
-
-    int                 tics;   // state tic counter
     const state_t*      state;
     unsigned int        flags;
 
@@ -282,43 +273,43 @@ typedef struct mobj_s
     // also the originator for missiles.
     struct mobj_s*      target;
 
-    // Movement direction, movement generation (zig-zagging).
+    short               health;
 
-    unsigned short movedir: 4;
+    short               tics;   // state tic counter (-1 = forever)
 
-    // If >0, the current target will be chased no
-    // matter what (even if shot by another object)
-    unsigned short               threshold:8;
+    // When < 0, select a new dir. Also counts up to 12*35
+    // for nightmare respawn, so needs more than 8 bits.
+    short               movecount;
 
-    //If a mobj can't move anywhere.
-    unsigned short               stuckcount:4;
+    unsigned char       type;   // mobjtype_t
 
-
-    // killough 9/9/98: How long a monster pursues a target.
-
-    //0-100 7 bits.
-    unsigned short      pursuecount;
-
-    //8 bits
-    short               movecount;      // when 0, select a new dir
+    // For movement checking. Whole map units, use P_RADIUS() for fixed_t.
+    unsigned char       radius;
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    //8bits
-    short               reactiontime;
+    unsigned char       reactiontime;
+
+    // If >0, the current target will be chased no
+    // matter what (even if shot by another object)
+    unsigned char       threshold;
+
+    // killough 9/9/98: How long a monster pursues a target. 0-100.
+    unsigned char       pursuecount;
+
+    // Movement direction, movement generation (zig-zagging).
+    unsigned char       movedir:4;
+
+    //If a mobj can't move anywhere.
+    unsigned char       stuckcount:4;
 
     // Thing being chased/attacked for tracers.
     struct mobj_s*      tracer;
 
-    // new field: last known enemy -- killough 2/15/98
-    struct mobj_s*      lastenemy;
-
-                                       // phares 3/17/98
-    // a linked list of sectors where this object appears
-    struct msecnode_s* touching_sectorlist;                 // phares 3/14/98
-
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!
 } mobj_t;
+
+#define P_RADIUS(mo) ((fixed_t)(mo)->radius << FRACBITS)
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
 

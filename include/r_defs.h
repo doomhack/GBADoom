@@ -80,7 +80,7 @@ typedef struct
   fixed_t x, y;
 } vertex_t;
 
-// Each sector has a degenmobj_t in its center for sound origin purposes.
+// Sound origin for non-mobj sounds (see P_StartSectorSound).
 typedef struct
 {
   fixed_t x;
@@ -92,38 +92,31 @@ typedef struct
 // Stores things/mobjs.
 //
 
-typedef struct
+typedef struct sector_s
 {
   fixed_t floorheight;
   fixed_t ceilingheight;
 
   mobj_t *soundtarget;   // thing that made a sound (or null)
-  degenmobj_t soundorg;  // origin for any sounds played by the sector
-  int validcount;        // if == validcount, already checked
   mobj_t *thinglist;     // list of mobjs in sector
-
 
   // thinker_t for reversable actions
   void *floordata;    // jff 2/22/98 make thinkers on
   void *ceilingdata;  // floors, ceilings, lighting,
 
-  // list of mobjs that are at least partially in the sector
-  // thinglist is a subset of touching_thinglist
-  struct msecnode_s *touching_thinglist;               // phares 3/14/98
-
   const struct line_s **lines;
 
+  unsigned short validcount;  // if == validcount, already checked
   short linecount;
-
-  short floorpic;
-  short ceilingpic;
-
-  short lightlevel;
   short special;
-  short oldspecial;      //jff 2/16/98 remembers if sector WAS secret (automap)
   short tag;
 
-  short soundtraversed;    // 0 = untraversed, 1,2 = sndlines-1
+  unsigned char floorpic;     // < 256 flats, checked in R_InitFlats
+  unsigned char ceilingpic;
+  unsigned char lightlevel;
+
+  unsigned char soundtraversed:2;   // 0 = untraversed, 1,2 = sndlines-1
+  unsigned char oldsecret:1;        //jff 2/16/98 remembers if sector WAS secret (automap)
 
 } sector_t;
 
@@ -156,22 +149,22 @@ typedef enum
 
 typedef enum
 {                 // cph:
-    RF_TOP_TILE  = 1,     // Upper texture needs tiling
-    RF_MID_TILE = 2,     // Mid texture needs tiling
-    RF_BOT_TILE = 4,     // Lower texture needs tiling
-    RF_IGNORE   = 8,     // Renderer can skip this line
-    RF_CLOSED   =16,     // Line blocks view
-    RF_MAPPED   =32      // Seen so show on automap.
+    RF_IGNORE   = 1,     // Renderer can skip this line
+    RF_CLOSED   = 2,     // Line blocks view
 } r_flags;
+
+#define RF_VALIDMASK 0x7ff  // Bits of gametic stored in r_validcount.
 
 //Runtime mutable data for lines.
 typedef struct linedata_s
 {
     unsigned short validcount;        // if == validcount, already checked
-    unsigned short r_validcount;      // cph: if == gametic, r_flags already done
 
-    short special;
-    short r_flags;
+    unsigned short r_validcount:11;   // cph: if == (gametic & RF_VALIDMASK), r_flags already done
+    unsigned short r_flags:2;         // RF_IGNORE / RF_CLOSED
+    unsigned short r_mapped:1;        // Seen so show on automap.
+    unsigned short nospecial:1;       // Special has been used up (W1, S1 etc).
+    unsigned short stairflip:1;       // Generalised stairs: StairDirection toggled.
 } linedata_t;
 
 typedef struct line_s
@@ -195,38 +188,16 @@ typedef struct line_s
 #define LN_FRONTSECTOR(l) (_g->sides[(l)->sidenum[0]].sector)
 #define LN_BACKSECTOR(l) ((l)->sidenum[1] != NO_INDEX ? _g->sides[(l)->sidenum[1]].sector : NULL)
 
-#define LN_SPECIAL(l) (_g->linedata[(l)->lineno].special)
-#define LN_VCOUNT(l) (_g->linedata[(l)->lineno].validcount)
-#define LN_RVCOUNT(l) (_g->linedata[(l)->lineno].r_validcount)
-#define LN_RFLAGS(l) (_g->linedata[(l)->lineno].r_flags)
+#define LN_DATA(l) (_g->linedata[(l)->lineno])
 
+// The special is const_special (ROM), cleared once used up and with
+// StairDirection (1 << 8) toggled by retriggerable generalised stairs.
+#define LN_SPECIAL(l) (LN_DATA(l).nospecial ? 0 : ((l)->const_special ^ (LN_DATA(l).stairflip << 8)))
+#define LN_CLEARSPECIAL(l) (LN_DATA(l).nospecial = 1)
+#define LN_FLIPSTAIRS(l) (LN_DATA(l).stairflip ^= 1)
 
-// phares 3/14/98
-//
-// Sector list node showing all sectors an object appears in.
-//
-// There are two threads that flow through these nodes. The first thread
-// starts at touching_thinglist in a sector_t and flows through the m_snext
-// links to find all mobjs that are entirely or partially in the sector.
-// The second thread starts at touching_sectorlist in an mobj_t and flows
-// through the m_tnext links to find all sectors a thing touches. This is
-// useful when applying friction or push effects to sectors. These effects
-// can be done as thinkers that act upon all objects touching their sectors.
-// As an mobj moves through the world, these nodes are created and
-// destroyed, with the links changed appropriately.
-//
-// For the links, NULL means top or end of list.
+#define LN_VCOUNT(l) (LN_DATA(l).validcount)
 
-typedef struct msecnode_s
-{
-  sector_t          *m_sector; // a sector containing this object
-  struct mobj_s     *m_thing;  // this object
-  struct msecnode_s *m_tprev;  // prev msecnode_t for this thing
-  struct msecnode_s *m_tnext;  // next msecnode_t for this thing
-  struct msecnode_s *m_sprev;  // prev msecnode_t for this sector
-  struct msecnode_s *m_snext;  // next msecnode_t for this sector
-  bool visited; // killough 4/4/98, 4/7/98: used in search algorithms
-} msecnode_t;
 
 //
 // The LineSeg.
@@ -273,17 +244,21 @@ typedef struct
 
 //
 // A SubSector.
-// References a Sector.
 // Basically, this is a list of LineSegs,
 //  indicating the visible walls that define
 //  (all or some) sides of a convex BSP leaf.
 //
+// Read straight from the SSECTORS lump in ROM (same layout as
+// mapsubsector_t, but not packed so fields load as halfwords).
+// Its sector is the front sector of its first seg (SS_SECTOR).
+//
 
 typedef struct subsector_s
 {
-  sector_t *sector;
   unsigned short numlines, firstline;
 } subsector_t;
+
+#define SS_SECTOR(ss) (&_g->sectors[_g->segs[(ss)->firstline].frontsectornum])
 
 //
 // OTHER TYPES

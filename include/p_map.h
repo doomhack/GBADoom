@@ -63,10 +63,8 @@ void    P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
 void    P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage);
 bool P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
 
-//jff 3/19/98 P_CheckSector(): new routine to replace P_ChangeSector()
+// Clip things around a moving sector (vanilla P_ChangeSector).
 bool P_CheckSector(sector_t *sector, bool crunch);
-void    P_DelSeclist(msecnode_t*);                          // phares 3/16/98
-void    P_CreateSecNodeList(mobj_t*,fixed_t,fixed_t);       // phares 3/14/98
 bool Check_Sides(mobj_t *, int, int);                    // phares
 
 /* cphipps 2004/08/30 */

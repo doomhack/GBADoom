@@ -134,24 +134,21 @@ void T_Glow(glow_t* g, void*)
 {
     switch(g->direction)
     {
+    // Test before stepping so the 8-bit lightlevel can't wrap.
     case -1:
         // light dims
-        g->sector->lightlevel -= GLOWSPEED;
-        if (g->sector->lightlevel <= g->minlight)
-        {
-            g->sector->lightlevel += GLOWSPEED;
+        if (g->sector->lightlevel - GLOWSPEED <= g->minlight)
             g->direction = 1;
-        }
+        else
+            g->sector->lightlevel -= GLOWSPEED;
         break;
 
     case 1:
         // light brightens
-        g->sector->lightlevel += GLOWSPEED;
-        if (g->sector->lightlevel >= g->maxlight)
-        {
-            g->sector->lightlevel -= GLOWSPEED;
+        if (g->sector->lightlevel + GLOWSPEED >= g->maxlight)
             g->direction = -1;
-        }
+        else
+            g->sector->lightlevel += GLOWSPEED;
         break;
     }
 }
