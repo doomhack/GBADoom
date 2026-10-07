@@ -93,6 +93,9 @@ extern fixed_t   *textureheight; //needed for texture pegging (and TFE fix - kil
 extern short       *flattranslation;             // for global animation
 extern short       *texturetranslation;
 
+extern const byte* texcolpool;                  // 128 byte texture columns from COLPOOL
+extern const texrun_t* texcolruns;              // masked texture runs from COLRUNS
+
 extern fixed_t basexscale, baseyscale;
 
 extern fixed_t  viewcos, viewsin;

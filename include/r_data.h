@@ -44,18 +44,10 @@
 #pragma interface
 #endif
 
-// A single patch from a texture definition, basically
-// a rectangular area within the texture rectangle.
-typedef struct
-{
-  short originx, originy;  // Block origin, which has already accounted
-  const patch_t* patch;    // for the internal origin of the patch.
-} texpatch_t;
-
 //
 // Texture definition.
-// A DOOM wall texture is a list of patches
-// which are to be combined in a predefined order.
+// GbaWadUtil composites the patches of each
+// texture into 128 byte columns (COLPOOL).
 //
 
 typedef struct
@@ -67,10 +59,18 @@ typedef struct
   // CPhipps - end of additions
   short width, height;
 
-  unsigned char overlapped;
-  unsigned char patchcount;      // All the patches[patchcount] are drawn
-  texpatch_t patches[1]; // back-to-front into the cached texture.
+  // Column x is texcolpool + (colids[x] << 7).
+  // Its masked runs start at &texcolruns[colids[width + x]].
+  const unsigned short* colids;
 } texture_t;
+
+// A run of opaque rows in a masked texture column.
+// A list of them ends with topdelta 0xff.
+typedef struct
+{
+  byte topdelta;
+  byte length;
+} texrun_t;
 
 
 

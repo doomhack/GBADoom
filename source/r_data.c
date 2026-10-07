@@ -82,11 +82,6 @@ typedef struct
 
 static const texture_t* R_LoadTexture(int texture_num)
 {
-    const byte* pnames = W_CacheLumpName("PNAMES");
-
-    //Skip to list of names.
-    pnames += 4;
-
     const int  *maptex1, *maptex2;
     int  numtextures1, numtextures2;
     const int *directory1, *directory2;
@@ -129,60 +124,15 @@ static const texture_t* R_LoadTexture(int texture_num)
 
     const maptexture_t *mtexture = (const maptexture_t *) ((const byte *)maptex + offset);
 
-    texture_t* texture = Z_Malloc(sizeof(const texture_t) + sizeof(const texpatch_t)*(mtexture->patchcount-1), PU_LEVEL, (void**)&textures[texture_num]);
+    texture_t* texture = Z_Malloc(sizeof(const texture_t), PU_LEVEL, (void**)&textures[texture_num]);
 
     texture->width = mtexture->width;
     texture->height = mtexture->height;
-    texture->patchcount = mtexture->patchcount;
     texture->name = mtexture->name;
 
-    texpatch_t* patch = texture->patches;
-    const mappatch_t* mpatch = mtexture->patches;
-
-    texture->overlapped = 0;
-
-
-
-    for (int j=0 ; j < texture->patchcount ; j++, mpatch++, patch++)
-    {
-        patch->originx = mpatch->originx;
-        patch->originy = mpatch->originy;
-
-        char pname[8];
-        strncpy(pname, (const char*)&pnames[mpatch->patch * 8], 8);
-
-        patch->patch = (const patch_t*)W_CacheLumpName(pname);
-    }
-
-    for (int j=0 ; j < texture->patchcount ; j++)
-    {
-        const texpatch_t* patch = &texture->patches[j];
-
-        //Check for patch overlaps.
-        int l1 = patch->originx;
-        int r1 = l1 + patch->patch->width;
-
-        for(int k = j+1; k < texture->patchcount; k++)
-        {
-            if(k == j)
-                continue;
-
-            const texpatch_t* p2 = &texture->patches[k];
-
-            //Check for patch overlaps.
-            int l2 = p2->originx;
-            int r2 = l2 + p2->patch->width;
-
-            if(r1 > l2 && l1 < r2)
-            {
-                texture->overlapped = 1;
-                break;
-            }
-        }
-
-        if(texture->overlapped)
-            break;
-    }
+    //Composited columns, built by GbaWadUtil.
+    const byte* texcols = W_CacheLumpName("TEXCOLS");
+    texture->colids = (const unsigned short*)(texcols + ((const unsigned int*)texcols)[1 + texture_num]);
 
     int w;
 
@@ -318,6 +268,12 @@ static void R_InitTextures()
     }
 
     _g->numtextures = numtextures1 + numtextures2;
+
+    if (W_CheckNumForName("TEXCOLS") == -1 || *(const int*)W_CacheLumpName("TEXCOLS") != _g->numtextures)
+        I_Error("R_InitTextures: TEXCOLS missing or out of date. Rebuild with GbaWadUtil.");
+
+    texcolpool = W_CacheLumpName("COLPOOL");
+    texcolruns = W_CacheLumpName("COLRUNS");
 
     textures = Z_Malloc(_g->numtextures*sizeof*textures, PU_STATIC, 0);
     memset(textures, 0, _g->numtextures*sizeof*textures);

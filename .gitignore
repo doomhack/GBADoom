@@ -54,3 +54,4 @@ source/iwad/doom64.c
 source/iwad/
 
 .qtc_clangd/
+*.sav

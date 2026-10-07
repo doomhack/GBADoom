@@ -85,8 +85,7 @@ static byte vram3_spare[1024];
 
 //Stuff alloc'd in OAM memory.
 
-//512 bytes.
-static unsigned int* columnCacheEntries = (unsigned int*)&vram3_spare[0];
+//First 512 bytes free.
 
 //240 bytes.
 short* floorclip = (short*)&vram3_spare[512];
@@ -97,7 +96,7 @@ short* ceilingclip = (short*)&vram3_spare[512+240];
 //16 bytes
 fixed_t* tmpbbox = (fixed_t*)&vram3_spare[512+240+240];
 
-//1008 bytes used. 16 byes left.
+//1008 bytes used (512 of them free). 16 byes left.
 
 
 
@@ -135,24 +134,21 @@ short* negonearray = (short*)&vram2_spare[240];
 #define xtoviewangle xtoviewangle_vram
 
 //*****************************************
-//Column and flat cache stuff.
+//Flat cache stuff.
 //GBA has 16kb of OBJ Video Memory (unused
 //as OBJs are disabled). The first 8kb holds
-//composite texture columns. The last 8kb
-//holds 2 flats, as VRAM is faster than ROM.
+//2 flats, as VRAM is faster than ROM. The
+//last 8kb is free (4 flat slots measured
+//no faster than 2).
 //*****************************************
-
-#define COLUMN_CACHE_ENTRIES 64
 
 #define FLAT_SIZE 4096
 #define FLAT_CACHE_SLOTS 2
 
 #ifndef GBA
-static byte columnCache[COLUMN_CACHE_ENTRIES*128];
 static byte flatCache[FLAT_CACHE_SLOTS*FLAT_SIZE];
 #else
-    #define columnCache ((byte*)0x6014000)
-    #define flatCache ((byte*)0x6016000)
+    #define flatCache ((byte*)0x6014000)
 #endif
 
 //Lump held in each flat cache slot.
@@ -249,6 +245,9 @@ fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
 
 short       *flattranslation;             // for global animation
 short       *texturetranslation;
+
+const byte* texcolpool;
+const texrun_t* texcolruns;
 
 fixed_t basexscale, baseyscale;
 
@@ -864,44 +863,54 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     }
 }
 
-static const column_t* R_GetColumn(const texture_t* texture, int texcolumn)
+//Composited 128 byte texture column, built by GbaWadUtil.
+inline static const byte* R_GetTextureColumn(const texture_t* texture, int texcolumn)
 {
-    const unsigned int patchcount = texture->patchcount;
-    const unsigned int widthmask = texture->widthmask;
+    return texcolpool + (texture->colids[texcolumn & texture->widthmask] << 7);
+}
 
-    const int xc = texcolumn & widthmask;
+//
+// R_DrawMaskedTextureColumn
+// Masked mid textures. Like R_DrawMaskedColumn, but the
+// runs of opaque rows are separate from the pixels, which
+// are the texture's composited column.
+//
+static void R_DrawMaskedTextureColumn(draw_column_vars_t *dcvars, const texture_t* texture, int texcolumn)
+{
+    const int xc = texcolumn & texture->widthmask;
 
-    if(patchcount == 1)
+    const texrun_t* run = &texcolruns[texture->colids[texture->width + xc]];
+
+    dcvars->source = texcolpool + (texture->colids[xc] << 7);
+
+    const int fclip_x = mfloorclip[dcvars->x];
+    const int cclip_x = mceilingclip[dcvars->x];
+
+    while (run->topdelta != 0xff)
     {
-        //simple texture.
-        const patch_t* patch = texture->patches[0].patch;
+        // calculate unclipped screen coordinates for run
+        const int topscreen = sprtopscreen + spryscale*run->topdelta;
+        const int bottomscreen = topscreen + spryscale*run->length;
 
-        return (const column_t *) ((const byte *)patch + patch->columnofs[xc]);
-    }
-    else
-    {
-        unsigned int i = 0;
+        int yh = (bottomscreen-1)>>FRACBITS;
+        int yl = (topscreen+FRACUNIT-1)>>FRACBITS;
 
-        do
+        if(yh >= fclip_x)
+            yh = fclip_x - 1;
+
+        if(yl <= cclip_x)
+            yl = cclip_x + 1;
+
+        if (yh < viewheight && yl <= yh)
         {
-            const texpatch_t* patch = &texture->patches[i];
+            dcvars->yh = yh;
+            dcvars->yl = yl;
 
-            const patch_t* realpatch = patch->patch;
+            R_DrawColumn (dcvars);
+        }
 
-            const int x1 = patch->originx;
-
-            if(xc < x1)
-                continue;
-
-            const int x2 = x1 + realpatch->width;
-
-            if(xc < x2)
-                return (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
-
-        } while(++i < patchcount);
+        run++;
     }
-
-    return NULL;
 }
 
 
@@ -979,9 +988,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
             dcvars.iscale = FixedReciprocal((unsigned)spryscale);
 
             // draw the texture
-            const column_t* column = R_GetColumn(texture, xc);
-
-            R_DrawMaskedColumn(R_DrawColumn, &dcvars, column);
+            R_DrawMaskedTextureColumn(&dcvars, texture, xc);
 
             maskedtexturecol[dcvars.x] = SHRT_MAX; // dropoff overflow
         }
@@ -1548,9 +1555,7 @@ static void R_DoDrawPlane(visplane_t *pl)
                 {
                     int xc = ((viewangle + xtoviewangle[x]) >> ANGLETOSKYSHIFT);
 
-                    const column_t* column = R_GetColumn(tex, xc);
-
-                    dcvars.source = (const byte*)column + 3;
+                    dcvars.source = R_GetTextureColumn(tex, xc);
                     R_DrawColumn(&dcvars);
                 }
             }
@@ -1893,166 +1898,9 @@ static visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
         return R_DupPlane(pl,start,stop);
 }
 
-static void R_DrawColumnInCache(const column_t* patch, byte* cache, int originy, int cacheheight)
+static void R_DrawSegTextureColumn(const texture_t* tex, int texcolumn, draw_column_vars_t* dcvars)
 {
-    while (patch->topdelta != 0xff)
-    {
-        const byte* source = (const byte *)patch + 3;
-        int count = patch->length;
-        int position = originy + patch->topdelta;
-
-        if (position < 0)
-        {
-            count += position;
-            position = 0;
-        }
-
-        if (position + count > cacheheight)
-            count = cacheheight - position;
-
-        if (count > 0)
-            ByteCopy(cache + position, source, count);
-
-        patch = (const column_t *)(  (const byte *)patch + patch->length + 4);
-    }
-}
-
-/*
- * Draw a column of pixels of the specified texture.
- * If the texture is simple (1 patch, full height) then just draw
- * straight from const patch_t*.
-*/
-
-#define CACHE_WAYS 4
-
-#define CACHE_MASK (CACHE_WAYS-1)
-#define CACHE_STRIDE (COLUMN_CACHE_ENTRIES / CACHE_WAYS)
-#define CACHE_KEY_MASK (CACHE_STRIDE-1)
-
-#define CACHE_ENTRY(c, t) ((c << 16 | t))
-
-#define CACHE_HASH(c, t) (((c >> 1) ^ t) & CACHE_KEY_MASK)
-
-static unsigned int FindColumnCacheItem(unsigned int texture, unsigned int column)
-{
-    //static unsigned int looks, peeks;
-    //looks++;
-
-    const unsigned int cx = CACHE_ENTRY(column, texture);
-
-    const unsigned int key = CACHE_HASH(column, texture);
-
-    unsigned int* cc = (unsigned int*)&columnCacheEntries[key];
-
-    unsigned int i = key;
-
-    do
-    {
-        //peeks++;
-        const unsigned int cy = *cc;
-
-        if((cy == cx) || (cy == 0))
-            return i;
-
-        cc+=CACHE_STRIDE;
-        i+=CACHE_STRIDE;
-
-    } while(i < COLUMN_CACHE_ENTRIES);
-
-
-    //No space. Random eviction.
-    return ((M_Random() & CACHE_MASK) * CACHE_STRIDE) + key;
-}
-
-
-static const byte* R_ComposeColumn(const unsigned int texture, const texture_t* tex, int texcolumn, unsigned int iscale)
-{
-    //static int total, misses;
-    int colmask;
-
-    if(!highDetail)
-    {
-        colmask = 0xfffe;
-
-        if(tex->width > 8)
-        {
-            if(iscale > (4 << FRACBITS))
-                colmask = 0xfff0;
-            else if(iscale > (3 << FRACBITS))
-                colmask = 0xfff8;
-            else if (iscale > (2 << FRACBITS))
-                colmask = 0xfffc;
-        }
-    }
-    else
-        colmask = 0xffff;
-
-
-    const int xc = (texcolumn & colmask) & tex->widthmask;
-
-    unsigned int cachekey = FindColumnCacheItem(texture, xc);
-
-    byte* colcache = &columnCache[cachekey*128];
-    unsigned int cacheEntry = columnCacheEntries[cachekey];
-
-    //total++;
-
-    if(cacheEntry != CACHE_ENTRY(xc, texture))
-    {
-        //misses++;
-        byte tmpCache[128];
-
-
-        columnCacheEntries[cachekey] = CACHE_ENTRY(xc, texture);
-
-        unsigned int i = 0;
-        unsigned int patchcount = tex->patchcount;
-
-        do
-        {
-            const texpatch_t* patch = &tex->patches[i];
-
-            const patch_t* realpatch = patch->patch;
-
-            const int x1 = patch->originx;
-
-            if(xc < x1)
-                continue;
-
-            const int x2 = x1 + realpatch->width;
-
-            if(xc < x2)
-            {
-                const column_t* patchcol = (const column_t *)((const byte *)realpatch + realpatch->columnofs[xc-x1]);
-
-                R_DrawColumnInCache (patchcol,
-                                     tmpCache,
-                                     patch->originy,
-                                     tex->height);
-
-            }
-
-        } while(++i < patchcount);
-
-        //Block copy will drop low 2 bits of len.
-        BlockCopy(colcache, tmpCache, (tex->height + 3));
-    }
-
-    return colcache;
-}
-
-static void R_DrawSegTextureColumn(unsigned int texture, const texture_t* tex, int texcolumn, draw_column_vars_t* dcvars)
-{
-    if(tex->overlapped == 0)
-    {
-        const column_t* column = R_GetColumn(tex, texcolumn);
-
-        dcvars->source = (const byte*)column + 3;
-    }
-    else
-    {
-        dcvars->source = R_ComposeColumn(texture, tex, texcolumn, dcvars->iscale);
-    }
+    dcvars->source = R_GetTextureColumn(tex, texcolumn);
 
     R_DrawColumn (dcvars);
 }
@@ -2192,7 +2040,7 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
 
             dcvars.yl = yl;
             dcvars.yh = yh;
-            R_DrawSegTextureColumn(midtex, midtex_t, texturecolumn, &dcvars);
+            R_DrawSegTextureColumn(midtex_t, texturecolumn, &dcvars);
 
             cc_rwx = viewheight;
             fc_rwx = -1;
@@ -2210,7 +2058,7 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
                     dcvars.yl = yl;
                     dcvars.yh = mid;
                     dcvars.texturemid = toptexturemid;
-                    R_DrawSegTextureColumn(toptex, toptex_t, texturecolumn, &dcvars);
+                    R_DrawSegTextureColumn(toptex_t, texturecolumn, &dcvars);
                     cc_rwx = mid;
                 }
                 else
@@ -2232,7 +2080,7 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
                     dcvars.yl = mid;
                     dcvars.yh = yh;
                     dcvars.texturemid = bottomtexturemid;
-                    R_DrawSegTextureColumn(bottomtex, bottomtex_t, texturecolumn, &dcvars);
+                    R_DrawSegTextureColumn(bottomtex_t, texturecolumn, &dcvars);
                     fc_rwx = mid;
                 }
                 else
