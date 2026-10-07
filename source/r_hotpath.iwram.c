@@ -102,22 +102,22 @@ fixed_t* tmpbbox = (fixed_t*)&vram3_spare[512+240+240];
 
 //Stuff alloc'd in VRAM1 memory.
 
-//580 bytes
+//512 bytes
 const fixed_t* yslope_vram = (const fixed_t*)&vram1_spare[0];
 
 //480 bytes
-const fixed_t* distscale_vram = (const fixed_t*)&vram1_spare[580];
+const fixed_t* distscale_vram = (const fixed_t*)&vram1_spare[512];
 
 //484 bytes.
-const angle_t* xtoviewangle_vram = (const angle_t*)&vram1_spare[580+480];
+const angle_t* xtoviewangle_vram = (const angle_t*)&vram1_spare[512+480];
 
 //240 Bytes.
-short* wipe_y_lookup = (short*)&vram1_spare[580+480+484];
+short* wipe_y_lookup = (short*)&vram1_spare[512+480+484];
 
 //384 Bytes
-vissprite_t** vissprite_ptrs = (vissprite_t**)&vram1_spare[580+480+484+240];
+vissprite_t** vissprite_ptrs = (vissprite_t**)&vram1_spare[512+480+484+240];
 
-//2168 bytes used. 392 bytes left.
+//2100 bytes used. 460 bytes left.
 
 
 //Stuff alloc'd in VRAM2 memory.

@@ -93,7 +93,7 @@ extern const angle_t xtoviewangle[121];
 extern const angle_t* xtoviewangle_vram; //VRAM Copy.
 
 
-extern const fixed_t yslope[160];
+extern const fixed_t yslope[128];
 extern const fixed_t* yslope_vram; //VRAM Copy.
 
 extern const fixed_t distscale[120];
