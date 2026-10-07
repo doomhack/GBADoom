@@ -291,6 +291,21 @@ SECTIONS
 	} = 0xff
 	__rom_end__ = __pad_lma + SIZEOF(.pad);
 
+	/* IWAD header (doom_iwad_header_t in doom_iwad.h), last thing in the ROM.
+	   GbaWadUtil -rom finds it by its magic, fills in version/length and
+	   appends the processed IWAD directly after it, at doom_iwad. */
+	__iwad_lma = ALIGN(__rom_end__, 32);
+	.iwad __iwad_lma : AT (__iwad_lma)
+	{
+		doom_iwad_header = ABSOLUTE(.);
+		LONG(0x44414247) LONG(0x2D4D4F4F) LONG(0x44415749) LONG(0x5244482D) /* "GBADOOM-IWAD-HDR" */
+		LONG(0)	/* version */
+		LONG(0)	/* length */
+		LONG(0)
+		LONG(0)
+		doom_iwad = ABSOLUTE(.);
+	}
+
 
 	/* Stabs debugging sections.  */
 	.stab 0 : { *(.stab) }

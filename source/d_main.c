@@ -89,6 +89,7 @@ const int startmap = 1;
 const bool nodrawers = false;
 
 static const char* timedemo = NULL;//"demo1";
+//static const char* timedemo = "demo4";
 
 /*
  * D_PostEvent - Event handling
@@ -590,6 +591,14 @@ static void CheckIWAD2(const unsigned char* iwad_data, GameMode_t *gmode,bool *h
 
 static void IdentifyVersion()
 {
+#ifdef GBA
+    if(doom_iwad_header.length == 0)
+        I_Error("No IWAD in ROM.\nAdd one with GbaWadUtil -rom");
+
+    if(doom_iwad_header.version != DOOM_IWAD_VERSION)
+        I_Error("IWAD version %u, expected %u.\nRebuild with GbaWadUtil -rom", doom_iwad_header.version, DOOM_IWAD_VERSION);
+#endif
+
     CheckIWAD2(doom_iwad, &_g->gamemode, &_g->haswolflevels);
 
     /* jff 8/23/98 set gamemission global appropriately in all cases

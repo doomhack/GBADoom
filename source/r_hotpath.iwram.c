@@ -820,12 +820,19 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     fixed_t xiscale = vis->xiscale;
 
     if(hires)
+    {
+        // Two samples per pixel, centred at 1/4 and 3/4.
         xiscale >>= 1;
+        frac -= xiscale >> 1;
+
+        if((unsigned int)(frac >> FRACBITS) >= (unsigned int)patch->width)
+            frac = vis->startfrac;
+    }
 
     dcvars.x = vis->x1;
     dcvars.odd_pixel = false;
 
-    while(dcvars.x < SCREENWIDTH)
+    while(dcvars.x <= vis->x2)
     {
         const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
         R_DrawMaskedColumn(colfunc, &dcvars, column);
@@ -840,7 +847,7 @@ static void R_DrawVisSprite(const vissprite_t *vis)
         if(!hires)
             dcvars.x++;
 
-        if(dcvars.x >= SCREENWIDTH)
+        if(dcvars.x > vis->x2)
             break;
 
 
@@ -1112,10 +1119,14 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     fixed_t tx = psp->sx-160*FRACUNIT;
 
     tx -= patch->leftoffset<<FRACBITS;
-    int x1 = (centerxfrac + FixedMul (tx, pspritescale))>>FRACBITS;
+    const fixed_t xl = centerxfrac + FixedMul (tx, pspritescale);
 
     tx += patch->width<<FRACBITS;
-    int x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
+    const fixed_t xr = centerxfrac + FixedMul (tx, pspritescale);
+
+    // Columns whose pixel centres lie within [xl, xr).
+    const int x1 = (xl + (FRACUNIT/2) - 1) >> FRACBITS;
+    const int x2 = ((xr + (FRACUNIT/2) - 1) >> FRACBITS) - 1;
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
@@ -1123,7 +1134,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
 
     // off the side
-    if (x2 < 0 || x1 > SCREENWIDTH)
+    if (x2 < 0 || x1 >= SCREENWIDTH || x2 < x1)
         return;
 
     // store information in a vissprite
@@ -1138,19 +1149,19 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     const bool flip = (bool) SPR_FLIPPED(sprframe, 0);
 
+    // Texel under the centre of the first drawn pixel.
+    const fixed_t frac = FixedMul((vis.x1 << FRACBITS) + (FRACUNIT/2) - xl, pspriteiscale);
+
     if (flip)
     {
         vis.xiscale = - pspriteiscale;
-        vis.startfrac = ((width<<FRACBITS)-1);
+        vis.startfrac = ((width<<FRACBITS)-1) - frac;
     }
     else
     {
         vis.xiscale = pspriteiscale;
-        vis.startfrac = 0;
+        vis.startfrac = frac;
     }
-
-    if (vis.x1 > x1)
-        vis.startfrac += vis.xiscale*(vis.x1-x1);
 
     vis.patch = patch;
 
@@ -1682,25 +1693,25 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     const fixed_t xscale = FixedDiv(projection, tz);
 
-    fixed_t xl = (centerxfrac + FixedMul(tx,xscale));
+    const fixed_t xl = (centerxfrac + FixedMul(tx,xscale));
 
     // off the side?
-    if(xl > (SCREENWIDTH << FRACBITS))
+    if(xl > ((SCREENWIDTH << FRACBITS) - (FRACUNIT/2)))
         return;
 
-    fixed_t xr = (centerxfrac + FixedMul(tx + (patch->width << FRACBITS),xscale)) - FRACUNIT;
+    const fixed_t xr = (centerxfrac + FixedMul(tx + (patch->width << FRACBITS),xscale));
 
     // off the side?
-    if(xr < 0)
+    if(xr <= (FRACUNIT/2))
         return;
 
     //Too small.
-    if(xr <= (xl + (FRACUNIT >> 2)))
+    if(xr <= (xl + FRACUNIT + (FRACUNIT >> 2)))
         return;
 
-
-    const int x1 = (xl >> FRACBITS);
-    const int x2 = (xr >> FRACBITS);
+    // Columns whose pixel centres lie within [xl, xr).
+    const int x1 = (xl + (FRACUNIT/2) - 1) >> FRACBITS;
+    const int x2 = ((xr + (FRACUNIT/2) - 1) >> FRACBITS) - 1;
 
     // store information in a vissprite
     vissprite_t* vis = R_NewVisSprite();
@@ -1723,20 +1734,19 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     const fixed_t iscale = FixedReciprocal(xscale);
 
-    //Add 1/2 iscale here to center on pixel?
+    // Texel under the centre of the first drawn pixel.
+    const fixed_t frac = FixedMul((vis->x1 << FRACBITS) + (FRACUNIT/2) - xl, iscale);
+
     if (flip)
     {
-        vis->startfrac = ((patch->width<<FRACBITS)-1);
+        vis->startfrac = ((patch->width<<FRACBITS)-1) - frac;
         vis->xiscale = -iscale;
     }
     else
     {
-        vis->startfrac = 0;
+        vis->startfrac = frac;
         vis->xiscale = iscale;
     }
-
-    if (vis->x1 > x1)
-        vis->startfrac += vis->xiscale*(vis->x1-x1);
 
     // get light level
     if (thing->flags & MF_SHADOW)

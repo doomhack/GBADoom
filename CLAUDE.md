@@ -19,11 +19,13 @@ Produces `GBADoom.elf` and `GBADoom.gba`.
 
 **Windows/Qt target:** open `GBADoom.pro` in Qt Creator (MinGW 32-bit or MSVC 32-bit). This is the primary way to iterate on gameplay/rendering logic without a GBA emulator — it builds the same source files as regular C/C++ against Qt for windowing/input instead of libgba.
 
-**Before a GBA build will produce a working game**, an IWAD must be baked in:
-1. Use `GbaWadUtil\GbaWadUtil.exe -in <wad> -cfile <name>.wad.c` (or run one of `GbaWadUtil\build_*.bat`) to convert a Doom/Doom2/Ultimate/TNT/Plutonia IWAD into a C source file.
-2. Copy the generated file to `source/iwad/`.
-3. Edit `source/doom_iwad.h` to `#include "iwad/<name>.c"` for the desired IWAD.
-`source/doom_iwad.c` exposes the embedded WAD as `doom_iwad[]` / `doom_iwad_len`.
+**The GBA build contains no IWAD.** `make` produces an engine-only ROM that ends with a 32-byte IWAD header (`doom_iwad_header_t` in `include/doom_iwad.h`, emitted by the `.iwad` section at the end of `gbadoom.ld`). Attach a WAD with:
+```
+GbaWadUtil -in <wad> -rom GBADoom.gba -romout <game>.gba
+```
+GbaWadUtil finds the header by its magic (`GBADOOM-IWAD-HDR`, 32-byte aligned), writes version/length, drops anything already after it and appends the processed WAD, so a ROM that already has a WAD can be re-patched. `doom_iwad` is a link-time address right after the header; `doom_iwad_len` reads the header. `IdentifyVersion()` errors at startup if no WAD is attached or `DOOM_IWAD_VERSION` doesn't match — bump it (and `romIwadVersion` in GbaWadUtil's `main.cpp`) whenever the processed WAD format changes.
+
+**The Qt build still compiles the IWAD in:** use `GbaWadUtil -in <wad> -cfile <name>.c` (or `GbaWadUtil\build_*.bat`), copy the output to `source/iwad/`, and pick it in `source/doom_iwad.c` (the `#include` there is `#ifndef GBA`).
 
 There is no automated test suite — verification is done by running the game (Qt build for quick checks, GBA emulator/hardware for platform-accurate checks).
 

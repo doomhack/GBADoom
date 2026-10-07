@@ -97,15 +97,10 @@ void ExtractFileBase (const char *path, char *dest)
 // proff - changed using pointer to wadfile_info_t
 static void W_AddFile()
 {
-    const wadinfo_t* header;
+    const wadinfo_t* header = (const wadinfo_t*)&doom_iwad[0];
 
-    if(doom_iwad_len > 0)
-    {
-        header = (wadinfo_t*)&doom_iwad[0];
-
-        if (strncmp(header->identification,"IWAD",4))
-            I_Error("W_AddFile: Wad file doesn't have IWAD id");
-    }
+    if (doom_iwad_len < sizeof(wadinfo_t) || strncmp(header->identification,"IWAD",4))
+        I_Error("W_AddFile: Wad file doesn't have IWAD id");
 }
 
 //Return -1 if not found.
@@ -113,34 +108,27 @@ static void W_AddFile()
 
 static int PUREFUNC FindLumpByName(const char* name, const filelump_t** lump)
 {
-    const wadinfo_t* header;
-    const filelump_t  *fileinfo;
+    const wadinfo_t* header = (const wadinfo_t*)&doom_iwad[0];
+    const filelump_t* fileinfo = (const filelump_t*)&doom_iwad[header->infotableofs];
 
-    if(doom_iwad_len > 0)
+    int_64_t nameint = 0;
+    strncpy((char*)&nameint, name, 8);
+
+    for(int i = header->numlumps - 1; i >= 0; i--)
     {
-        header = (const wadinfo_t*)&doom_iwad[0];
+        //This is a bit naughty with alignment.
+        //For x86 doesn't matter because unaligned loads
+        //are fine.
+        //On ARM, unaligned loads are not fine but since it
+        //doesn't have a 64bit load, the compiler will generate
+        //32 bit loads. These vars are 32 aligned.
 
-        fileinfo = (filelump_t*)&doom_iwad[header->infotableofs];
+        int_64_t nameint2 = *(int_64_t*)fileinfo[i].name;
 
-        int_64_t nameint = 0;
-        strncpy((char*)&nameint, name, 8);
-
-        for(int i = header->numlumps - 1; i >= 0; i--)
+        if(nameint == nameint2)
         {
-            //This is a bit naughty with alignment.
-            //For x86 doesn't matter because unaligned loads
-            //are fine.
-            //On ARM, unaligned loads are not fine but since it
-            //doesn't have a 64bit load, the compiler will generate
-            //32 bit loads. These vars are 32 aligned.
-
-            int_64_t nameint2 = *(int_64_t*)fileinfo[i].name;
-
-            if(nameint == nameint2)
-            {
-                *lump = &fileinfo[i];
-                return i;
-            }
+            *lump = &fileinfo[i];
+            return i;
         }
     }
 
@@ -150,25 +138,14 @@ static int PUREFUNC FindLumpByName(const char* name, const filelump_t** lump)
 
 static const filelump_t* PUREFUNC FindLumpByNum(int num)
 {
-    const wadinfo_t* header;
-    const filelump_t  *fileinfo;
+    const wadinfo_t* header = (const wadinfo_t*)&doom_iwad[0];
 
-    if(num < 0)
+    if(num < 0 || num >= header->numlumps)
         return NULL;
 
-    if(doom_iwad_len > 0)
-    {
-        header = (const wadinfo_t*)&doom_iwad[0];
+    const filelump_t* fileinfo = (const filelump_t*)&doom_iwad[header->infotableofs];
 
-        if(num >= header->numlumps)
-            return NULL;
-
-        fileinfo = (const filelump_t*)&doom_iwad[header->infotableofs];
-
-        return &fileinfo[num];
-    }
-
-    return NULL;
+    return &fileinfo[num];
 }
 
 //
