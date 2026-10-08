@@ -771,6 +771,65 @@ static void R_DrawMaskedColumn(R_DrawColumn_f colfunc, draw_column_vars_t *dcvar
     dcvars->texturemid = basetexturemid;
 }
 
+//*******************************************
+// High detail sprites.
+// Each pixel has two samples, at the centres of its left (low byte)
+// and right halves. Where both halves come from the same texture
+// column the pixel is drawn whole, otherwise each half is drawn.
+// (Merging the two columns' posts to write both halves at once was
+// tried: sprites draw few pixels, and the merge cost as much as it
+// saved.)
+//*******************************************
+
+//vis->startfrac is the texel under the left half of x1. Halves whose
+//sample is outside the patch (only at the sprite's edges) are skipped.
+static void R_DrawVisSpriteHiRes(const vissprite_t* vis, draw_column_vars_t* dcvars)
+{
+    const patch_t* patch = vis->patch;
+    const unsigned int width = patch->width;
+
+    const fixed_t step = vis->xiscale >> 1; //Per half pixel.
+    fixed_t frac = vis->startfrac;
+
+    for (int x = vis->x1; x <= vis->x2; x++)
+    {
+        const fixed_t fracr = frac + step;
+
+        const column_t* columnl = NULL;
+        const column_t* columnr = NULL;
+
+        if ((unsigned int)(frac >> FRACBITS) < width)
+            columnl = (const column_t *)((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
+
+        if ((unsigned int)(fracr >> FRACBITS) < width)
+            columnr = (const column_t *)((const byte *)patch + patch->columnofs[fracr >> FRACBITS]);
+
+        dcvars->x = x;
+
+        if (columnl && columnl == columnr)
+        {
+            //Both halves the same: draw the whole pixel.
+            R_DrawMaskedColumn(R_DrawColumn, dcvars, columnl);
+        }
+        else
+        {
+            if (columnl)
+            {
+                dcvars->odd_pixel = false;
+                R_DrawMaskedColumn(R_DrawColumnHiRes, dcvars, columnl);
+            }
+
+            if (columnr)
+            {
+                dcvars->odd_pixel = true;
+                R_DrawMaskedColumn(R_DrawColumnHiRes, dcvars, columnr);
+            }
+        }
+
+        frac = fracr + step;
+    }
+}
+
 //
 // R_DrawVisSprite
 //  mfloorclip and mceilingclip should also be set.
@@ -782,7 +841,6 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
     R_DrawColumn_f colfunc = R_DrawColumn;
     draw_column_vars_t dcvars;
-    bool hires = false;
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
@@ -793,13 +851,6 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
     if (!dcvars.colormap)   // NULL colormap = shadow draw
         colfunc = R_DrawFuzzColumn;    // killough 3/14/98
-    else
-    {
-        hires = highDetail;
-
-        if(hires)
-            colfunc = R_DrawColumnHiRes;
-    }
 
     // proff 11/06/98: Changed for high-res
     dcvars.iscale = vis->iscale;
@@ -809,25 +860,18 @@ static void R_DrawVisSprite(const vissprite_t *vis)
     spryscale = vis->scale;
     sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
+    //Shadows are always low detail (see R_SpriteSamples).
+    if (highDetail && dcvars.colormap)
+    {
+        R_DrawVisSpriteHiRes(vis, &dcvars);
+        return;
+    }
 
     const patch_t *patch = vis->patch;
 
-    fixed_t xiscale = vis->xiscale;
+    const fixed_t xiscale = vis->xiscale;
 
-    if(hires)
-    {
-        // Two samples per pixel, centred at 1/4 and 3/4.
-        xiscale >>= 1;
-        frac -= xiscale >> 1;
-
-        if((unsigned int)(frac >> FRACBITS) >= (unsigned int)patch->width)
-            frac = vis->startfrac;
-    }
-
-    dcvars.x = vis->x1;
-    dcvars.odd_pixel = false;
-
-    while(dcvars.x <= vis->x2)
+    for (dcvars.x = vis->x1; dcvars.x <= vis->x2; dcvars.x++)
     {
         const column_t* column = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
         R_DrawMaskedColumn(colfunc, &dcvars, column);
@@ -836,26 +880,6 @@ static void R_DrawVisSprite(const vissprite_t *vis)
 
         if(((frac >> FRACBITS) >= patch->width) || frac < 0)
             break;
-
-        dcvars.odd_pixel = true;
-
-        if(!hires)
-            dcvars.x++;
-
-        if(dcvars.x > vis->x2)
-            break;
-
-
-        const column_t* column2 = (const column_t *) ((const byte *)patch + patch->columnofs[frac >> FRACBITS]);
-        R_DrawMaskedColumn(colfunc, &dcvars, column2);
-
-        frac += xiscale;
-
-        if(((frac >> FRACBITS) >= patch->width) || frac < 0)
-            break;
-
-        dcvars.x++;
-        dcvars.odd_pixel = false;
     }
 }
 
@@ -1159,6 +1183,17 @@ static void R_DrawSprite (const vissprite_t* spr)
 }
 
 
+//Where a sprite pixel's samples are, as fractions of a pixel: its centre
+//in low detail, or the centres of its left and right halves in high
+//detail (shadows are always low detail). A pixel is drawn if any of its
+//samples is inside the sprite, so the first and last pixels may have
+//only one half inside it in high detail.
+static void R_SpriteSamples(bool hires, fixed_t* first, fixed_t* last)
+{
+    *first = hires ? FRACUNIT/4 : FRACUNIT/2;
+    *last = hires ? (3*FRACUNIT)/4 : FRACUNIT/2;
+}
+
 //
 // R_DrawPSprite
 //
@@ -1183,9 +1218,14 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     tx += patch->width<<FRACBITS;
     const fixed_t xr = centerxfrac + FixedMul (tx, pspritescale);
 
-    // Columns whose pixel centres lie within [xl, xr).
-    const int x1 = (xl + (FRACUNIT/2) - 1) >> FRACBITS;
-    const int x2 = ((xr + (FRACUNIT/2) - 1) >> FRACBITS) - 1;
+    const bool shadow = _g->player.powers[pw_invisibility] > 4*32 || _g->player.powers[pw_invisibility] & 8;
+
+    fixed_t sample1, sample2;
+    R_SpriteSamples(highDetail && !shadow, &sample1, &sample2);
+
+    // Columns with a sample within [xl, xr).
+    const int x1 = (xl - sample2 + FRACUNIT - 1) >> FRACBITS;
+    const int x2 = ((xr - sample1 + FRACUNIT - 1) >> FRACBITS) - 1;
 
     width = patch->width;
     topoffset = patch->topoffset<<FRACBITS;
@@ -1208,8 +1248,8 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     const bool flip = (bool) SPR_FLIPPED(sprframe, 0);
 
-    // Texel under the centre of the first drawn pixel.
-    const fixed_t frac = FixedMul((vis.x1 << FRACBITS) + (FRACUNIT/2) - xl, pspriteiscale);
+    // Texel under the first sample of the first drawn pixel.
+    const fixed_t frac = FixedMul((vis.x1 << FRACBITS) + sample1 - xl, pspriteiscale);
 
     if (flip)
     {
@@ -1224,7 +1264,7 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
 
     vis.patch = patch;
 
-    if (_g->player.powers[pw_invisibility] > 4*32 || _g->player.powers[pw_invisibility] & 8)
+    if (shadow)
         vis.colormap = NULL;                    // shadow draw
     else if (fixedcolormap)
         vis.colormap = R_FastColormap(fixedcolormap);           // fixed color
@@ -1741,23 +1781,27 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     const fixed_t xl = (centerxfrac + FixedMul(tx,xscale));
 
+    fixed_t sample1, sample2;
+    R_SpriteSamples(highDetail && !(thing->flags & MF_SHADOW), &sample1, &sample2);
+
     // off the side?
-    if(xl > ((SCREENWIDTH << FRACBITS) - (FRACUNIT/2)))
+    if(xl > ((SCREENWIDTH << FRACBITS) - (FRACUNIT - sample2)))
         return;
+
 
     const fixed_t xr = (centerxfrac + FixedMul(tx + (patch->width << FRACBITS),xscale));
 
     // off the side?
-    if(xr <= (FRACUNIT/2))
+    if(xr <= sample1)
         return;
 
     //Too small.
     if(xr <= (xl + FRACUNIT + (FRACUNIT >> 2)))
         return;
 
-    // Columns whose pixel centres lie within [xl, xr).
-    const int x1 = (xl + (FRACUNIT/2) - 1) >> FRACBITS;
-    const int x2 = ((xr + (FRACUNIT/2) - 1) >> FRACBITS) - 1;
+    // Columns with a sample within [xl, xr).
+    const int x1 = (xl - sample2 + FRACUNIT - 1) >> FRACBITS;
+    const int x2 = ((xr - sample1 + FRACUNIT - 1) >> FRACBITS) - 1;
 
     // store information in a vissprite
     vissprite_t* vis = R_NewVisSprite();
@@ -1780,8 +1824,8 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
 
     const fixed_t iscale = FixedReciprocal(xscale);
 
-    // Texel under the centre of the first drawn pixel.
-    const fixed_t frac = FixedMul((vis->x1 << FRACBITS) + (FRACUNIT/2) - xl, iscale);
+    // Texel under the first sample of the first drawn pixel.
+    const fixed_t frac = FixedMul((vis->x1 << FRACBITS) + sample1 - xl, iscale);
 
     if (flip)
     {

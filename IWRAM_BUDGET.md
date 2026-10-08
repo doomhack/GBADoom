@@ -5,53 +5,66 @@ how deep the stack that lives in the leftover space can get. The
 [VRAM section](#vram-oam-and-palette) covers the 96 KB of VRAM plus OAM and
 palette RAM, which also hold renderer tables.
 
-Measured on the GBA build of 2026-10-07 (commit `6b663e5` plus uncommitted
-work: libtimidity music, VBlank-IRQ mixer, IWAD-less ROM). Sizes are bytes.
+Measured on the GBA build of 2026-10-08 (commit `bed1441` plus the
+uncommitted high-detail sprite sampling change in `r_hotpath.iwram.c`). Sizes
+are bytes.
 
 ## Summary
 
 | | Bytes |
 |---|---|
-| Static IWRAM (code + data) | 22,328 |
-| **Main stack (free gap)** | **10,184** |
+| Static IWRAM (code + data) | 25,348 |
+| **Main stack (free gap)** | **7,164** |
 | Worst realistic stack use (gameplay + sound IRQ) | ~2,200 |
-| Headroom at worst realistic depth | ~8,000 |
+| Headroom at worst realistic depth | ~4,900 |
 
 `I_Error` is treated as a terminal crash and left out of the stack figures
 (it needs 1,656 B of its own; see below).
+
+Since the 2026-10-07 snapshot, static IWRAM grew by 3,020 B, all in
+`r_hotpath.iwram.c`:
+
+- **Code, +2,224 B.** The BSP chain is now built at O3 (`R_BSP_OPT`), which
+  inlines `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` into
+  `R_Subsector`. The drawseg clip summary for sprites and the high-detail
+  sprite path are also new.
+- **`.bss`, +796 B.** The single 256 B `current_colormap` became a 4-slot
+  colormap cache.
+
+The stack shrank by the same 3,020 B.
 
 ## Memory map
 
 | Region | Range | Bytes | Notes |
 |---|---|---|---|
-| `.iwram` (code) | 0x03000000–0x03004F20 | 20,256 | |
-| `.bss` | 0x03004F20–0x0300571C | 2,044 | cleared by crt0 |
-| `.data`, `.init_array`, `.fini_array` | 0x0300571C–0x03005738 | 28 | |
-| **Main stack (User/System mode)** | 0x03005738–0x03007F00 | **10,184** | grows down from `__sp_usr` |
+| `.iwram` (code) | 0x03000000–0x030057D0 | 22,480 | |
+| `.bss` | 0x030057D0–0x030062E8 | 2,840 | cleared by crt0 |
+| `.data`, `.init_array`, `.fini_array` | 0x030062E8–0x03006304 | 28 | |
+| **Main stack (User/System mode)** | 0x03006304–0x03007F00 | **7,164** | grows down from `__sp_usr` |
 | IRQ-mode stack | 0x03007F00–0x03007FA0 | 160 | `__sp_irq`; uses 16 B (see below) |
 | SVC stack and BIOS area | 0x03007FA0–0x03008000 | 96 | BIOS SWIs, IRQ vector, `__irq_flags` |
 
-The stack has no guard. If it grows past 0x03005738 it silently overwrites
+The stack has no guard. If it grows past 0x03006304 it silently overwrites
 `.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics).
 
 ## Static contents
 
-### `.iwram` code (20,256)
+### `.iwram` code (22,480)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 17,352 | `R_Subsector` 4,392, `R_RenderPlayerView` 3,472, `R_RenderSegLoop` 2,340, `R_MapPlane` 1,144, `P_CrossBSPNode` 924, `R_RenderMaskedSegRange` 700, `R_DrawColumn` 664 |
+| `r_hotpath.iwram.c` | 19,576 | `R_Subsector` 6,956 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 3,176, `R_MapPlane` 1,144, `R_AddSprites` 1,008, `P_CrossBSPNode` 924, `R_RenderBSPNode` 832, `R_RenderMaskedSegRange` 700, `R_DrawColumn` 664 |
 | libtimidity (`TIMI_IWRAM`) | 1,616 | `_timi_resample_voice` 944, `update_signal` 372, `_timi_mix_voice` 300 |
 | `s_mix.iwram.c` | 628 | `S_MixResample` 264, `S_MixOutput` 188, `S_MixDirect` 164 |
 | `fixeddiv.s` | 412 | |
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
 | Linker interworking stubs, alignment | 64 | |
 
-### `.bss` (2,044) and `.data` (28)
+### `.bss` (2,840) and `.data` (28)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 932 | `current_colormap` 256, `spanstart` 160, `flatStats` 128, `solidcol` 120 |
+| `r_hotpath.iwram.c` | 1,728 | `colormapSlots` 1,024 (4 × 256), `spanstart` 160, `flatStats` 128, `solidcol` 120, `colormapSlotSrc` 16 |
 | `s_mix.iwram.c` | 896 | `mixbuf` 896 |
 | libgba | 158 | `IntrTable` 120 |
 | LTO globals, crtbegin, alignment | 58 | |
@@ -76,7 +89,7 @@ routines, traversers, column drawers, the voice mixer) are resolved by name.
 
 | Path | Depth | Notes |
 |---|---|---|
-| Render (`main` → `R_RenderPlayerView`) | 792 | 152 + 640; texture-cache miss included |
+| Render (`main` → `R_RenderPlayerView`) | 824 | 152 + 672: `R_RenderPlayerView` 136 → `R_RenderBSPNode` 184 → `R_Subsector` 224 → `R_AddSprites` 120 → `FixedDiv` 8. A texture-cache miss under `R_Subsector` is 24 B shallower. |
 | Gameplay tick, one state action | 1,584 | `G_Ticker` → `P_SetMobjState` → action → move/teleport → damage → action |
 | Gameplay tick with `snprintf` (`S_ChangeMusic` in the finale) | 1,728 | |
 | Level load / Load Game with an `lprintf` | 1,944 | deepest common path: `G_DoLoadLevel` → `lprintf` → `vsprintf` |
@@ -108,13 +121,17 @@ nothing nests unless the mixer runs longer than a frame.
 
 ### Combined worst case (main + sound IRQ)
 
-| Scenario | Depth | Spare of 10,184 |
+| Scenario | Depth | Spare of 7,164 |
 |---|---|---|
-| Render | 1,036 | 9,148 |
-| Gameplay, one state action | 1,828 | 8,356 |
-| Level load with `lprintf` | 2,188 | 7,996 |
-| Two nested state actions | 2,644 | 7,540 |
-| Three nested state actions | 3,460 | 6,724 |
+| Render | 1,068 | 6,096 |
+| Gameplay, one state action | 1,828 | 5,336 |
+| Level load with `lprintf` | 2,188 | 4,976 |
+| Two nested state actions | 2,644 | 4,520 |
+| Three nested state actions | 3,460 | 3,704 |
+
+The render and mixer depths were re-measured on this build. The gameplay and
+level-load paths carry over from the 2026-10-07 analysis, since none of that
+code has changed.
 
 ### Not counted: `I_Error`
 
@@ -144,9 +161,13 @@ Those builds predate the sound IRQ, so the measurements don't include the
 
 - **Every byte added to IWRAM comes off the stack.** That includes code or
   statics in `r_hotpath.iwram.c`, `s_mix.iwram.c` and `TIMI_IWRAM` functions.
-  At the realistic worst case (~2.2 KB), about 8 KB can still be added
-  before the stack has no margin. Keep at least ~4 KB free for the rare
-  nested-action paths.
+  At the realistic worst case (~2.2 KB), about 4.9 KB can still be added
+  before the stack has no margin. Keeping the stack at least ~4 KB (above
+  the 3,460 B three-nested-action case) leaves about 3 KB for further IWRAM
+  growth.
+- **Big stack frames on the render path.** O3 inlining made `R_Subsector`'s
+  frame 224 B, and it sits under `R_RenderBSPNode` (184 B). Inlining more
+  into that chain grows the render depth as well as the code.
 - **Large stack locals** in code that runs during gameplay or in the VBlank
   handler. The mixer runs on top of the deepest game path, so keep
   `I_SoundVBlank`'s call chain shallow.
@@ -161,8 +182,8 @@ Those builds predate the sound IRQ, so the measurements don't include the
 
 The display runs in Mode 4 (8-bit bitmap, two pages, OBJs off), set in
 `I_CreateWindow_e32`. That leaves gaps after each page, all of OBJ VRAM, OAM
-and the OBJ palette unused by the hardware. The renderer keeps lookup tables
-and a flat cache in some of them.
+and the OBJ palette unused by the hardware. The renderer keeps lookup tables,
+clip arrays, colormaps and a flat cache in them.
 
 The layouts are structs in `include/vram_spare.h`, reached through
 fixed-address macros:
@@ -172,6 +193,7 @@ fixed-address macros:
 | `vram1_spare_t` | `vram1_spare` | gap after page 1 |
 | `vram_tail_t` | `vram_tail` | gap after page 2 plus all of OBJ VRAM (contiguous) |
 | `oam_spare_t` | `oam_spare` | OAM |
+| `objpal_spare_t` | `objpal_spare` | OBJ palette |
 
 The compiler places the members, and `static_assert`s fail the build if a
 region overflows; `vram_tail_t` must fill its region exactly, so the flat
@@ -244,19 +266,28 @@ is 16- or 32-bit, as OAM requires.
 
 976 B used, 48 B free.
 
+`R_ClearPlanes` resets `floorclip` and `ceilingclip` with a 32-bit DMA fill
+(`BlockSet`, whose source word is on the IWRAM stack). `R_StoreWallRange`
+saves clip ranges to the openings array with 16-bit DMA (`BlockCopy16`).
+
 ### Palette RAM (1,024 at 0x05000000)
 
 | Range | Bytes | Use |
 |---|---|---|
 | 0x05000000–0x05000200 | 512 | BG palette: the 256-colour game palette (`I_SetPallete_e32`); entries 0 and 241 are also set for the text console |
-| 0x05000200–0x05000400 | 512 | OBJ palette: unused |
+| 0x05000200–0x05000300 | 256 | `objpal_spare->fullColormap`: colormap 0 (full bright), filled once by `R_InitBuffer`. Used for the sky, fullbright sprites and the weapon. |
+| 0x05000300–0x05000400 | 256 | `objpal_spare->fixedColormap`: the current `fixedcolormap` (invulnerability or light amplification), copied by `R_RenderPlayerView` only when it changes |
+
+`R_FastColormap` hands drawers these copies instead of loading a colormap
+slot. In mGBA, lookups from palette RAM run at IWRAM speed (sky: 19.0
+cycles/pixel against 18.9 from IWRAM). On hardware, a CPU access can take one
+extra cycle when the display reads the palette at the same time.
 
 ### Free video memory
 
 | Where | Bytes | Notes |
 |---|---|---|
 | `vram_tail->unused`, 0x06013600–0x06015400 | 7,680 | one contiguous block |
-| OBJ palette | 512 | 16-bit bus |
 | `vram1_spare` | 460 | |
 | OAM | 48 | |
 
