@@ -45,7 +45,7 @@
 #include "f_wipe.h"
 #include "i_system_e32.h"
 
-extern short* wipe_y_lookup;
+#include "vram_spare.h"
 
 
 #ifdef GBA
@@ -71,6 +71,8 @@ int wipe_EndScreen(void)
 static int wipe_doMelt(int ticks)
 {
     bool done = true;
+
+    short* const wipe_y_lookup = vram1_spare->wipe_y_lookup;
 
     unsigned short* backbuffer = I_GetBackBuffer();
     unsigned short* frontbuffer = I_GetFrontBuffer();
@@ -135,6 +137,8 @@ static int wipe_doMelt(int ticks)
 
 void wipe_initMelt()
 {
+    short* const wipe_y_lookup = vram1_spare->wipe_y_lookup;
+
     // setup initial column positions (y<0 => not ready to scroll yet)
     wipe_y_lookup[0] = -(M_Random() % 16);
     for (int i = 1; i < SCREENWIDTH; i++)

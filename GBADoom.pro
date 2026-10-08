@@ -193,6 +193,7 @@ HEADERS += \
     include/tables.h \
     include/v_video.h \
     include/version.h \
+    include/vram_spare.h \
     include/w_wad.h \
     include/wi_stuff.h \
     include/z_zone.h

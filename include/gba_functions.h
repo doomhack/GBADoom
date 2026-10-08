@@ -33,6 +33,19 @@ inline static void BlockCopy(void* dest, const void* src, const unsigned int len
 #endif
 }
 
+//As BlockCopy, but 16 bits at a time, for halfword aligned data.
+//len is in bytes and must be at least 2 (a DMA count of 0 means 0x4000).
+inline static void BlockCopy16(void* dest, const void* src, const unsigned int len)
+{
+#ifdef GBA
+    const int halfwords = len >> 1;
+
+    DMA3COPY(src, dest, DMA_DST_INC | DMA_SRC_INC | DMA16 | DMA_IMMEDIATE | halfwords)
+#else
+    memcpy(dest, src, len & 0xfffffffe);
+#endif
+}
+
 inline static void CpuBlockCopy(void* dest, const void* src, const unsigned int len)
 {
 #ifdef GBA

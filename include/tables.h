@@ -89,20 +89,13 @@ extern const angle_t tantoangle[2049];
 
 extern const int viewangletox[4096];
 
+//Copied to VRAM at startup (vram_spare.h).
 extern const angle_t xtoviewangle[121];
-extern const angle_t* xtoviewangle_vram; //VRAM Copy.
 
-
+//One entry per view row.
 extern const fixed_t yslope[128];
-extern const fixed_t* yslope_vram; //VRAM Copy.
 
 extern const fixed_t distscale[120];
-extern const fixed_t* distscale_vram; //VRAM Copy.
-
-extern short* screenheightarray;
-extern short* negonearray;
-
-extern fixed_t* tmpbbox;
 
 
 #endif

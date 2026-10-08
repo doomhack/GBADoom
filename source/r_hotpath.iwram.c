@@ -64,92 +64,33 @@
 
 #include "gba_functions.h"
 
+#include "vram_spare.h"
+
 
 //#define static
 
-//*****************************************
-//These are unused regions of VRAM.
-//We can store things in here to free space
-//in IWRAM.
-//*****************************************
-
+//Tables in spare VRAM/OAM: layout in vram_spare.h.
 #ifndef GBA
-static byte vram1_spare[2560];
-static byte vram2_spare[2560];
-static byte vram3_spare[1024];
-#else
-    #define vram1_spare ((byte*)0x6000000+0x9600)
-    #define vram2_spare ((byte*)0x600A000+0x9600)
-    #define vram3_spare ((byte*)0x7000000)
+vram1_spare_t vram1_spare_storage;
+vram_tail_t vram_tail_storage;
+oam_spare_t oam_spare_storage;
+objpal_spare_t objpal_spare_storage;
 #endif
 
-//Stuff alloc'd in OAM memory.
+static_assert(sizeof(yslope) / sizeof(yslope[0]) >= SCREENHEIGHT - ST_SCALED_HEIGHT, "yslope must cover every view row");
 
-//First 512 bytes free.
-
-//240 bytes.
-short* floorclip = (short*)&vram3_spare[512];
-
-//240 bytes.
-short* ceilingclip = (short*)&vram3_spare[512+240];
-
-//16 bytes
-fixed_t* tmpbbox = (fixed_t*)&vram3_spare[512+240+240];
-
-//1008 bytes used (512 of them free). 16 byes left.
-
-
-
-//Stuff alloc'd in VRAM1 memory.
-
-//512 bytes
-const fixed_t* yslope_vram = (const fixed_t*)&vram1_spare[0];
-
-//480 bytes
-const fixed_t* distscale_vram = (const fixed_t*)&vram1_spare[512];
-
-//484 bytes.
-const angle_t* xtoviewangle_vram = (const angle_t*)&vram1_spare[512+480];
-
-//240 Bytes.
-short* wipe_y_lookup = (short*)&vram1_spare[512+480+484];
-
-//384 Bytes
-vissprite_t** vissprite_ptrs = (vissprite_t**)&vram1_spare[512+480+484+240];
-
-//2100 bytes used. 460 bytes left.
-
-
-//Stuff alloc'd in VRAM2 memory.
-
-//240 bytes
-short* screenheightarray = (short*)&vram2_spare[0];
-
-//240 bytes
-short* negonearray = (short*)&vram2_spare[240];
-
-
-#define yslope yslope_vram
-#define distscale distscale_vram
-#define xtoviewangle xtoviewangle_vram
+//Read the VRAM copies of these tables, not the ROM ones.
+#define yslope (vram1_spare->yslope)
+#define distscale (vram1_spare->distscale)
+#define xtoviewangle (vram1_spare->xtoviewangle)
 
 //*****************************************
 //Flat cache stuff.
-//GBA has 16kb of OBJ Video Memory (unused
-//as OBJs are disabled). The first 8kb holds
-//2 flats, as VRAM is faster than ROM. The
-//last 8kb is free (4 flat slots measured
-//no faster than 2).
+//The flats are cached in the last 8kb of
+//OBJ VRAM (vram_tail->flatCache), as VRAM
+//is faster than ROM. 4 flat slots measured
+//no faster than 2.
 //*****************************************
-
-#define FLAT_SIZE 4096
-#define FLAT_CACHE_SLOTS 2
-
-#ifndef GBA
-static byte flatCache[FLAT_CACHE_SLOTS*FLAT_SIZE];
-#else
-    #define flatCache ((byte*)0x6014000)
-#endif
 
 //Lump held in each flat cache slot.
 static int flatCacheLump[FLAT_CACHE_SLOTS] = {-1, -1};
@@ -267,8 +208,14 @@ static fixed_t  pixlowstep;
 static int      worldhigh;
 static int      worldlow;
 
-static lighttable_t current_colormap[256];
-static const lighttable_t* current_colormap_ptr;
+//Colormaps copied into IWRAM (ROM is slower), with the ROM copy each
+//slot holds. Walls, flats and masked textures switch between a few
+//light levels, so several slots avoid most of the copies.
+#define COLORMAP_SLOTS 4
+
+static lighttable_t colormapSlots[COLORMAP_SLOTS][256];
+static const lighttable_t* colormapSlotSrc[COLORMAP_SLOTS];
+static unsigned int colormapNextSlot;
 
 static fixed_t planeheight;
 
@@ -324,6 +271,14 @@ inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
     return (fixed_t)((int_64_t) a*b >> FRACBITS);
 }
 
+//BSP traversal and wall setup are built at O3 (the rest of the file is Os).
+//Functions that call each other must share it, or GCC won't inline them.
+#ifdef GBA
+    #define R_BSP_OPT __attribute__((optimize("O3")))
+#else
+    #define R_BSP_OPT
+#endif
+
 //This is a hack. I want FixedMul inlined only in this file. Sorry, not sorry.
 
 static inline __attribute__((always_inline)) fixed_t FixedMulInline(fixed_t a, fixed_t b)
@@ -347,6 +302,17 @@ static inline __attribute__((always_inline)) fixed_t FixedReciprocalInline(const
 }
 
 
+//Inline copy of R_SetDefaultDrawColumnVars (r_draw.c, in ROM).
+static inline __attribute__((always_inline)) void R_SetDefaultDrawColumnVarsInline(draw_column_vars_t *dcvars)
+{
+    dcvars->x = dcvars->yl = dcvars->yh = 0;
+    dcvars->iscale = dcvars->texturemid = 0;
+    dcvars->source = NULL;
+    dcvars->colormap = colormaps;
+}
+
+#define R_SetDefaultDrawColumnVars R_SetDefaultDrawColumnVarsInline
+
 static inline __attribute__((always_inline)) int min(int x, int y)
 {
     return x < y ? x : y;
@@ -364,9 +330,15 @@ static inline __attribute__((always_inline)) int clamp(int lo, int v, int hi)
 
 // killough 5/3/98: reformatted
 
-static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
+//FixedApproxDiv with the reciprocal inlined (it's a call otherwise).
+static inline __attribute__((always_inline)) fixed_t FixedApproxDivInline(const fixed_t a, const fixed_t b)
 {
-    const unsigned int ans = FixedApproxDiv(num << 3, den >> 8) >> FRACBITS;
+    return FixedMul(a, FixedReciprocalInline(b));
+}
+
+static CONSTFUNC R_BSP_OPT int SlopeDiv(unsigned num, unsigned den)
+{
+    const unsigned int ans = FixedApproxDivInline(num << 3, den >> 8) >> FRACBITS;
 
     return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
@@ -380,7 +352,7 @@ static CONSTFUNC int SlopeDiv(unsigned num, unsigned den)
 // killough 5/2/98: reformatted
 //
 
-static PUREFUNC int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
+static PUREFUNC R_BSP_OPT int R_PointOnSide(fixed_t x, fixed_t y, const mapnode_t *node)
 {
     const fixed_t nx = x - ((fixed_t)node->x << FRACBITS);
     const fixed_t ny = y - ((fixed_t)node->y << FRACBITS);
@@ -416,7 +388,7 @@ sector_t *R_PointInSector(fixed_t x, fixed_t y)
 //  tantoangle[] table.
 //
 
-CONSTFUNC angle_t R_PointToAngle2(const fixed_t vx, const fixed_t vy, fixed_t x, fixed_t y)
+CONSTFUNC R_BSP_OPT angle_t R_PointToAngle2(const fixed_t vx, const fixed_t vy, fixed_t x, fixed_t y)
 {
     x -= vx;
     y -= vy;
@@ -457,7 +429,7 @@ CONSTFUNC angle_t R_PointToAngle2(const fixed_t vx, const fixed_t vy, fixed_t x,
 
 // killough 5/2/98: move from r_main.c, made static, simplified
 
-static CONSTFUNC fixed_t R_PointToDist(fixed_t x, fixed_t y)
+static CONSTFUNC R_BSP_OPT fixed_t R_PointToDist(fixed_t x, fixed_t y)
 {
     fixed_t dx = D_abs(x - viewx);
     fixed_t dy = D_abs(y - viewy);
@@ -469,7 +441,7 @@ static CONSTFUNC fixed_t R_PointToDist(fixed_t x, fixed_t y)
         dy = t;
     }
 
-    return FixedApproxDiv(dx, finesine[(tantoangle[FixedApproxDiv(dy,dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT]);
+    return FixedApproxDivInline(dx, finesine[(tantoangle[FixedApproxDivInline(dy,dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT]);
 }
 
 static const lighttable_t* R_ColourMap(int lightlevel)
@@ -500,18 +472,42 @@ static const lighttable_t* R_ColourMap(int lightlevel)
 }
 
 
-//Load a colormap into IWRAM.
+//Which colormap objpal_spare->fixedColormap holds.
+static const lighttable_t* objpalFixedSrc;
+
+//Colormaps used directly per pixel (not via R_LoadColorMap) are read
+//from the OBJ palette copies if there is one, as ROM is slower.
+static const lighttable_t* R_FastColormap(const lighttable_t* cm)
+{
+    if (cm == colormaps)
+        return objpal_spare->fullColormap;
+
+    if (cm && cm == fixedcolormap)
+        return objpal_spare->fixedColormap;
+
+    return cm;
+}
+
+//Load a colormap into IWRAM. The slot replaced is the oldest one. That
+//is never one still in use, as every caller finishes drawing with its
+//colormap before the next load.
 static const lighttable_t* R_LoadColorMap(int lightlevel)
 {
     const lighttable_t* lm = R_ColourMap(lightlevel);
 
-    if(current_colormap_ptr != lm)
+    for(unsigned int i = 0; i < COLORMAP_SLOTS; i++)
     {
-        BlockCopy(current_colormap, lm, 256);
-        current_colormap_ptr = lm;
+        if(colormapSlotSrc[i] == lm)
+            return colormapSlots[i];
     }
 
-    return current_colormap;
+    const unsigned int slot = colormapNextSlot;
+    colormapNextSlot = (slot + 1) & (COLORMAP_SLOTS - 1);
+
+    BlockCopy(colormapSlots[slot], lm, 256);
+    colormapSlotSrc[slot] = lm;
+
+    return colormapSlots[slot];
 }
 
 //
@@ -1023,15 +1019,72 @@ static inline int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 // R_DrawSprite
 //
 
+//Number of entries in vram_tail->dsclip this frame.
+static unsigned int num_dsclip;
+
+//Summarise the drawsegs that can clip sprites (those with a
+//silhouette or a masked mid texture), in drawseg order.
+static void R_BuildDrawsegClip(void)
+{
+    const drawseg_t* drawsegs = _g->drawsegs;
+    drawseg_clip_t* dc = vram_tail->dsclip;
+
+    for (const drawseg_t* ds = drawsegs; ds < ds_p; ds++)
+    {
+        if (!ds->silhouette && !ds->maskedtexturecol)
+            continue;
+
+        dc->xkey = ((unsigned int)ds->x2 << 16) | (255 - ds->x1);
+
+        if (ds->scale1 > ds->scale2)
+        {
+            dc->lowscale = ds->scale2;
+            dc->scale = ds->scale1;
+        }
+        else
+        {
+            dc->lowscale = ds->scale1;
+            dc->scale = ds->scale2;
+        }
+
+        dc->index = ds - drawsegs;
+        dc->masked = (ds->maskedtexturecol != NULL);
+
+        dc++;
+    }
+
+    num_dsclip = dc - vram_tail->dsclip;
+}
+
+// Return the next summary entry below dc (scanning down to first)
+// that overlaps the sprite, or NULL.
+// Both halves of (xkey - skey) are >= 0 only if the drawseg
+// overlaps the sprite: the high half is dx2 - sx1 and the
+// low half is sx2 - dx1. Values are < 256, so a negative half
+// sets bit 31 or bit 15. (A borrow from the low half only
+// happens when the low test has already failed.)
+// Kept out of line so the scan loop has registers to itself.
+static __attribute__((noinline)) const drawseg_clip_t* R_NextClipSeg(const drawseg_clip_t* dc, const drawseg_clip_t* first, unsigned int skey)
+{
+    while (dc-- > first)
+    {
+        if (!((dc->xkey - skey) & 0x80008000))
+            return dc;
+    }
+
+    return NULL;
+}
+
 static void R_DrawSprite (const vissprite_t* spr)
 {
-    short* clipbot = floorclip;
-    short* cliptop = ceilingclip;
+    short* clipbot = oam_spare->floorclip;
+    short* cliptop = oam_spare->ceilingclip;
 
-    fixed_t scale;
-    fixed_t lowscale;
+    const int sx1 = spr->x1;
+    const int sx2 = spr->x2;
+    const fixed_t sprscale = spr->scale;
 
-    for (int x = spr->x1 ; x<=spr->x2 ; x++)
+    for (int x = sx1 ; x<=sx2 ; x++)
     {
         clipbot[x] = viewheight;
         cliptop[x] = -1;
@@ -1045,31 +1098,30 @@ static void R_DrawSprite (const vissprite_t* spr)
     // (pointer check was originally nonportable
     // and buggy, by going past LEFT end of array):
 
+    // Scan the summary (R_BuildDrawsegClip) rather than the
+    // drawsegs, and only read a drawseg if it covers the sprite.
+
+    const unsigned int skey = ((unsigned int)sx1 << 16) | (255 - sx2);
+
     const drawseg_t* drawsegs  =_g->drawsegs;
+    const drawseg_clip_t* dsclip = vram_tail->dsclip;
 
-    for (const drawseg_t* ds = ds_p; ds-- > drawsegs; )  // new -- killough
+    // determine which drawsegs obscure the sprite
+    for (const drawseg_clip_t* dc = dsclip + num_dsclip; (dc = R_NextClipSeg(dc, dsclip, skey)); )  // new -- killough
     {
-        // determine if the drawseg obscures the sprite
-        if (ds->x1 > spr->x2 || ds->x2 < spr->x1 || (!ds->silhouette && !ds->maskedtexturecol))
-            continue;      // does not cover sprite
+        const unsigned int xkey = dc->xkey;
 
-        const int r1 = ds->x1 < spr->x1 ? spr->x1 : ds->x1;
-        const int r2 = ds->x2 > spr->x2 ? spr->x2 : ds->x2;
+        const int dx1 = 255 - (int)(xkey & 0xffff);
+        const int dx2 = xkey >> 16;
 
-        if (ds->scale1 > ds->scale2)
-        {
-            lowscale = ds->scale2;
-            scale = ds->scale1;
-        }
-        else
-        {
-            lowscale = ds->scale1;
-            scale = ds->scale2;
-        }
+        const drawseg_t* ds = drawsegs + dc->index;
 
-        if (scale < spr->scale || (lowscale < spr->scale && !R_PointOnSegSide (spr->gx, spr->gy, ds->curline)))
+        const int r1 = dx1 < sx1 ? sx1 : dx1;
+        const int r2 = dx2 > sx2 ? sx2 : dx2;
+
+        if (dc->scale < sprscale || (dc->lowscale < sprscale && !R_PointOnSegSide (spr->gx, spr->gy, ds->curline)))
         {
-            if (ds->maskedtexturecol)       // masked mid texture?
+            if (dc->masked)       // masked mid texture?
                 R_RenderMaskedSegRange(ds, r1, r2);
 
             continue;               // seg is behind sprite
@@ -1175,9 +1227,9 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     if (_g->player.powers[pw_invisibility] > 4*32 || _g->player.powers[pw_invisibility] & 8)
         vis.colormap = NULL;                    // shadow draw
     else if (fixedcolormap)
-        vis.colormap = fixedcolormap;           // fixed color
+        vis.colormap = R_FastColormap(fixedcolormap);           // fixed color
     else if (psp->state->frame & FF_FULLBRIGHT)
-        vis.colormap = fullcolormap;            // full bright // killough 3/20/98
+        vis.colormap = R_FastColormap(fullcolormap);            // full bright // killough 3/20/98
     else
         vis.colormap = R_LoadColorMap(lightlevel);  // local light
 
@@ -1197,8 +1249,8 @@ static void R_DrawPlayerSprites(void)
   pspdef_t *psp;
 
   // clip to screen bounds
-  mfloorclip = screenheightarray;
-  mceilingclip = negonearray;
+  mfloorclip = oam_spare->screenheightarray;
+  mceilingclip = oam_spare->negonearray;
 
   // add all active psprites
   for (i=0, psp=_g->player.psprites; i<NUMPSPRITES; i++,psp++)
@@ -1228,9 +1280,9 @@ static void R_SortVisSprites (void)
     if (i)
     {
         while (--i>=0)
-            vissprite_ptrs[i] = _g->vissprites+i;
+            vram1_spare->vissprite_ptrs[i] = _g->vissprites+i;
 
-        qsort(vissprite_ptrs, num_vissprite, sizeof (vissprite_t*), compare);
+        qsort(vram1_spare->vissprite_ptrs, num_vissprite, sizeof (vissprite_t*), compare);
     }
 }
 
@@ -1247,9 +1299,12 @@ static void R_DrawMasked(void)
 
     R_SortVisSprites();
 
+    if (num_vissprite)
+        R_BuildDrawsegClip();
+
     // draw all vissprites back to front
     for (i = num_vissprite ;--i>=0; )
-        R_DrawSprite(vissprite_ptrs[i]);         // killough
+        R_DrawSprite(vram1_spare->vissprite_ptrs[i]);         // killough
 
     // render any remaining masked mid textures
 
@@ -1386,7 +1441,7 @@ static const byte* R_GetFlat(int lump)
     for(unsigned int i = 0; i < FLAT_CACHE_SLOTS; i++)
     {
         if(flatCacheLump[i] == lump)
-            return &flatCache[i*FLAT_SIZE];
+            return vram_tail->flatCache[i];
     }
 
     return W_CacheLumpNum(lump);
@@ -1416,21 +1471,8 @@ static void R_LoadFlat(unsigned int slot, int lump)
     if(W_LumpLength(lump) < FLAT_SIZE)
         return;
 
-    const byte* src = W_CacheLumpNum(lump);
-    byte* dest = &flatCache[slot*FLAT_SIZE];
-
-    if(((size_t)src & 3) == 0)
-    {
-        BlockCopy(dest, src, FLAT_SIZE);
-    }
-    else
-    {
-        //Unaligned lump. VRAM needs 16bit writes.
-        unsigned short* d = (unsigned short*)dest;
-
-        for(unsigned int i = 0; i < FLAT_SIZE; i += 2)
-            *d++ = src[i] | (src[i+1] << 8);
-    }
+    //GbaWadUtil 4 byte aligns every lump.
+    BlockCopy(vram_tail->flatCache[slot], W_CacheLumpNum(lump), FLAT_SIZE);
 
     flatCacheLump[slot] = lump;
 }
@@ -1540,8 +1582,7 @@ static void R_DoDrawPlane(visplane_t *pl)
            * Because of this hack, sky is not affected by INVUL inverse mapping.
            * Until Boom fixed this. Compat option added in MBF. */
 
-            if (!(dcvars.colormap = fixedcolormap))
-                dcvars.colormap = fullcolormap;          // killough 3/20/98
+            dcvars.colormap = R_FastColormap(fixedcolormap ? fixedcolormap : fullcolormap);          // killough 3/20/98
 
             // proff 09/21/98: Changed for high-res
             dcvars.iscale = skyiscale;
@@ -1609,7 +1650,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 // killough 5/2/98: reformatted, cleaned up
 // CPhipps - moved here from r_main.c
 
-static inline fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
+static inline R_BSP_OPT fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 {
     const int anglea = ANG90 + (visangle - viewangle);
     const int angleb = ANG90 + (visangle - rw_normalangle);
@@ -1757,9 +1798,9 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (thing->flags & MF_SHADOW)
         vis->colormap = NULL;             // shadow draw
     else if (fixedcolormap)
-        vis->colormap = fixedcolormap;      // fixed map
+        vis->colormap = R_FastColormap(fixedcolormap);      // fixed map
     else if (thing->state->frame & FF_FULLBRIGHT)
-        vis->colormap = fullcolormap;     // full bright  // killough 3/20/98
+        vis->colormap = R_FastColormap(fullcolormap);     // full bright  // killough 3/20/98
     else
     {      // diminished light
         vis->colormap = R_ColourMap(lightlevel);
@@ -1800,7 +1841,7 @@ static void R_AddSprites(sector_t* sec, int lightlevel)
 
 // New function, by Lee Killough
 
-static visplane_t *new_visplane(unsigned hash)
+static R_BSP_OPT visplane_t *new_visplane(unsigned hash)
 {
     visplane_t *check = _g->freetail;
 
@@ -1818,7 +1859,7 @@ static visplane_t *new_visplane(unsigned hash)
     return check;
 }
 
-static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
+static R_BSP_OPT visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
 {
     if (picnum == _g->skyflatnum)
         height = lightlevel = 0;         // killough 7/19/98: most skies map together
@@ -1850,7 +1891,7 @@ static visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel)
  *
  * cph 2003/04/18 - create duplicate of existing visplane and set initial range
  */
-static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
+static R_BSP_OPT visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
 {
     const unsigned int hash = visplane_hash(pl->picnum, pl->lightlevel, pl->height);
     visplane_t *new_pl = new_visplane(hash);
@@ -1872,7 +1913,7 @@ static visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
 //
 // R_CheckPlane
 //
-static visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
+static R_BSP_OPT visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
 {
     int intrl, intrh, unionl, unionh, x;
 
@@ -1930,8 +1971,8 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
     //(and stepped values stored back) on every column.
     const int stopx = rw_stopx;
 
-    short* const fclip = floorclip;
-    short* const cclip = ceilingclip;
+    short* const fclip = oam_spare->floorclip;
+    short* const cclip = oam_spare->ceilingclip;
     const angle_t* const xtoangle = xtoviewangle;
 
     const bool textured = segtextured;
@@ -2117,7 +2158,7 @@ static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
         didsolidcol = 1;
 }
 
-static bool R_CheckOpenings(const int start)
+static R_BSP_OPT bool R_CheckOpenings(const int start)
 {
     int pos = _g->lastopening - _g->openings;
     int need = (rw_stopx - start)*4 + pos;
@@ -2130,13 +2171,37 @@ static bool R_CheckOpenings(const int start)
     return need <= MAXOPENINGS;
 }
 
+//ceil(2^32 / n) for 2 <= n < 128 (entries 0 and 1 unused).
+#define RECIP32(n) ((n) < 2 ? 0u : 0xFFFFFFFFu / ((n) < 2 ? 2u : (unsigned int)(n)) + 1u)
+#define RECIP32_4(n) RECIP32(n), RECIP32(n+1), RECIP32(n+2), RECIP32(n+3)
+#define RECIP32_16(n) RECIP32_4(n), RECIP32_4(n+4), RECIP32_4(n+8), RECIP32_4(n+12)
+#define RECIP32_64(n) RECIP32_16(n), RECIP32_16(n+16), RECIP32_16(n+32), RECIP32_16(n+48)
+
+static const unsigned int smallRecip[128] = { RECIP32_64(0), RECIP32_64(64) };
+
+//Exactly a / n (truncated, like FixedDiv(a, n << FRACBITS)) for
+//|a| < 2^22 and 1 <= n < 128, without a 64 bit divide.
+//With m = ceil(2^32 / n), m * n = 2^32 + e where 0 <= e < n, so
+//(|a| * m) >> 32 = floor(|a| / n + |a| * e / (n * 2^32)), and the
+//extra term is < 1/n because |a| * e < 2^22 * 2^7 < 2^32.
+static inline int R_DivSmall(const int a, const unsigned int n)
+{
+    if (n == 1)
+        return a;
+
+    const unsigned int ua = a < 0 ? -a : a;
+    const int q = (int)(((unsigned long long)ua * smallRecip[n]) >> 32);
+
+    return a < 0 ? -q : q;
+}
+
 //
 // R_StoreWallRange
 // A wall segment will be drawn
 //  between start and stop pixels (inclusive).
 //
 
-static void R_StoreWallRange(const int start, const int stop)
+static R_BSP_OPT void R_StoreWallRange(const int start, const int stop)
 {
     fixed_t hyp;
     angle_t offsetangle;
@@ -2187,7 +2252,9 @@ static void R_StoreWallRange(const int start, const int stop)
     {
         ds_p->scale2 = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[stop]);
 
-        ds_p->scalestep = rw_scalestep = FixedDiv(ds_p->scale2-rw_scale, (stop-start) << FRACBITS);
+        //Same as FixedDiv(scale2 - scale1, (stop - start) << FRACBITS).
+        //Scales are clamped to [256, 64 * FRACUNIT], so |a| < 2^22.
+        ds_p->scalestep = rw_scalestep = R_DivSmall(ds_p->scale2-rw_scale, stop-start);
     }
     else
         ds_p->scale2 = ds_p->scale1;
@@ -2220,8 +2287,8 @@ static void R_StoreWallRange(const int start, const int stop)
         rw_midtexturemid += FixedMod( (sidedef->rowoffset << FRACBITS), textureheight[midtexture]);
 
         ds_p->silhouette = SIL_BOTH;
-        ds_p->sprtopclip = screenheightarray;
-        ds_p->sprbottomclip = negonearray;
+        ds_p->sprtopclip = oam_spare->screenheightarray;
+        ds_p->sprbottomclip = oam_spare->negonearray;
         ds_p->bsilheight = INT_MAX;
         ds_p->tsilheight = INT_MIN;
     }
@@ -2241,9 +2308,9 @@ static void R_StoreWallRange(const int start, const int stop)
             // from being displayed on the automap.
 
             ds_p->silhouette = SIL_BOTH;
-            ds_p->sprbottomclip = negonearray;
+            ds_p->sprbottomclip = oam_spare->negonearray;
             ds_p->bsilheight = INT_MAX;
-            ds_p->sprtopclip = screenheightarray;
+            ds_p->sprtopclip = oam_spare->screenheightarray;
             ds_p->tsilheight = INT_MIN;
 
         }
@@ -2416,14 +2483,16 @@ static void R_StoreWallRange(const int start, const int stop)
     // save sprite clipping info
     if ((ds_p->silhouette & SIL_TOP || maskedtexture) && !ds_p->sprtopclip)
     {
-        ByteCopy((byte*)_g->lastopening, (const byte*)(ceilingclip+start), sizeof(short)*(rw_stopx-start));
+        //Clip values are shorts (and OAM needs 16 or 32 bit access).
+        BlockCopy16(_g->lastopening, oam_spare->ceilingclip+start, sizeof(short)*(rw_stopx-start));
         ds_p->sprtopclip = _g->lastopening - start;
         _g->lastopening += rw_stopx - start;
     }
 
     if ((ds_p->silhouette & SIL_BOTTOM || maskedtexture) && !ds_p->sprbottomclip)
     {
-        ByteCopy((byte*)_g->lastopening, (const byte*)(floorclip+start), sizeof(short)*(rw_stopx-start));
+        //Clip values are shorts (and OAM needs 16 or 32 bit access).
+        BlockCopy16(_g->lastopening, oam_spare->floorclip+start, sizeof(short)*(rw_stopx-start));
         ds_p->sprbottomclip = _g->lastopening - start;
         _g->lastopening += rw_stopx - start;
     }
@@ -2450,7 +2519,7 @@ static void R_StoreWallRange(const int start, const int stop)
 // cph - converted to R_RecalcLineFlags. This recalculates all the flags for
 // a line, including closure and texture tiling.
 
-static void R_RecalcLineFlags(void)
+static R_BSP_OPT void R_RecalcLineFlags(void)
 {
     linedata_t* linedata = &_g->linedata[linedef->lineno];
 
@@ -2508,7 +2577,7 @@ static void R_RecalcLineFlags(void)
 // Replaces the old R_Clip*WallSegment functions. It draws bits of walls in those
 // columns which aren't solid, and updates the solidcol[] array appropriately
 
-static void R_ClipWallSegment(int first, int last, bool solid)
+static R_BSP_OPT void R_ClipWallSegment(int first, int last, bool solid)
 {
     byte *p;
     while (first < last)
@@ -2551,7 +2620,7 @@ static void R_ClipWallSegment(int first, int last, bool solid)
 // and adds any visible pieces to the line list.
 //
 
-static void R_AddLine (const seg_t *line)
+static R_BSP_OPT void R_AddLine (const seg_t *line)
 {
     angle_t angle1 = R_PointToAngle2(viewx, viewy, line->v1.x, line->v1.y);
     angle_t angle2 = R_PointToAngle2(viewx, viewy, line->v2.x, line->v2.y);
@@ -2628,7 +2697,7 @@ static void R_AddLine (const seg_t *line)
 //
 // killough 1/31/98 -- made static, polished
 
-static void R_Subsector(int num)
+static R_BSP_OPT void R_Subsector(int num)
 {
     int         count;
     const seg_t       *line;
@@ -2696,7 +2765,7 @@ static const byte checkcoord[12][4] = // killough -- static const
 };
 
 // killough 1/28/98: static // CPhipps - const parameter, reformatted
-static bool R_CheckBBox(const short *bspcoord)
+static R_BSP_OPT bool R_CheckBBox(const short *bspcoord)
 {
     angle_t angle1, angle2;
 
@@ -2763,7 +2832,7 @@ static bool R_CheckBBox(const short *bspcoord)
 
 
 
-static bool R_RenderBspSubsector(int bspnum)
+static R_BSP_OPT bool R_RenderBspSubsector(int bspnum)
 {
     // Found a subsector?
     if (bspnum & NF_SUBSECTOR)
@@ -2793,7 +2862,7 @@ static bool R_RenderBspSubsector(int bspnum)
 //node numbers are < NF_SUBSECTOR, so this fits in 16 bits.
 #define BSP_PUSH(n, s) (stack[sp++] = (unsigned short)(((n) << 1) | (s)))
 
-static void R_RenderBSPNode(int bspnum)
+static R_BSP_OPT void R_RenderBSPNode(int bspnum)
 {
     unsigned short stack[MAX_BSP_DEPTH];
     int sp = 0;
@@ -2908,8 +2977,12 @@ static void R_ClearPlanes(void)
     int i;
 
     // opening / clipping determination
-    for (i=0 ; i<SCREENWIDTH ; i++)
-        floorclip[i] = viewheight, ceilingclip[i] = -1;
+    // 32 bit DMA fill with the short value in both halves of the word.
+    static_assert(offsetof(oam_spare_t, floorclip) % 4 == 0 && offsetof(oam_spare_t, ceilingclip) % 4 == 0, "clip arrays must be word aligned for BlockSet");
+    static_assert(sizeof(oam_spare->floorclip) % 4 == 0 && sizeof(oam_spare->ceilingclip) % 4 == 0, "clip arrays must be whole words for BlockSet");
+
+    BlockSet(oam_spare->floorclip, ((unsigned int)viewheight << 16) | (unsigned int)viewheight, sizeof(oam_spare->floorclip));
+    BlockSet(oam_spare->ceilingclip, 0xffffffff, sizeof(oam_spare->ceilingclip));
 
 
     for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
@@ -2928,6 +3001,14 @@ static void R_ClearPlanes(void)
 void R_RenderPlayerView (player_t* player)
 {
     R_SetupFrame (player);
+
+    //A powerup colormap stays the same for many frames, so copy it to
+    //the OBJ palette only when it changes.
+    if (fixedcolormap && fixedcolormap != objpalFixedSrc)
+    {
+        BlockCopy(objpal_spare->fixedColormap, fixedcolormap, sizeof(objpal_spare->fixedColormap));
+        objpalFixedSrc = fixedcolormap;
+    }
 
     // Clear buffers.
     R_ClearClipSegs ();

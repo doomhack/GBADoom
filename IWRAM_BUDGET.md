@@ -12,10 +12,10 @@ work: libtimidity music, VBlank-IRQ mixer, IWAD-less ROM). Sizes are bytes.
 
 | | Bytes |
 |---|---|
-| Static IWRAM (code + data) | 22,472 |
-| **Main stack (free gap)** | **10,040** |
+| Static IWRAM (code + data) | 22,328 |
+| **Main stack (free gap)** | **10,184** |
 | Worst realistic stack use (gameplay + sound IRQ) | ~2,200 |
-| Headroom at worst realistic depth | ~7,800 |
+| Headroom at worst realistic depth | ~8,000 |
 
 `I_Error` is treated as a terminal crash and left out of the stack figures
 (it needs 1,656 B of its own; see below).
@@ -24,28 +24,28 @@ work: libtimidity music, VBlank-IRQ mixer, IWAD-less ROM). Sizes are bytes.
 
 | Region | Range | Bytes | Notes |
 |---|---|---|---|
-| `.iwram` (code) | 0x03000000–0x03004FB0 | 20,400 | |
-| `.bss` | 0x03004FB0–0x030057AC | 2,044 | cleared by crt0 |
-| `.data`, `.init_array`, `.fini_array` | 0x030057AC–0x030057C8 | 28 | |
-| **Main stack (User/System mode)** | 0x030057C8–0x03007F00 | **10,040** | grows down from `__sp_usr` |
+| `.iwram` (code) | 0x03000000–0x03004F20 | 20,256 | |
+| `.bss` | 0x03004F20–0x0300571C | 2,044 | cleared by crt0 |
+| `.data`, `.init_array`, `.fini_array` | 0x0300571C–0x03005738 | 28 | |
+| **Main stack (User/System mode)** | 0x03005738–0x03007F00 | **10,184** | grows down from `__sp_usr` |
 | IRQ-mode stack | 0x03007F00–0x03007FA0 | 160 | `__sp_irq`; uses 16 B (see below) |
 | SVC stack and BIOS area | 0x03007FA0–0x03008000 | 96 | BIOS SWIs, IRQ vector, `__irq_flags` |
 
-The stack has no guard. If it grows past 0x030057C8 it silently overwrites
+The stack has no guard. If it grows past 0x03005738 it silently overwrites
 `.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics).
 
 ## Static contents
 
-### `.iwram` code (20,400)
+### `.iwram` code (20,256)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 17,492 | `R_Subsector` 4,396, `R_RenderPlayerView` 3,516, `R_RenderSegLoop` 2,404, `R_MapPlane` 1,132, `P_CrossBSPNode` 924, `R_RenderMaskedSegRange` 700, `R_DrawColumn` 664 |
+| `r_hotpath.iwram.c` | 17,352 | `R_Subsector` 4,392, `R_RenderPlayerView` 3,472, `R_RenderSegLoop` 2,340, `R_MapPlane` 1,144, `P_CrossBSPNode` 924, `R_RenderMaskedSegRange` 700, `R_DrawColumn` 664 |
 | libtimidity (`TIMI_IWRAM`) | 1,616 | `_timi_resample_voice` 944, `update_signal` 372, `_timi_mix_voice` 300 |
 | `s_mix.iwram.c` | 628 | `S_MixResample` 264, `S_MixOutput` 188, `S_MixDirect` 164 |
 | `fixeddiv.s` | 412 | |
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
-| Linker interworking stubs, alignment | 68 | |
+| Linker interworking stubs, alignment | 64 | |
 
 ### `.bss` (2,044) and `.data` (28)
 
@@ -108,13 +108,13 @@ nothing nests unless the mixer runs longer than a frame.
 
 ### Combined worst case (main + sound IRQ)
 
-| Scenario | Depth | Spare of 10,040 |
+| Scenario | Depth | Spare of 10,184 |
 |---|---|---|
-| Render | 1,036 | 9,004 |
-| Gameplay, one state action | 1,828 | 8,212 |
-| Level load with `lprintf` | 2,188 | 7,852 |
-| Two nested state actions | 2,644 | 7,396 |
-| Three nested state actions | 3,460 | 6,580 |
+| Render | 1,036 | 9,148 |
+| Gameplay, one state action | 1,828 | 8,356 |
+| Level load with `lprintf` | 2,188 | 7,996 |
+| Two nested state actions | 2,644 | 7,540 |
+| Three nested state actions | 3,460 | 6,724 |
 
 ### Not counted: `I_Error`
 
@@ -144,7 +144,7 @@ Those builds predate the sound IRQ, so the measurements don't include the
 
 - **Every byte added to IWRAM comes off the stack.** That includes code or
   statics in `r_hotpath.iwram.c`, `s_mix.iwram.c` and `TIMI_IWRAM` functions.
-  At the realistic worst case (~2.2 KB), about 7.8 KB can still be added
+  At the realistic worst case (~2.2 KB), about 8 KB can still be added
   before the stack has no margin. Keep at least ~4 KB free for the rare
   nested-action paths.
 - **Large stack locals** in code that runs during gameplay or in the VBlank
@@ -161,62 +161,88 @@ Those builds predate the sound IRQ, so the measurements don't include the
 
 The display runs in Mode 4 (8-bit bitmap, two pages, OBJs off), set in
 `I_CreateWindow_e32`. That leaves gaps after each page, all of OBJ VRAM, OAM
-and the OBJ palette unused by the hardware. `r_hotpath.iwram.c` puts lookup
-tables and a flat cache in some of them.
+and the OBJ palette unused by the hardware. The renderer keeps lookup tables
+and a flat cache in some of them.
+
+The layouts are structs in `include/vram_spare.h`, reached through
+fixed-address macros:
+
+| Struct | Macro | Region |
+|---|---|---|
+| `vram1_spare_t` | `vram1_spare` | gap after page 1 |
+| `vram_tail_t` | `vram_tail` | gap after page 2 plus all of OBJ VRAM (contiguous) |
+| `oam_spare_t` | `oam_spare` | OAM |
+
+The compiler places the members, and `static_assert`s fail the build if a
+region overflows; `vram_tail_t` must fill its region exactly, so the flat
+cache always ends at the end of OBJ VRAM. The VRAM copies of ROM tables take
+their array sizes from the ROM declarations, so the copy sizes always match.
+To add a table, add a member. Free space is the region size minus `sizeof`
+the struct, or the `unused` member in `vram_tail_t`.
 
 ### VRAM (98,304)
 
 | Region | Range | Bytes | Used | Free |
 |---|---|---|---|---|
 | Page 1 framebuffer | 0x06000000–0x06009600 | 38,400 | 38,400 | 0 |
-| Page 1 spare (`vram1_spare`) | 0x06009600–0x0600A000 | 2,560 | 2,100 | 460 |
+| Page 1 gap (`vram1_spare`) | 0x06009600–0x0600A000 | 2,560 | 2,100 | 460 |
 | Page 2 framebuffer | 0x0600A000–0x06013600 | 38,400 | 38,400 | 0 |
-| Page 2 spare (`vram2_spare`) | 0x06013600–0x06014000 | 2,560 | 480 | 2,080 |
-| OBJ VRAM (flat cache) | 0x06014000–0x06018000 | 16,384 | 8,192 | 8,192 |
-| **Total** | | **98,304** | **87,572** | **10,732** |
+| Page 2 gap + OBJ VRAM (`vram_tail`) | 0x06013600–0x06018000 | 18,944 | 11,264 | 7,680 |
+| **Total** | | **98,304** | **90,164** | **8,140** |
 
-Contents of the spare areas (offsets are bytes into the area):
+Contents (offsets are bytes into the region, as laid out by the compiler):
 
-| Area | Offset | Table | Bytes |
+| Region | Offset | Member | Bytes |
 |---|---|---|---|
-| `vram1_spare` | 0 | `yslope_vram` (copy of `yslope[128]`, one entry per view row) | 512 |
-| | 512 | `distscale_vram` (copy of `distscale[120]`) | 480 |
-| | 992 | `xtoviewangle_vram` (copy of `xtoviewangle[121]`) | 484 |
+| `vram1_spare` | 0 | `yslope` (copy of ROM `yslope[128]`, one entry per view row) | 512 |
+| | 512 | `distscale` (copy of ROM `distscale[120]`) | 480 |
+| | 992 | `xtoviewangle` (copy of ROM `xtoviewangle[121]`) | 484 |
 | | 1476 | `wipe_y_lookup` | 240 |
 | | 1716 | `vissprite_ptrs` (`MAXVISSPRITES` × 4) | 384 |
-| `vram2_spare` | 0 | `screenheightarray` | 240 |
-| | 240 | `negonearray` | 240 |
-| OBJ VRAM | 0 | `flatCache`, 2 slots × 4,096 | 8,192 |
+| `vram_tail` | 0 | `unused` (free, 0x06013600–0x06015400) | 7,680 |
+| | 7680 | `dsclip` (`MAXDRAWSEGS` × 16, per-frame drawseg summary for sprite clipping, 0x06015400–0x06016000) | 3,072 |
+| | 10752 | `flatCache`, 2 slots × 4,096 (0x06016000–0x06018000) | 8,192 |
 
-`R_InitBuffer` (`r_draw.c`) fills the tables. Nothing else writes past row 160
-of either page. `I_CreateWindow_e32` clears exactly 240 × 160 bytes, and the
-wipe and patch drawers stay inside the page.
+The page 2 gap and OBJ VRAM are adjacent, so the free space is kept in one
+block at the start and the flat cache at the end. `screenheightarray` and
+`negonearray` moved from the page 2 gap to OAM to empty it. 4 flat slots
+measured no faster than 2.
+
+`R_InitBuffer` (`r_draw.c`) fills the tables and `R_LoadFlat` fills the flat
+cache with `BlockCopy`. Nothing else writes past row 160 of either page.
+`I_CreateWindow_e32` clears exactly 240 × 160 bytes, and the wipe and patch
+drawers stay inside the page. A VRAM dump after 1,200 tics of the Doom 2 demo
+showed the `unused` block still all zero and both flat slots matching their
+WAD data in the ROM.
 
 The libgba console (`consoleDemoInit`: font at char base 0, map at base 4)
 uses 0x06000000–0x06002800, inside page 1. An `lprintf` during play only
 scribbles on the visible frame. `I_Error` switches to Mode 0, but it is
 terminal.
 
-`yslope` used to be `fixed_t[160]` (640 B) in a 580 B slot, so `distscale`
-overwrote `yslope_vram[145..159]`. That was harmless, since only rows 0–127 are
-read. It is now `yslope[128]`, matching the fixed 128-row view (`viewheight`,
-160 minus the status bar); the dropped entries were all zero. A VRAM dump
-after `R_InitBuffer` matches the ROM tables exactly.
+`yslope` used to be `fixed_t[160]` (640 B) in a hand-computed 580 B slot, so
+`distscale` overwrote its entries 145–159. That was harmless, since only rows
+0–127 are read. It is now `yslope[128]`, matching the fixed 128-row view
+(`viewheight`, 160 minus the status bar), and `r_hotpath.iwram.c`
+`static_assert`s that it covers every view row. The struct layout makes this
+kind of overlap impossible.
 
-### OAM (1,024 at 0x07000000, `vram3_spare`)
+### OAM (1,024 at 0x07000000, `oam_spare`)
 
-OBJs are disabled, so OAM is free memory. `DISPCNT` bit 5 (H-blank interval
-free) is set, and every access is 16- or 32-bit, as OAM requires.
+OBJs are disabled, so OAM is free memory with a 32-bit bus and no display
+contention. `DISPCNT` bit 5 (H-blank interval free) is set, and every access
+is 16- or 32-bit, as OAM requires.
 
-| Offset | Table | Bytes |
+| Offset | Member | Bytes |
 |---|---|---|
-| 0 | free | 512 |
-| 512 | `floorclip` | 240 |
-| 752 | `ceilingclip` | 240 |
-| 992 | `tmpbbox` (`_g->tmbbox`) | 16 |
-| 1008 | free | 16 |
+| 0 | `screenheightarray` | 240 |
+| 240 | `negonearray` | 240 |
+| 480 | `floorclip` | 240 |
+| 720 | `ceilingclip` | 240 |
+| 960 | `tmpbbox` (`_g->tmbbox`) | 16 |
+| 976 | free | 48 |
 
-496 B used, 528 B free.
+976 B used, 48 B free.
 
 ### Palette RAM (1,024 at 0x05000000)
 
@@ -229,11 +255,10 @@ free) is set, and every access is 16- or 32-bit, as OAM requires.
 
 | Where | Bytes | Notes |
 |---|---|---|
-| OBJ VRAM 0x06016000–0x06018000 | 8,192 | two more flat slots measured no faster than two |
-| `vram2_spare` | 2,080 | |
+| `vram_tail->unused`, 0x06013600–0x06015400 | 7,680 | one contiguous block |
+| OBJ palette | 512 | 16-bit bus |
 | `vram1_spare` | 460 | |
-| OAM | 528 | 512 at the start, 16 at the end |
-| OBJ palette | 512 | 16-bit writes only |
+| OAM | 48 | |
 
 VRAM, OAM and palette RAM need 16- or 32-bit writes, because 8-bit writes to
 VRAM store the byte to both halves of the halfword. Any table moved there

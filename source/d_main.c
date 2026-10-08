@@ -88,8 +88,8 @@ const int startmap = 1;
 
 const bool nodrawers = false;
 
-static const char* timedemo = NULL;//"demo1";
-//static const char* timedemo = "demo4";
+//static const char* timedemo = NULL;//"demo1";
+static const char* timedemo = "demo4";
 
 /*
  * D_PostEvent - Event handling

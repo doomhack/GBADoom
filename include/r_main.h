@@ -79,8 +79,6 @@ extern fixed_t  viewx, viewy, viewz;
 
 extern angle_t  viewangle;
 
-extern short *floorclip, *ceilingclip;
-
 extern const lighttable_t *fullcolormap;
 extern const lighttable_t *colormaps;
 extern const lighttable_t* fixedcolormap;

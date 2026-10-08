@@ -38,6 +38,7 @@
 #include "v_video.h"
 #include "gba_functions.h"
 #include "global_data.h"
+#include "vram_spare.h"
 
 //
 // All drawing to the view buffer is accomplished in this file.
@@ -79,17 +80,20 @@ void R_InitBuffer()
 
 
     //Copy lookup tables to fast VRAM.
-    BlockCopy((void*)xtoviewangle_vram, xtoviewangle, sizeof(xtoviewangle));
+    BlockCopy(vram1_spare->xtoviewangle, xtoviewangle, sizeof(vram1_spare->xtoviewangle));
 
-    BlockCopy((void*)yslope_vram, yslope, sizeof(yslope));
+    BlockCopy(vram1_spare->yslope, yslope, sizeof(vram1_spare->yslope));
 
-    BlockCopy((void*)distscale_vram, distscale, sizeof(distscale));
+    BlockCopy(vram1_spare->distscale, distscale, sizeof(vram1_spare->distscale));
 
-    for(int i = 0; i < 120; i++)
-        negonearray[i] = -1;
+    //Colormap used directly by sky and full bright sprites.
+    BlockCopy(objpal_spare->fullColormap, colormaps, sizeof(objpal_spare->fullColormap));
 
-    for(int i = 0; i < 120; i++)
-        screenheightarray[i] = 128;
+    for(int i = 0; i < SCREENWIDTH; i++)
+        oam_spare->negonearray[i] = -1;
 
-    _g->tmbbox = tmpbbox;
+    for(int i = 0; i < SCREENWIDTH; i++)
+        oam_spare->screenheightarray[i] = viewheight;
+
+    _g->tmbbox = oam_spare->tmpbbox;
 }
