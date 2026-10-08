@@ -31,20 +31,95 @@
  *
  *-----------------------------------------------------------------------------*/
 
+
 #include "doomdef.h"
 #include "v_video.h"
 #include "st_stuff.h"
 #include "st_lib.h"
+#include "st_gfx.h"
+#include "i_system_e32.h"
 #include "global_data.h"
 
 #include "gba_functions.h"
 
+// The status bar is drawn at full GBA resolution: bytes per screen row.
+#define ST_PITCH (SCREENWIDTH*2)
+
 //
-// STlib_init()
+// STlib_growArea()
 //
-void STlib_init(void)
+// Grows a widget's area to cover a patch drawn at x, y,
+// clipped to the status bar.
+//
+static void STlib_growArea(st_area_t* a, int x, int y, const patch_t* patch)
 {
-    // cph - no longer hold STMINUS pointer
+    int x0 = (x - patch->leftoffset) & ~1;
+    int y0 = y - patch->topoffset;
+    int x1 = (x - patch->leftoffset + patch->width + 1) & ~1;
+    int y1 = y0 + patch->height;
+
+    if (a->w)
+    {
+        x0 = MIN(x0, a->x);
+        y0 = MIN(y0, a->y);
+        x1 = MAX(x1, a->x + a->w);
+        y1 = MAX(y1, a->y + a->h);
+    }
+
+    a->x = MAX(x0, 0);
+    a->y = MAX(y0, ST_Y);
+    a->w = MIN(x1, ST_PITCH) - a->x;
+    a->h = MIN(y1, SCREENHEIGHT) - a->y;
+}
+
+//
+// STlib_copyArea()
+//
+// Copies an area into the back page from src, which is laid out in
+// rows of ST_PITCH bytes starting at screen row firstrow.
+//
+static void STlib_copyArea(const st_area_t* a, const byte* src, int firstrow)
+{
+    byte* dest = (byte*)_g->screens[0].data + (ScreenYToOffset(a->y) << 1) + a->x;
+
+    src += (a->y - firstrow) * ST_PITCH + a->x;
+
+    for (int h = a->h; h; h--)
+    {
+        BlockCopy16(dest, src, a->w);
+        dest += ST_PITCH;
+        src += ST_PITCH;
+    }
+}
+
+//
+// STlib_needsDraw()
+//
+// Returns true if the widget must be drawn into the back page.
+// A changed widget is erased and drawn here, then copied to
+// the other page on the next frame.
+//
+static bool STlib_needsDraw(st_area_t* a, bool changed, bool refresh)
+{
+    if (changed || refresh)
+    {
+        if (!refresh)
+            STlib_copyArea(a, gfx_stbar, ST_Y);
+
+        a->pending = !refresh;
+        return true;
+    }
+
+    if (a->pending)
+    {
+        // The Qt build draws into a single buffer.
+#ifdef GBA
+        STlib_copyArea(a, (const byte*)I_GetFrontBuffer(), 0);
+#endif
+        a->pending = false;
+    }
+
+    return false;
 }
 
 //
@@ -53,7 +128,7 @@ void STlib_init(void)
 // Initializes an st_number_t widget
 //
 // Passed the widget, its position, the patches for the digits, a pointer
-// to the value displayed, a pointer to the on/off control, and the width
+// to the value displayed, and the width
 // Returns nothing
 //
 void STlib_initNum
@@ -61,8 +136,7 @@ void STlib_initNum
  int x,
  int y,
  const patch_t **pl,
- int* num,
- bool* on,
+ const int* num,
  int     width )
 {
     n->x  = x;
@@ -70,35 +144,33 @@ void STlib_initNum
     n->oldnum = 0;
     n->width  = width;
     n->num  = num;
-    n->on = on;
     n->p  = pl;
+
+    n->a.w = 0;
+    n->a.pending = false;
+
+    for (int i = 1; i <= width; i++)
+        for (int d = 0; d < 10; d++)
+            STlib_growArea(&n->a, x - i*pl[0]->width, y, pl[d]);
 }
 
 /*
  * STlib_drawNum()
  *
- * A fairly efficient way to draw a number based on differences from the
- * old number.
+ * Draws a number right-justified at the widget's position.
  *
- * Passed a st_number_t widget, a color range for output, and a flag
- * indicating whether refresh is needed.
+ * Passed a st_number_t widget and the number
  * Returns nothing
- *
- * jff 2/16/98 add color translation to digit output
- * cphipps 10/99 - const pointer to colour trans table, made function static
  */
-static void STlib_drawNum(st_number_t* n)
+static void STlib_drawNum(const st_number_t* n, int num)
 {
     int   numdigits = n->width;
-    int   num = *n->num;
 
     int   w = n->p[0]->width;
     int   x = n->x;
 
-    int   neg;
-
     // CPhipps - compact some code, use num instead of *n->num
-    if ((neg = (n->oldnum = num) < 0))
+    if (num < 0)
     {
         if (numdigits == 2 && num < -9)
             num = -9;
@@ -108,23 +180,16 @@ static void STlib_drawNum(st_number_t* n)
         num = -num;
     }
 
-    // clear the area
-    x = n->x - numdigits*w;
-
     // if non-number, do not draw it
     if (num == 1994)
         return;
 
-    x = n->x;
-
-    //jff 2/16/98 add color translation to digit output
     // in the special case of 0, you draw 0
     if (!num)
         // CPhipps - patch drawing updated, reformatted
         V_DrawPatchNoScale(x - w, n->y, n->p[0]);
 
     // draw the new number
-    //jff 2/16/98 add color translation to digit output
     while (num && numdigits--)
     {
         // CPhipps - patch drawing updated, reformatted
@@ -137,59 +202,20 @@ static void STlib_drawNum(st_number_t* n)
 /*
  * STlib_updateNum()
  *
- * Draws a number conditionally based on the widget's enable
+ * Draws a number if it changed, or refresh is true
  *
- * Passed a number widget, the output color range, and a refresh flag
+ * Passed a number widget and a refresh flag
  * Returns nothing
- *
- * jff 2/16/98 add color translation to digit output
- * cphipps 10/99 - make that pointer const
  */
-void STlib_updateNum(st_number_t* n)
+void STlib_updateNum(st_number_t* n, bool refresh)
 {
-    if (*n->on)
-        STlib_drawNum(n);
-}
+    int num = *n->num;
 
-//
-// STlib_initPercent()
-//
-// Initialize a st_percent_t number with percent sign widget
-//
-// Passed a st_percent_t widget, the position, the digit patches, a pointer
-// to the number to display, a pointer to the enable flag, and patch
-// for the percent sign.
-// Returns nothing.
-//
-void STlib_initPercent
-(st_percent_t* p,
- int x,
- int y,
- const patch_t** pl,
- int* num,
- bool* on,
- const patch_t *percent )
-{
-    STlib_initNum(&p->n, x, y, pl, num, on, 3);
-    p->p = percent;
-}
-
-/*
- * STlib_updatePercent()
- *
- * Draws a number/percent conditionally based on the widget's enable
- *
- * Passed a precent widget, the output color range, and a refresh flag
- * Returns nothing
- *
- * jff 2/16/98 add color translation to digit output
- * cphipps - const for pointer to the colour translation table
- */
-
-void STlib_updatePercent(st_percent_t* per)
-{
-    STlib_updateNum(&per->n);
-    //V_DrawPatchNoScale(per->n.x, per->n.y, per->p); - Percentage is in the GBA Doom II Hud graphic ~Kippykip
+    if (STlib_needsDraw(&n->a, num != n->oldnum, refresh))
+    {
+        STlib_drawNum(n, num);
+        n->oldnum = num;
+    }
 }
 
 //
@@ -198,8 +224,8 @@ void STlib_updatePercent(st_percent_t* per)
 // Initialize a st_multicon_t widget, used for a multigraphic display
 // like the status bar's keys.
 //
-// Passed a st_multicon_t widget, the position, the graphic patches, a pointer
-// to the numbers representing what to display, and pointer to the enable flag
+// Passed a st_multicon_t widget, the position, the graphic patches and
+// how many there are, and a pointer to the number representing what to display
 // Returns nothing.
 //
 void STlib_initMultIcon
@@ -207,15 +233,20 @@ void STlib_initMultIcon
  int x,
  int y,
  const patch_t **il,
- int* inum,
- bool* on )
+ int count,
+ const int* inum )
 {
     i->x  = x;
     i->y  = y;
     i->oldinum  = -1;
     i->inum = inum;
-    i->on = on;
     i->p  = il;
+
+    i->a.w = 0;
+    i->a.pending = false;
+
+    for (int j = 0; j < count; j++)
+        STlib_growArea(&i->a, x, y, il[j]);
 }
 
 //
@@ -228,76 +259,29 @@ void STlib_initMultIcon
 // Passed a st_multicon_t widget, and a refresh flag
 // Returns nothing.
 //
-void STlib_updateMultIcon (st_multicon_t* mi)
+void STlib_updateMultIcon (st_multicon_t* mi, bool refresh)
 {
-    if(!mi->p)
-        return;
+    int inum = *mi->inum;
 
-    if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-        V_DrawPatchNoScale(mi->x, mi->y, mi->p[*mi->inum]);
-
-    mi->oldinum = *mi->inum;
-
-}
-
-//
-// STlib_initBinIcon()
-//
-// Initialize a st_binicon_t widget, used for a multinumber display
-// like the status bar's weapons, that are present or not.
-//
-// Passed a st_binicon_t widget, the position, the digit patches, a pointer
-// to the flags representing what is displayed, and pointer to the enable flag
-// Returns nothing.
-//
-void STlib_initBinIcon
-( st_binicon_t* b,
-  int x,
-  int y,
-  const patch_t* i,
-  bool* val,
-  bool* on )
-{
-    b->x  = x;
-    b->y  = y;
-    b->oldval = 0;
-    b->val  = val;
-    b->on = on;
-    b->p  = i;
-}
-
-//
-// STlib_updateBinIcon()
-//
-// DInitialize a st_binicon_t widget, used for a multinumber display
-// like the status bar's weapons, that are present or not.
-//
-// Draw a st_binicon_t widget, used for a multinumber display
-// like the status bar's weapons that are present or not. Displays each
-// when the control flag changes or refresh is true
-//
-// Passed a st_binicon_t widget, and a refresh flag
-// Returns nothing.
-//
-void STlib_updateBinIcon
-( st_binicon_t*   bi,
-  bool   refresh )
-{
-    if (*bi->on && (bi->oldval != *bi->val || refresh))
+    if (STlib_needsDraw(&mi->a, inum != mi->oldinum, refresh))
     {
-        if (*bi->val)
-            V_DrawPatch(bi->x, bi->y, ST_FG, bi->p);
+        if (inum != -1)  // killough 2/16/98: draw only if != -1
+            V_DrawPatchNoScale(mi->x, mi->y, mi->p[inum]);
 
-        bi->oldval = *bi->val;
+        mi->oldinum = inum;
     }
 }
+
+static const st_area_t st_wholebar = {0, ST_Y, ST_PITCH, ST_HEIGHT, false};
 
 void ST_refreshBackground(void)
 {
-    if (_g->st_statusbaron)
-    {
-        const unsigned int st_offset = ((SCREENHEIGHT-ST_SCALED_HEIGHT)*120);
+    STlib_copyArea(&st_wholebar, gfx_stbar, ST_Y);
+}
 
-        CpuBlockCopy(&_g->screens[0].data[st_offset], _g->stbarbg, _g->stbar_len);
-    }
+void ST_copyFromFront(void)
+{
+#ifdef GBA
+    STlib_copyArea(&st_wholebar, (const byte*)I_GetFrontBuffer(), 0);
+#endif
 }

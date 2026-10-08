@@ -691,6 +691,7 @@ bool mus_paused;
 //st_stuff.c
 //******************************************************************************
 
+// 2: draw the whole status bar, 1: copy it to the other screen page
 unsigned int st_needrefresh;
 
 // 0-9, tall numbers
@@ -699,18 +700,10 @@ const patch_t* tallnum[10];
 // 0-9, short, yellow (,different!) numbers
 const patch_t* shortnum[10];
 
-// tall % sign
-const patch_t* tallpercent;
-
 const patch_t* keys[NUMCARDS];
 
 // face status patches
 const patch_t* faces[ST_NUMFACES];
-
-//e6y: status bar background
-const patch_t* stbarbg;
-unsigned int stbar_len;
-
 
 // weapon ownership patches
 const patch_t* arms[6][2];
@@ -719,7 +712,7 @@ const patch_t* arms[6][2];
 st_number_t w_ready;
 
 // health widget
-st_percent_t st_health;
+st_number_t st_health;
 
 // weapon ownership widgets
 st_multicon_t w_arms[6];
@@ -737,7 +730,7 @@ st_number_t w_ammo[4];
 st_number_t w_maxammo[4];
 
 // armor widget
-st_percent_t  st_armor;
+st_number_t   st_armor;
 
 // used to use appopriately pained face
 int      st_oldhealth;

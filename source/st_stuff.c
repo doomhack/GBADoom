@@ -41,7 +41,6 @@
 #include "r_main.h"
 #include "am_map.h"
 #include "global_data.h"
-#include "st_gfx.h"
 
 //
 // STATUS BAR CODE
@@ -265,18 +264,23 @@ static void ST_updateFaceWidget(void)
 
 }
 
-static void ST_updateWidgets(void)
+static const int* ST_readyAmmo(void)
 {
     static const int  largeammo = 1994; // means "n/a"
-    int         i;
 
     if(_g->fps_show)
-        _g->w_ready.num = &_g->fps_framerate;
+        return (const int*)&_g->fps_framerate;
     else if (weaponinfo[_g->player.readyweapon].ammo == am_noammo)
-        _g->w_ready.num = &largeammo;
+        return &largeammo;
     else
-        _g->w_ready.num = &_g->player.ammo[weaponinfo[_g->player.readyweapon].ammo];
+        return &_g->player.ammo[weaponinfo[_g->player.readyweapon].ammo];
+}
 
+static void ST_updateWidgets(void)
+{
+    int         i;
+
+    _g->w_ready.num = ST_readyAmmo();
 
     // update keycard multiple widgets
     for (i=0;i<3;i++)
@@ -346,78 +350,28 @@ static void ST_doPaletteStuff(void)
     }
 }
 
-static void ST_drawWidgets()
+static void ST_drawWidgets(bool refresh)
 {
-    STlib_updateNum(&_g->w_ready);
+    STlib_updateNum(&_g->w_ready, refresh);
 
     // Restore the ammo numbers for backpack stats I guess, etc ~Kippykip
     for (int i=0;i<4;i++)
     {
-        STlib_updateNum(&_g->w_ammo[i]);
-        STlib_updateNum(&_g->w_maxammo[i]);
+        STlib_updateNum(&_g->w_ammo[i], refresh);
+        STlib_updateNum(&_g->w_maxammo[i], refresh);
     }
 
-    STlib_updatePercent(&_g->st_health);
+    STlib_updateNum(&_g->st_health, refresh);
 
-    STlib_updatePercent(&_g->st_armor);
+    STlib_updateNum(&_g->st_armor, refresh);
 
-    STlib_updateMultIcon(&_g->w_faces);
+    STlib_updateMultIcon(&_g->w_faces, refresh);
 
     for (int i=0;i<3;i++)
-        STlib_updateMultIcon(&_g->w_keyboxes[i]);
+        STlib_updateMultIcon(&_g->w_keyboxes[i], refresh);
 
     for (int i=0;i<6;i++)
-        STlib_updateMultIcon(&_g->w_arms[i]);
-}
-
-static void ST_doRefresh(void)
-{
-    // draw status bar background to off-screen buff
-    ST_refreshBackground();
-
-    // and refresh all widgets
-    ST_drawWidgets();
-
-}
-
-static bool ST_NeedUpdate()
-{
-    // ready weapon ammo
-    if(_g->w_ready.oldnum != *_g->w_ready.num)
-        return true;
-
-    if(_g->st_health.n.oldnum != *_g->st_health.n.num)
-        return true;
-
-    if(_g->st_armor.n.oldnum != *_g->st_armor.n.num)
-        return true;
-
-    if(_g->w_faces.oldinum != *_g->w_faces.inum)
-        return true;
-
-    // ammo
-    for(int i=0; i<4; i++)
-    {
-        if(_g->w_ammo[i].oldnum != *_g->w_ammo[i].num)
-            return true;
-        if(_g->w_maxammo[i].oldnum != *_g->w_maxammo[i].num)
-            return true;
-    }
-
-    // weapons owned
-    for(int i=0; i<6; i++)
-    {
-        if(_g->w_arms[i].oldinum != *_g->w_arms[i].inum)
-            return true;
-    }
-
-    for(int i = 0; i < 3; i++)
-    {
-        if(_g->w_keyboxes[i].oldinum != *_g->w_keyboxes[i].inum)
-            return true;
-    }
-
-    return false;
+        STlib_updateMultIcon(&_g->w_arms[i], refresh);
 }
 
 void ST_Drawer(bool statusbaron, bool refresh)
@@ -431,29 +385,23 @@ void ST_Drawer(bool statusbaron, bool refresh)
 
     if (statusbaron)
     {
-        bool needupdate = false;
-
-        if(refresh)
-        {
-            needupdate = true;
+        // st_needrefresh 2: draw the whole status bar into the back page,
+        // 1: then copy it to the other page on the next frame.
+        if (refresh)
             _g->st_needrefresh = 2;
-        }
-        else if(ST_NeedUpdate())
-        {
-            needupdate = true;
-            _g->st_needrefresh = 2;
-        }
-        else if(_g->st_needrefresh)
-        {
-            needupdate = true;
-        }
 
-        if(needupdate)
-        {
-            ST_doRefresh();
+        bool redraw = (_g->st_needrefresh == 2);
 
+        if (redraw)
+            ST_refreshBackground();
+        else if (_g->st_needrefresh)
+            ST_copyFromFront();
+
+        if (_g->st_needrefresh)
             _g->st_needrefresh--;
-        }
+
+        // Widgets that changed since the last frame are redrawn.
+        ST_drawWidgets(redraw);
     }
 }
 
@@ -481,10 +429,6 @@ static void ST_loadGraphics()
         _g->shortnum[i] = (const patch_t *) W_CacheLumpName(namebuf);
     }
 
-    // Load percent key.
-    //Note: why not load STMINUS here, too?
-    _g->tallpercent = (const patch_t*) W_CacheLumpName("STTPRCNT");
-
     // key cards
     for (i=0;i<NUMCARDS;i++)
     {
@@ -503,10 +447,6 @@ static void ST_loadGraphics()
         // yellow #
         _g->arms[i][1] = (const patch_t *) _g->shortnum[i+2];
     }
-
-    // status bar background bits
-    _g->stbarbg = (const patch_t *) gfx_stbar;
-    _g->stbar_len = gfx_stbar_len;
 
     // face states
     facenum = 0;
@@ -555,7 +495,8 @@ static void ST_initData(void)
     for (i=0;i<3;i++)
         _g->keyboxes[i] = -1;
 
-    STlib_init();
+    // draw the whole status bar on the first frame
+    _g->st_needrefresh = 2;
 }
 
 static void ST_createWidgets(void)
@@ -567,26 +508,24 @@ static void ST_createWidgets(void)
                   ST_AMMOX,
                   ST_AMMOY,
                   _g->tallnum,
-                  &_g->player.ammo[weaponinfo[_g->player.readyweapon].ammo],
-                  &_g->st_statusbaron,
+                  ST_readyAmmo(),
                   ST_AMMOWIDTH );
 
-    // health percentage
-    STlib_initPercent(&_g->st_health,
-                      ST_HEALTHX,
-                      ST_HEALTHY,
-                      _g->tallnum,
-                      &_g->player.health,
-                      &_g->st_statusbaron,
-                      _g->tallpercent);
+    // health percentage (the % sign is part of the background)
+    STlib_initNum(&_g->st_health,
+                  ST_HEALTHX,
+                  ST_HEALTHY,
+                  _g->tallnum,
+                  &_g->player.health,
+                  ST_HEALTHWIDTH);
 
     // armor percentage - should be colored later
-    STlib_initPercent(&_g->st_armor,
-                      ST_ARMORX,
-                      ST_ARMORY,
-                      _g->tallnum,
-                      &_g->player.armorpoints,
-                      &_g->st_statusbaron, _g->tallpercent);
+    STlib_initNum(&_g->st_armor,
+                  ST_ARMORX,
+                  ST_ARMORY,
+                  _g->tallnum,
+                  &_g->player.armorpoints,
+                  ST_ARMORWIDTH);
 
     // weapons owned
     for(i=0;i<6;i++)
@@ -594,31 +533,28 @@ static void ST_createWidgets(void)
         STlib_initMultIcon(&_g->w_arms[i],
                            ST_ARMSX+(i%3)*ST_ARMSXSPACE,
                            ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-                           _g->arms[i], (int*) &_g->player.weaponowned[i+1],
-                           &_g->st_statusbaron);
+                           _g->arms[i], 2,
+                           &_g->player.weaponowned[i+1]);
     }
 
     // keyboxes 0-2
     STlib_initMultIcon(&_g->w_keyboxes[0],
                        ST_KEY0X,
                        ST_KEY0Y,
-                       _g->keys,
-                       &_g->keyboxes[0],
-                       &_g->st_statusbaron);
+                       _g->keys, NUMCARDS,
+                       &_g->keyboxes[0]);
 
     STlib_initMultIcon(&_g->w_keyboxes[1],
                        ST_KEY1X,
                        ST_KEY1Y,
-                       _g->keys,
-                       &_g->keyboxes[1],
-                       &_g->st_statusbaron);
+                       _g->keys, NUMCARDS,
+                       &_g->keyboxes[1]);
 
     STlib_initMultIcon(&_g->w_keyboxes[2],
                        ST_KEY2X,
                        ST_KEY2Y,
-                       _g->keys,
-                       &_g->keyboxes[2],
-                       &_g->st_statusbaron);
+                       _g->keys, NUMCARDS,
+                       &_g->keyboxes[2]);
 
     // ammo count (all four kinds)
     STlib_initNum(&_g->w_ammo[0],
@@ -626,7 +562,6 @@ static void ST_createWidgets(void)
                   ST_AMMO0Y,
                   _g->shortnum,
                   &_g->player.ammo[0],
-                  &_g->st_statusbaron,
                   ST_AMMO0WIDTH);
 
     STlib_initNum(&_g->w_ammo[1],
@@ -634,7 +569,6 @@ static void ST_createWidgets(void)
                   ST_AMMO1Y,
                   _g->shortnum,
                   &_g->player.ammo[1],
-                  &_g->st_statusbaron,
                   ST_AMMO1WIDTH);
 
     STlib_initNum(&_g->w_ammo[2],
@@ -642,7 +576,6 @@ static void ST_createWidgets(void)
                   ST_AMMO2Y,
                   _g->shortnum,
                   &_g->player.ammo[2],
-                  &_g->st_statusbaron,
                   ST_AMMO2WIDTH);
 
     STlib_initNum(&_g->w_ammo[3],
@@ -650,7 +583,6 @@ static void ST_createWidgets(void)
                   ST_AMMO3Y,
                   _g->shortnum,
                   &_g->player.ammo[3],
-                  &_g->st_statusbaron,
                   ST_AMMO3WIDTH);
 
     // max ammo count (all four kinds)
@@ -659,7 +591,6 @@ static void ST_createWidgets(void)
                   ST_MAXAMMO0Y,
                   _g->shortnum,
                   &_g->player.maxammo[0],
-                  &_g->st_statusbaron,
                   ST_MAXAMMO0WIDTH);
 
     STlib_initNum(&_g->w_maxammo[1],
@@ -667,7 +598,6 @@ static void ST_createWidgets(void)
                   ST_MAXAMMO1Y,
                   _g->shortnum,
                   &_g->player.maxammo[1],
-                  &_g->st_statusbaron,
                   ST_MAXAMMO1WIDTH);
 
     STlib_initNum(&_g->w_maxammo[2],
@@ -675,7 +605,6 @@ static void ST_createWidgets(void)
                   ST_MAXAMMO2Y,
                   _g->shortnum,
                   &_g->player.maxammo[2],
-                  &_g->st_statusbaron,
                   ST_MAXAMMO2WIDTH);
 
     STlib_initNum(&_g->w_maxammo[3],
@@ -683,16 +612,14 @@ static void ST_createWidgets(void)
                   ST_MAXAMMO3Y,
                   _g->shortnum,
                   &_g->player.maxammo[3],
-                  &_g->st_statusbaron,
                   ST_MAXAMMO3WIDTH);
 
     // faces
     STlib_initMultIcon(&_g->w_faces,
                        ST_FACESX,
                        ST_FACESY,
-                       _g->faces,
-                       &_g->st_faceindex,
-                       &_g->st_statusbaron);
+                       _g->faces, ST_NUMFACES,
+                       &_g->st_faceindex);
 }
 
 static bool st_stopped = true;

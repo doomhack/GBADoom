@@ -39,14 +39,22 @@
 #include "v_video.h"  // color ranges
 
 //
-// Background and foreground screen numbers
-//
-#define ST_BG 1
-#define ST_FG 0
-
-//
 // Typedefs of widgets
 //
+
+// The status bar area a widget draws in, in screen pixels.
+// x and w are even so the area can be copied in halfwords.
+typedef struct
+{
+  short x;
+  short y;
+  short w;
+  short h;
+
+  // the widget changed last frame, so the other
+  //  screen page still needs this area copied over
+  bool pending;
+} st_area_t;
 
 // Number widget
 
@@ -61,84 +69,46 @@ typedef struct
   short width;
 
   // last number value
-  short   oldnum;
+  int   oldnum;
 
   // pointer to current value
-  int*  num;
-
-  // pointer to bool stating
-  //  whether to update number
-  bool*  on;
+  const int*  num;
 
   // list of patches for 0-9
   const patch_t** p;
 
+  st_area_t a;
+
 } st_number_t;
-
-// Percent widget ("child" of number widget,
-//  or, more precisely, contains a number widget.)
-typedef struct
-{
-  // number information
-  st_number_t   n;
-
-  // percent sign graphic
-  const patch_t*    p;
-} st_percent_t;
 
 // Multiple Icon widget
 typedef struct
 {
   // center-justified location of icons
-  int     x;
-  int     y;
+  short   x;
+  short   y;
 
   // last icon number
   int     oldinum;
 
   // pointer to current icon
-  int*    inum;
-
-  // pointer to bool stating
-  //  whether to update icon
-  bool*    on;
+  const int*    inum;
 
   // list of icons
   const patch_t**   p;
 
+  st_area_t a;
+
 } st_multicon_t;
-
-// Binary Icon widget
-
-typedef struct
-{
-  // center-justified location of icon
-  int     x;
-  int     y;
-
-  // last icon value
-  bool oldval;
-
-  // pointer to current icon status
-  bool*    val;
-
-  // pointer to bool
-  //  stating whether to update icon
-  bool*    on;
-
-  const patch_t*    p;  // icon
-  int     data;   // user data
-} st_binicon_t;
 
 //
 // Widget creation, access, and update routines
 //
-
-// Initializes widget library.
-// More precisely, initialize STMINUS,
-//  everything else is done somewhere else.
+// Each frame a widget whose value changed is erased to the status bar
+// background and drawn into the back page only. The next frame, when that
+// page is the front page, the area is copied to the new back page.
+// refresh redraws everything into the back page (after ST_refreshBackground).
 //
-void STlib_init(void);
 
 // Number widget routines
 void STlib_initNum
@@ -146,25 +116,10 @@ void STlib_initNum
   int x,
   int y,
   const patch_t **pl,
-  int* num,
-  bool* on,
+  const int* num,
   int width );
 
-void STlib_updateNum (st_number_t* n);
-
-
-// Percent widget routines
-void STlib_initPercent
-( st_percent_t* p,
-  int x,
-  int y,
-  const patch_t** pl,
-  int* num,
-  bool* on,
-  const patch_t* percent );
-
-
-void STlib_updatePercent (st_percent_t* per);
+void STlib_updateNum (st_number_t* n, bool refresh);
 
 
 // Multiple Icon widget routines
@@ -173,27 +128,17 @@ void STlib_initMultIcon
   int x,
   int y,
   const patch_t**   il,
-  int* inum,
-  bool* on );
+  int count,
+  const int* inum );
 
 
-void STlib_updateMultIcon (st_multicon_t* mi);
+void STlib_updateMultIcon (st_multicon_t* mi, bool refresh);
 
-// Binary Icon widget routines
-
-void STlib_initBinIcon
-( st_binicon_t* b,
-  int x,
-  int y,
-  const patch_t* i,
-  bool* val,
-  bool* on );
-
-void STlib_updateBinIcon
-( st_binicon_t* bi,
-  bool refresh );
-
+// Draws the whole status bar background into the back page.
 void ST_refreshBackground(void);
+
+// Copies the whole status bar from the front page to the back page.
+void ST_copyFromFront(void);
 
 
 #endif
