@@ -2670,7 +2670,16 @@ static R_BSP_OPT void R_ClipWallSegment(int first, int last, bool solid)
 
 static R_BSP_OPT void R_AddLine (const seg_t *line)
 {
-    angle_t angle1 = R_PointToAngle2(viewx, viewy, (fixed_t)line->v1.x << FRACBITS, (fixed_t)line->v1.y << FRACBITS);
+    const fixed_t v1x = (fixed_t)line->v1.x << FRACBITS;
+    const fixed_t v1y = (fixed_t)line->v1.y << FRACBITS;
+
+    // Backface culling before the angle calculations: skip the seg if the
+    // view is behind it (cross product of v1->v2 and v1->view > 0).
+    // Edge-on segs (cross product 0) are left to the span test below.
+    if ((long long)(viewy - v1y) * (line->v2.x - line->v1.x) > (long long)(viewx - v1x) * (line->v2.y - line->v1.y))
+        return;
+
+    angle_t angle1 = R_PointToAngle2(viewx, viewy, v1x, v1y);
     angle_t angle2 = R_PointToAngle2(viewx, viewy, (fixed_t)line->v2.x << FRACBITS, (fixed_t)line->v2.y << FRACBITS);
 
     // Clip to view edges.
