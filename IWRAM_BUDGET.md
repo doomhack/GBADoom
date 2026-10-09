@@ -5,25 +5,53 @@ how deep the stack that lives in the leftover space can get. The
 [VRAM section](#vram-oam-and-palette) covers the 96 KB of VRAM plus OAM and
 palette RAM, which also hold renderer tables.
 
-Measured on the GBA build of 2026-10-09 (commit `66899ab`, the `lprintf` /
-`I_Error` rewrite). The memory map, the paths that used to go through
-newlib's printf, and the timedemo measurement are new for this build. The
-gameplay state-action paths carry over from the earlier static analysis,
-adjusted for `main`'s larger frame. Sizes are bytes.
+Measured on the GBA build of 2026-10-09: commit `398ad03` (after the
+`lprintf` / `I_Error` rewrite in `66899ab`) plus the uncommitted deferred
+state-action queue and iterative sound flood. The
+memory map, the paths that used to go through newlib's printf, and the
+timedemo measurements are new for this build. The one-state-action path
+carries over from the earlier static analysis, adjusted for `main`'s larger
+frame. Sizes are bytes.
 
 ## Summary
 
 | | Bytes |
 |---|---|
-| Static IWRAM (code + data) | 25,372 |
-| **Main stack (free gap)** | **7,140** |
-| Worst realistic stack use (gameplay + sound IRQ) | ~1,850 |
-| Headroom at worst realistic depth | ~5,300 |
-| Measured peak, Doom 2 demo1 timedemo (incl. sound IRQ and the final `I_Error`) | 1,192 |
+| Static IWRAM (code + data) | 25,156 |
+| **Main stack (free gap)** | **7,356** |
+| Worst realistic stack use (gameplay + sound IRQ) | ~1,880 |
+| Headroom at worst realistic depth | ~5,470 |
+| Measured peak, Doom 2 demo1 timedemo (incl. sound IRQ and the final `I_Error`) | 1,200 |
+| Deepest measured peak, 7 timedemos (Doom 2 demo1–3, Ultimate Doom demo1–4) | 1,368 |
 
 The goal of the stack work is to make the deepest path shallower. That
 frees IWRAM for building more of the hot code at O2/O3 or moving more of it
 into IWRAM.
+
+### Deferred state actions (uncommitted)
+
+- **State actions no longer nest.** Setting a state from inside an action
+  used to run the new action straight away, on top of the running one. Now
+  it is queued and run afterwards, so "two or three nested actions" (2,660 and
+  3,476 B with the sound IRQ) are gone. The worst case is one action, about
+  1,880 B (with the corrected mixer depth), and data can no longer push it higher (see
+  [Deferred state actions](#deferred-state-actions)).
+- **`P_SetMobjState` moved from `r_hotpath.iwram.c` to `p_mobj.c` (ROM).**
+  IWRAM code −216 B, stack +216 B. Timedemos are 0.5–0.6% slower.
+
+### Iterative sound flood (uncommitted)
+
+- **`P_RecursiveSound` replaced by a breadth-first queue in `P_NoiseAlert`**
+  (`p_enemy.c`). The old flood recursed once per sector (40 B a level) and
+  set the deepest measured peak: 24 levels under `P_FireWeapon` in Doom 2
+  demo3, 1,728 B with the mixer. The flood now uses a fixed ~132 B of stack
+  from `A_WeaponReady` (`P_FireWeapon` 32 → `P_SoundSpread` 64 →
+  `P_LineOpening` 12) on any map. See [Sound flood](#sound-flood).
+- **Costs `numsectors` × 2 B of zone heap per level** (`_g->soundqueue`,
+  PU_LEVEL): 696 B on Doom 2's largest map (MAP14, 348 sectors), 1,674 B on
+  Sigil E3M7 (837).
+- **Same game state.** All seven timedemos end in exactly the same state as
+  the action-queue build, and run equal or up to 8 realtics faster.
 
 ### Since the 2026-10-08 snapshot
 
@@ -47,14 +75,14 @@ into IWRAM.
 
 | Region | Range | Bytes | Notes |
 |---|---|---|---|
-| `.iwram` (code) | 0x03000000–0x030057E8 | 22,504 | |
-| `.bss` | 0x030057E8–0x03006300 | 2,840 | cleared by crt0 |
-| `.data`, `.init_array`, `.fini_array` | 0x03006300–0x0300631C | 28 | |
-| **Main stack (User/System mode)** | 0x0300631C–0x03007F00 | **7,140** | grows down from `__sp_usr` |
+| `.iwram` (code) | 0x03000000–0x03005710 | 22,288 | |
+| `.bss` | 0x03005710–0x03006228 | 2,840 | cleared by crt0 |
+| `.data`, `.init_array`, `.fini_array` | 0x03006228–0x03006244 | 28 | |
+| **Main stack (User/System mode)** | 0x03006244–0x03007F00 | **7,356** | grows down from `__sp_usr` |
 | IRQ-mode stack | 0x03007F00–0x03007FA0 | 160 | `__sp_irq`; uses 16 B (see below) |
 | SVC stack and BIOS area | 0x03007FA0–0x03008000 | 96 | BIOS SWIs, IRQ vector, `__irq_flags` |
 
-The stack has no guard. If it grows past 0x0300631C it silently overwrites
+The stack has no guard. If it grows past 0x03006244 it silently overwrites
 `.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics). A
 trashed `IntrTable` sends the next VBlank to a garbage address. `I_Error` no
 longer depends on `IntrTable` or `_g`, so a later `I_Error` still displays.
@@ -62,16 +90,16 @@ An overflow itself is not detected.
 
 ## Static contents
 
-### `.iwram` code (22,504)
+### `.iwram` code (22,288)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 19,596 | `R_Subsector` 6,956 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 3,176, `R_MapPlane` 1,144, `R_AddSprites` 1,008, `P_CrossBSPNode` 936, `R_RenderBSPNode` 832, `R_RenderMaskedSegRange` 704, `R_DrawColumn` 664 |
+| `r_hotpath.iwram.c` | 19,352 | `R_Subsector` 6,956 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 3,176, `R_MapPlane` 1,144, `R_AddSprites` 1,008, `P_CrossBSPNode` 936, `R_RenderBSPNode` 832, `R_RenderMaskedSegRange` 704, `R_DrawColumn` 664 |
 | libtimidity (`TIMI_IWRAM`) | 1,616 | `_timi_resample_voice` 944, `update_signal` 372, `_timi_mix_voice` 300 |
 | `s_mix.iwram.c` | 628 | `S_MixResample` 264, `S_MixOutput` 188, `S_MixDirect` 164 |
 | `fixeddiv.s` | 412 | |
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
-| Linker interworking stubs, alignment | 68 | |
+| Linker interworking stubs, alignment | 96 | |
 
 ### `.bss` (2,840) and `.data` (28)
 
@@ -105,22 +133,75 @@ routines, traversers, column drawers, the voice mixer) are resolved by name.
 | Path | Depth | Notes |
 |---|---|---|
 | Render (`main` → `R_RenderPlayerView`) | 840 | 168 + 672: `R_RenderPlayerView` 136 → `R_RenderBSPNode` 184 → `R_Subsector` 224 → `R_AddSprites` 120 → `FixedDiv` 8. A texture-cache miss under `R_Subsector` is 24 B shallower. |
-| Gameplay tick, one state action | 1,600 | `G_Ticker` → `P_SetMobjState` → action → move/teleport → damage → action. Deepest common path. |
-| Level load / Load Game with an `lprintf` | 696 | `main` 168 → `G_Ticker` 128 → `G_DoLoadGame` 80 → `G_DoLoadLevel` 104 → `lprintf` 216. Was 1,944 with newlib. |
+| Gameplay tick, one state action | ~1,600 | `G_Ticker` → `P_SetMobjState` → action → move/teleport → damage → `P_SetMobjState` (queues). Deepest path. |
+| Level load / Load Game with an `lprintf` | 688 | `main` 168 → `G_Ticker` 120 → `G_DoLoadGame` 80 → `G_DoLoadLevel` 104 → `lprintf` 216. Was 1,944 with newlib. |
 | Finale music change (`S_ChangeMusic` → `lsnprintf`) | ~500 | `main` → `G_Ticker` → `F_Ticker` 328 → `S_ChangeMusic` 72 → `lsnprintf` ~96. Was 1,728 with `snprintf`. |
 | Startup (`D_DoomMainSetup`) | ≤ 456 + 168 | the deepest direct call chain ends in `I_Error`. Was 1,608 + 152. |
-| Two nested state actions | 2,416 | rare |
-| Three nested state actions | 3,232 | very rare |
 
-The state-action rows are the earlier figures plus `main`'s 16 B growth.
-They follow function pointers, which the direct-call analysis used for the
-other rows can't resolve.
+The state-action row is the earlier figure plus `main`'s 16 B growth, 8 B
+for the new `P_SetMobjState` frame (32 B, with the loop and queue drain
+inlined), and `G_Ticker`'s frame shrinking from 128 to 120 B (`398ad03`). It follows function pointers, which the direct-call analysis used
+for the other rows can't resolve.
 
-A "state action" is a monster or weapon state's action function. They can
-nest: an action spawns a missile that explodes on spawn and kills something,
-whose death state runs another action. Each extra level costs about 820 B.
-Recursion beyond three levels is theoretically possible but not seen in
-practice.
+### Deferred state actions
+
+A "state action" is a monster or weapon state's action function, run by
+`P_SetMobjState` (mobjs) or `P_SetPsprite` (weapons) when the state is set.
+Actions used to nest. For example, a weapon fires a rocket that explodes at
+spawn (`A_Explode`), damages an idle monster (its see state runs `A_Chase`),
+and that monster walks over a teleport line and telefrags something (its
+death state runs `A_Scream`). Two and three nested actions were 2,416 and
+3,232 B.
+
+In the state data the chain is at most four actions deep. The
+enemy-rockets cheat (`CF_ENEMY_ROCKETS`, which turns every monster attack
+into `A_CyberAttack`) makes it a loop, limited only by the number of idle
+monsters in reach.
+
+Now the outermost `P_SetMobjState` / `P_SetPsprite` call sets
+`_g->runningaction`. Any state set while it is on still sets `state` and
+`tics` immediately, but its action goes into `_g->pendingactions`
+(`MAXPENDINGACTIONS` = 32, 256 B of EWRAM) instead of running.
+`P_RunPendingActions` runs the queue in order after the outer action
+returns:
+
+- Actions run from the queue queue their own follow-ons, so the chain runs
+  one after another instead of nesting.
+- Entries whose mobj was removed are skipped. Removal is delayed until the
+  thinker loop reaches the mobj, so the pointer is still valid.
+- Entries whose mobj changed state again before their turn are skipped.
+
+Some states still run straight away, as before:
+
+- **0-tic states.** A queued 0-tic state would never count down. Only
+  Revenant and Arch-vile attack states are 0-tic, and they're always set by
+  the mobj on itself.
+- **Everything when the queue is full.** Correctness doesn't depend on its
+  size.
+
+**Measured.** Doom 2 demo1 and Ultimate Doom demo4 never queue anything, and
+their end states match `66899ab` exactly. Doom 2 demo2/demo3 and Ultimate
+Doom demo1–3 queue 40–129 actions each, with at most 3 waiting at once.
+They play to the end; their end states differ from `66899ab`, as expected.
+
+**Behaviour change.** A queued action runs after the action that triggered
+it instead of partway through it. `P_Random` order changes, so timedemos
+that queue anything diverge from older builds: re-baseline A/B checks. A
+mobj whose state changes twice before its queued action runs only runs the
+newer state's action. Actions also no longer run inside another mobj's
+`P_TryMove`, where they could overwrite the `tm*` globals.
+
+**Speed and placement.** Realtics, Doom 2 demo1 / Ultimate Doom demo4:
+
+| Build | IWRAM code vs `66899ab` | demo1 | demo4 |
+|---|---|---|---|
+| `66899ab` (`P_SetMobjState` in `r_hotpath.iwram.c`) | 0 | 2,069 | 1,898 |
+| Queue, `P_SetMobjState` in ROM (current) | −216 | 2,081 | 1,908 |
+| Queue, `P_SetMobjState` in IWRAM (ARM, Os, loop inlined, drain in ROM) | +232 | 2,073 | 1,901 |
+
+Most of the cost is running the state loop from ROM. The extra bookkeeping
+is about 0.2%. The IWRAM variant trades 448 B of IWRAM for ~0.35%, about
+the same return per byte as building `r_hotpath.iwram.c` at O2.
 
 ### Sound interrupt
 
@@ -131,22 +212,46 @@ whatever depth the main loop is at when VBlank arrives.
 
 | Path | Depth |
 |---|---|
-| `I_SoundVBlank` → `_timi_mix_voice` → `_timi_resample_voice` → `S_MixResample` | 240 |
-| plus `lr` pushed by `IntrMain` in System mode | 4 |
-| **Total added to the main stack** | **244** |
+| `lr` pushed by `IntrMain` in System mode | 4 |
+| `I_SoundVBlank` (`S_MixFrame` / `mid_song_render` inlined) | 72 |
+| → `_timi_mix_voice` (IWRAM) | 40 |
+| → `ramp_out` (ROM, voice ending) | 40 |
+| → `_timi_resample_voice` (IWRAM) | 96 |
+| → `S_MixResample` (IWRAM) | 32 |
+| **Total added to the main stack** | **~284** |
 
-IRQs are re-enabled during the handler, but no other IRQ source is on, so
-nothing nests unless the mixer runs longer than a frame.
+The earlier figure (244 B) missed `ramp_out`, which `_timi_mix_voice` reaches
+through a long call that the direct-call analysis doesn't follow. Its frame
+was 120 B, with an 80 B `tmp[MAX_DIE_TIME]` buffer on the stack (the mixer
+measured 356 B at the Doom 2 demo3 peak). That buffer is now
+`MidSong.ramp_tmp`, in the zone-allocated song state in EWRAM (uncommitted).
+A `static` would have gone to IWRAM `.bss`, just moving the bytes.
+
+On Doom 2 demo2 (the heaviest music) all 73 `ramp_out` calls produce the
+same samples as before, and realtics are unchanged (2,988). The extra EWRAM
+accesses (~80 a call, up to ~400 cycles) do shift the game thread against
+the VBlank slightly. One of 292 sound starts lands a VBlank later, and 11 of
+5,150 output frames differ for that reason. That is timing, not a change in
+what the mixer computes.
+
+**The mixer can't re-enter itself.** `IntrMain` saves IME, writes
+`0x04000000` to it (bit 0 clear, so IME off) before calling the handler, and
+restores it only after `I_SoundVBlank` returns. Nothing in the mixer writes
+`REG_IME`. A long mix or a held-off VBlank only delays the next one. Checked
+over a Doom 2 demo3 timedemo with GDB breakpoints on `I_SoundVBlank`'s entry
+and exit: 12,231 entries, 0 re-entries, IME off at every entry.
 
 ### Combined worst case (main + sound IRQ)
 
-| Scenario | Depth | Spare of 7,140 |
+| Scenario | Depth | Spare of 7,356 |
 |---|---|---|
-| Level load with `lprintf` | 940 | 6,200 |
-| Render | 1,084 | 6,056 |
-| Gameplay, one state action | 1,844 | 5,296 |
-| Two nested state actions | 2,660 | 4,480 |
-| Three nested state actions | 3,476 | 3,664 |
+| Level load with `lprintf` | ~972 | ~6,380 |
+| Render | ~1,124 | ~6,230 |
+| Gameplay, one state action | ~1,884 | ~5,470 |
+
+With the old 120 B `ramp_out` frame the render row was ~1,204 B, which
+matched the measured Doom 2 demo1 peak (1,200 B: the mixer over sprite
+drawing). The measured peaks below predate the `ramp_out` change.
 
 ### `I_Error`
 
@@ -195,12 +300,65 @@ addresses at the low-water mark show what set each peak:
 
 The demo never reaches the static one-state-action worst case.
 
+Peaks across the stack work, all with the sound IRQ. Once anything is
+queued, the action-queue demos play out differently from `66899ab`, so
+those two columns come from different moments. The iterative sound flood
+changes no game state, so its column is the same play as the queue column:
+
+| Timedemo | `66899ab` | Action queue | + iterative sound | What set the peak |
+|---|---|---|---|---|
+| Doom 2 demo1 | 1,204 | 1,200 | 1,200 | mixer over sprite drawing (nothing queued) |
+| Doom 2 demo2 | 1,360 | 1,364 | 1,352 | |
+| Doom 2 demo3 | 1,360 | 1,728 | 1,368 | queue build, caught with a watchpoint: weapon noise `P_RecursiveSound` 24 levels deep (~960 B) with the mixer (356 B) on top |
+| Ultimate Doom demo1 | 1,204 | 1,292 | 1,292 | |
+| Ultimate Doom demo2 | 1,676 | 1,512 | 1,332 | `66899ab`: `P_RecursiveSound` 5+ levels deep, with the mixer on top |
+| Ultimate Doom demo3 | 1,228 | 1,224 | 1,224 | |
+| Ultimate Doom demo4 | 1,504 | 1,536 | 1,272 | (nothing queued) |
+
+None of these peaks is a nested state action, so the action queue doesn't
+show in them. It caps the worst case, which these demos don't reach. The
+sound flood set the top two peaks, and replacing it removed them.
+
+Stale return addresses can mislead: the Doom 2 demo3 residue showed two
+`I_SoundVBlank` frames that were left over from earlier interrupts. To get
+the real chain, paint once to find the low-water address, then rerun with a
+write watchpoint on that word (`watch *(int*)0x03007840`; mGBA's GDB stub
+supports hardware watchpoints) and dump the stack from `$sp` when it fires.
+
 The original layout (1,336 B stack) couldn't be painted the same way, but the
 gameplay peak above was already 96 B over its limit, and on that build mGBA
 reported "Jumped to invalid address" at the timedemo's final `I_Error`.
 
-The first two rows predate the sound IRQ, so they don't include the 244 B
+The first two rows predate the sound IRQ, so they don't include the ~284 B
 the mixer adds.
+
+## Sound flood
+
+`P_NoiseAlert` (`p_enemy.c`, called from `P_FireWeapon`) wakes monsters by
+flooding the weapon noise through adjacent sectors. Closed doors stop it,
+and it can cross one `ML_SOUNDBLOCK` line. Each sector reached gets
+`soundtarget` and `soundtraversed` = 1 + the fewest blocking lines crossed
+to reach it.
+
+The old `P_RecursiveSound` did this depth first, one 40 B frame per sector
+on the current path. Vanilla's revisit rule (a sector reached with 1
+blocking line is redone if later reached with 0) means the final marks don't
+depend on the order. Line openings don't change during the walk, so a
+breadth-first flood gives the same result:
+
+1. `P_SoundReach` marks the emitter's sector and appends its index to
+   `_g->soundqueue`.
+2. `P_SoundSpread` floods from each queued sector through open,
+   non-blocking two-sided lines into unreached sectors (mark 1).
+3. From every mark-1 sector it crosses blocking lines into unreached sectors
+   (mark 2), then floods on through non-blocking lines (mark 2).
+
+Each sector is queued at most once, so `_g->soundqueue` holds `numsectors`
+entries. It is allocated with the sectors in `P_LoadSectors` (PU_LEVEL,
+2 B a sector). Stack use is fixed: about 132 B from `A_WeaponReady`.
+`P_LineOpening` is now only called for lines into unreached sectors, so it
+runs no more often than before. The last `open*` values it leaves differ,
+but every reader calls `P_LineOpening` first.
 
 ## Formatted output
 
@@ -224,10 +382,22 @@ names are `char[8]` and aren't terminated when a name is 8 characters long.
 
 - **Every byte added to IWRAM comes off the stack.** That includes code or
   statics in `r_hotpath.iwram.c`, `s_mix.iwram.c` and `TIMI_IWRAM` functions.
-  At the realistic worst case (~1.85 KB), about 5.3 KB can still be added
-  before the stack has no margin. Keeping the stack at least ~4 KB (above
-  the 3,476 B three-nested-action case) leaves about 3 KB for further IWRAM
-  growth.
+  At the realistic worst case (~1.88 KB), about 5.47 KB can still be added
+  before the stack has no margin. The old ~4 KB floor came from the
+  three-nested-action case (3,476 B), which the action queue removed. No
+  path found so far grows with the map or the data.
+- **Avoid recursion whose depth depends on the map** (sector, line or BSP
+  walks driven by game logic). `P_RecursiveSound` was one, and it set the
+  deepest measured peak until it was replaced (see [Sound flood](#sound-flood)).
+- **Keep buffers off the mixer's stack.** The mixer runs on top of whatever
+  the game is doing when VBlank hits, and can't re-enter (see
+  [Sound interrupt](#sound-interrupt)). Scratch buffers belong in `MidSong`
+  or `_g` (EWRAM), as `ramp_out`'s now does, not on the stack or in IWRAM
+  `.bss`.
+- **Start state actions only through `P_SetMobjState` / `P_SetPsprite`.**
+  They set `_g->runningaction`, which is what makes nested state changes
+  queue. An action calling another action directly (as `A_Hoof` calls
+  `A_Chase`) is fine; it runs on the same level.
 - **`main`'s frame (168 B) is under every path.** LTO inlines `D_DoomLoop`,
   `D_Display` and many of the drawers (`WI_*`, `ST*`, `HU*`, `AM_*`,
   `M_Drawer`) into `main`. Their locals stay reserved during `G_Ticker` too.

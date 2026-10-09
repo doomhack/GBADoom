@@ -3288,54 +3288,6 @@ void P_XYMovement (mobj_t* mo);
 void P_ZMovement (mobj_t* mo);
 
 
-//
-// P_SetMobjState
-// Returns true if the mobj is still present.
-//
-
-bool P_SetMobjState(mobj_t* mobj, statenum_t state)
-{
-    const state_t*	st;
-
-    do
-    {
-        if (state == S_NULL)
-        {
-            mobj->state = (state_t *) S_NULL;
-            P_RemoveMobj (mobj);
-            return false;
-        }
-
-        st = &states[state];
-        mobj->state = st;
-        mobj->tics = st->tics;
-
-        // Modified handling.
-        // Call action functions when the state is set
-        if(st->action)
-        {
-            if(!(_g->player.cheats & CF_ENEMY_ROCKETS))
-            {
-                st->action(mobj, NULL);
-            }
-            else
-            {
-                if(mobjinfo[mobj->type].missilestate && (state >= mobjinfo[mobj->type].missilestate) && (state < mobjinfo[mobj->type].painstate))
-                    A_CyberAttack(mobj, NULL);
-                else
-                    st->action(mobj, NULL);
-            }
-        }
-
-        state = st->nextstate;
-
-    } while (!mobj->tics);
-
-    return true;
-}
-
-
-
 void P_MobjThinker (mobj_t* mobj, void*)
 {
     // killough 11/98:

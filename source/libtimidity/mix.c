@@ -171,7 +171,7 @@ TIMI_IWRAM static int update_signal(MidSong *song, int v)
 static void ramp_out(MidSong *song, sint32 *lp, int v, sint32 c)
 {
   sint32 left, li, i, n;
-  sint32 tmp[MAX_DIE_TIME];
+  sint32 *tmp = song->ramp_tmp;
 
   left=song->voice[v].left_mix;
   li=-(left/c);

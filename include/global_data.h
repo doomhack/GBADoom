@@ -322,6 +322,8 @@ ceiling_t *activeceilings[MAXCEILINGS];
 
 fixed_t dropoff_deltax, dropoff_deltay, floorz;
 
+unsigned short* soundqueue; // P_NoiseAlert's sector queue: numsectors entries, PU_LEVEL.
+
 mobj_t* corpsehit;
 fixed_t viletryx;
 fixed_t viletryy;
@@ -440,6 +442,11 @@ intercept_t* intercept_p;
 //******************************************************************************
 //p_mobj.c
 //******************************************************************************
+
+bool runningaction;         // A state action is running: P_SetMobjState queues new ones.
+
+unsigned int numpendingactions;
+pendingaction_t pendingactions[MAXPENDINGACTIONS];
 
 //******************************************************************************
 //p_plats.c

@@ -61,6 +61,11 @@ static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 {
     pspdef_t *psp = &player->psprites[position];
 
+    // Mobj state actions the weapon actions set are queued (P_SetMobjState).
+    bool outer = !_g->runningaction;
+
+    _g->runningaction = true;
+
     do
     {
         const state_t *state;
@@ -87,6 +92,14 @@ static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
         stnum = psp->state->nextstate;
     }
     while (!psp->tics);     // an initial state of 0 could cycle through
+
+    if (outer)
+    {
+        if (_g->numpendingactions)
+            P_RunPendingActions();
+
+        _g->runningaction = false;
+    }
 }
 
 //

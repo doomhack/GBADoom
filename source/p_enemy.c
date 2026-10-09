@@ -76,45 +76,51 @@ void P_ZBumpCheck(mobj_t *);                                        // phares
 //
 
 //
-// Called by P_NoiseAlert.
-// Recursively traverse adjacent sectors,
-// sound blocking lines cut off traversal.
+// P_SoundReach
+// Wakes up the monsters in sec: marks it as reached by the sound and
+// appends it to _g->soundqueue at count. Returns the new count.
 //
-// killough 5/5/98: reformatted, cleaned up
 
-static void P_RecursiveSound(sector_t *sec, int soundblocks, mobj_t *soundtarget)
+static unsigned int P_SoundReach(sector_t *sec, unsigned int soundtraversed, mobj_t *soundtarget, unsigned int count)
 {
-    int i;
-
-    // wake up all monsters in this sector
-    if (sec->validcount == _g->validcount && sec->soundtraversed <= soundblocks+1)
-        return;             // already flooded
-
     sec->validcount = _g->validcount;
-    sec->soundtraversed = soundblocks+1;
+    sec->soundtraversed = soundtraversed;
     P_SetTarget(&sec->soundtarget, soundtarget);
 
-    for (i=0; i<sec->linecount; i++)
+    _g->soundqueue[count] = sec - _g->sectors;
+
+    return count + 1;
+}
+
+//
+// P_SoundSpread
+// Spreads the sound from sec through its open two-sided lines whose
+// ML_SOUNDBLOCK flag equals blocking, into sectors not reached yet.
+//
+
+static unsigned int P_SoundSpread(const sector_t *sec, unsigned int blocking, unsigned int soundtraversed, mobj_t *soundtarget, unsigned int count)
+{
+    for (int i=0; i<sec->linecount; i++)
     {
-        sector_t *other;
         const line_t *check = SEC_LINE(sec, i);
 
-        if (!(check->flags & ML_TWOSIDED))
+        if (!(check->flags & ML_TWOSIDED) || (check->flags & ML_SOUNDBLOCK) != blocking)
             continue;
+
+        sector_t *other = SIDE_SECTOR(check->sidenum[SIDE_SECTOR(check->sidenum[0])==sec]);
+
+        if (other->validcount == _g->validcount)
+            continue;       // already reached
 
         P_LineOpening(check);
 
         if (_g->openrange <= 0)
             continue;       // closed door
 
-        other=SIDE_SECTOR(check->sidenum[SIDE_SECTOR(check->sidenum[0])==sec]);
-
-        if (!(check->flags & ML_SOUNDBLOCK))
-            P_RecursiveSound(other, soundblocks, soundtarget);
-        else
-            if (!soundblocks)
-                P_RecursiveSound(other, 1, soundtarget);
+        count = P_SoundReach(other, soundtraversed, soundtarget, count);
     }
+
+    return count;
 }
 
 //
@@ -122,10 +128,31 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks, mobj_t *soundtarget
 // If a monster yells at a player,
 // it will alert other monsters to the player.
 //
+// The sound floods adjacent sectors through open two-sided lines and can
+// cross one sound blocking line. Each sector reached gets soundtraversed =
+// 1 + the fewest blocking lines crossed to reach it, as with the old
+// recursive flood, but breadth first with a queue so the stack doesn't
+// grow with the map: first every sector reachable without crossing a
+// blocking line, then one blocking line further. Each sector is queued at
+// most once, so the queue needs numsectors entries.
+//
+
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     _g->validcount++;
-    P_RecursiveSound(emitter->sector, 0, target);
+
+    unsigned int count = P_SoundReach(emitter->sector, 1, target, 0);
+
+    for (unsigned int i=0; i<count; i++)
+        count = P_SoundSpread(&_g->sectors[_g->soundqueue[i]], 0, 1, target, count);
+
+    unsigned int unblocked = count;
+
+    for (unsigned int i=0; i<unblocked; i++)
+        count = P_SoundSpread(&_g->sectors[_g->soundqueue[i]], ML_SOUNDBLOCK, 2, target, count);
+
+    for (unsigned int i=unblocked; i<count; i++)
+        count = P_SoundSpread(&_g->sectors[_g->soundqueue[i]], 0, 2, target, count);
 }
 
 //

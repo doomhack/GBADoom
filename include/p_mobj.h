@@ -337,10 +337,22 @@ typedef struct mobj_s
 // Whether an object is "sentient" or not. Used for environmental influences.
 #define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seestate)
 
+// A state set while a state action runs doesn't run its action on top of
+// the running one. It is queued and run after, so actions don't nest on
+// the stack. See P_SetMobjState.
+#define MAXPENDINGACTIONS 32
+
+typedef struct
+{
+    mobj_t* mobj;
+    short state;        // statenum_t the action was queued for.
+} pendingaction_t;
+
 void    P_RespawnSpecials(void);
 mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
 void    P_RemoveMobj(mobj_t *th);
 bool P_SetMobjState(mobj_t *mobj, statenum_t state);
+void P_RunPendingActions(void);
 
 void    P_MobjThinker(mobj_t *mobj, void *);
 void    P_MobjBrainlessThinker(mobj_t* mobj, void *);

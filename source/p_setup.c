@@ -87,6 +87,7 @@ static void P_LoadSectors (int lump)
 
     _g->numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
     _g->sectors = Z_Calloc (_g->numsectors,sizeof(sector_t),PU_LEVEL,0);
+    _g->soundqueue = Z_Malloc (_g->numsectors * sizeof(*_g->soundqueue), PU_LEVEL, 0);
     data = W_CacheLumpNum (lump); // cph - wad lump handling updated
 
     for (i=0; i<_g->numsectors; i++)

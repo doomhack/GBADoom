@@ -130,6 +130,11 @@ struct _MidSong
 
   MidChannel channel[16];
   MidVoice voice[MID_MAX_VOICES];
+
+  /* ramp_out's resample buffer. Here (EWRAM) rather than on the stack:
+     the mixer runs in the VBlank IRQ on top of the game's stack, and
+     never re-enters. */
+  sint32 ramp_tmp[MAX_DIE_TIME];
 };
 
 #endif /* TIMIDITY_INTERNAL_H */

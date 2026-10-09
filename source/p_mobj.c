@@ -613,6 +613,130 @@ void P_RemoveMobj (mobj_t* mobj)
     P_RemoveThing (mobj);
 }
 
+//
+// P_RunStateActions
+// Calls the action of mobj's current state (number state), then sets
+// and runs any 0 tic states after it.
+// Returns true if the mobj is still present.
+//
+
+static bool P_RunStateActions(mobj_t* mobj, statenum_t state)
+{
+    const state_t* st = mobj->state;
+
+    while(true)
+    {
+        actionf_t action = st->action;
+
+        if(action)
+        {
+            if(_g->player.cheats & CF_ENEMY_ROCKETS)
+            {
+                const mobjinfo_t* info = &mobjinfo[mobj->type];
+
+                if(info->missilestate && state >= info->missilestate && state < info->painstate)
+                    action = (actionf_t)A_CyberAttack;
+            }
+
+            action(mobj, NULL);
+        }
+
+        if(mobj->tics)
+            return true;
+
+        state = st->nextstate;
+
+        if (state == S_NULL)
+        {
+            mobj->state = (state_t *) S_NULL;
+            P_RemoveMobj (mobj);
+            return false;
+        }
+
+        st = &states[state];
+        mobj->state = st;
+        mobj->tics = st->tics;
+    }
+}
+
+//
+// P_SetMobjState
+// Returns true if the mobj is still present.
+//
+// A state set while an action runs has its action queued, not run on top
+// of the running one, so actions don't nest on the stack. The outermost
+// call runs the queue (P_RunPendingActions). 0 tic states still run
+// straight away (their tics can't count down), as does everything when
+// the queue is full.
+//
+
+bool P_SetMobjState(mobj_t* mobj, statenum_t state)
+{
+    if (state == S_NULL)
+    {
+        mobj->state = (state_t *) S_NULL;
+        P_RemoveMobj (mobj);
+        return false;
+    }
+
+    const state_t* st = &states[state];
+    mobj->state = st;
+    mobj->tics = st->tics;
+
+    if(_g->runningaction)
+    {
+        if(st->action && st->tics && _g->numpendingactions < MAXPENDINGACTIONS)
+        {
+            pendingaction_t* pa = &_g->pendingactions[_g->numpendingactions++];
+
+            pa->mobj = mobj;
+            pa->state = state;
+
+            return true;
+        }
+
+        return P_RunStateActions(mobj, state);
+    }
+
+    _g->runningaction = true;
+
+    bool present = P_RunStateActions(mobj, state);
+
+    if(_g->numpendingactions)
+        P_RunPendingActions();
+
+    _g->runningaction = false;
+
+    return present;
+}
+
+//
+// P_RunPendingActions
+// Runs the state actions P_SetMobjState queued, in order. Actions those
+// set are queued behind them, so this runs until the queue is empty.
+//
+
+void P_RunPendingActions(void)
+{
+    for(unsigned int i = 0; i < _g->numpendingactions; i++)
+    {
+        mobj_t* mobj = _g->pendingactions[i].mobj;
+        statenum_t state = _g->pendingactions[i].state;
+
+        // Removed mobjs stay allocated until the thinker loop reaches them.
+        if(mobj->thinker.function == (think_t)P_RemoveThingDelayed)
+            continue;
+
+        // Its state changed again before the action ran.
+        if(mobj->state != &states[state])
+            continue;
+
+        P_RunStateActions(mobj, state);
+    }
+
+    _g->numpendingactions = 0;
+}
+
 
 /*
  * P_FindDoomedNum
