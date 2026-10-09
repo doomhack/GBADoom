@@ -23,9 +23,13 @@ private:
     bool ProcessLines(quint32 lumpNum);
     bool ProcessSegs(quint32 lumpNum);
     bool ProcessSides(quint32 lumpNum);
+    bool ProcessBlockmap(quint32 lumpNum);
+    bool ProcessReject(quint32 lumpNum);
+    bool ProcessSectorLines(quint32 lumpNum);
 
     bool RemovePatches();
     bool ProcessTextureColumns();
+    bool RemoveOverriddenMaps();
     bool RemoveUnusedLumps();
     bool ProcessSounds();
     bool ProcessMusic();

@@ -3,7 +3,9 @@
 #include "mus2mid.h"
 #include "gusbank.h"
 
+#include <algorithm>
 #include <cmath>
+#include <map>
 #include <vector>
 
 WadProcessor::WadProcessor(WadFile& wad, QObject *parent)
@@ -18,6 +20,7 @@ bool WadProcessor::ProcessWad()
 
     Lump mapLump;
 
+    RemoveOverriddenMaps();
     RemoveUnusedLumps();
     ProcessTextureColumns();
     ProcessSounds();
@@ -88,6 +91,14 @@ bool WadProcessor::ProcessLevel(quint32 lumpNum)
     ProcessLines(lumpNum);
     ProcessSegs(lumpNum);
     ProcessSides(lumpNum);
+    ProcessBlockmap(lumpNum);
+    ProcessReject(lumpNum);
+    ProcessSectorLines(lumpNum);
+
+    //Lines and segs now hold their own vertex coordinates, so the
+    //engine doesn't need VERTEXES. Its map lump enum has no
+    //ML_VERTEXES, so the lumps after it move down one slot.
+    wadFile.RemoveLump(lumpNum+ML_VERTEXES);
 
     return true;
 }
@@ -159,36 +170,54 @@ bool WadProcessor::ProcessLines(quint32 lumpNum)
 
     const vertex_t* vtx = reinterpret_cast<const vertex_t*>(vxl.data.constData());
 
+    Lump mapLump;
+    wadFile.GetLumpByNum(lumpNum, mapLump);
+
+    //lineno and sidenums are 16 bit; 0xffff is NO_INDEX.
+    if(lineCount >= NO_INDEX)
+    {
+        qCritical("%s: %u lines, the engine supports at most %u.", qPrintable(mapLump.name), lineCount, NO_INDEX - 1u);
+        exit(1);
+    }
+
     for(unsigned int i = 0; i < lineCount; i++)
     {
-        newLines[i].v1.x = vtx[oldLines[i].v1].x;
-        newLines[i].v1.y = vtx[oldLines[i].v1].y;
+        //vtx is in fixed point (ProcessVertexes), lines keep map units.
+        const int x1 = vtx[oldLines[i].v1].x >> FRACBITS;
+        const int y1 = vtx[oldLines[i].v1].y >> FRACBITS;
+        const int x2 = vtx[oldLines[i].v2].x >> FRACBITS;
+        const int y2 = vtx[oldLines[i].v2].y >> FRACBITS;
 
-        newLines[i].v2.x = vtx[oldLines[i].v2].x;
-        newLines[i].v2.y = vtx[oldLines[i].v2].y;
+        //dx and dy are shorts in the engine.
+        if(x2 - x1 != qint16(x2 - x1) || y2 - y1 != qint16(y2 - y1))
+        {
+            qCritical("%s: line %u is too long (dx %d, dy %d). Lines can be at most 32767 units in x and y.", qPrintable(mapLump.name), i, x2 - x1, y2 - y1);
+            exit(1);
+        }
+
+        newLines[i].v1.x = x1;
+        newLines[i].v1.y = y1;
+
+        newLines[i].v2.x = x2;
+        newLines[i].v2.y = y2;
 
         newLines[i].special = oldLines[i].special;
         newLines[i].flags = oldLines[i].flags;
         newLines[i].tag = oldLines[i].tag;
 
-        newLines[i].dx = newLines[i].v2.x - newLines[i].v1.x;
-        newLines[i].dy = newLines[i].v2.y - newLines[i].v1.y;
-
-        newLines[i].slopetype =
-                !newLines[i].dx ? ST_VERTICAL : !newLines[i].dy ? ST_HORIZONTAL :
-                FixedDiv(newLines[i].dy, newLines[i].dx) > 0 ? ST_POSITIVE : ST_NEGATIVE;
+        newLines[i].dx = x2 - x1;
+        newLines[i].dy = y2 - y1;
 
         newLines[i].sidenum[0] = oldLines[i].sidenum[0];
         newLines[i].sidenum[1] = oldLines[i].sidenum[1];
 
-        newLines[i].bbox[BOXLEFT] = (newLines[i].v1.x < newLines[i].v2.x ? newLines[i].v1.x : newLines[i].v2.x);
-        newLines[i].bbox[BOXRIGHT] = (newLines[i].v1.x < newLines[i].v2.x ? newLines[i].v2.x : newLines[i].v1.x);
+        newLines[i].bbox[BOXLEFT] = (x1 < x2 ? x1 : x2);
+        newLines[i].bbox[BOXRIGHT] = (x1 < x2 ? x2 : x1);
 
-        newLines[i].bbox[BOXTOP] = (newLines[i].v1.y < newLines[i].v2.y ? newLines[i].v2.y : newLines[i].v1.y);
-        newLines[i].bbox[BOXBOTTOM] = (newLines[i].v1.y < newLines[i].v2.y ? newLines[i].v1.y : newLines[i].v2.y);
+        newLines[i].bbox[BOXTOP] = (y1 < y2 ? y2 : y1);
+        newLines[i].bbox[BOXBOTTOM] = (y1 < y2 ? y1 : y2);
 
         newLines[i].lineno = i;
-
     }
 
     Lump newLine;
@@ -268,14 +297,15 @@ bool WadProcessor::ProcessSegs(quint32 lumpNum)
 
     for(unsigned int i = 0; i < segCount; i++)
     {
-        newSegs[i].v1.x = vtx[oldSegs[i].v1].x;
-        newSegs[i].v1.y = vtx[oldSegs[i].v1].y;
+        //vtx is in fixed point (ProcessVertexes), segs keep map units.
+        newSegs[i].v1.x = vtx[oldSegs[i].v1].x >> FRACBITS;
+        newSegs[i].v1.y = vtx[oldSegs[i].v1].y >> FRACBITS;
 
-        newSegs[i].v2.x = vtx[oldSegs[i].v2].x;
-        newSegs[i].v2.y = vtx[oldSegs[i].v2].y;
+        newSegs[i].v2.x = vtx[oldSegs[i].v2].x >> FRACBITS;
+        newSegs[i].v2.y = vtx[oldSegs[i].v2].y >> FRACBITS;
 
-        newSegs[i].angle = oldSegs[i].angle << 16;
-        newSegs[i].offset = oldSegs[i].offset << 16;
+        newSegs[i].angle = oldSegs[i].angle;
+        newSegs[i].offset = oldSegs[i].offset;
 
         newSegs[i].linenum = oldSegs[i].linedef;
 
@@ -317,6 +347,191 @@ bool WadProcessor::ProcessSegs(quint32 lumpNum)
     return true;
 }
 
+//Rebuilds BLOCKMAP: header (orgx, orgy, width, height), one word offset
+//per cell, then the line lists, each ending in 0xffff. The leading 0
+//of each list (never used by the engine) is dropped, each distinct
+//list is stored once, and a list that is the tail of a longer one
+//points into it. Each cell keeps its lines in the original order.
+bool WadProcessor::ProcessBlockmap(quint32 lumpNum)
+{
+    quint32 bmLumpNum = lumpNum+ML_BLOCKMAP;
+
+    Lump bml;
+
+    if(!wadFile.GetLumpByNum(bmLumpNum, bml))
+        return false;
+
+    if(bml.length < 8)
+        return false;
+
+    const quint16* oldBm = reinterpret_cast<const quint16*>(bml.data.constData());
+    const quint32 oldWords = bml.length / 2;
+    const quint32 cellCount = oldBm[2] * oldBm[3];
+
+    if(4 + cellCount > oldWords)
+        return false;
+
+    std::vector<std::vector<quint16>> cells(cellCount);
+
+    for(quint32 c = 0; c < cellCount; c++)
+    {
+        quint32 pos = oldBm[4+c];
+
+        //Skip the leading 0.
+        if(pos < oldWords && oldBm[pos] != 0xffff)
+            pos++;
+
+        while(pos < oldWords && oldBm[pos] != 0xffff)
+            cells[c].push_back(oldBm[pos++]);
+    }
+
+    //Longest lists first, so shorter ones can find themselves as a tail.
+    std::vector<std::vector<quint16>> lists(cells);
+    std::sort(lists.begin(), lists.end(), [](const std::vector<quint16>& a, const std::vector<quint16>& b)
+    {
+        return a.size() != b.size() ? a.size() > b.size() : a < b;
+    });
+
+    std::vector<quint16> newBm(oldBm, oldBm + 4);
+    newBm.resize(4 + cellCount);
+
+    //Every stored list and each of its tails -> word offset.
+    std::map<std::vector<quint16>, quint32> placed;
+
+    for(const std::vector<quint16>& l : lists)
+    {
+        if(placed.count(l))
+            continue;
+
+        const quint32 start = newBm.size();
+
+        newBm.insert(newBm.end(), l.begin(), l.end());
+        newBm.push_back(0xffff);
+
+        for(size_t i = 0; i <= l.size(); i++)
+            placed.emplace(std::vector<quint16>(l.begin() + i, l.end()), start + i);
+    }
+
+    if(newBm.size() > 0x10000)
+    {
+        qWarning("%s: BLOCKMAP needs %u words, offsets only reach 65536. Left unchanged.", qPrintable(bml.name), quint32(newBm.size()));
+        return false;
+    }
+
+    for(quint32 c = 0; c < cellCount; c++)
+        newBm[4+c] = placed[cells[c]];
+
+    Lump newBml;
+    newBml.name = bml.name;
+    newBml.length = newBm.size() * sizeof(quint16);
+    newBml.data = QByteArray(reinterpret_cast<const char*>(newBm.data()), newBml.length);
+
+    wadFile.ReplaceLump(bmLumpNum, newBml);
+
+    return true;
+}
+
+//An all-zero REJECT never rejects anything, so it is emptied (kept as a
+//zero-length lump so BLOCKMAP stays at its ML_* offset) and the engine
+//skips the check.
+bool WadProcessor::ProcessReject(quint32 lumpNum)
+{
+    quint32 rejectLumpNum = lumpNum+ML_REJECT;
+
+    Lump rl;
+
+    if(!wadFile.GetLumpByNum(rejectLumpNum, rl))
+        return false;
+
+    if(rl.length == 0 || rl.data.count('\0') != rl.data.size())
+        return true;
+
+    Lump emptyRl;
+    emptyRl.name = rl.name;
+    emptyRl.length = 0;
+
+    wadFile.ReplaceLump(rejectLumpNum, emptyRl);
+
+    return true;
+}
+
+//Builds SECLINES, inserted after BLOCKMAP: each sector's lines, in the
+//order the engine's P_GroupLines used to make them (a line goes to its
+//front sector, and to its back sector if that is different).
+//Format: u32 start[sectors+1], then u16 line numbers; sector i has
+//lines[start[i] .. start[i+1]-1]. Needs processed lines and sides.
+bool WadProcessor::ProcessSectorLines(quint32 lumpNum)
+{
+    Lump mapLump, lines, sides, sectors, segs, ssectors;
+
+    if(!wadFile.GetLumpByNum(lumpNum, mapLump) || !wadFile.GetLumpByNum(lumpNum+ML_LINEDEFS, lines) ||
+       !wadFile.GetLumpByNum(lumpNum+ML_SIDEDEFS, sides) || !wadFile.GetLumpByNum(lumpNum+ML_SECTORS, sectors) ||
+       !wadFile.GetLumpByNum(lumpNum+ML_SEGS, segs) || !wadFile.GetLumpByNum(lumpNum+ML_SSECTORS, ssectors))
+        return false;
+
+    const line_t* lineData = reinterpret_cast<const line_t*>(lines.data.constData());
+    const sidedef_t* sideData = reinterpret_cast<const sidedef_t*>(sides.data.constData());
+    const seg_t* segData = reinterpret_cast<const seg_t*>(segs.data.constData());
+    const quint16* ssData = reinterpret_cast<const quint16*>(ssectors.data.constData()); //numsegs, firstseg
+
+    const quint32 lineCount = lines.length / sizeof(line_t);
+    const quint32 sideCount = sides.length / sizeof(sidedef_t);
+    const quint32 sectorCount = sectors.length / sizeof(mapsector_t);
+    const quint32 segCount = segs.length / sizeof(seg_t);
+    const quint32 ssCount = ssectors.length / (2 * sizeof(quint16));
+
+    //The engine takes a subsector's sector from its first seg.
+    for(quint32 i = 0; i < ssCount; i++)
+    {
+        const quint16 firstSeg = ssData[i*2 + 1];
+
+        if(firstSeg >= segCount || segData[firstSeg].frontsectornum >= sectorCount)
+            qWarning("%s: subsector %u is a part of no sector.", qPrintable(mapLump.name), i);
+    }
+
+    std::vector<std::vector<quint16>> secLines(sectorCount);
+
+    for(quint32 i = 0; i < lineCount; i++)
+    {
+        const quint16 s0 = lineData[i].sidenum[0];
+        const quint16 s1 = lineData[i].sidenum[1];
+
+        if(s0 >= sideCount)
+        {
+            qWarning("%s: line %u has no front side.", qPrintable(mapLump.name), i);
+            continue;
+        }
+
+        const quint16 front = sideData[s0].sector;
+
+        secLines[front].push_back(i);
+
+        if(s1 < sideCount && quint16(sideData[s1].sector) != front)
+            secLines[quint16(sideData[s1].sector)].push_back(i);
+    }
+
+    std::vector<quint32> start;
+    std::vector<quint16> lineNums;
+
+    for(const std::vector<quint16>& l : secLines)
+    {
+        start.push_back(lineNums.size());
+        lineNums.insert(lineNums.end(), l.begin(), l.end());
+    }
+
+    start.push_back(lineNums.size());
+
+    Lump secLinesLump;
+    secLinesLump.name = "SECLINES";
+    secLinesLump.data = QByteArray(reinterpret_cast<const char*>(start.data()), start.size() * sizeof(quint32));
+    secLinesLump.data.append(reinterpret_cast<const char*>(lineNums.data()), lineNums.size() * sizeof(quint16));
+    secLinesLump.length = secLinesLump.data.size();
+
+    wadFile.InsertLump(lumpNum+ML_SECLINES, secLinesLump);
+
+    return true;
+}
+
 bool WadProcessor::ProcessSides(quint32 lumpNum)
 {
     quint32 sidesLumpNum = lumpNum+ML_SIDEDEFS;
@@ -329,32 +544,110 @@ bool WadProcessor::ProcessSides(quint32 lumpNum)
     if(sides.length == 0)
         return false;
 
-    quint32 sideCount = sides.length / sizeof(mapsidedef_t);
+    //Lines and segs are already processed. Their sidenums get remapped.
+    quint32 linesLumpNum = lumpNum+ML_LINEDEFS;
+    quint32 segsLumpNum = lumpNum+ML_SEGS;
+    quint32 sectorsLumpNum = lumpNum+ML_SECTORS;
 
-    sidedef_t* newSides = new sidedef_t[sideCount];
+    Lump mapLump, lines, segs, sectors;
+
+    if(!wadFile.GetLumpByNum(lumpNum, mapLump) || !wadFile.GetLumpByNum(linesLumpNum, lines) || !wadFile.GetLumpByNum(segsLumpNum, segs) || !wadFile.GetLumpByNum(sectorsLumpNum, sectors))
+        return false;
+
+    quint32 sideCount = sides.length / sizeof(mapsidedef_t);
+    quint32 lineCount = lines.length / sizeof(line_t);
+    quint32 segCount = segs.length / sizeof(seg_t);
+    quint32 sectorCount = sectors.length / sizeof(mapsector_t);
+
+    std::vector<sidedef_t> convSides(sideCount);
 
     const mapsidedef_t* oldSides = reinterpret_cast<const mapsidedef_t*>(sides.data.constData());
 
     for(unsigned int i = 0; i < sideCount; i++)
     {
-        newSides[i].textureoffset = oldSides[i].textureoffset;
-        newSides[i].rowoffset = oldSides[i].rowoffset;
+        convSides[i].textureoffset = oldSides[i].textureoffset;
+        convSides[i].rowoffset = oldSides[i].rowoffset;
 
-        newSides[i].toptexture = GetTextureNumForName(oldSides[i].toptexture);
-        newSides[i].bottomtexture = GetTextureNumForName(oldSides[i].bottomtexture);
-        newSides[i].midtexture = GetTextureNumForName(oldSides[i].midtexture);
+        convSides[i].toptexture = GetTextureNumForName(oldSides[i].toptexture);
+        convSides[i].bottomtexture = GetTextureNumForName(oldSides[i].bottomtexture);
+        convSides[i].midtexture = GetTextureNumForName(oldSides[i].midtexture);
 
-        newSides[i].sector = oldSides[i].sector;
+        convSides[i].sector = oldSides[i].sector;
+
+        if(quint16(convSides[i].sector) >= sectorCount)
+        {
+            qWarning("%s: sidedef %u has out-of-range sector %u. Using sector 0.", qPrintable(mapLump.name), i, quint16(convSides[i].sector));
+            convSides[i].sector = 0;
+        }
+    }
+
+    //The engine reads sidedefs from ROM. Side 0 of a line with a special
+    //can be changed by the game (switch textures, scrolling), so each of
+    //those keeps its own entry, numbered from 0; the engine copies them
+    //to RAM. The rest are read only, so identical ones are merged.
+    std::vector<quint16> remap(sideCount, NO_INDEX);
+    std::vector<sidedef_t> newSides;
+
+    line_t* newLines = reinterpret_cast<line_t*>(lines.data.data());
+    seg_t* newSegs = reinterpret_cast<seg_t*>(segs.data.data());
+
+    for(quint32 i = 0; i < lineCount; i++)
+    {
+        const quint16 s = newLines[i].sidenum[0];
+
+        if(newLines[i].special && s < sideCount && remap[s] == NO_INDEX)
+        {
+            remap[s] = newSides.size();
+            newSides.push_back(convSides[s]);
+        }
+    }
+
+    std::map<QByteArray, quint16> merged;
+
+    for(quint32 i = 0; i < sideCount; i++)
+    {
+        if(remap[i] != NO_INDEX)
+            continue;
+
+        const QByteArray key(reinterpret_cast<const char*>(&convSides[i]), sizeof(sidedef_t));
+
+        auto it = merged.find(key);
+
+        if(it != merged.end())
+        {
+            remap[i] = it->second;
+        }
+        else
+        {
+            remap[i] = newSides.size();
+            merged.emplace(key, remap[i]);
+            newSides.push_back(convSides[i]);
+        }
+    }
+
+    for(quint32 i = 0; i < lineCount; i++)
+    {
+        for(int s = 0; s < 2; s++)
+        {
+            if(newLines[i].sidenum[s] < sideCount)
+                newLines[i].sidenum[s] = remap[newLines[i].sidenum[s]];
+        }
+    }
+
+    for(quint32 i = 0; i < segCount; i++)
+    {
+        if(newSegs[i].sidenum < sideCount)
+            newSegs[i].sidenum = remap[newSegs[i].sidenum];
     }
 
     Lump newSide;
     newSide.name = sides.name;
-    newSide.length = sideCount * sizeof(sidedef_t);
-    newSide.data = QByteArray(reinterpret_cast<const char*>(newSides), newSide.length);
-
-    delete[] newSides;
+    newSide.length = newSides.size() * sizeof(sidedef_t);
+    newSide.data = QByteArray(reinterpret_cast<const char*>(newSides.data()), newSide.length);
 
     wadFile.ReplaceLump(sidesLumpNum, newSide);
+    wadFile.ReplaceLump(linesLumpNum, lines);
+    wadFile.ReplaceLump(segsLumpNum, segs);
 
     return true;
 }
@@ -742,6 +1035,52 @@ bool WadProcessor::RemovePatches()
     }
 
     qInfo("Removed %u patch lumps, %u bytes.", removed, removedBytes);
+
+    return true;
+}
+
+//A PWAD map (e.g. Sigil's E3M1) replaces the IWAD's: lumps are found by
+//name from the end, so the earlier copy is never loaded. Remove it: the
+//marker and the map lumps after it.
+bool WadProcessor::RemoveOverriddenMaps()
+{
+    static const QStringList mapLumpNames = {"THINGS", "LINEDEFS", "SIDEDEFS", "VERTEXES", "SEGS",
+                                             "SSECTORS", "NODES", "SECTORS", "REJECT", "BLOCKMAP"};
+
+    quint32 removedLumps = 0, removedBytes = 0;
+
+    for(quint32 i = 0; i + 1 < wadFile.LumpCount(); i++)
+    {
+        Lump marker, next;
+
+        wadFile.GetLumpByNum(i, marker);
+        wadFile.GetLumpByNum(i+1, next);
+
+        if(next.name.compare("THINGS", Qt::CaseInsensitive))
+            continue;
+
+        //Is there a later map with this name?
+        Lump later;
+
+        if(wadFile.GetLumpByName(marker.name, later) <= qint32(i))
+            continue;
+
+        quint32 end = i + 1;
+
+        for(Lump l; wadFile.GetLumpByNum(end, l) && mapLumpNames.contains(l.name, Qt::CaseInsensitive); end++)
+            removedBytes += l.length;
+
+        removedBytes += marker.length;
+        removedLumps += end - i;
+
+        while(end-- > i)
+            wadFile.RemoveLump(i);
+
+        i--;
+    }
+
+    if(removedLumps)
+        qInfo("Removed %u lumps of overridden maps, %u bytes.", removedLumps, removedBytes);
 
     return true;
 }

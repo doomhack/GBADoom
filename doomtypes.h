@@ -65,7 +65,8 @@ enum {
   ML_NODES,             // BSP nodes
   ML_SECTORS,           // Sectors, from editing
   ML_REJECT,            // LUT, sector-sector visibility
-  ML_BLOCKMAP           // LUT, motion clipping, walls/grid element
+  ML_BLOCKMAP,          // LUT, motion clipping, walls/grid element
+  ML_SECLINES           // Per-sector line lists, added by ProcessSectorLines
 };
 
 
@@ -119,22 +120,23 @@ enum
 };  /* bbox coordinates */
 
 
+// The engine's line_t. Coordinates, dx/dy and bbox in map units.
 typedef struct line_s
 {
-    vertex_t v1;
-    vertex_t v2;            // Vertices, from v1 to v2.
-    quint32 lineno;         //line number.
-    fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
+    mapvertex_t v1;
+    mapvertex_t v2;         // Vertices, from v1 to v2.
 
-    quint16 sidenum[2];        // Visual appearance: SideDefs.
+    qint16 dx, dy;          // v2 - v1, for side checking.
 
-    fixed_t bbox[4];        //Line bounding box.
+    qint16 bbox[4];         // Line bounding box.
 
-    quint16 flags;           // Animation related.
+    quint16 sidenum[2];     // Visual appearance: SideDefs.
+
+    quint16 flags;          // Animation related.
     qint16 special;
     qint16 tag;
-    quint16 slopetype; // To aid move clipping.
 
+    quint16 lineno;         // Line number.
 } line_t;
 
 typedef struct {
@@ -163,15 +165,16 @@ typedef struct {
 
 
 //
-// The LineSeg.
+// The LineSeg (engine's seg_t). Vertices and offset in map units,
+// angle is BAM >> 16, as in the WAD.
 //
 typedef struct
 {
-    vertex_t v1;
-    vertex_t v2;            // Vertices, from v1 to v2.
+    mapvertex_t v1;
+    mapvertex_t v2;         // Vertices, from v1 to v2.
 
-    fixed_t offset;
-    angle_t angle;
+    qint16 offset;
+    quint16 angle;
 
     quint16 sidenum;
     quint16 linenum;
@@ -205,6 +208,18 @@ typedef struct
   short midtexture;
   short sector;  // Front sector, towards viewer.
 } sidedef_t;
+
+// Sector definition, from editing.
+typedef struct
+{
+  short floorheight;
+  short ceilingheight;
+  char  floorpic[8];
+  char  ceilingpic[8];
+  short lightlevel;
+  short special;
+  short tag;
+} mapsector_t;
 
 typedef struct
 {
