@@ -252,6 +252,13 @@ SECTIONS
 
 	__iheap_start = . ;
 
+	/* GBADoom: the main (User/System mode) stack grows down from __sp_usr	*/
+	/*   into whatever IWRAM is left above __iheap_start. Fail the link if	*/
+	/*   IWRAM code and data leave less than __stack_reserve bytes for it.	*/
+	/*   See IWRAM_BUDGET.md.						*/
+	__stack_reserve = 0x800;
+	ASSERT(__iheap_start + __stack_reserve <= __sp_usr, "IWRAM overflow: less than __stack_reserve (2 KB) left for the main stack. See IWRAM_BUDGET.md.")
+
 	__ewram_start = ORIGIN(ewram);
 	.ewram __ewram_start : AT (__ewram_lma)
 	{

@@ -386,6 +386,13 @@ names are `char[8]` and aren't terminated when a name is 8 characters long.
   before the stack has no margin. The old ~4 KB floor came from the
   three-nested-action case (3,476 B), which the action queue removed. No
   path found so far grows with the map or the data.
+- **The link fails below a 2 KB stack.** `gbadoom.ld` sets
+  `__stack_reserve = 0x800` and asserts `__iheap_start + __stack_reserve <=
+  __sp_usr`. IWRAM code and data can grow by 5,308 B (7,356 − 2,048) before
+  the build stops with "IWRAM overflow: less than __stack_reserve (2 KB) left
+  for the main stack". That leaves ~170 B above the ~1.88 KB static worst
+  case and ~680 B above the deepest measured peak (1,368 B). Raise the
+  reserve if a new path turns out deeper.
 - **Avoid recursion whose depth depends on the map** (sector, line or BSP
   walks driven by game logic). `P_RecursiveSound` was one, and it set the
   deepest measured peak until it was replaced (see [Sound flood](#sound-flood)).
