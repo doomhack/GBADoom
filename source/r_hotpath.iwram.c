@@ -35,9 +35,9 @@
 
 //This is to keep the codesize under control.
 //This whole file needs to fit within IWRAM.
-#ifdef GBA
-    #pragma GCC optimize ("Os")
-#endif
+//Levels are set in code_opt.h.
+#include "code_opt.h"
+ARM_CODE_DEFAULT
 
 #ifdef HAVE_CONFIG_H
     #include "config.h"
@@ -271,13 +271,9 @@ inline fixed_t CONSTFUNC FixedMul(fixed_t a, fixed_t b)
     return (fixed_t)((int_64_t) a*b >> FRACBITS);
 }
 
-//BSP traversal and wall setup are built at O3 (the rest of the file is Os).
-//Functions that call each other must share it, or GCC won't inline them.
-#ifdef GBA
-    #define R_BSP_OPT __attribute__((optimize("O3")))
-#else
-    #define R_BSP_OPT
-#endif
+//BSP traversal and wall setup are WARM_CODE (code_opt.h). Functions that
+//call each other must share a level, or GCC won't inline them.
+#define R_BSP_OPT WARM_CODE
 
 //This is a hack. I want FixedMul inlined only in this file. Sorry, not sorry.
 
@@ -537,7 +533,7 @@ inline static void R_DrawColumnPixel(unsigned short* dest, const byte* source, c
 #endif
 }
 
-static void __attribute__((flatten, optimize("O3"))) R_DrawColumn (const draw_column_vars_t *dcvars)
+static void __attribute__((flatten)) HOT_CODE R_DrawColumn (const draw_column_vars_t *dcvars)
 {
     int count = (dcvars->yh - dcvars->yl) + 1;
 
@@ -1432,7 +1428,7 @@ static void R_DrawSpan(unsigned int y, unsigned int x1, const unsigned int count
     }
 }
 
-static void __attribute__((flatten, optimize("O3"))) R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
+static void __attribute__((flatten)) HOT_CODE R_MapPlane(unsigned int y, unsigned int x1, unsigned int x2, draw_span_vars_t *dsvars)
 {
     const fixed_t distance = FixedMul(planeheight, yslope[y]);
     const fixed_t length = FixedMul (distance, distscale[x1]);
@@ -2003,7 +1999,8 @@ static void R_DrawSegTextureColumn(const texture_t* tex, int texcolumn, draw_col
 #define HEIGHTUNIT (1<<HEIGHTBITS)
 
 //Optimise me
-static void __attribute__((optimize("O3"))) R_RenderSegLoop (int rw_x)
+//Inlined into R_StoreWallRange, so it shares the BSP chain's level.
+static void R_BSP_OPT R_RenderSegLoop (int rw_x)
 {
     fixed_t  texturecolumn = 0;   // shut up compiler warning
 

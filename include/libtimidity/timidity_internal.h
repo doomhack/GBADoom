@@ -39,9 +39,12 @@
 #define TIMI_NAMESPACE(x) _timi_ ## x
 
 /* Code that runs for every voice for every control ratio chunk goes in
-   IWRAM on the GBA: Thumb code from ROM is several times slower. */
+   IWRAM on the GBA: Thumb code from ROM is several times slower. Built at
+   ARM_CODE_OPT_LEVEL (code_opt.h). */
+#include "code_opt.h"
+
 #ifdef GBA
-#define TIMI_IWRAM __attribute__((section(".iwram"), long_call, noinline, target("arm"), optimize("Os")))
+#define TIMI_IWRAM __attribute__((section(".iwram"), long_call, noinline, target("arm"), optimize(ARM_CODE_OPT_LEVEL)))
 #else
 #define TIMI_IWRAM
 #endif

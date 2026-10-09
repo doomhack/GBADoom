@@ -3,6 +3,9 @@
 // %.iwram.o rules) since they run for every voice for every output sample.
 //
 
+#include "code_opt.h"
+ARM_CODE_DEFAULT
+
 #include "s_mix.h"
 
 #define FRAC_MASK ((1 << SND_MIX_FRACBITS) - 1)
@@ -16,7 +19,8 @@ int32_t* S_MixBuffer(void)
 }
 
 // Linearly interpolated sample at ofs, as a 16 bit value.
-static inline int32_t S_MixInterp(const int8_t* src, int32_t ofs)
+// always_inline: it is ARM_CODE_DEFAULT and its callers are HOT_CODE.
+static inline __attribute__((always_inline)) int32_t S_MixInterp(const int8_t* src, int32_t ofs)
 {
     const int8_t* s = &src[ofs >> SND_MIX_FRACBITS];
 
@@ -26,7 +30,7 @@ static inline int32_t S_MixInterp(const int8_t* src, int32_t ofs)
     return (v1 << 8) + (((v2 - v1) * (ofs & FRAC_MASK)) >> (SND_MIX_FRACBITS - 8));
 }
 
-int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr, int32_t count, int32_t amp,
+HOT_CODE int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr, int32_t count, int32_t amp,
                       int32_t loop_end, int32_t loop_len)
 {
 #ifdef GBA
@@ -99,7 +103,7 @@ int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr
     return ofs;
 }
 
-void S_MixDirect(int32_t* buf, const int8_t* src, int32_t count, int32_t amp)
+HOT_CODE void S_MixDirect(int32_t* buf, const int8_t* src, int32_t count, int32_t amp)
 {
     amp <<= 8;
 
@@ -127,7 +131,7 @@ void S_MixDirect(int32_t* buf, const int8_t* src, int32_t count, int32_t amp)
     }
 }
 
-static inline uint32_t S_MixClip(int32_t v)
+static inline __attribute__((always_inline)) uint32_t S_MixClip(int32_t v)
 {
     v >>= 21;
 
@@ -139,7 +143,7 @@ static inline uint32_t S_MixClip(int32_t v)
     return v & 0xFF;
 }
 
-void S_MixOutput(int8_t* out, int32_t* buf, int32_t count)
+HOT_CODE void S_MixOutput(int8_t* out, int32_t* buf, int32_t count)
 {
     uint32_t* o = (uint32_t*)out;
 

@@ -360,6 +360,31 @@ entries. It is allocated with the sectors in `P_LoadSectors` (PU_LEVEL,
 runs no more often than before. The last `open*` values it leaves differ,
 but every reader calls `P_LineOpening` first.
 
+## Optimisation levels
+
+`include/code_opt.h` sets three levels for the ARM code in IWRAM:
+
+| Define | Default | Used by |
+|---|---|---|
+| `HOT_CODE_OPT_LEVEL` (`HOT_CODE`) | O3 | `R_DrawColumn`, `R_MapPlane` (both also `flatten`), `S_MixResample`, `S_MixDirect`, `S_MixOutput` |
+| `WARM_CODE_OPT_LEVEL` (`WARM_CODE`) | O3 | the BSP chain (`R_BSP_OPT`, 20 functions) and `R_RenderSegLoop`, which inlines into it |
+| `ARM_CODE_OPT_LEVEL` (`ARM_CODE_DEFAULT`) | Os | the rest of `r_hotpath.iwram.c` and `s_mix.iwram.c`, and `TIMI_IWRAM` |
+
+The defaults build byte-identical code to before the defines. IWRAM code
+size for other settings (current tree, 22,288 B at the defaults):
+
+| HOT / WARM / ARM | IWRAM code | Change |
+|---|---|---|
+| O3 / O3 / Os (default) | 22,288 | 0 |
+| O3 / O2 / Os | 21,184 | −1,104 |
+| O2 / O2 / Os | 21,184 | −1,104 |
+| O3 / O3 / O2 | 25,928 | +3,640 |
+| Os / Os / Os | 19,672 | −2,616 |
+
+The HOT functions come out the same size at O2 and O3. Changing a level
+changes which functions can inline into each other (GCC won't inline across
+levels), so time any change with the timedemos.
+
 ## Formatted output
 
 `source/lprintf.c` has one small formatter, `L_Format`, behind three entry

@@ -114,6 +114,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     include/am_map.h \
+    include/code_opt.h \
     include/config.h \
     include/d_englsh.h \
     include/d_event.h \
