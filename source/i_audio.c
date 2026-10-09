@@ -149,7 +149,7 @@ void I_InitSound(void)
             sfx = sfx->link;
 
         char name[9];
-        snprintf(name, sizeof(name), "DS%s", sfx->name);
+        lsnprintf(name, sizeof(name), "DS%s", sfx->name);
 
         for(char* c = name; *c; c++)
             *c = toupper(*c);
@@ -192,7 +192,7 @@ void I_PlaySong(int handle, int looping)
         return;
 
     char name[9];
-    snprintf(name, sizeof(name), "D_%s", musicNames[handle]);
+    lsnprintf(name, sizeof(name), "D_%s", musicNames[handle]);
 
     const int lump = W_CheckNumForName(name);
 

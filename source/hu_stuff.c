@@ -39,6 +39,7 @@
 #include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
 #include "w_wad.h"
 #include "dstrings.h"
+#include "lprintf.h"
 
 
 #include "global_data.h"
@@ -318,7 +319,7 @@ void HU_Init(void)
     j = HU_FONTSTART;
     for (i=0;i<HU_FONTSIZE;i++)
     {
-        sprintf(buffer, "STCFN%.3d", j++);
+        lsnprintf(buffer, sizeof(buffer), "STCFN%.3d", j++);
         _g->hu_font[i] = (const patch_t *) W_CacheLumpName(buffer);
     }
 }

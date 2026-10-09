@@ -596,7 +596,7 @@ static void IdentifyVersion()
         I_Error("No IWAD in ROM.\nAdd one with GbaWadUtil -rom");
 
     if(doom_iwad_header.version != DOOM_IWAD_VERSION)
-        I_Error("IWAD version %u, expected %u.\nRebuild with GbaWadUtil -rom", doom_iwad_header.version, DOOM_IWAD_VERSION);
+        I_Error("IWAD version %d, expected %d.\nRebuild with GbaWadUtil -rom", doom_iwad_header.version, DOOM_IWAD_VERSION);
 #endif
 
     CheckIWAD2(doom_iwad, &_g->gamemode, &_g->haswolflevels);
@@ -788,7 +788,7 @@ void GetFirstMap(int *ep, int *map)
         {
             for (i=1;!done && i<33;i++)  // Ty 09/13/98 - add use of !done
             {
-                sprintf(test,"MAP%02d",i);
+                lsnprintf(test, sizeof(test), "MAP%.2d", i);
                 ix = W_CheckNumForName(test);
                 if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
                 {
@@ -804,7 +804,7 @@ void GetFirstMap(int *ep, int *map)
             {
                 for (j=1;!done && j<10;j++)  // Ty 09/13/98 - add use of !done
                 {
-                    sprintf(test,"E%dM%d",i,j);
+                    lsnprintf(test, sizeof(test), "E%dM%d", i, j);
                     ix = W_CheckNumForName(test);
                     if (ix != -1)  // Ty 10/04/98 avoid -1 subscript
                     {

@@ -158,20 +158,16 @@ void I_ProcessKeyEvents()
 
 //**************************************************************************************
 
-#define MAX_MESSAGE_SIZE 1024
-
 void I_Error (const char *error, ...)
 {
-	char msg[MAX_MESSAGE_SIZE];
- 
 	va_list v;
 	va_start(v, error);
-	
-	vsprintf(msg, error, v);
-	
+
+	lvprintf(error, v);
+
 	va_end(v);
 
-    printf("%s\n", msg);
+    printf("\n");
 
 
     fflush( stderr );

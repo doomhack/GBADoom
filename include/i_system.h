@@ -43,8 +43,8 @@ void I_EndDisplay(void);
 int I_GetTime(void);     /* killough */
 
 /* cphipps - I_GetVersionString
- * Returns a version string in the given buffer
+ * Returns the version string
  */
-const char* I_GetVersionString(char* buf);
+const char* I_GetVersionString(void);
 
 #endif

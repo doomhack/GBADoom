@@ -96,7 +96,7 @@ static bool P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 
 #ifdef RANGECHECK
     if (ammo < 0 || ammo > NUMAMMO)
-        I_Error ("P_GiveAmmo: bad type %i", ammo);
+        I_Error ("P_GiveAmmo: bad type %d", ammo);
 #endif
 
     if ( player->ammo[ammo] == player->maxammo[ammo]  )

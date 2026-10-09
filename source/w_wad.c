@@ -237,7 +237,7 @@ int PUREFUNC W_LumpLength(int lump)
         return l->size;
     }
 
-    I_Error ("W_LumpLength: %i >= numlumps",lump);
+    I_Error ("W_LumpLength: %d >= numlumps",lump);
 
     return 0;
 }

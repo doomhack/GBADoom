@@ -238,7 +238,7 @@ int R_LoadTextureByName(const char* tex_name)
 #ifndef GBA
     if(tnum == -1)
     {
-        printf("texture name: %s not found.\n", tex_name);
+        lprintf("texture name: %s not found.", tex_name);
         return NO_TEXTURE;
     }
 #endif

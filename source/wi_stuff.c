@@ -252,11 +252,11 @@ void WI_levelNameLump(int epis, int map, char* buf)
 {
     if (_g->gamemode == commercial)
     {
-        sprintf(buf, "CWILV%2.2d", map);
+        lsnprintf(buf, 9, "CWILV%.2d", map);
     }
     else
     {
-        sprintf(buf, "WILV%d%d", epis, map);
+        lsnprintf(buf, 9, "WILV%d%d", epis, map);
     }
 }
 
@@ -273,7 +273,7 @@ static void WI_slamBackground(void)
     if (_g->gamemode == commercial || (_g->gamemode == retail && _g->wbs->epsd == 3))
         strcpy(name, "INTERPIC");
     else
-        sprintf(name, "WIMAP%d", _g->wbs->epsd);
+        lsnprintf(name, sizeof(name), "WIMAP%d", _g->wbs->epsd);
 
     // background
     V_DrawNamePatch(0, 0, FB, name);
@@ -998,7 +998,7 @@ void WI_loadData(void)
     for (i=0;i<10;i++)
     {
         // numbers 0-9
-        sprintf(name, "WINUM%d", i);
+        lsnprintf(name, sizeof(name), "WINUM%d", i);
 
         _g->num[i] = W_CacheLumpName(name);
     }

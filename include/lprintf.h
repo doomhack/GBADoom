@@ -34,7 +34,13 @@
 #ifndef __LPRINTF__
 #define __LPRINTF__
 
-typedef enum                /* Logical output levels */
+#include <stdarg.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum               /* Logical output levels */
 {
   LO_INFO=1,                /* One of these is used in each physical output    */
   LO_CONFIRM=2,             /* call. Which are output, or echoed to console    */
@@ -45,11 +51,21 @@ typedef enum                /* Logical output levels */
   LO_ALWAYS=64,
 } OutputLevels;
 
+//These only support %s, %.Ns, %d, %.Nd (zero padded to N digits) and %%.
 extern int lprintf(const char *fmt, ...);
+
+void lvprintf(const char *fmt, va_list v);
+
+//snprintf: always terminates buf, returns the length written.
+int lsnprintf(char *buf, unsigned int size, const char *fmt, ...);
 
 /* killough 3/20/98: add const
  * killough 4/25/98: add gcc attributes
  * cphipps 01/11- moved from i_system.h */
 void I_Error (const char *error, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

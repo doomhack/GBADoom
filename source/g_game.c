@@ -751,16 +751,6 @@ void G_DoCompleted (void)
     _g->gamestate = GS_INTERMISSION;
     _g->automapmode &= ~am_active;
 
-    // lmpwatch.pl engine-side demo testing support
-    // print "FINISHED: <mapname>" when the player exits the current map
-    if (nodrawers && (_g->demoplayback || _g->timingdemo))
-    {
-        if (_g->gamemode == commercial)
-            lprintf("FINISHED: MAP%02d\n", _g->gamemap);
-        else
-            lprintf("FINISHED: E%dM%d\n", _g->gameepisode, _g->gamemap);
-    }
-
     WI_Start (&_g->wminfo);
 }
 
@@ -1337,10 +1327,10 @@ bool G_CheckDemoStatus (void)
     {
         int endtime = I_GetTime();
         // killough -- added fps information and made it work for longer demos:
-        unsigned realtics = endtime-_g->starttime;
-        I_Error ("Timed %u gametics in %u realtics = %-.1f frames per second",
-                 (unsigned) _g->gametic,realtics,
-                 (unsigned) _g->gametic * (double) TICRATE / realtics);
+        int realtics = endtime-_g->starttime;
+        int fps10 = (_g->gametic * TICRATE * 10) / realtics;
+        I_Error ("Timed %d gametics in %d realtics = %d.%d frames per second",
+                 _g->gametic, realtics, fps10 / 10, fps10 % 10);
     }
 
     if (_g->demoplayback)

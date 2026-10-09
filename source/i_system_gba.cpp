@@ -327,28 +327,36 @@ void I_ProcessKeyEvents()
 
 //**************************************************************************************
 
-//Console is 30x20 chars. Keep this small - I_Error can be called deep in the stack.
-#define MAX_MESSAGE_SIZE 256
-
+//I_Error can be called deep in the stack, out of memory, or with _g or the
+//interrupt table trashed, so it uses none of them and very little stack.
 void I_Error (const char *error, ...)
 {
-    consoleDemoInit();
+    //No more interrupts: the VBlank mixer reads _g.
+    REG_IME = 0;
 
-    char msg[MAX_MESSAGE_SIZE];
+    //Stop the sound DMA and silence the output.
+    REG_DMA1CNT = 0;
+    REG_TM0CNT_H = 0;
+    SNDSTAT = 0;
+
+    consoleDemoInit();
 
     va_list v;
     va_start(v, error);
 
-    vsnprintf(msg, sizeof(msg), error, v);
+    lvprintf(error, v);
 
     va_end(v);
 
-    //fputs, not printf: stdout is unbuffered so printf goes via __sbprintf (~2.3KB stack).
-    fputs(msg, stdout);
+    //Halt until each VBlank. Halt wakes on IE & IF even with IME off,
+    //so this never goes through the interrupt dispatcher.
+    REG_DISPSTAT |= LCDC_VBL;
+    REG_IE = IRQ_VBLANK;
 
     while(true)
     {
-        VBlankIntrWait();
+        REG_IF = IRQ_VBLANK;
+        Halt();
     }
 }
 

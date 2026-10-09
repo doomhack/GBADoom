@@ -60,8 +60,7 @@
 
 static void PrintVer(void)
 {
-    char vbuf[24];
-    lprintf("%s",I_GetVersionString(vbuf));
+    lprintf("%s", I_GetVersionString());
 }
 
 int main(int argc, const char * const * argv)

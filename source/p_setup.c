@@ -359,11 +359,11 @@ void P_SetupLevel(int episode, int map)
     // find map name
     if (_g->gamemode == commercial)
     {
-        sprintf(lumpname, "MAP%02d", map);           // killough 1/24/98: simplify
+        lsnprintf(lumpname, sizeof(lumpname), "MAP%.2d", map);          // killough 1/24/98: simplify
     }
     else
     {
-        sprintf(lumpname, "E%dM%d", episode, map);   // killough 1/24/98: simplify
+        lsnprintf(lumpname, sizeof(lumpname), "E%dM%d", episode, map);  // killough 1/24/98: simplify
     }
 
     lumpnum = W_GetNumForName(lumpname);

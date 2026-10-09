@@ -39,6 +39,7 @@
 #include "sounds.h"
 #include "f_finale.h" // CPhipps - hmm...
 #include "dstrings.h"
+#include "lprintf.h"
 
 #include "global_data.h"
 
@@ -604,7 +605,7 @@ static void F_BunnyScroll (void)
         _g->laststage = stage;
     }
 
-    sprintf (name,"END%i",stage);
+    lsnprintf(name, sizeof(name), "END%d", stage);
     // CPhipps - patch drawing updated
     V_DrawNamePatch((320-13*8)/2, (200-8*8)/2, 0, name);
 }

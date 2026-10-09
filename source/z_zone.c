@@ -132,7 +132,7 @@ void Z_Free (void* ptr)
 
 #ifndef GBA
     running_count -= block->size;
-    printf("Free: %d\n", running_count);
+    lprintf("Free: %d", running_count);
 #endif
 
     other = block->prev;
@@ -205,7 +205,7 @@ void* Z_Malloc(int size, int tag, void **user)
         if (rover == start)
         {
             // scanned all the way around the list
-            I_Error ("Z_Malloc: failed on allocation of %i bytes", size);
+            I_Error ("Z_Malloc: failed on allocation of %d bytes", size);
         }
 
         if (rover->user)
@@ -275,7 +275,7 @@ void* Z_Malloc(int size, int tag, void **user)
 
 #ifndef GBA
     running_count += base->size;
-    printf("Alloc: %d (%d)\n", base->size, running_count);
+    lprintf("Alloc: %d (%d)", base->size, running_count);
 #endif
 
     return (void *) ((byte *)base + sizeof(memblock_t));
