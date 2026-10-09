@@ -90,7 +90,6 @@ fixed_t ftom_zoommul; // how far the window zooms each tic (fb coords)
 //d_client.c
 //******************************************************************************
 
-ticcmd_t         netcmd;
 int maketic;
 int lastmadetic;
 

@@ -146,9 +146,7 @@ const unsigned int settings_sram_offset = sizeof(gba_save_data_t) * 8;
 
 //
 // G_BuildTiccmd
-// Builds a ticcmd from all of the available inputs
-// or reads it from the demo buffer.
-// If recording a demo, write it out
+// Builds the player's ticcmd from all of the available inputs
 //
 static inline signed char fudgef(signed char b)
 {
@@ -167,8 +165,9 @@ static inline signed short fudgea(signed short b)
 }
 
 
-void G_BuildTiccmd(ticcmd_t* cmd)
+static void G_BuildTiccmd(void)
 {
+    ticcmd_t* cmd = &_g->player.cmd;
     int speed;
     int tspeed;
     int forward;
@@ -489,12 +488,10 @@ void G_Ticker (void)
     {
         if (_g->playeringame)
         {
-            ticcmd_t *cmd = &_g->player.cmd;
-
-            memcpy(cmd, &_g->netcmd, sizeof *cmd);
-
             if (_g->demoplayback)
-                G_ReadDemoTiccmd (cmd);
+                G_ReadDemoTiccmd (&_g->player.cmd);
+            else
+                G_BuildTiccmd ();
         }
     }
 

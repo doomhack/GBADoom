@@ -272,7 +272,6 @@ static void D_DoomLoop(void)
         if (_g->singletics)
         {
             I_StartTic ();
-            G_BuildTiccmd (&_g->netcmd);
 
             if (_g->advancedemo)
                 D_DoAdvanceDemo ();

@@ -1548,7 +1548,9 @@ bool P_CheckSector(sector_t* sector,bool crunch)
  * Must clear tmthing at tic end, as it might contain a pointer to a removed thinker, or the level might have ended/been ended and we clear the objects it was pointing too. Hopefully we don't need to carry this between tics for sync. */
 void P_MapStart(void)
 {
+#ifdef RANGECHECK
     if (_g->tmthing) I_Error("P_MapStart: tmthing set!");
+#endif
 }
 
 void P_MapEnd(void)

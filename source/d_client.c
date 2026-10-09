@@ -77,7 +77,6 @@ void D_BuildNewTiccmds(void)
         if (_g->maketic - _g->gametic > 3)
             break;
 
-        G_BuildTiccmd(&_g->netcmd);
         _g->maketic++;
     }
 }
