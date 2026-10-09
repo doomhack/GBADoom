@@ -772,7 +772,7 @@ int twoSided
 ( int sector,
   int line );
 
-side_t* getSide
+const side_t* getSide
 ( int   currentSector,
   int   line,
   int   side );

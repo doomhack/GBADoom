@@ -462,11 +462,8 @@ fixed_t bulletslope;
 
 //
 // MAP related Lookup tables.
-// Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
+// Store LINEDEFS, SIDEDEFS, etc.
 //
-
-int      numvertexes;
-const vertex_t *vertexes;
 
 const seg_t    *segs;
 
@@ -485,7 +482,10 @@ linedata_t* linedata;
 
 
 int      numsides;
-side_t   *sides;
+const side_t *sides;           // ROM (SIDEDEFS lump)
+
+int      nummutablesides;
+side_t   *mutablesides;       // RAM copy of sides[0 .. nummutablesides-1]
 
 // BLOCKMAP
 // Created from axis aligned bounding box
@@ -498,11 +498,11 @@ side_t   *sides;
 
 int       bmapwidth, bmapheight;  // size in mapblocks
 
-// killough 3/1/98: remove blockmap limit internally:
-const short      *blockmap;              // was short -- killough
+// Per-cell word offsets of the line lists (built by GbaWadUtil).
+const unsigned short *blockmap;
 
 // offsets in blockmap are from here
-const short      *blockmaplump;          // was short -- killough
+const unsigned short *blockmaplump;
 
 fixed_t   bmaporgx, bmaporgy;     // origin of block map
 

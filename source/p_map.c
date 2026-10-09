@@ -201,10 +201,10 @@ bool PIT_CrossLine (const line_t* ld)
 {
     if (!(ld->flags & ML_TWOSIDED) ||
             (ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS)))
-        if (!(_g->tmbbox[BOXLEFT]   > ld->bbox[BOXRIGHT]  ||
-              _g->tmbbox[BOXRIGHT]  < ld->bbox[BOXLEFT]   ||
-              _g->tmbbox[BOXTOP]    < ld->bbox[BOXBOTTOM] ||
-              _g->tmbbox[BOXBOTTOM] > ld->bbox[BOXTOP]))
+        if (!(_g->tmbbox[BOXLEFT]   > MAPTOFIXED(ld->bbox[BOXRIGHT])  ||
+              _g->tmbbox[BOXRIGHT]  < MAPTOFIXED(ld->bbox[BOXLEFT])   ||
+              _g->tmbbox[BOXTOP]    < MAPTOFIXED(ld->bbox[BOXBOTTOM]) ||
+              _g->tmbbox[BOXBOTTOM] > MAPTOFIXED(ld->bbox[BOXTOP])))
             if (P_PointOnLineSide(_g->pe_x,_g->pe_y,ld) != P_PointOnLineSide(_g->ls_x,_g->ls_y,ld))
                 return(false);  // line blocks trajectory                   //   ^
     return(true); // line doesn't block trajectory                    //   |
@@ -219,10 +219,10 @@ static int untouched(const line_t *ld)
 {
     fixed_t x, y, tmbbox[4];
     return
-            (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+P_RADIUS(_g->tmthing)) <= ld->bbox[BOXLEFT] ||
-            (tmbbox[BOXLEFT] = x-P_RADIUS(_g->tmthing)) >= ld->bbox[BOXRIGHT] ||
-            (tmbbox[BOXTOP] = (y=_g->tmthing->y)+P_RADIUS(_g->tmthing)) <= ld->bbox[BOXBOTTOM] ||
-            (tmbbox[BOXBOTTOM] = y-P_RADIUS(_g->tmthing)) >= ld->bbox[BOXTOP] ||
+            (tmbbox[BOXRIGHT] = (x=_g->tmthing->x)+P_RADIUS(_g->tmthing)) <= MAPTOFIXED(ld->bbox[BOXLEFT]) ||
+            (tmbbox[BOXLEFT] = x-P_RADIUS(_g->tmthing)) >= MAPTOFIXED(ld->bbox[BOXRIGHT]) ||
+            (tmbbox[BOXTOP] = (y=_g->tmthing->y)+P_RADIUS(_g->tmthing)) <= MAPTOFIXED(ld->bbox[BOXBOTTOM]) ||
+            (tmbbox[BOXBOTTOM] = y-P_RADIUS(_g->tmthing)) >= MAPTOFIXED(ld->bbox[BOXTOP]) ||
             P_BoxOnLineSide(tmbbox, ld) != -1;
 }
 
@@ -235,18 +235,18 @@ static // killough 3/26/98: make static
 bool PIT_CheckLine (const line_t* ld)
 {
     const fixed_t* tmbbox = _g->tmbbox;
-    const fixed_t* ldbbox = ld->bbox;
+    const short* ldbbox = ld->bbox;
 
-    if (tmbbox[BOXLEFT] >= ldbbox[BOXRIGHT])
+    if (tmbbox[BOXLEFT] >= MAPTOFIXED(ldbbox[BOXRIGHT]))
         return true;
 
-    if (tmbbox[BOXRIGHT] <= ldbbox[BOXLEFT])
+    if (tmbbox[BOXRIGHT] <= MAPTOFIXED(ldbbox[BOXLEFT]))
         return true;
 
-    if (tmbbox[BOXBOTTOM] >= ldbbox[BOXTOP])
+    if (tmbbox[BOXBOTTOM] >= MAPTOFIXED(ldbbox[BOXTOP]))
         return true;
 
-    if (tmbbox[BOXTOP] <= ldbbox[BOXBOTTOM])
+    if (tmbbox[BOXTOP] <= MAPTOFIXED(ldbbox[BOXBOTTOM]))
         return true;
 
     if (P_BoxOnLineSide(tmbbox, ld) != -1)
@@ -263,11 +263,11 @@ bool PIT_CheckLine (const line_t* ld)
     // could be crossed in either order.
 
     // killough 7/24/98: allow player to move out of 1s wall, to prevent sticking
-    if (!LN_BACKSECTOR(ld)) // one sided line
+    if (ld->sidenum[1] == NO_INDEX) // one sided line
     {
         _g->blockline = ld;
         return _g->tmunstuck && !untouched(ld) &&
-                FixedMul(_g->tmx-_g->tmthing->x,ld->dy) > FixedMul(_g->tmy-_g->tmthing->y,ld->dx);
+                FixedMul(_g->tmx-_g->tmthing->x,MAPTOFIXED(ld->dy)) > FixedMul(_g->tmy-_g->tmthing->y,MAPTOFIXED(ld->dx));
     }
 
     // killough 8/10/98: allow bouncing objects to pass through as missiles
@@ -755,13 +755,13 @@ void P_HitSlideLine (const line_t* ld)
     /* killough 10/98: only bounce if hit hard (prevents wobbling)
    * cph - DEMOSYNC - should only affect players in Boom demos? */
 
-    if (ld->slopetype == ST_HORIZONTAL)
+    if (LN_SLOPETYPE(ld) == ST_HORIZONTAL)
     {
         _g->tmymove = 0; // no more movement in the Y direction
         return;
     }
 
-    if (ld->slopetype == ST_VERTICAL)
+    if (LN_SLOPETYPE(ld) == ST_VERTICAL)
     {                                                          // phares
         _g->tmxmove = 0; // no more movement in the X direction
         return;
@@ -772,7 +772,7 @@ void P_HitSlideLine (const line_t* ld)
 
     side = P_PointOnLineSide (_g->slidemo->x, _g->slidemo->y, ld);
 
-    lineangle = R_PointToAngle2 (0,0, ld->dx, ld->dy);
+    lineangle = R_PointToAngle2 (0,0, MAPTOFIXED(ld->dx), MAPTOFIXED(ld->dy));
     if (side == 1)
         lineangle += ANG180;
 

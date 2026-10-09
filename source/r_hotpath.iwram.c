@@ -127,7 +127,7 @@ static byte spanstart[MAX_SCREENHEIGHT];                // killough 2/8/98
 
 
 static const seg_t     *curline;
-static side_t    *sidedef;
+static const side_t *sidedef;
 static const line_t    *linedef;
 static sector_t  *frontsector;
 static sector_t  *backsector;
@@ -964,7 +964,9 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
     frontsector = SG_FRONTSECTOR(curline);
     backsector = SG_BACKSECTOR(curline);
 
-    const int texnum = texturetranslation[_g->sides[curline->sidenum].midtexture];
+    const side_t* side = SIDE(curline->sidenum);
+
+    const int texnum = texturetranslation[side->midtexture];
 
     // killough 4/13/98: get correct lightlevel for 2s normal textures
     rw_lightlevel = frontsector->lightlevel;
@@ -990,7 +992,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
         dcvars.texturemid = dcvars.texturemid - viewz;
     }
 
-    dcvars.texturemid += (_g->sides[curline->sidenum].rowoffset << FRACBITS);
+    dcvars.texturemid += (side->rowoffset << FRACBITS);
 
     const texture_t* texture = R_GetOrLoadTexture(texnum);
 
@@ -1022,10 +1024,10 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
 
 static inline int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 {
-    const fixed_t lx = line->v1.x;
-    const fixed_t ly = line->v1.y;
-    const fixed_t ldx = line->v2.x - lx;
-    const fixed_t ldy = line->v2.y - ly;
+    const fixed_t lx = (fixed_t)line->v1.x << FRACBITS;
+    const fixed_t ly = (fixed_t)line->v1.y << FRACBITS;
+    const int ldx = line->v2.x - line->v1.x;    // map units
+    const int ldy = line->v2.y - line->v1.y;
 
     if (!ldx)
         return x <= lx ? ldy > 0 : ldy < 0;
@@ -1036,7 +1038,7 @@ static inline int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
     x -= lx;
     y -= ly;
 
-    return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
+    return FixedMul(y, ldx) >= FixedMul(ldy, x);
 }
 
 //
@@ -2264,19 +2266,21 @@ static R_BSP_OPT void R_StoreWallRange(const int start, const int stop)
     // mark the segment as visible for auto map
     linedata->r_mapped = 1;
 
-    sidedef = &_g->sides[curline->sidenum];
+    sidedef = SIDE(curline->sidenum);
     linedef = &_g->lines[curline->linenum];
 
     // calculate rw_distance for scale calculation
-    rw_normalangle = curline->angle + ANG90;
+    rw_normalangle = ((angle_t)curline->angle << 16) + ANG90;
 
     offsetangle = rw_normalangle-rw_angle1;
 
     if (D_abs(offsetangle) > ANG90)
         offsetangle = ANG90;
 
-    hyp = (viewx==curline->v1.x && viewy==curline->v1.y)?
-                0 : R_PointToDist (curline->v1.x, curline->v1.y);
+    const fixed_t v1x = (fixed_t)curline->v1.x << FRACBITS;
+    const fixed_t v1y = (fixed_t)curline->v1.y << FRACBITS;
+
+    hyp = (viewx==v1x && viewy==v1y)? 0 : R_PointToDist (v1x, v1y);
 
     rw_distance = FixedMul(hyp, finecosine[offsetangle>>ANGLETOFINESHIFT]);
 
@@ -2438,7 +2442,7 @@ static R_BSP_OPT void R_StoreWallRange(const int start, const int stop)
     {
         rw_offset = FixedMul (hyp, -finesine[offsetangle >>ANGLETOFINESHIFT]);
 
-        rw_offset += (sidedef->textureoffset << FRACBITS) + curline->offset;
+        rw_offset += (sidedef->textureoffset + curline->offset) << FRACBITS;
 
         rw_centerangle = ANG90 + viewangle - rw_normalangle;
 
@@ -2565,9 +2569,9 @@ static R_BSP_OPT void R_StoreWallRange(const int start, const int stop)
 
 static R_BSP_OPT void R_RecalcLineFlags(void)
 {
-    linedata_t* linedata = &_g->linedata[linedef->lineno];
+    linedata_t* linedata = &_g->linedata[curline->linenum];
 
-    const side_t* side = &_g->sides[curline->sidenum];
+    const side_t* side = SIDE(curline->sidenum);
 
     linedata->r_validcount = (_g->gametic & RF_VALIDMASK);
 
@@ -2666,8 +2670,8 @@ static R_BSP_OPT void R_ClipWallSegment(int first, int last, bool solid)
 
 static R_BSP_OPT void R_AddLine (const seg_t *line)
 {
-    angle_t angle1 = R_PointToAngle2(viewx, viewy, line->v1.x, line->v1.y);
-    angle_t angle2 = R_PointToAngle2(viewx, viewy, line->v2.x, line->v2.y);
+    angle_t angle1 = R_PointToAngle2(viewx, viewy, (fixed_t)line->v1.x << FRACBITS, (fixed_t)line->v1.y << FRACBITS);
+    angle_t angle2 = R_PointToAngle2(viewx, viewy, (fixed_t)line->v2.x << FRACBITS, (fixed_t)line->v2.y << FRACBITS);
 
     // Clip to view edges.
     const angle_t span = angle1 - angle2;
@@ -2722,7 +2726,7 @@ static R_BSP_OPT void R_AddLine (const seg_t *line)
 
     curline = line;
     linedef = &_g->lines[curline->linenum];
-    linedata_t* linedata = &_g->linedata[linedef->lineno];
+    linedata_t* linedata = &_g->linedata[curline->linenum];
 
     if (linedata->r_validcount != (_g->gametic & RF_VALIDMASK))
         R_RecalcLineFlags();
@@ -3159,10 +3163,10 @@ static bool P_CrossSubsector(int num)
 
         _g->linedata[linenum].validcount = _g->validcount;
 
-        if (line->bbox[BOXLEFT] > _g->los.bbox[BOXRIGHT ] ||
-                line->bbox[BOXRIGHT] < _g->los.bbox[BOXLEFT  ] ||
-                line->bbox[BOXBOTTOM] > _g->los.bbox[BOXTOP   ] ||
-                line->bbox[BOXTOP]    < _g->los.bbox[BOXBOTTOM])
+        if (MAPTOFIXED(line->bbox[BOXLEFT]) > _g->los.bbox[BOXRIGHT ] ||
+                MAPTOFIXED(line->bbox[BOXRIGHT]) < _g->los.bbox[BOXLEFT  ] ||
+                MAPTOFIXED(line->bbox[BOXBOTTOM]) > _g->los.bbox[BOXTOP   ] ||
+                MAPTOFIXED(line->bbox[BOXTOP])    < _g->los.bbox[BOXBOTTOM])
             continue;
 
         // cph - do what we can before forced to check intersection
@@ -3188,16 +3192,16 @@ static bool P_CrossSubsector(int num)
         }
 
         // Forget this line if it doesn't cross the line of sight
-        const vertex_t *v1,*v2;
+        const fixed_t v1x = MAPTOFIXED(line->v1.x);
+        const fixed_t v1y = MAPTOFIXED(line->v1.y);
+        const fixed_t v2x = MAPTOFIXED(line->v2.x);
+        const fixed_t v2y = MAPTOFIXED(line->v2.y);
 
-        v1 = &line->v1;
-        v2 = &line->v2;
-
-        if (P_DivlineSide(v1->x, v1->y, &_g->los.strace) == P_DivlineSide(v2->x, v2->y, &_g->los.strace))
+        if (P_DivlineSide(v1x, v1y, &_g->los.strace) == P_DivlineSide(v2x, v2y, &_g->los.strace))
             continue;
 
-        divl.dx = v2->x - (divl.x = v1->x);
-        divl.dy = v2->y - (divl.y = v1->y);
+        divl.dx = v2x - (divl.x = v1x);
+        divl.dy = v2y - (divl.y = v1y);
 
         // line isn't crossed?
         if (P_DivlineSide(_g->los.strace.x, _g->los.strace.y, &divl) == P_DivlineSide(_g->los.t2x, _g->los.t2y, &divl))

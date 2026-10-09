@@ -97,7 +97,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks, mobj_t *soundtarget
     for (i=0; i<sec->linecount; i++)
     {
         sector_t *other;
-        const line_t *check = sec->lines[i];
+        const line_t *check = SEC_LINE(sec, i);
 
         if (!(check->flags & ML_TWOSIDED))
             continue;
@@ -107,7 +107,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks, mobj_t *soundtarget
         if (_g->openrange <= 0)
             continue;       // closed door
 
-        other=_g->sides[check->sidenum[_g->sides[check->sidenum[0]].sector==sec]].sector;
+        other=SIDE_SECTOR(check->sidenum[SIDE_SECTOR(check->sidenum[0])==sec]);
 
         if (!(check->flags & ML_SOUNDBLOCK))
             P_RecursiveSound(other, soundblocks, soundtarget);
@@ -568,10 +568,10 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 static bool PIT_AvoidDropoff(const line_t *line)
 {
     if (LN_BACKSECTOR(line)                          && // Ignore one-sided linedefs
-            _g->tmbbox[BOXRIGHT]  > line->bbox[BOXLEFT]   &&
-            _g->tmbbox[BOXLEFT]   < line->bbox[BOXRIGHT]  &&
-            _g->tmbbox[BOXTOP]    > line->bbox[BOXBOTTOM] && // Linedef must be contacted
-            _g->tmbbox[BOXBOTTOM] < line->bbox[BOXTOP]    &&
+            _g->tmbbox[BOXRIGHT]  > MAPTOFIXED(line->bbox[BOXLEFT])   &&
+            _g->tmbbox[BOXLEFT]   < MAPTOFIXED(line->bbox[BOXRIGHT])  &&
+            _g->tmbbox[BOXTOP]    > MAPTOFIXED(line->bbox[BOXBOTTOM]) && // Linedef must be contacted
+            _g->tmbbox[BOXBOTTOM] < MAPTOFIXED(line->bbox[BOXTOP])    &&
             P_BoxOnLineSide(_g->tmbbox, line) == -1)
     {
         fixed_t front = LN_FRONTSECTOR(line)->floorheight;
@@ -582,10 +582,10 @@ static bool PIT_AvoidDropoff(const line_t *line)
         // and the other must be a tall dropoff (more than 24).
 
         if (back == _g->floorz && front < _g->floorz - FRACUNIT*24)
-            angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
+            angle = R_PointToAngle2(0,0,MAPTOFIXED(line->dx),MAPTOFIXED(line->dy));   // front side dropoff
         else
             if (front == _g->floorz && back < _g->floorz - FRACUNIT*24)
-                angle = R_PointToAngle2(line->dx,line->dy,0,0); // back side dropoff
+                angle = R_PointToAngle2(MAPTOFIXED(line->dx),MAPTOFIXED(line->dy),0,0); // back side dropoff
             else
                 return true;
 

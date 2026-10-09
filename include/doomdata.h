@@ -48,18 +48,20 @@
 
 // Lump order in a map WAD: each map needs a couple of lumps
 // to provide a complete scene geometry description.
+// GbaWadUtil removes VERTEXES (lines and segs carry their own
+// coordinates), so there is no ML_VERTEXES.
 enum {
   ML_LABEL,             // A separator, name, ExMx or MAPxx
   ML_THINGS,            // Monsters, items..
   ML_LINEDEFS,          // LineDefs, from editing
   ML_SIDEDEFS,          // SideDefs, from editing
-  ML_VERTEXES,          // Vertices, edited and BSP splits generated
-  ML_SEGS,              // LineSegs, from LineDefs split by BSP
+  ML_SEGS,             // LineSegs, from LineDefs split by BSP
   ML_SSECTORS,          // SubSectors, list of LineSegs
   ML_NODES,             // BSP nodes
   ML_SECTORS,           // Sectors, from editing
   ML_REJECT,            // LUT, sector-sector visibility
-  ML_BLOCKMAP           // LUT, motion clipping, walls/grid element
+  ML_BLOCKMAP,          // LUT, motion clipping, walls/grid element
+  ML_SECLINES           // Per-sector line lists (GbaWadUtil)
 };
 
 

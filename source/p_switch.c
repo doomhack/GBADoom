@@ -183,9 +183,10 @@ void P_ChangeSwitchTexture (const line_t* line, int useAgain)
     short   *texture, ttop, tmid, tbot;
     bwhere_e position;
 
-    ttop = _g->sides[line->sidenum[0]].toptexture;
-    tmid = _g->sides[line->sidenum[0]].midtexture;
-    tbot = _g->sides[line->sidenum[0]].bottomtexture;
+    // Only lines with a special get here, so side 0 has a RAM copy.
+    ttop = _g->mutablesides[line->sidenum[0]].toptexture;
+    tmid = _g->mutablesides[line->sidenum[0]].midtexture;
+    tbot = _g->mutablesides[line->sidenum[0]].bottomtexture;
 
     sound = sfx_swtchn;
 
@@ -227,15 +228,15 @@ void P_ChangeSwitchTexture (const line_t* line, int useAgain)
     switch(position)
     {
     case top:
-        _g->sides[line->sidenum[0]].toptexture = *texture;
+        _g->mutablesides[line->sidenum[0]].toptexture = *texture;
         break;
 
     case middle:
-        _g->sides[line->sidenum[0]].midtexture = *texture;
+        _g->mutablesides[line->sidenum[0]].midtexture = *texture;
         break;
 
     case bottom:
-        _g->sides[line->sidenum[0]].bottomtexture = *texture;
+        _g->mutablesides[line->sidenum[0]].bottomtexture = *texture;
         break;
     }
 

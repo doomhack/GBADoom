@@ -491,7 +491,7 @@ int EV_VerticalDoor
   }
 
   // get the sector on the second side of activating linedef
-  sec = _g->sides[line->sidenum[1]].sector;
+  sec = SIDE_SECTOR(line->sidenum[1]);
 
   /* if door already has a thinker, use it
    * cph 2001/04/05 -

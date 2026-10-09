@@ -187,12 +187,12 @@ void P_InitPicAnims (void)
 //
 // Note: if side=1 is specified, it must exist or results undefined
 //
-side_t* getSide
+const side_t* getSide
 ( int           currentSector,
   int           line,
   int           side )
 {
-    return &_g->sides[ (_g->sectors[currentSector].lines[line])->sidenum[side] ];
+    return SIDE( (SEC_LINE(&_g->sectors[currentSector], line))->sidenum[side] );
 }
 
 
@@ -210,7 +210,7 @@ static sector_t* getSector
   int           line,
   int           side )
 {
-    return _g->sides[ (_g->sectors[currentSector].lines[line])->sidenum[side] ].sector;
+    return SIDE_SECTOR( (SEC_LINE(&_g->sectors[currentSector], line))->sidenum[side] );
 }
 
 
@@ -230,7 +230,7 @@ int twoSided
     //jff 1/26/98 return what is actually needed, whether the line
     //has two sidedefs, rather than whether the 2S flag is set
 
-    return (_g->sectors[sector].lines[line])->sidenum[1] != NO_INDEX;
+    return (SEC_LINE(&_g->sectors[sector], line))->sidenum[1] != NO_INDEX;
 }
 
 
@@ -273,7 +273,7 @@ fixed_t P_FindLowestFloorSurrounding(sector_t* sec)
 
     for (i=0 ;i < sec->linecount ; i++)
     {
-        check = sec->lines[i];
+        check = SEC_LINE(sec, i);
         other = getNextSector(check,sec);
 
         if (!other)
@@ -308,7 +308,7 @@ fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
 
     for (i=0 ;i < sec->linecount ; i++)
     {
-        check = sec->lines[i];
+        check = SEC_LINE(sec, i);
         other = getNextSector(check,sec);
 
         if (!other)
@@ -337,12 +337,12 @@ fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
     int i;
 
     for (i=0 ;i < sec->linecount ; i++)
-        if ((other = getNextSector(sec->lines[i],sec)) &&
+        if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                 other->floorheight > currentheight)
         {
             int height = other->floorheight;
             while (++i < sec->linecount)
-                if ((other = getNextSector(sec->lines[i],sec)) &&
+                if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                         other->floorheight < height &&
                         other->floorheight > currentheight)
                     height = other->floorheight;
@@ -372,12 +372,12 @@ fixed_t P_FindNextLowestFloor(sector_t *sec, int currentheight)
     int i;
 
     for (i=0 ;i < sec->linecount ; i++)
-        if ((other = getNextSector(sec->lines[i],sec)) &&
+        if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                 other->floorheight < currentheight)
         {
             int height = other->floorheight;
             while (++i < sec->linecount)
-                if ((other = getNextSector(sec->lines[i],sec)) &&
+                if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                         other->floorheight > height &&
                         other->floorheight < currentheight)
                     height = other->floorheight;
@@ -403,12 +403,12 @@ fixed_t P_FindNextLowestCeiling(sector_t *sec, int currentheight)
     int i;
 
     for (i=0 ;i < sec->linecount ; i++)
-        if ((other = getNextSector(sec->lines[i],sec)) &&
+        if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                 other->ceilingheight < currentheight)
         {
             int height = other->ceilingheight;
             while (++i < sec->linecount)
-                if ((other = getNextSector(sec->lines[i],sec)) &&
+                if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                         other->ceilingheight > height &&
                         other->ceilingheight < currentheight)
                     height = other->ceilingheight;
@@ -434,12 +434,12 @@ fixed_t P_FindNextHighestCeiling(sector_t *sec, int currentheight)
     int i;
 
     for (i=0 ;i < sec->linecount ; i++)
-        if ((other = getNextSector(sec->lines[i],sec)) &&
+        if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                 other->ceilingheight > currentheight)
         {
             int height = other->ceilingheight;
             while (++i < sec->linecount)
-                if ((other = getNextSector(sec->lines[i],sec)) &&
+                if ((other = getNextSector(SEC_LINE(sec, i),sec)) &&
                         other->ceilingheight < height &&
                         other->ceilingheight > currentheight)
                     height = other->ceilingheight;
@@ -470,7 +470,7 @@ fixed_t P_FindLowestCeilingSurrounding(sector_t* sec)
 
     for (i=0 ;i < sec->linecount ; i++)
     {
-        check = sec->lines[i];
+        check = SEC_LINE(sec, i);
         other = getNextSector(check,sec);
 
         if (!other)
@@ -506,7 +506,7 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t* sec)
 
     for (i=0 ;i < sec->linecount ; i++)
     {
-        check = sec->lines[i];
+        check = SEC_LINE(sec, i);
         other = getNextSector(check,sec);
 
         if (!other)
@@ -533,7 +533,7 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t* sec)
 fixed_t P_FindShortestTextureAround(int secnum)
 {
     int minsize = INT_MAX;
-    side_t*     side;
+    const side_t* side;
     int i;
     sector_t *sec = &_g->sectors[secnum];
 
@@ -571,7 +571,7 @@ fixed_t P_FindShortestTextureAround(int secnum)
 fixed_t P_FindShortestUpperAround(int secnum)
 {
     int minsize = INT_MAX;
-    side_t*     side;
+    const side_t* side;
     int i;
     sector_t *sec = &_g->sectors[secnum];
 
@@ -623,7 +623,7 @@ sector_t *P_FindModelFloorSector(fixed_t floordestheight,int secnum)
     {
         if ( twoSided(secnum, i) )
         {
-            if (getSide(secnum,i,0)->sector-_g->sectors == secnum)
+            if (getSide(secnum,i,0)->sectornum == secnum)
                 sec = getSector(secnum,i,1);
             else
                 sec = getSector(secnum,i,0);
@@ -665,7 +665,7 @@ sector_t *P_FindModelCeilingSector(fixed_t ceildestheight,int secnum)
     {
         if ( twoSided(secnum, i) )
         {
-            if (getSide(secnum,i,0)->sector-_g->sectors == secnum)
+            if (getSide(secnum,i,0)->sectornum == secnum)
                 sec = getSector(secnum,i,1);
             else
                 sec = getSector(secnum,i,0);
@@ -735,7 +735,7 @@ int P_FindMinSurroundingLight
     min = max;
     for (i=0 ; i < sector->linecount ; i++)
     {
-        line = sector->lines[i];
+        line = SEC_LINE(sector, i);
         check = getNextSector(line,sector);
 
         if (!check)
@@ -2292,17 +2292,17 @@ void P_UpdateSpecials (void)
                 switch(_g->buttonlist[i].where)
                 {
                 case top:
-                    _g->sides[_g->buttonlist[i].line->sidenum[0]].toptexture =
+                    _g->mutablesides[_g->buttonlist[i].line->sidenum[0]].toptexture =
                             _g->buttonlist[i].btexture;
                     break;
 
                 case middle:
-                    _g->sides[_g->buttonlist[i].line->sidenum[0]].midtexture =
+                    _g->mutablesides[_g->buttonlist[i].line->sidenum[0]].midtexture =
                             _g->buttonlist[i].btexture;
                     break;
 
                 case bottom:
-                    _g->sides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
+                    _g->mutablesides[_g->buttonlist[i].line->sidenum[0]].bottomtexture =
                             _g->buttonlist[i].btexture;
                     break;
                 }
@@ -2438,7 +2438,7 @@ void P_SpawnSpecials (void)
 
 void T_Scroll(scroll_t *s, void*)
 {
-    side_t *side  =_g->sides + s->affectee;
+    side_t *side = &_g->mutablesides[s->affectee];
     side->textureoffset++;
 }
 

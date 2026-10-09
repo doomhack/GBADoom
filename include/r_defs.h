@@ -80,6 +80,17 @@ typedef struct
   fixed_t x, y;
 } vertex_t;
 
+// A vertex in whole map units (Doom map vertexes are integers).
+typedef struct
+{
+    short x, y;
+} segvertex_t;
+
+// Whole map units (16 bit, as the ROM map data stores them) to fixed_t.
+// Going through unsigned short lets Thumb code use ldrh with an offset
+// (ldrsh has none); the sign comes out of the shift.
+#define MAPTOFIXED(v) ((fixed_t)((unsigned int)(unsigned short)(v) << FRACBITS))
+
 // Sound origin for non-mobj sounds (see P_StartSectorSound).
 typedef struct
 {
@@ -104,7 +115,7 @@ typedef struct sector_s
   void *floordata;    // jff 2/22/98 make thinkers on
   void *ceilingdata;  // floors, ceilings, lighting,
 
-  const struct line_s **lines;
+  const unsigned short *lines;  // line numbers, in ROM (SECLINES lump); use SEC_LINE()
 
   unsigned short validcount;  // if == validcount, already checked
   short linecount;
@@ -123,18 +134,30 @@ typedef struct sector_s
 //
 // The SideDef.
 //
+// Read straight from the SIDEDEFS lump in ROM (built by GbaWadUtil,
+// identical sidedefs merged). Side 0 of a line with a special can be
+// changed (switch textures, scrolling): those come first and have a RAM
+// copy in _g->mutablesides, so read sidedefs through SIDE().
+//
 
 typedef struct
 {
-    sector_t* sector;      // Sector the SideDef is facing.
-
     short textureoffset; // add this to the calculated texture column
     short rowoffset;     // add this to the calculated texture top
 
-    unsigned int toptexture:10;
-    unsigned int bottomtexture:10;
-    unsigned int midtexture:10;
+    unsigned short toptexture;
+    unsigned short bottomtexture;
+    unsigned short midtexture;
+
+    unsigned short sectornum;   // Sector the SideDef is facing.
 } side_t;
+
+static_assert(sizeof(side_t) == 12, "side_t must match GbaWadUtil's sidedef_t");
+
+#define SIDE(n) ((unsigned int)(n) < (unsigned int)_g->nummutablesides ? &_g->mutablesides[(n)] : &_g->sides[(n)])
+
+// Sectors never change, so this reads the ROM copy.
+#define SIDE_SECTOR(n) (&_g->sectors[_g->sides[(n)].sectornum])
 
 //
 // Move clipping aid for LineDefs.
@@ -167,28 +190,43 @@ typedef struct linedata_s
     unsigned short stairflip:1;       // Generalised stairs: StairDirection toggled.
 } linedata_t;
 
+//
+// The LineDef.
+// Read straight from the LINEDEFS lump in ROM (built by GbaWadUtil).
+// Coordinates, dx/dy and bbox are whole map units; use MAPTOFIXED()
+// for fixed point.
+//
 typedef struct line_s
 {
-    vertex_t v1;
-    vertex_t v2;     // Vertices, from v1 to v2.
-    unsigned int lineno;         //line number.
+    segvertex_t v1;
+    segvertex_t v2;         // Vertices, from v1 to v2.
 
-    fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
+    short dx, dy;           // v2 - v1, for side checking.
+
+    short bbox[4];          // Line bounding box.
 
     unsigned short sidenum[2];        // Visual appearance: SideDefs.
-    fixed_t bbox[4];        //Line bounding box.
 
     unsigned short flags;           // Animation related.
     short const_special;
     short tag;
-    short slopetype; // To aid move clipping.
 
+    unsigned short lineno;          // Line number.
 } line_t;
 
-#define LN_FRONTSECTOR(l) (_g->sides[(l)->sidenum[0]].sector)
-#define LN_BACKSECTOR(l) ((l)->sidenum[1] != NO_INDEX ? _g->sides[(l)->sidenum[1]].sector : NULL)
+static_assert(sizeof(line_t) == 32, "line_t must match GbaWadUtil's line_t");
+
+// To aid move clipping.
+#define LN_SLOPETYPE(l) (!(l)->dx ? ST_VERTICAL : !(l)->dy ? ST_HORIZONTAL : \
+                         ((l)->dx ^ (l)->dy) < 0 ? ST_NEGATIVE : ST_POSITIVE)
+
+#define LN_FRONTSECTOR(l) SIDE_SECTOR((l)->sidenum[0])
+#define LN_BACKSECTOR(l) ((l)->sidenum[1] != NO_INDEX ? SIDE_SECTOR((l)->sidenum[1]) : NULL)
 
 #define LN_DATA(l) (_g->linedata[(l)->lineno])
+
+// Line i of sector s.
+#define SEC_LINE(s, i) (&_g->lines[(s)->lines[(i)]])
 
 // The special is const_special (ROM), cleared once used up and with
 // StairDirection (1 << 8) toggled by retriggerable generalised stairs.
@@ -223,14 +261,17 @@ typedef struct
 
 //
 // The LineSeg.
+// Read straight from the SEGS lump in ROM (built by GbaWadUtil).
+// Coordinates and offset are map units and angle is BAM >> 16, as in
+// the WAD; shift them up by FRACBITS / 16 to use them.
 //
 typedef struct
 {
-    vertex_t v1;
-    vertex_t v2;            // Vertices, from v1 to v2.
+    segvertex_t v1;
+    segvertex_t v2;         // Vertices, from v1 to v2.
 
-    fixed_t offset;
-    angle_t angle;
+    short offset;
+    unsigned short angle;
 
     unsigned short sidenum;
     unsigned short linenum;
@@ -238,6 +279,8 @@ typedef struct
     unsigned short frontsectornum;
     unsigned short backsectornum;
 } seg_t;
+
+static_assert(sizeof(seg_t) == 20, "seg_t must match GbaWadUtil's seg_t");
 
 #define SG_FRONTSECTOR(s) ((s)->frontsectornum != NO_INDEX ? &_g->sectors[(s)->frontsectornum] : NULL)
 #define SG_BACKSECTOR(s) ((s)->backsectornum != NO_INDEX ? &_g->sectors[(s)->backsectornum] : NULL)

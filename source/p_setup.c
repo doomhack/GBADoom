@@ -48,22 +48,6 @@
 #include "global_data.h"
 
 //
-// P_LoadVertexes
-//
-// killough 5/3/98: reformatted, cleaned up
-//
-static void P_LoadVertexes (int lump)
-{
-    // Determine number of lumps:
-    //  total lump length / vertex record length.
-    _g->numvertexes = W_LumpLength(lump) / sizeof(vertex_t);
-
-    // Allocate zone memory for buffer.
-    _g->vertexes = W_CacheLumpNum(lump);
-
-}
-
-//
 // P_LoadSegs
 //
 // killough 5/3/98: reformatted, cleaned up
@@ -204,49 +188,40 @@ static void P_LoadLineDefs (int lump)
 //
 // P_LoadSideDefs
 //
-// killough 4/4/98: split into two functions
+// The sidedefs stay in ROM (GbaWadUtil merges identical ones and checks
+// sector numbers). Side 0 of a line with a special can be changed by
+// switches and scrollers; GbaWadUtil numbers those first and they get a
+// RAM copy. Must be called after P_LoadLineDefs.
 
 static void P_LoadSideDefs (int lump)
 {
-    _g->numsides = W_LumpLength(lump) / sizeof(mapsidedef_t);
-    _g->sides = Z_Calloc(_g->numsides,sizeof(side_t),PU_LEVEL,0);
-}
+    _g->numsides = W_LumpLength(lump) / sizeof(side_t);
+    _g->sides = W_CacheLumpNum(lump);
 
-// killough 4/4/98: delay using texture names until
-// after linedefs are loaded, to allow overloading.
-// killough 5/3/98: reformatted, cleaned up
+    int nummutable = 0;
 
-static void P_LoadSideDefs2(int lump)
-{
-    const byte *data = W_CacheLumpNum(lump); // cph - const*, wad lump handling updated
-    int  i;
-
-    for (i=0; i<_g->numsides; i++)
+    for (int i=0; i<_g->numlines; i++)
     {
-        register const mapsidedef_t *msd = (const mapsidedef_t *) data + i;
-        register side_t *sd = _g->sides + i;
-        register sector_t *sec;
+        const line_t* li = &_g->lines[i];
 
-        sd->textureoffset = msd->textureoffset;
-        sd->rowoffset = msd->rowoffset;
+        if (li->const_special && li->sidenum[0] != NO_INDEX && li->sidenum[0] >= nummutable)
+            nummutable = li->sidenum[0] + 1;
+    }
 
-        { /* cph 2006/09/30 - catch out-of-range sector numbers; use sector 0 instead */
-            unsigned short sector_num = SHORT(msd->sector);
-            if (sector_num >= _g->numsectors)
-            {
-                lprintf("P_LoadSideDefs2: sidedef %i has out-of-range sector num %u\n", i, sector_num);
-                sector_num = 0;
-            }
-            sd->sector = sec = &_g->sectors[sector_num];
-        }
+    _g->nummutablesides = nummutable;
+    _g->mutablesides = NULL;
 
-        sd->midtexture = msd->midtexture;
-        sd->toptexture = msd->toptexture;
-        sd->bottomtexture = msd->bottomtexture;
+    if (nummutable)
+    {
+        _g->mutablesides = Z_Malloc(nummutable*sizeof(side_t), PU_LEVEL, 0);
+        memcpy(_g->mutablesides, _g->sides, nummutable*sizeof(side_t));
+    }
 
-        R_GetTexture(sd->midtexture);
-        R_GetTexture(sd->toptexture);
-        R_GetTexture(sd->bottomtexture);
+    for (int i=0; i<_g->numsides; i++)
+    {
+        R_GetTexture(_g->sides[i].midtexture);
+        R_GetTexture(_g->sides[i].toptexture);
+        R_GetTexture(_g->sides[i].bottomtexture);
     }
 }
 
@@ -282,8 +257,8 @@ static void P_LoadBlockMap (int lump)
 {
     _g->blockmaplump = W_CacheLumpNum(lump);
 
-    _g->bmaporgx = _g->blockmaplump[0]<<FRACBITS;
-    _g->bmaporgy = _g->blockmaplump[1]<<FRACBITS;
+    _g->bmaporgx = (short)_g->blockmaplump[0]<<FRACBITS;
+    _g->bmaporgy = (short)_g->blockmaplump[1]<<FRACBITS;
     _g->bmapwidth = _g->blockmaplump[2];
     _g->bmapheight = _g->blockmaplump[3];
 
@@ -296,7 +271,6 @@ static void P_LoadBlockMap (int lump)
 
 //
 // P_LoadReject - load the reject table, padding it if it is too short
-// totallines must be the number returned by P_GroupLines()
 // an underflow will be padded with zeroes, or a doom.exe z_zone header
 // 
 // this function incorporates e6y's RejectOverrunAddInt code:
@@ -308,73 +282,28 @@ static void P_LoadBlockMap (int lump)
 static void P_LoadReject(int lumpnum)
 {
     _g->rejectlump = lumpnum + ML_REJECT;
-    _g->rejectmatrix = W_CacheLumpNum(_g->rejectlump);
+
+    // GbaWadUtil empties a REJECT that is all zeros (it never rejects).
+    _g->rejectmatrix = W_LumpLength(_g->rejectlump) ? W_CacheLumpNum(_g->rejectlump) : NULL;
 }
 
 //
-// P_GroupLines
-// Builds sector line lists and subsector sector numbers.
-// Finds block bounding boxes for sectors.
+// P_LoadSectorLines
+// The per-sector line lists, built by GbaWadUtil in the order P_GroupLines
+// used to make them: u32 start[numsectors+1], then u16 line numbers.
+// Sector i has lines[start[i] .. start[i+1]-1].
 //
-// killough 5/3/98: reformatted, cleaned up
-// cph 18/8/99: rewritten to avoid O(numlines * numsectors) section
-// It makes things more complicated, but saves seconds on big levels
-// figgi 09/18/00 -- adapted for gl-nodes
 
-// cph - convenient sub-function
-static void P_AddLineToSector(const line_t* li, sector_t* sector)
+static void P_LoadSectorLines(int lump)
 {
-    sector->lines[sector->linecount++] = li;
-}
+    const unsigned int* start = W_CacheLumpNum(lump);
+    const unsigned short* lines = (const unsigned short*)(start + _g->numsectors + 1);
 
-// modified to return totallines (needed by P_LoadReject)
-static int P_GroupLines (void)
-{
-    register const line_t *li;
-    register sector_t *sector;
-    int i, total = _g->numlines;
-
-    // SS_SECTOR uses the first seg's front sector.
-    for (i=0 ; i<_g->numsubsectors ; i++)
+    for (int i=0; i<_g->numsectors; i++)
     {
-        if(_g->segs[_g->subsectors[i].firstline].frontsectornum >= _g->numsectors)
-            I_Error("P_GroupLines: Subsector a part of no sector!\n");
+        _g->sectors[i].lines = lines + start[i];
+        _g->sectors[i].linecount = start[i+1] - start[i];
     }
-
-    // count number of lines in each sector
-    for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
-    {
-        LN_FRONTSECTOR(li)->linecount++;
-        if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
-        {
-            LN_BACKSECTOR(li)->linecount++;
-            total++;
-        }
-    }
-
-    {  // allocate line tables for each sector
-        const line_t **linebuffer = Z_Malloc(total*sizeof(line_t *), PU_LEVEL, 0);
-
-        // e6y: REJECT overrun emulation code
-        // moved to P_LoadReject
-
-        for (i=0, sector = _g->sectors; i<_g->numsectors; i++, sector++)
-        {
-            sector->lines = linebuffer;
-            linebuffer += sector->linecount;
-            sector->linecount = 0;
-        }
-    }
-
-    // Enter those lines
-    for (i=0,li=_g->lines; i<_g->numlines; i++, li++)
-    {
-        P_AddLineToSector(li, LN_FRONTSECTOR(li));
-        if (LN_BACKSECTOR(li) && LN_BACKSECTOR(li) != LN_FRONTSECTOR(li))
-            P_AddLineToSector(li, LN_BACKSECTOR(li));
-    }
-
-    return total; // this value is needed by the reject overrun emulation code
 }
 
 
@@ -441,11 +370,9 @@ void P_SetupLevel(int episode, int map)
 
     _g->leveltime = 0; _g->totallive = 0;
 
-    P_LoadVertexes  (lumpnum+ML_VERTEXES);
     P_LoadSectors   (lumpnum+ML_SECTORS);
-    P_LoadSideDefs  (lumpnum+ML_SIDEDEFS);
     P_LoadLineDefs  (lumpnum+ML_LINEDEFS);
-    P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
+    P_LoadSideDefs  (lumpnum+ML_SIDEDEFS);
     P_LoadBlockMap  (lumpnum+ML_BLOCKMAP);
 
 
@@ -453,10 +380,8 @@ void P_SetupLevel(int episode, int map)
     P_LoadNodes(lumpnum + ML_NODES);
     P_LoadSegs(lumpnum + ML_SEGS);
 
-    P_GroupLines();
+    P_LoadSectorLines(lumpnum + ML_SECLINES);
 
-    // reject loading and underflow padding separated out into new function
-    // P_GroupLines modified to return a number the underflow padding needs
     P_LoadReject(lumpnum);
 
     // Note: you don't need to clear player queue slots --

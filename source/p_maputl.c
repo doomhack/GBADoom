@@ -65,10 +65,14 @@ fixed_t CONSTFUNC P_AproxDistance(fixed_t dx, fixed_t dy)
 
 int PUREFUNC P_PointOnLineSide(fixed_t x, fixed_t y, const line_t *line)
 {
-    return !line->dx ? x <= line->v1.x ? line->dy > 0 : line->dy < 0 :
-            !line->dy ? y <= line->v1.y ? line->dx < 0 : line->dx > 0 :
-            FixedMul(y-line->v1.y, line->dx>>FRACBITS) >=
-            FixedMul(line->dy>>FRACBITS, x-line->v1.x);
+    const fixed_t lx = MAPTOFIXED(line->v1.x);
+    const fixed_t ly = MAPTOFIXED(line->v1.y);
+
+    // dx and dy are in map units, so no >>FRACBITS.
+    return !line->dx ? x <= lx ? line->dy > 0 : line->dy < 0 :
+            !line->dy ? y <= ly ? line->dx < 0 : line->dx > 0 :
+            FixedMul(y-ly, line->dx) >=
+            FixedMul(line->dy, x-lx);
 }
 
 //
@@ -81,27 +85,32 @@ int PUREFUNC P_PointOnLineSide(fixed_t x, fixed_t y, const line_t *line)
 int PUREFUNC P_BoxOnLineSide(const fixed_t *tmbox, const line_t *ld)
 {
     int p;
-    switch (ld->slopetype)
-    {
 
-    default: // shut up compiler warnings -- killough
-    case ST_HORIZONTAL:
+    // Branches as LN_SLOPETYPE: vertical, horizontal, positive, negative.
+    if (!ld->dx)
+    {
+        const fixed_t lx = MAPTOFIXED(ld->v1.x);
         return
-                (tmbox[BOXBOTTOM] > ld->v1.y) == (p = tmbox[BOXTOP] > ld->v1.y) ?
-                    p ^ (ld->dx < 0) : -1;
-    case ST_VERTICAL:
-        return
-                (tmbox[BOXLEFT] < ld->v1.x) == (p = tmbox[BOXRIGHT] < ld->v1.x) ?
+                (tmbox[BOXLEFT] < lx) == (p = tmbox[BOXRIGHT] < lx) ?
                     p ^ (ld->dy < 0) : -1;
-    case ST_POSITIVE:
+    }
+
+    if (!ld->dy)
+    {
+        const fixed_t ly = MAPTOFIXED(ld->v1.y);
+        return
+                (tmbox[BOXBOTTOM] > ly) == (p = tmbox[BOXTOP] > ly) ?
+                    p ^ (ld->dx < 0) : -1;
+    }
+
+    if ((ld->dx ^ ld->dy) >= 0)
         return
                 P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld) ==
                 (p = P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXTOP], ld)) ? p : -1;
-    case ST_NEGATIVE:
-        return
-                (P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld)) ==
-                (p = P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXTOP], ld)) ? p : -1;
-    }
+
+    return
+            (P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld)) ==
+            (p = P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXTOP], ld)) ? p : -1;
 }
 
 //
@@ -125,10 +134,10 @@ static int PUREFUNC P_PointOnDivlineSide(fixed_t x, fixed_t y, const divline_t *
 
 static void P_MakeDivline(const line_t *li, divline_t *dl)
 {
-    dl->x = li->v1.x;
-    dl->y = li->v1.y;
-    dl->dx = li->dx;
-    dl->dy = li->dy;
+    dl->x = MAPTOFIXED(li->v1.x);
+    dl->y = MAPTOFIXED(li->v1.y);
+    dl->dx = MAPTOFIXED(li->dx);
+    dl->dy = MAPTOFIXED(li->dy);
 }
 
 //
@@ -308,22 +317,15 @@ bool P_BlockLinesIterator(int x, int y, bool func(const line_t*))
     if (x<0 || y<0 || x>=_g->bmapwidth || y>=_g->bmapheight)
         return true;
 
-    const int offset = _g->blockmap[y*_g->bmapwidth+x] + 1;
-    const short* list = _g->blockmaplump+offset;     // original was reading         // phares
-
-    // delmiting 0 as linedef 0     // phares
-
-    // killough 1/31/98: for compatibility we need to use the old method.
-    // Most demos go out of sync, and maybe other problems happen, if we
-    // don't consider linedef 0. For safety this should be qualified.
-
-    //list++;     // skip 0 starting delimiter                      // phares
+    // GbaWadUtil drops the leading 0 delimiter, so the list starts at
+    // the first line and ends at 0xffff.
+    const unsigned short* list = _g->blockmaplump + _g->blockmap[y*_g->bmapwidth+x];
 
     const int vcount = _g->validcount;
     linedata_t *linedata = _g->linedata;
     const line_t *lines = _g->lines;
 
-    for ( ; *list != -1 ; list++)                                   // phares
+    for ( ; *list != 0xffff ; list++)
     {
         const int lineno = *list;
 
@@ -352,10 +354,10 @@ void P_SectorBBox(const sector_t* sec, fixed_t* bbox)
 
     for (int i = 0; i < sec->linecount; i++)
     {
-        const line_t* li = sec->lines[i];
+        const line_t* li = SEC_LINE(sec, i);
 
-        M_AddToBox(bbox, li->v1.x, li->v1.y);
-        M_AddToBox(bbox, li->v2.x, li->v2.y);
+        M_AddToBox(bbox, MAPTOFIXED(li->v1.x), MAPTOFIXED(li->v1.y));
+        M_AddToBox(bbox, MAPTOFIXED(li->v2.x), MAPTOFIXED(li->v2.y));
     }
 }
 
@@ -409,8 +411,8 @@ bool PIT_AddLineIntercepts(const line_t *ld)
     if (_g->trace.dx >  FRACUNIT*16 || _g->trace.dy >  FRACUNIT*16 ||
             _g->trace.dx < -FRACUNIT*16 || _g->trace.dy < -FRACUNIT*16)
     {
-        s1 = P_PointOnDivlineSide (ld->v1.x, ld->v1.y, &_g->trace);
-        s2 = P_PointOnDivlineSide (ld->v2.x, ld->v2.y, &_g->trace);
+        s1 = P_PointOnDivlineSide (MAPTOFIXED(ld->v1.x), MAPTOFIXED(ld->v1.y), &_g->trace);
+        s2 = P_PointOnDivlineSide (MAPTOFIXED(ld->v2.x), MAPTOFIXED(ld->v2.y), &_g->trace);
     }
     else
     {

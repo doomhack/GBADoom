@@ -158,17 +158,27 @@ static void AM_findMinMaxBoundaries(void)
     _g->min_x = _g->min_y =  INT_MAX;
     _g->max_x = _g->max_y = -INT_MAX;
 
-    for (i=0;i<_g->numvertexes;i++)
+    // There is no VERTEXES lump. BSP split vertexes lie on lines,
+    // so the line ends give the same bounds.
+    for (i=0;i<_g->numlines;i++)
     {
-        if (_g->vertexes[i].x < _g->min_x)
-            _g->min_x = _g->vertexes[i].x;
-        else if (_g->vertexes[i].x > _g->max_x)
-            _g->max_x = _g->vertexes[i].x;
+        const segvertex_t* v[2] = {&_g->lines[i].v1, &_g->lines[i].v2};
 
-        if (_g->vertexes[i].y < _g->min_y)
-            _g->min_y = _g->vertexes[i].y;
-        else if (_g->vertexes[i].y > _g->max_y)
-            _g->max_y = _g->vertexes[i].y;
+        for (int j=0;j<2;j++)
+        {
+            const fixed_t x = MAPTOFIXED(v[j]->x);
+            const fixed_t y = MAPTOFIXED(v[j]->y);
+
+            if (x < _g->min_x)
+                _g->min_x = x;
+            if (x > _g->max_x)
+                _g->max_x = x;
+
+            if (y < _g->min_y)
+                _g->min_y = y;
+            if (y > _g->max_y)
+                _g->max_y = y;
+        }
     }
 
     _g->max_w = (_g->max_x >>= FRACTOMAPBITS) - (_g->min_x >>= FRACTOMAPBITS);//e6y
@@ -763,10 +773,10 @@ static void AM_drawWalls(void)
     // draw the unclipped visible portions of all lines
     for (i=0;i<_g->numlines;i++)
     {
-        l.a.x = _g->lines[i].v1.x >> FRACTOMAPBITS;//e6y
-        l.a.y = _g->lines[i].v1.y >> FRACTOMAPBITS;//e6y
-        l.b.x = _g->lines[i].v2.x >> FRACTOMAPBITS;//e6y
-        l.b.y = _g->lines[i].v2.y >> FRACTOMAPBITS;//e6y
+        l.a.x = MAPTOFIXED(_g->lines[i].v1.x) >> FRACTOMAPBITS;//e6y
+        l.a.y = MAPTOFIXED(_g->lines[i].v1.y) >> FRACTOMAPBITS;//e6y
+        l.b.x = MAPTOFIXED(_g->lines[i].v2.x) >> FRACTOMAPBITS;//e6y
+        l.b.y = MAPTOFIXED(_g->lines[i].v2.y) >> FRACTOMAPBITS;//e6y
 
 
         const sector_t* backsector = LN_BACKSECTOR(&_g->lines[i]);

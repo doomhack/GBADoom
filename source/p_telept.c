@@ -149,7 +149,7 @@ int EV_SilentTeleport(const line_t *line, int side, mobj_t *thing)
         // teleporter linedef causes thing to exit in the direction
         // indicated by the exit thing.
         angle_t angle =
-                R_PointToAngle2(0, 0, line->dx, line->dy) - m->angle + ANG90;
+                R_PointToAngle2(0, 0, MAPTOFIXED(line->dx), MAPTOFIXED(line->dy)) - m->angle + ANG90;
 
         // Sine, cosine of angle adjustment
         fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
@@ -220,23 +220,23 @@ int EV_SilentLineTeleport(const line_t *line, int side, mobj_t *thing,
         return 0;
 
     for (i = -1; (i = P_FindLineFromLineTag(line, i)) >= 0;)
-        if ((l=_g->lines+i) != line && LN_BACKSECTOR(l))
+        if ((l=_g->lines+i) != line && l->sidenum[1] != NO_INDEX)
         {
             // Get the thing's position along the source linedef
             fixed_t pos = D_abs(line->dx) > D_abs(line->dy) ?
-                        FixedDiv(thing->x - line->v1.x, line->dx) :
-                        FixedDiv(thing->y - line->v1.y, line->dy) ;
+                        FixedDiv(thing->x - MAPTOFIXED(line->v1.x), MAPTOFIXED(line->dx)) :
+                        FixedDiv(thing->y - MAPTOFIXED(line->v1.y), MAPTOFIXED(line->dy)) ;
 
             // Get the angle between the two linedefs, for rotating
             // orientation and momentum. Rotate 180 degrees, and flip
             // the position across the exit linedef, if reversed.
             angle_t angle = (reverse ? pos = FRACUNIT-pos, 0 : ANG180) +
-                    R_PointToAngle2(0, 0, l->dx, l->dy) -
-                    R_PointToAngle2(0, 0, line->dx, line->dy);
+                    R_PointToAngle2(0, 0, MAPTOFIXED(l->dx), MAPTOFIXED(l->dy)) -
+                    R_PointToAngle2(0, 0, MAPTOFIXED(line->dx), MAPTOFIXED(line->dy));
 
             // Interpolate position across the exit linedef
-            fixed_t x = l->v2.x - FixedMul(pos, l->dx);
-            fixed_t y = l->v2.y - FixedMul(pos, l->dy);
+            fixed_t x = MAPTOFIXED(l->v2.x) - FixedMul(pos, MAPTOFIXED(l->dx));
+            fixed_t y = MAPTOFIXED(l->v2.y) - FixedMul(pos, MAPTOFIXED(l->dy));
 
             // Sine, cosine of angle adjustment
             fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
@@ -299,7 +299,7 @@ int EV_SilentLineTeleport(const line_t *line, int side, mobj_t *thing,
                     // Adjust z position to be same height above ground as before.
                     // Ground level at the exit is measured as the higher of the
                     // two floor heights at the exit linedef.
-                    thing->z = z + _g->sides[l->sidenum[stepdown]].sector->floorheight;
+                    thing->z = z + SIDE_SECTOR(l->sidenum[stepdown])->floorheight;
 
                     // Rotate thing's orientation according to difference in linedef angles
                     thing->angle += angle;

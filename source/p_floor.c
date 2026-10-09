@@ -530,7 +530,7 @@ int EV_DoFloor
         case raiseToTexture:
         {
             int minsize = INT_MAX;
-            side_t*     side;
+            const side_t* side;
 
             /* jff 3/13/98 no ovf */
 
@@ -750,9 +750,9 @@ int EV_BuildStairs
 
                 for (i = 0;i < sec->linecount;i++)
                 {
-                    sector_t* tsec = LN_FRONTSECTOR((sec->lines[i]));
+                    sector_t* tsec = LN_FRONTSECTOR((SEC_LINE(sec, i)));
                     int newsecnum;
-                    if ( !((sec->lines[i])->flags & ML_TWOSIDED) )
+                    if ( !((SEC_LINE(sec, i))->flags & ML_TWOSIDED) )
                         continue;
 
                     newsecnum = tsec-_g->sectors;
@@ -760,7 +760,7 @@ int EV_BuildStairs
                     if (secnum != newsecnum)
                         continue;
 
-                    tsec = LN_BACKSECTOR((sec->lines[i]));
+                    tsec = LN_BACKSECTOR((SEC_LINE(sec, i)));
                     if (!tsec) continue;     //jff 5/7/98 if no backside, continue
                     newsecnum = tsec - _g->sectors;
 
@@ -831,7 +831,7 @@ int EV_DoDonut(const line_t*  line)
         if (P_SectorActive(floor_special,s1)) //jff 2/22/98
             continue;
 
-        s2 = getNextSector(s1->lines[0],s1);  // s2 is pool's sector
+        s2 = getNextSector(SEC_LINE(s1, 0),s1);  // s2 is pool's sector
         if (!s2) continue;                    // note lowest numbered line around
         // pillar must be two-sided
 
@@ -845,12 +845,12 @@ int EV_DoDonut(const line_t*  line)
         {
 
 
-            if (!LN_BACKSECTOR((s2->lines[i])) || LN_BACKSECTOR((s2->lines[i])) == s1)
+            if ((SEC_LINE(s2, i))->sidenum[1] == NO_INDEX || LN_BACKSECTOR((SEC_LINE(s2, i))) == s1)
                 continue;
 
             rtn = 1; //jff 1/26/98 no donut action - no switch change on return
 
-            s3 = LN_BACKSECTOR((s2->lines[i]));      // s3 is model sector for changes
+            s3 = LN_BACKSECTOR((SEC_LINE(s2, i)));      // s3 is model sector for changes
 
             //  Spawn rising slime
             floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
