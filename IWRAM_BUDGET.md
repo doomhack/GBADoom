@@ -5,60 +5,73 @@ how deep the stack that lives in the leftover space can get. The
 [VRAM section](#vram-oam-and-palette) covers the 96 KB of VRAM plus OAM and
 palette RAM, which also hold renderer tables.
 
-Measured on the GBA build of 2026-10-08 (commit `bed1441` plus the
-uncommitted high-detail sprite sampling change in `r_hotpath.iwram.c`). Sizes
-are bytes.
+Measured on the GBA build of 2026-10-09 (commit `66899ab`, the `lprintf` /
+`I_Error` rewrite). The memory map, the paths that used to go through
+newlib's printf, and the timedemo measurement are new for this build. The
+gameplay state-action paths carry over from the earlier static analysis,
+adjusted for `main`'s larger frame. Sizes are bytes.
 
 ## Summary
 
 | | Bytes |
 |---|---|
-| Static IWRAM (code + data) | 25,348 |
-| **Main stack (free gap)** | **7,164** |
-| Worst realistic stack use (gameplay + sound IRQ) | ~2,200 |
-| Headroom at worst realistic depth | ~4,900 |
+| Static IWRAM (code + data) | 25,372 |
+| **Main stack (free gap)** | **7,140** |
+| Worst realistic stack use (gameplay + sound IRQ) | ~1,850 |
+| Headroom at worst realistic depth | ~5,300 |
+| Measured peak, Doom 2 demo1 timedemo (incl. sound IRQ and the final `I_Error`) | 1,192 |
 
-`I_Error` is treated as a terminal crash and left out of the stack figures
-(it needs 1,656 B of its own; see below).
+The goal of the stack work is to make the deepest path shallower. That
+frees IWRAM for building more of the hot code at O2/O3 or moving more of it
+into IWRAM.
 
-Since the 2026-10-07 snapshot, static IWRAM grew by 3,020 B, all in
-`r_hotpath.iwram.c`:
+### Since the 2026-10-08 snapshot
 
-- **Code, +2,224 B.** The BSP chain is now built at O3 (`R_BSP_OPT`), which
-  inlines `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` into
-  `R_Subsector`. The drawseg clip summary for sprites and the high-detail
-  sprite path are also new.
-- **`.bss`, +796 B.** The single 256 B `current_colormap` became a 4-slot
-  colormap cache.
-
-The stack shrank by the same 3,020 B.
+- **`printf` replaced (`66899ab`).** Every newlib printf-family call is gone.
+  Console output and lump-name formatting now go through `lprintf.c` (see
+  [Formatted output](#formatted-output)). That removed the old worst common
+  path (level load with `lprintf`, 2,188 B including the sound IRQ). The
+  realistic worst case is now one state action plus the sound IRQ. The
+  measured timedemo peak fell from 1,528 to 1,192 B, and the ROM is
+  30,372 B smaller.
+- **`I_Error` rewritten.** It now needs 272 B instead of 1,656 B and can run
+  with no free heap. The old one never displayed the timedemo result (see
+  [`I_Error`](#i_error)).
+- **Static IWRAM +24 B (stack −24 B).** `r_hotpath.iwram.c` grew in
+  `P_CrossBSPNode` (+12), `R_PointInSector` (+4) and `R_RenderMaskedSegRange`
+  (+4), plus 4 B of alignment.
+- **`main`'s frame is 168 B, up from 152.** 8 B came from commits before
+  `66899ab` and 8 B from `66899ab`. That adds 16 B to every path.
 
 ## Memory map
 
 | Region | Range | Bytes | Notes |
 |---|---|---|---|
-| `.iwram` (code) | 0x03000000–0x030057D0 | 22,480 | |
-| `.bss` | 0x030057D0–0x030062E8 | 2,840 | cleared by crt0 |
-| `.data`, `.init_array`, `.fini_array` | 0x030062E8–0x03006304 | 28 | |
-| **Main stack (User/System mode)** | 0x03006304–0x03007F00 | **7,164** | grows down from `__sp_usr` |
+| `.iwram` (code) | 0x03000000–0x030057E8 | 22,504 | |
+| `.bss` | 0x030057E8–0x03006300 | 2,840 | cleared by crt0 |
+| `.data`, `.init_array`, `.fini_array` | 0x03006300–0x0300631C | 28 | |
+| **Main stack (User/System mode)** | 0x0300631C–0x03007F00 | **7,140** | grows down from `__sp_usr` |
 | IRQ-mode stack | 0x03007F00–0x03007FA0 | 160 | `__sp_irq`; uses 16 B (see below) |
 | SVC stack and BIOS area | 0x03007FA0–0x03008000 | 96 | BIOS SWIs, IRQ vector, `__irq_flags` |
 
-The stack has no guard. If it grows past 0x03006304 it silently overwrites
-`.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics).
+The stack has no guard. If it grows past 0x0300631C it silently overwrites
+`.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics). A
+trashed `IntrTable` sends the next VBlank to a garbage address. `I_Error` no
+longer depends on `IntrTable` or `_g`, so a later `I_Error` still displays.
+An overflow itself is not detected.
 
 ## Static contents
 
-### `.iwram` code (22,480)
+### `.iwram` code (22,504)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 19,576 | `R_Subsector` 6,956 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 3,176, `R_MapPlane` 1,144, `R_AddSprites` 1,008, `P_CrossBSPNode` 924, `R_RenderBSPNode` 832, `R_RenderMaskedSegRange` 700, `R_DrawColumn` 664 |
+| `r_hotpath.iwram.c` | 19,596 | `R_Subsector` 6,956 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 3,176, `R_MapPlane` 1,144, `R_AddSprites` 1,008, `P_CrossBSPNode` 936, `R_RenderBSPNode` 832, `R_RenderMaskedSegRange` 704, `R_DrawColumn` 664 |
 | libtimidity (`TIMI_IWRAM`) | 1,616 | `_timi_resample_voice` 944, `update_signal` 372, `_timi_mix_voice` 300 |
 | `s_mix.iwram.c` | 628 | `S_MixResample` 264, `S_MixOutput` 188, `S_MixDirect` 164 |
 | `fixeddiv.s` | 412 | |
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
-| Linker interworking stubs, alignment | 64 | |
+| Linker interworking stubs, alignment | 68 | |
 
 ### `.bss` (2,840) and `.data` (28)
 
@@ -77,6 +90,8 @@ places newlib and libsysbase `.data`/`.bss` in EWRAM (`.ewram`/`.sbss`). That
 is 6,900 B: the stdio handle table (4 KB), malloc state, locale and reent data.
 These used to sit in IWRAM, which left the stack only 1,336 B and caused real
 overflow crashes. Nothing from those libraries is used on a hot path.
+printf is gone, but the console still writes through libsysbase's `write()`,
+which uses the handle table.
 
 ## Stack depth
 
@@ -89,13 +104,17 @@ routines, traversers, column drawers, the voice mixer) are resolved by name.
 
 | Path | Depth | Notes |
 |---|---|---|
-| Render (`main` → `R_RenderPlayerView`) | 824 | 152 + 672: `R_RenderPlayerView` 136 → `R_RenderBSPNode` 184 → `R_Subsector` 224 → `R_AddSprites` 120 → `FixedDiv` 8. A texture-cache miss under `R_Subsector` is 24 B shallower. |
-| Gameplay tick, one state action | 1,584 | `G_Ticker` → `P_SetMobjState` → action → move/teleport → damage → action |
-| Gameplay tick with `snprintf` (`S_ChangeMusic` in the finale) | 1,728 | |
-| Level load / Load Game with an `lprintf` | 1,944 | deepest common path: `G_DoLoadLevel` → `lprintf` → `vsprintf` |
-| Startup (`D_DoomMainSetup`) | 1,608 + 152 | |
-| Two nested state actions | 2,400 | rare |
-| Three nested state actions | 3,216 | very rare |
+| Render (`main` → `R_RenderPlayerView`) | 840 | 168 + 672: `R_RenderPlayerView` 136 → `R_RenderBSPNode` 184 → `R_Subsector` 224 → `R_AddSprites` 120 → `FixedDiv` 8. A texture-cache miss under `R_Subsector` is 24 B shallower. |
+| Gameplay tick, one state action | 1,600 | `G_Ticker` → `P_SetMobjState` → action → move/teleport → damage → action. Deepest common path. |
+| Level load / Load Game with an `lprintf` | 696 | `main` 168 → `G_Ticker` 128 → `G_DoLoadGame` 80 → `G_DoLoadLevel` 104 → `lprintf` 216. Was 1,944 with newlib. |
+| Finale music change (`S_ChangeMusic` → `lsnprintf`) | ~500 | `main` → `G_Ticker` → `F_Ticker` 328 → `S_ChangeMusic` 72 → `lsnprintf` ~96. Was 1,728 with `snprintf`. |
+| Startup (`D_DoomMainSetup`) | ≤ 456 + 168 | the deepest direct call chain ends in `I_Error`. Was 1,608 + 152. |
+| Two nested state actions | 2,416 | rare |
+| Three nested state actions | 3,232 | very rare |
+
+The state-action rows are the earlier figures plus `main`'s 16 B growth.
+They follow function pointers, which the direct-call analysis used for the
+other rows can't resolve.
 
 A "state action" is a monster or weapon state's action function. They can
 nest: an action spawns a missile that explodes on spawn and kills something,
@@ -121,26 +140,39 @@ nothing nests unless the mixer runs longer than a frame.
 
 ### Combined worst case (main + sound IRQ)
 
-| Scenario | Depth | Spare of 7,164 |
+| Scenario | Depth | Spare of 7,140 |
 |---|---|---|
-| Render | 1,068 | 6,096 |
-| Gameplay, one state action | 1,828 | 5,336 |
-| Level load with `lprintf` | 2,188 | 4,976 |
-| Two nested state actions | 2,644 | 4,520 |
-| Three nested state actions | 3,460 | 3,704 |
+| Level load with `lprintf` | 940 | 6,200 |
+| Render | 1,084 | 6,056 |
+| Gameplay, one state action | 1,844 | 5,296 |
+| Two nested state actions | 2,660 | 4,480 |
+| Three nested state actions | 3,476 | 3,664 |
 
-The render and mixer depths were re-measured on this build. The gameplay and
-level-load paths carry over from the 2026-10-07 analysis, since none of that
-code has changed.
+### `I_Error`
 
-### Not counted: `I_Error`
+`I_Error` (`i_system_gba.cpp`) is a terminal error screen. It does not touch
+`_g`, the heap, `IntrTable` or the interrupt dispatcher:
 
-`I_Error` is a terminal error screen. It uses `vsnprintf` into a 256 B buffer
-and `fputs`, so its own depth is 1,656 B, mostly `%f` formatting. Called from
-deep gameplay it reaches 3,216 B (about 3.5 KB with the sound IRQ on top),
-which still fits.
+1. `REG_IME = 0`, then it stops the sound DMA and Timer 0 and turns off sound
+   output, so the mixer can't run on top of it.
+2. `consoleDemoInit()`, then `lvprintf` writes the message straight to the
+   console.
+3. It halts with `REG_IE = IRQ_VBLANK` and IME still off. BIOS `Halt` wakes on
+   `IE & IF`, so the loop acknowledges `REG_IF` and halts again.
 
-## Measured (earlier builds)
+Its own depth is 272 B. The deepest part is `consoleDemoInit` →
+`consoleInit` → `setvbuf` → `__swhatbuf_r`. Printing the message is 224 B:
+`I_Error` 48 → `L_Format` 56 → `write` 16 → `_write_r` 24 → `con_write` 56
+→ `consolePrintChar` 24. Called from the deepest one-action gameplay path, it
+reaches about 1.9 KB.
+
+The old `I_Error` used `vsnprintf` into a 256 B stack buffer and needed
+1,656 B. The timedemo result's `%f` made `_dtoa_r` call `Balloc`. Its malloc
+failed, because the zone heap takes nearly all the free memory at startup.
+newlib then asserted ("Balloc succeeded", `mprec.c` line 783) and the result
+was never shown.
+
+## Measured
 
 The stack was painted with `0xDEADBEEF` at `main` via mGBA's GDB stub, a
 timedemo was run, and the low-water mark was read back:
@@ -149,32 +181,67 @@ timedemo was run, and the low-water mark was read back:
 |---|---|---|
 | After the EWRAM move, old `I_Error` | 1,432 | 4,232 |
 | After `I_Error` → `fputs`, 256 B buffer | 1,432 | 1,800 |
+| `2339533` (before the printf rewrite), with sound IRQ | 1,528 | never displayed: newlib `Balloc` assertion |
+| `66899ab` (`lprintf` / `I_Error` rewrite), with sound IRQ | **1,192** | **1,192** |
+
+The last two rows are the Doom 2 demo1 timedemo (1,198 gametics, 2,072
+realtics) on a copy of each commit with `timedemo = "demo1"`. Stale return
+addresses at the low-water mark show what set each peak:
+
+- **`2339533`:** `_svfprintf_r` / `__ssputs_r` (a `sprintf` building a lump
+  name) with `I_SoundVBlank` on top.
+- **`66899ab`:** the mixer (`_timi_mix_voice` → `_timi_resample_voice`)
+  interrupting game code.
+
+The demo never reaches the static one-state-action worst case.
 
 The original layout (1,336 B stack) couldn't be painted the same way, but the
 gameplay peak above was already 96 B over its limit, and on that build mGBA
 reported "Jumped to invalid address" at the timedemo's final `I_Error`.
 
-Those builds predate the sound IRQ, so the measurements don't include the
-244 B the mixer adds.
+The first two rows predate the sound IRQ, so they don't include the 244 B
+the mixer adds.
+
+## Formatted output
+
+`source/lprintf.c` has one small formatter, `L_Format`, behind three entry
+points. It supports `%s`, `%.Ns`, `%d`, `%.Nd` (zero padded to N digits, at
+most 11 characters) and `%%`. Anything else is printed as it is. There is no
+float output.
+
+| Function | Output | Stack |
+|---|---|---|
+| `lprintf(fmt, ...)` | console, then a newline | 216 |
+| `lvprintf(fmt, va_list)` | console (used by `I_Error`) | `lprintf` minus 40 |
+| `lsnprintf(buf, size, fmt, ...)` | buffer; always terminated, returns the length | ~96 |
+
+Console output is written piece by piece with `write(1, …)`. That goes
+straight to libgba's console devoptab, with no message buffer, no stdio, no
+malloc and no locale. `%.8s` is the one modifier with a real use: WAD lump
+names are `char[8]` and aren't terminated when a name is 8 characters long.
 
 ## What to watch
 
 - **Every byte added to IWRAM comes off the stack.** That includes code or
   statics in `r_hotpath.iwram.c`, `s_mix.iwram.c` and `TIMI_IWRAM` functions.
-  At the realistic worst case (~2.2 KB), about 4.9 KB can still be added
+  At the realistic worst case (~1.85 KB), about 5.3 KB can still be added
   before the stack has no margin. Keeping the stack at least ~4 KB (above
-  the 3,460 B three-nested-action case) leaves about 3 KB for further IWRAM
+  the 3,476 B three-nested-action case) leaves about 3 KB for further IWRAM
   growth.
+- **`main`'s frame (168 B) is under every path.** LTO inlines `D_DoomLoop`,
+  `D_Display` and many of the drawers (`WI_*`, `ST*`, `HU*`, `AM_*`,
+  `M_Drawer`) into `main`. Their locals stay reserved during `G_Ticker` too.
 - **Big stack frames on the render path.** O3 inlining made `R_Subsector`'s
   frame 224 B, and it sits under `R_RenderBSPNode` (184 B). Inlining more
   into that chain grows the render depth as well as the code.
 - **Large stack locals** in code that runs during gameplay or in the VBlank
   handler. The mixer runs on top of the deepest game path, so keep
   `I_SoundVBlank`'s call chain shallow.
-- **`printf`-family calls** cost 1.3–1.5 KB each (`_svfprintf_r` alone is
-  816 B). stdout is unbuffered, so `printf` to the console also goes through
-  `__sbprintf` (another ~1.2 KB). Prefer `fputs`, or avoid formatting on the
-  GBA.
+- **Don't reintroduce newlib's printf family** (`printf`, `sprintf`,
+  `snprintf`, `vsnprintf`). It costs 1.3–3.4 KB of stack per call
+  (`_svfprintf_r` alone is 816 B, `__sbprintf` 1,168 B), mallocs for `%f`,
+  and adds about 30 KB of ROM. Use `lprintf`, `lsnprintf` or `I_Error`
+  instead (see [Formatted output](#formatted-output)).
 - **Extra IRQ sources**: if more interrupts are enabled, they can nest on the
   same stack on top of the mixer.
 
