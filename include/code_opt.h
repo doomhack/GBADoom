@@ -26,7 +26,7 @@
 
 #define HOT_CODE_OPT_LEVEL  "O3"
 #define WARM_CODE_OPT_LEVEL "O3"
-#define ARM_CODE_OPT_LEVEL  "Os"
+#define ARM_CODE_OPT_LEVEL  "O2"
 
 #define CODE_OPT_PRAGMA_(x) _Pragma(#x)
 #define CODE_OPT_PRAGMA(level) CODE_OPT_PRAGMA_(GCC optimize (level))

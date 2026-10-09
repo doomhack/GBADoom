@@ -5,28 +5,40 @@ how deep the stack that lives in the leftover space can get. The
 [VRAM section](#vram-oam-and-palette) covers the 96 KB of VRAM plus OAM and
 palette RAM, which also hold renderer tables.
 
-Measured on the GBA build of 2026-10-09: commit `398ad03` (after the
-`lprintf` / `I_Error` rewrite in `66899ab`) plus the uncommitted deferred
-state-action queue and iterative sound flood. The
-memory map, the paths that used to go through newlib's printf, and the
-timedemo measurements are new for this build. The one-state-action path
-carries over from the earlier static analysis, adjusted for `main`'s larger
-frame. Sizes are bytes.
+Measured on the GBA build of 2026-10-10: commit `9729c7b` (optimisation
+level defines) with the ARM code default switched from Os to O2
+(uncommitted). The one-state-action path carries over from the earlier
+static analysis, adjusted for `main`'s larger frame. Sizes are bytes.
 
 ## Summary
 
 | | Bytes |
 |---|---|
-| Static IWRAM (code + data) | 25,156 |
-| **Main stack (free gap)** | **7,356** |
-| Worst realistic stack use (gameplay + sound IRQ) | ~1,880 |
-| Headroom at worst realistic depth | ~5,470 |
-| Measured peak, Doom 2 demo1 timedemo (incl. sound IRQ and the final `I_Error`) | 1,200 |
-| Deepest measured peak, 7 timedemos (Doom 2 demo1–3, Ultimate Doom demo1–4) | 1,368 |
+| Static IWRAM (code + data) | 28,800 |
+| **Main stack (free gap)** | **3,712** |
+| Stack the link guarantees (`__stack_reserve`) | 2,048 |
+| Worst realistic stack use (gameplay + sound IRQ) | ~1,890 |
+| Headroom at worst realistic depth | ~1,820 |
+| Measured peak, Ultimate Doom demo4 at O2 | 1,272 |
+| Deepest measured peak, 7 timedemos (Doom 2 demo1–3, Ultimate Doom demo1–4; Os build) | 1,368 |
 
 The goal of the stack work is to make the deepest path shallower. That
 frees IWRAM for building more of the hot code at O2/O3 or moving more of it
 into IWRAM.
+
+### ARM code at O2 (uncommitted)
+
+- **`ARM_CODE_OPT_LEVEL` is now O2** (`include/code_opt.h`; HOT and WARM
+  stay O3). It applies to the rest of `r_hotpath.iwram.c` and
+  `s_mix.iwram.c`, and to `TIMI_IWRAM`. IWRAM code +3,640 B, stack
+  7,356 → 3,712 B.
+- **Ultimate Doom demo4: 1,906 → 1,881 realtics (14.89 → 15.09 fps,
+  +1.3%).** End state and stack peak (1,272 B) are unchanged. O3 would give
+  1,857 (15.29 fps, +2.6%) but leaves only 1,816 B of stack, below the 2 KB
+  reserve and the ~1,890 B static worst case. See
+  [Optimisation levels](#optimisation-levels).
+- **IWRAM code can grow another 1,664 B** (3,712 − 2,048) before the link
+  fails.
 
 ### Deferred state actions (uncommitted)
 
@@ -75,14 +87,14 @@ into IWRAM.
 
 | Region | Range | Bytes | Notes |
 |---|---|---|---|
-| `.iwram` (code) | 0x03000000–0x03005710 | 22,288 | |
-| `.bss` | 0x03005710–0x03006228 | 2,840 | cleared by crt0 |
-| `.data`, `.init_array`, `.fini_array` | 0x03006228–0x03006244 | 28 | |
-| **Main stack (User/System mode)** | 0x03006244–0x03007F00 | **7,356** | grows down from `__sp_usr` |
+| `.iwram` (code) | 0x03000000–0x03006548 | 25,928 | |
+| `.bss` | 0x03006548–0x03007064 | 2,844 | cleared by crt0 |
+| `.data`, `.init_array`, `.fini_array` | 0x03007064–0x03007080 | 28 | |
+| **Main stack (User/System mode)** | 0x03007080–0x03007F00 | **3,712** | grows down from `__sp_usr` |
 | IRQ-mode stack | 0x03007F00–0x03007FA0 | 160 | `__sp_irq`; uses 16 B (see below) |
 | SVC stack and BIOS area | 0x03007FA0–0x03008000 | 96 | BIOS SWIs, IRQ vector, `__irq_flags` |
 
-The stack has no guard. If it grows past 0x03006244 it silently overwrites
+The stack has no guard. If it grows past 0x03007080 it silently overwrites
 `.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics). A
 trashed `IntrTable` sends the next VBlank to a garbage address. `I_Error` no
 longer depends on `IntrTable` or `_g`, so a later `I_Error` still displays.
@@ -90,25 +102,25 @@ An overflow itself is not detected.
 
 ## Static contents
 
-### `.iwram` code (22,288)
+### `.iwram` code (25,928, ARM default at O2)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 19,352 | `R_Subsector` 6,956 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 3,176, `R_MapPlane` 1,144, `R_AddSprites` 1,008, `P_CrossBSPNode` 936, `R_RenderBSPNode` 832, `R_RenderMaskedSegRange` 704, `R_DrawColumn` 664 |
-| libtimidity (`TIMI_IWRAM`) | 1,616 | `_timi_resample_voice` 944, `update_signal` 372, `_timi_mix_voice` 300 |
+| `r_hotpath.iwram.c` | 22,276 | `R_Subsector` 6,936 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 4,264, `P_CrossBSPNode` 1,936, `R_DrawVisSprite` 1,308, `R_AddSprites` 1,180, `R_MapPlane` 1,144, `R_RenderMaskedSegRange` 896, `R_RenderBSPNode` 832, `R_DrawColumn` 664 |
+| libtimidity (`TIMI_IWRAM`) | 2,372 | `_timi_resample_voice` 1,616, `update_signal` 424, `_timi_mix_voice` 332 |
 | `s_mix.iwram.c` | 628 | `S_MixResample` 264, `S_MixOutput` 188, `S_MixDirect` 164 |
 | `fixeddiv.s` | 412 | |
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
-| Linker interworking stubs, alignment | 96 | |
+| Linker interworking stubs, alignment | 56 | |
 
-### `.bss` (2,840) and `.data` (28)
+### `.bss` (2,844) and `.data` (28)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
 | `r_hotpath.iwram.c` | 1,728 | `colormapSlots` 1,024 (4 × 256), `spanstart` 160, `flatStats` 128, `solidcol` 120, `colormapSlotSrc` 16 |
 | `s_mix.iwram.c` | 896 | `mixbuf` 896 |
 | libgba | 158 | `IntrTable` 120 |
-| LTO globals, crtbegin, alignment | 58 | |
+| LTO globals, crtbegin, alignment | 62 | |
 | `.data` + init/fini arrays | 28 | |
 
 ### Kept out of IWRAM on purpose
@@ -132,7 +144,7 @@ routines, traversers, column drawers, the voice mixer) are resolved by name.
 
 | Path | Depth | Notes |
 |---|---|---|
-| Render (`main` → `R_RenderPlayerView`) | 840 | 168 + 672: `R_RenderPlayerView` 136 → `R_RenderBSPNode` 184 → `R_Subsector` 224 → `R_AddSprites` 120 → `FixedDiv` 8. A texture-cache miss under `R_Subsector` is 24 B shallower. |
+| Render (`main` → `R_RenderPlayerView`) | 816 | 168 + 648: `R_RenderPlayerView` 152 → `R_RenderBSPNode` 184 → `R_Subsector` 224 → `R_AddSprites` 80 → `FixedDiv` 8 (ARM default at O2; 840 at Os). A texture-cache miss under `R_Subsector` is 24 B shallower. |
 | Gameplay tick, one state action | ~1,600 | `G_Ticker` → `P_SetMobjState` → action → move/teleport → damage → `P_SetMobjState` (queues). Deepest path. |
 | Level load / Load Game with an `lprintf` | 688 | `main` 168 → `G_Ticker` 120 → `G_DoLoadGame` 80 → `G_DoLoadLevel` 104 → `lprintf` 216. Was 1,944 with newlib. |
 | Finale music change (`S_ChangeMusic` → `lsnprintf`) | ~500 | `main` → `G_Ticker` → `F_Ticker` 328 → `S_ChangeMusic` 72 → `lsnprintf` ~96. Was 1,728 with `snprintf`. |
@@ -216,9 +228,9 @@ whatever depth the main loop is at when VBlank arrives.
 | `I_SoundVBlank` (`S_MixFrame` / `mid_song_render` inlined) | 72 |
 | → `_timi_mix_voice` (IWRAM) | 40 |
 | → `ramp_out` (ROM, voice ending) | 40 |
-| → `_timi_resample_voice` (IWRAM) | 96 |
+| → `_timi_resample_voice` (IWRAM) | 104 (96 at Os) |
 | → `S_MixResample` (IWRAM) | 32 |
-| **Total added to the main stack** | **~284** |
+| **Total added to the main stack** | **~292** |
 
 The earlier figure (244 B) missed `ramp_out`, which `_timi_mix_voice` reaches
 through a long call that the direct-call analysis doesn't follow. Its frame
@@ -243,11 +255,11 @@ and exit: 12,231 entries, 0 re-entries, IME off at every entry.
 
 ### Combined worst case (main + sound IRQ)
 
-| Scenario | Depth | Spare of 7,356 |
+| Scenario | Depth | Spare of 3,712 |
 |---|---|---|
-| Level load with `lprintf` | ~972 | ~6,380 |
-| Render | ~1,124 | ~6,230 |
-| Gameplay, one state action | ~1,884 | ~5,470 |
+| Level load with `lprintf` | ~980 | ~2,730 |
+| Render | ~1,108 | ~2,600 |
+| Gameplay, one state action | ~1,892 | ~1,820 |
 
 With the old 120 B `ramp_out` frame the render row was ~1,204 B, which
 matched the measured Doom 2 demo1 peak (1,200 B: the mixer over sprite
@@ -329,7 +341,7 @@ The original layout (1,336 B stack) couldn't be painted the same way, but the
 gameplay peak above was already 96 B over its limit, and on that build mGBA
 reported "Jumped to invalid address" at the timedemo's final `I_Error`.
 
-The first two rows predate the sound IRQ, so they don't include the ~284 B
+The first two rows predate the sound IRQ, so they don't include the ~292 B
 the mixer adds.
 
 ## Sound flood
@@ -368,18 +380,31 @@ but every reader calls `P_LineOpening` first.
 |---|---|---|
 | `HOT_CODE_OPT_LEVEL` (`HOT_CODE`) | O3 | `R_DrawColumn`, `R_MapPlane` (both also `flatten`), `S_MixResample`, `S_MixDirect`, `S_MixOutput` |
 | `WARM_CODE_OPT_LEVEL` (`WARM_CODE`) | O3 | the BSP chain (`R_BSP_OPT`, 20 functions) and `R_RenderSegLoop`, which inlines into it |
-| `ARM_CODE_OPT_LEVEL` (`ARM_CODE_DEFAULT`) | Os | the rest of `r_hotpath.iwram.c` and `s_mix.iwram.c`, and `TIMI_IWRAM` |
+| `ARM_CODE_OPT_LEVEL` (`ARM_CODE_DEFAULT`) | O2 (was Os) | the rest of `r_hotpath.iwram.c` and `s_mix.iwram.c`, and `TIMI_IWRAM` |
 
-The defaults build byte-identical code to before the defines. IWRAM code
-size for other settings (current tree, 22,288 B at the defaults):
+With O3 / O3 / Os the defines built byte-identical code to before they were
+added. IWRAM code size for other settings (measured with ARM at Os = 22,288 B):
 
 | HOT / WARM / ARM | IWRAM code | Change |
 |---|---|---|
-| O3 / O3 / Os (default) | 22,288 | 0 |
+| O3 / O3 / Os (before) | 22,288 | 0 |
 | O3 / O2 / Os | 21,184 | −1,104 |
 | O2 / O2 / Os | 21,184 | −1,104 |
-| O3 / O3 / O2 | 25,928 | +3,640 |
+| O3 / O3 / O2 (current) | 25,928 | +3,640 |
 | Os / Os / Os | 19,672 | −2,616 |
+| O3 / O3 / O3 | 27,824 | +5,536 (fails the 2 KB stack reserve) |
+
+Ultimate Doom demo4, HOT and WARM at O3 (identical end states and stack
+peak, 1,272 B):
+
+| ARM default | IWRAM code | Free stack | Realtics | fps |
+|---|---|---|---|---|
+| Os | 22,288 | 7,356 | 1,906 | 14.89 |
+| **O2 (chosen)** | 25,928 | 3,712 | 1,881 | 15.09 (+1.3%) |
+| O3 | 27,824 | 1,816 | 1,857 | 15.29 (+2.6%) |
+
+O3 needs the stack worst case cut by roughly 300 B first (to fit the 2 KB
+reserve and the ~1,890 B static worst case).
 
 The HOT functions come out the same size at O2 and O3. Changing a level
 changes which functions can inline into each other (GCC won't inline across
@@ -407,15 +432,15 @@ names are `char[8]` and aren't terminated when a name is 8 characters long.
 
 - **Every byte added to IWRAM comes off the stack.** That includes code or
   statics in `r_hotpath.iwram.c`, `s_mix.iwram.c` and `TIMI_IWRAM` functions.
-  At the realistic worst case (~1.88 KB), about 5.47 KB can still be added
+  At the realistic worst case (~1.89 KB), about 1.8 KB can still be added
   before the stack has no margin. The old ~4 KB floor came from the
   three-nested-action case (3,476 B), which the action queue removed. No
   path found so far grows with the map or the data.
 - **The link fails below a 2 KB stack.** `gbadoom.ld` sets
   `__stack_reserve = 0x800` and asserts `__iheap_start + __stack_reserve <=
-  __sp_usr`. IWRAM code and data can grow by 5,308 B (7,356 − 2,048) before
+  __sp_usr`. IWRAM code and data can grow by 1,664 B (3,712 − 2,048) before
   the build stops with "IWRAM overflow: less than __stack_reserve (2 KB) left
-  for the main stack". That leaves ~170 B above the ~1.88 KB static worst
+  for the main stack". That leaves ~160 B above the ~1.89 KB static worst
   case and ~680 B above the deepest measured peak (1,368 B). Raise the
   reserve if a new path turns out deeper.
 - **Avoid recursion whose depth depends on the map** (sector, line or BSP
