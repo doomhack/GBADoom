@@ -7,3 +7,5 @@ GbaWadUtil
 Makefile
 moc_*.h
 moc_*.cpp
+build/Makefile.Debug
+build/Makefile.Release

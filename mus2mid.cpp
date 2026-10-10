@@ -1,5 +1,8 @@
 #include "mus2mid.h"
 
+#include <algorithm>
+#include <vector>
+
 //MUS event types (bits 4-6 of the event byte).
 enum
 {
@@ -53,6 +56,17 @@ public:
         data.append(char(b & 0x7f));
     }
 
+    void WriteTempo(const quint8 tempo[3])
+    {
+        WriteVarLen(delay);
+        delay = 0;
+        runningStatus = 0;
+        data.append(char(0xff));
+        data.append(char(0x51));
+        data.append(char(0x03));
+        data.append(reinterpret_cast<const char*>(tempo), 3);
+    }
+
     void WriteEndOfTrack()
     {
         WriteVarLen(delay);
@@ -76,6 +90,25 @@ private:
         }
     }
 };
+
+static QByteArray WriteType0Midi(const MidiTrackWriter& track, quint16 divisions)
+{
+    QByteArray midi;
+
+    midi.append("MThd", 4);
+    const char header[10] = {0, 0, 0, 6, 0, 0, 0, 1, char(divisions >> 8), char(divisions & 0xff)};
+    midi.append(header, sizeof(header));
+
+    midi.append("MTrk", 4);
+
+    char trackLength[4];
+    qToBigEndian<quint32>(track.data.size(), trackLength);
+    midi.append(trackLength, 4);
+
+    midi.append(track.data);
+
+    return midi;
+}
 
 //MUS channel 15 is percussion (MIDI channel 9). Others keep their number, skipping 9.
 static quint8 MidiChannel(quint8 musChannel)
@@ -230,19 +263,134 @@ QByteArray ConvertMusToMidi(const QByteArray& mus)
     track.WriteEndOfTrack();
 
     //MUS runs at 140 ticks per second: 70 ticks per quarter note at the default 120bpm.
-    QByteArray midi;
+    return WriteType0Midi(track, 70);
+}
 
-    midi.append("MThd", 4);
-    const char header[10] = {0, 0, 0, 6, 0, 0, 0, 1, 0, 70};
-    midi.append(header, sizeof(header));
+QByteArray ConvertMidiToType0(const QByteArray& midi)
+{
+    const quint8* p = reinterpret_cast<const quint8*>(midi.constData());
+    const qint64 size = midi.size();
 
-    midi.append("MTrk", 4);
+    if(size < 14 || memcmp(p, "MThd", 4) != 0)
+        return QByteArray();
 
-    char trackLength[4];
-    qToBigEndian<quint32>(track.data.size(), trackLength);
-    midi.append(trackLength, 4);
+    const qint64 headerLength = qFromBigEndian<quint32>(p + 4);
+    const quint16 format = qFromBigEndian<quint16>(p + 8);
+    const quint16 divisions = qFromBigEndian<quint16>(p + 12);
 
-    midi.append(track.data);
+    if(headerLength < 6 || format > 1)
+        return QByteArray();
 
-    return midi;
+    if(format == 0)
+        return midi;
+
+    //Channel events and tempo changes from every track, in time order.
+    //Everything else is skipped by the player anyway.
+    struct Event
+    {
+        quint32 tick;
+        quint8 status;
+        quint8 data[3];
+    };
+
+    std::vector<Event> events;
+
+    //The song ends (and loops) at the last track's End Of Track.
+    quint32 endTick = 0;
+
+    qint64 pos = 8 + headerLength;
+
+    while(pos + 8 <= size)
+    {
+        const qint64 end = qMin<qint64>(size, pos + 8 + qFromBigEndian<quint32>(p + pos + 4));
+        const bool isTrack = !memcmp(p + pos, "MTrk", 4);
+
+        pos += 8;
+
+        quint32 tick = 0;
+        quint8 status = 0;
+
+        auto varlen = [&]() { quint32 v = 0; quint8 b; do { b = p[pos++]; v = (v << 7) | (b & 0x7f); } while((b & 0x80) && pos < end); return v; };
+
+        while(isTrack && pos < end)
+        {
+            tick += varlen();
+
+            if(pos >= end)
+                break;
+
+            const quint8 b = p[pos];
+
+            if(b == 0xff)
+            {
+                if(pos + 2 >= end)
+                    break;
+
+                const quint8 type = p[pos + 1];
+                pos += 2;
+
+                const quint32 length = varlen();
+
+                if(type == 0x2f)
+                    break;
+
+                if(type == 0x51 && length >= 3 && pos + 3 <= end)
+                    events.push_back({tick, 0xff, {p[pos], p[pos + 1], p[pos + 2]}});
+
+                pos += length;
+                continue;
+            }
+
+            if(b == 0xf0 || b == 0xf7)
+            {
+                pos++;
+                pos += varlen();
+                continue;
+            }
+
+            if(b & 0x80)
+            {
+                status = b;
+                pos++;
+            }
+            else if(!status)
+                return QByteArray();
+
+            //Program change and channel pressure have one data byte.
+            const int dataBytes = ((status & 0xe0) == 0xc0) ? 1 : 2;
+
+            if(pos + dataBytes > end)
+                break;
+
+            events.push_back({tick, status, {p[pos], quint8(dataBytes > 1 ? p[pos + 1] : 0), 0}});
+            pos += dataBytes;
+        }
+
+        endTick = qMax(endTick, tick);
+        pos = end;
+    }
+
+    //Stable, so events at the same tick keep their track order (tempo track first).
+    std::stable_sort(events.begin(), events.end(), [](const Event& a, const Event& b) { return a.tick < b.tick; });
+
+    MidiTrackWriter track;
+    quint32 lastTick = 0;
+
+    for(const Event& e : events)
+    {
+        track.delay += e.tick - lastTick;
+        lastTick = e.tick;
+
+        if(e.status == 0xff)
+            track.WriteTempo(e.data);
+        else if((e.status & 0xe0) == 0xc0)
+            track.WriteEvent(e.status, e.data[0]);
+        else
+            track.WriteEvent(e.status, e.data[0], e.data[1]);
+    }
+
+    track.delay += endTick - lastTick;
+    track.WriteEndOfTrack();
+
+    return WriteType0Midi(track, divisions);
 }

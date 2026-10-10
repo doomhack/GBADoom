@@ -1240,7 +1240,7 @@ bool WadProcessor::ProcessSounds()
     return true;
 }
 
-//MUS music lumps become type 0 MIDI for libtimidity.
+//MUS (and type 1 MIDI) music lumps become type 0 MIDI for libtimidity.
 bool WadProcessor::ProcessMusic()
 {
     for(quint32 i = 0; i < wadFile.LumpCount(); i++)
@@ -1249,17 +1249,19 @@ bool WadProcessor::ProcessMusic()
 
         wadFile.GetLumpByNum(i, l);
 
-        if(!l.name.startsWith("D_") || l.data.startsWith("MThd"))
+        if(!l.name.startsWith("D_"))
             continue;
+
+        const bool isMidi = l.data.startsWith("MThd");
 
         Lump newLump;
         newLump.name = l.name;
-        newLump.data = ConvertMusToMidi(l.data);
+        newLump.data = isMidi ? ConvertMidiToType0(l.data) : ConvertMusToMidi(l.data);
         newLump.length = newLump.data.size();
 
         if(!newLump.length)
         {
-            qWarning("%s is not a MUS lump. Removed.", qPrintable(l.name));
+            qWarning("%s is not a MUS or MIDI lump. Removed.", qPrintable(l.name));
             wadFile.RemoveLump(i);
             i--;
             continue;
