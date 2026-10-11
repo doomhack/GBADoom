@@ -8,8 +8,6 @@ ARM_CODE_DEFAULT
 
 #include "s_mix.h"
 
-#define FRAC_MASK ((1 << SND_MIX_FRACBITS) - 1)
-
 // Accumulator for one frame. In IWRAM (.bss).
 static int32_t mixbuf[SND_MIX_SAMPLES];
 
@@ -18,33 +16,33 @@ int32_t* S_MixBuffer(void)
     return mixbuf;
 }
 
-// Linearly interpolated sample at ofs, as a 16 bit value.
-// always_inline: it is ARM_CODE_DEFAULT and its callers are HOT_CODE.
-static inline __attribute__((always_inline)) int32_t S_MixInterp(const int8_t* src, int32_t ofs)
-{
-    const int8_t* s = &src[ofs >> SND_MIX_FRACBITS];
-
-    int32_t v1 = s[0];
-    int32_t v2 = s[1];
-
-    return (v1 << 8) + (((v2 - v1) * (ofs & FRAC_MASK)) >> (SND_MIX_FRACBITS - 8));
-}
-
+// The nearest sample, not interpolated: through the 8 bit output it sounds
+// no different from linear interpolation, at about half the cost.
 HOT_CODE int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr, int32_t count, int32_t amp,
                       int32_t loop_end, int32_t loop_len)
 {
-#ifdef GBA
-    // An odd sample here, then pairs in ARM asm below.
-    int32_t single = count & 1;
+    // Bias ofs (and loop_end) by half a sample so that the >> rounds.
+    const int32_t half = 1 << (SND_MIX_FRACBITS - 1);
 
-    count >>= 1;
+    ofs += half;
+
+    if(loop_end != INT32_MAX)
+        loop_end += half;
+
+    amp <<= 8;
+
+#ifdef GBA
+    // Up to three samples here, then four at a time in ARM asm below.
+    int32_t single = count & 3;
+
+    count >>= 2;
 #else
     int32_t single = count;
 #endif
 
     while(single--)
     {
-        *buf++ += S_MixInterp(src, ofs) * amp;
+        *buf++ += src[ofs >> SND_MIX_FRACBITS] * amp;
 
         ofs += incr;
 
@@ -53,54 +51,52 @@ HOT_CODE int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int
     }
 
 #ifdef GBA
-    // Two samples per pass with the accumulator pair in ldm/stm. Same
-    // arithmetic as S_MixInterp(). In asm because GCC spills the pair.
+    // Four samples per pass with the accumulators in ldm/stm. Same arithmetic
+    // as above. In asm because GCC doesn't use stm here. amp is the mla's
+    // first operand: the multiplier (the sample) sets how long it takes.
     static_assert(SND_MIX_FRACBITS == 12, "The shifts below assume 12 fraction bits");
 
     if(count)
     {
-        int32_t i, v1, v2;
+        int32_t s;
 
         asm volatile(
             "1:                                 \n"
-            "   ldmia   %[buf], {r4, r5}        \n"
-            "   mov     %[i], %[ofs], asr #12   \n"
-            "   add     %[v2], %[src], %[i]     \n"
-            "   ldrsb   %[v1], [%[v2]]          \n"
-            "   ldrsb   %[v2], [%[v2], #1]      \n"
-            "   sub     %[i], %[ofs], %[i], lsl #12 \n"
-            "   sub     %[v2], %[v2], %[v1]     \n"
-            "   mul     %[v2], %[i], %[v2]      \n"
-            "   mov     %[v1], %[v1], lsl #8    \n"
-            "   add     %[v1], %[v1], %[v2], asr #4 \n"
-            "   mla     r4, %[v1], %[amp], r4   \n"
+            "   ldmia   %[buf], {r4-r7}         \n"
+            "   mov     %[s], %[ofs], asr #12   \n"
+            "   ldrsb   %[s], [%[src], %[s]]    \n"
+            "   mla     r4, %[amp], %[s], r4    \n"
             "   add     %[ofs], %[ofs], %[incr] \n"
             "   cmp     %[ofs], %[end]          \n"
             "   subge   %[ofs], %[ofs], %[len]  \n"
-            "   mov     %[i], %[ofs], asr #12   \n"
-            "   add     %[v2], %[src], %[i]     \n"
-            "   ldrsb   %[v1], [%[v2]]          \n"
-            "   ldrsb   %[v2], [%[v2], #1]      \n"
-            "   sub     %[i], %[ofs], %[i], lsl #12 \n"
-            "   sub     %[v2], %[v2], %[v1]     \n"
-            "   mul     %[v2], %[i], %[v2]      \n"
-            "   mov     %[v1], %[v1], lsl #8    \n"
-            "   add     %[v1], %[v1], %[v2], asr #4 \n"
-            "   mla     r5, %[v1], %[amp], r5   \n"
+            "   mov     %[s], %[ofs], asr #12   \n"
+            "   ldrsb   %[s], [%[src], %[s]]    \n"
+            "   mla     r5, %[amp], %[s], r5    \n"
             "   add     %[ofs], %[ofs], %[incr] \n"
             "   cmp     %[ofs], %[end]          \n"
             "   subge   %[ofs], %[ofs], %[len]  \n"
-            "   stmia   %[buf]!, {r4, r5}       \n"
+            "   mov     %[s], %[ofs], asr #12   \n"
+            "   ldrsb   %[s], [%[src], %[s]]    \n"
+            "   mla     r6, %[amp], %[s], r6    \n"
+            "   add     %[ofs], %[ofs], %[incr] \n"
+            "   cmp     %[ofs], %[end]          \n"
+            "   subge   %[ofs], %[ofs], %[len]  \n"
+            "   mov     %[s], %[ofs], asr #12   \n"
+            "   ldrsb   %[s], [%[src], %[s]]    \n"
+            "   mla     r7, %[amp], %[s], r7    \n"
+            "   add     %[ofs], %[ofs], %[incr] \n"
+            "   cmp     %[ofs], %[end]          \n"
+            "   subge   %[ofs], %[ofs], %[len]  \n"
+            "   stmia   %[buf]!, {r4-r7}        \n"
             "   subs    %[count], %[count], #1  \n"
             "   bne     1b                      \n"
-            : [buf] "+r" (buf), [ofs] "+r" (ofs), [count] "+r" (count),
-              [i] "=&r" (i), [v1] "=&r" (v1), [v2] "=&r" (v2)
+            : [buf] "+r" (buf), [ofs] "+r" (ofs), [count] "+r" (count), [s] "=&r" (s)
             : [src] "r" (src), [incr] "r" (incr), [amp] "r" (amp), [end] "r" (loop_end), [len] "r" (loop_len)
-            : "r4", "r5", "cc", "memory");
+            : "r4", "r5", "r6", "r7", "cc", "memory");
     }
 #endif
 
-    return ofs;
+    return ofs - half;
 }
 
 HOT_CODE void S_MixDirect(int32_t* buf, const int8_t* src, int32_t count, int32_t amp)
