@@ -298,7 +298,7 @@ static void R_InitFlats(void)
     int lastflat  = W_GetNumForName("F_END") - 1;
     _g->numflats  = lastflat - _g->firstflat + 1;
 
-    if (_g->numflats > 256) // sector_t floorpic/ceilingpic are bytes.
+    if (_g->numflats > 1024) // sector_t floorpic/ceilingpic are bytes.
         I_Error("R_InitFlats: Too many flats (%d)", _g->numflats);
 
     // Create translation table for global animation.
