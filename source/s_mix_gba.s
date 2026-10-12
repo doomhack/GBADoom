@@ -6,8 +6,8 @@
 
     Built in: SND_MIX_FRACBITS 12 and SND_MIX_SAMPLES 224 (s_mix.c checks them).
 
-    amp is always the mla's Rm: the ARM7's multiply time depends on Rs, and the
-    sample (8 bits) is quicker there than amp << 8 (21 bits).
+    The ARM7's multiply time depends on Rs, so that is the shorter operand:
+    in S_MixDirect the sample (8 bits) rather than amp << 8 (21 bits).
 */
 
     .bss
@@ -36,62 +36,55 @@ S_MixBuffer:
     int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr,
                           int32_t count, int32_t amp, int32_t loop_end, int32_t loop_len)
 
-    The nearest sample, not interpolated: through the 8 bit output it sounds no
-    different from linear interpolation, at about half the cost. ofs and
-    loop_end are biased by half a sample so that the >> rounds.
+    Linear interpolation. Taking the nearest sample is about half the cost and
+    mostly sounds the same, but some instruments get audible artifacts.
 
-    Up to 3 samples one at a time, then 4 per pass with the accumulators in
-    ldm/stm.
+    An odd sample on its own, then 2 per pass with the accumulators in ldm/stm.
+    r6 = src + 1, so both samples load with a register offset.
 
-    r0 buf, r1 src, r2 ofs, r3 incr, r4-r7 accumulators, r8 count, r9 amp << 8,
-    r10 loop_end, r11 loop_len, r12 sample, lr singles
+    r0 buf, r1 src, r2 ofs, r3 incr, r4-r5 accumulators, r6 src + 1, r7 count,
+    r8 amp, r9 loop_end, r10 loop_len, r11 index then fraction, r12 s[0], lr s[1]
 */
+    .macro  lerp acc
+    mov     r11, r2, asr #12
+    ldrsb   r12, [r1, r11]
+    ldrsb   lr, [r6, r11]
+    sub     r11, r2, r11, lsl #12   @ Fraction.
+    sub     lr, lr, r12
+    mul     lr, r11, lr             @ Rs is s[1] - s[0], 9 bits: 1 cycle.
+    mov     r12, r12, lsl #8
+    add     r12, r12, lr, asr #4    @ Interpolated sample, 16 bits.
+    mla     \acc, r12, r8, \acc
+    add     r2, r2, r3
+    cmp     r2, r9
+    subge   r2, r2, r10
+    .endm
+
     .global S_MixResample
     .type   S_MixResample, %function
 S_MixResample:
     push    {r4-r11, lr}
     add     r12, sp, #36
-    ldmia   r12, {r8-r11}           @ count, amp, loop_end, loop_len
+    ldmia   r12, {r7-r10}           @ count, amp, loop_end, loop_len
+    add     r6, r1, #1
 
-    add     r2, r2, #2048           @ Half a sample.
-    mvn     r12, #0x80000000        @ loop_end INT32_MAX: never wraps.
-    cmp     r10, r12
-    addne   r10, r10, #2048
-    mov     r9, r9, lsl #8
-
-    ands    lr, r8, #3
+    tst     r7, #1
     beq     2f
-1:
-    mov     r12, r2, asr #12
-    ldrsb   r12, [r1, r12]
     ldr     r4, [r0]
-    mla     r4, r9, r12, r4
+    lerp    r4
     str     r4, [r0], #4
-    add     r2, r2, r3
-    cmp     r2, r10
-    subge   r2, r2, r11
-    subs    lr, lr, #1
-    bne     1b
 2:
-    movs    r8, r8, asr #2
+    movs    r7, r7, asr #1
     beq     4f
 3:
-    ldmia   r0, {r4-r7}
-
-    .irp    acc, r4, r5, r6, r7
-    mov     r12, r2, asr #12
-    ldrsb   r12, [r1, r12]
-    mla     \acc, r9, r12, \acc
-    add     r2, r2, r3
-    cmp     r2, r10
-    subge   r2, r2, r11
-    .endr
-
-    stmia   r0!, {r4-r7}
-    subs    r8, r8, #1
+    ldmia   r0, {r4, r5}
+    lerp    r4
+    lerp    r5
+    stmia   r0!, {r4, r5}
+    subs    r7, r7, #1
     bne     3b
 4:
-    sub     r0, r2, #2048
+    mov     r0, r2
     pop     {r4-r11, lr}
     bx      lr
 

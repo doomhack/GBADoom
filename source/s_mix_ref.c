@@ -16,24 +16,19 @@ int32_t* S_MixBuffer(void)
     return mixbuf;
 }
 
-// The nearest sample, not interpolated: through the 8 bit output it sounds
-// no different from linear interpolation, at about half the cost.
+// Linear interpolation. Taking the nearest sample is about half the cost and
+// mostly sounds the same, but some instruments get audible artifacts.
 int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr, int32_t count, int32_t amp,
                       int32_t loop_end, int32_t loop_len)
 {
-    // Bias ofs (and loop_end) by half a sample so that the >> rounds.
-    const int32_t half = 1 << (SND_MIX_FRACBITS - 1);
-
-    ofs += half;
-
-    if(loop_end != INT32_MAX)
-        loop_end += half;
-
-    amp <<= 8;
-
     while(count--)
     {
-        *buf++ += src[ofs >> SND_MIX_FRACBITS] * amp;
+        const int8_t* s = &src[ofs >> SND_MIX_FRACBITS];
+
+        // Interpolated sample as a 16 bit value.
+        int32_t v = (s[0] << 8) + (((s[1] - s[0]) * (ofs & ((1 << SND_MIX_FRACBITS) - 1))) >> (SND_MIX_FRACBITS - 8));
+
+        *buf++ += v * amp;
 
         ofs += incr;
 
@@ -41,7 +36,7 @@ int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr
             ofs -= loop_len;
     }
 
-    return ofs - half;
+    return ofs;
 }
 
 void S_MixDirect(int32_t* buf, const int8_t* src, int32_t count, int32_t amp)

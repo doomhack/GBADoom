@@ -35,9 +35,9 @@ typedef struct snd_sfx_voice_t
 //
 
 // Mix count samples of src from ofs, stepping by incr (both SND_MIX_FRACBITS),
-// taking the nearest sample (no interpolation), so it can read
-// src[(ofs >> SND_MIX_FRACBITS) + 1]. Whenever ofs reaches loop_end it goes
-// back by loop_len (INT32_MAX: never). Returns the new ofs.
+// with linear interpolation. Reads src[(ofs >> SND_MIX_FRACBITS) + 1]. Whenever
+// ofs reaches loop_end it goes back by loop_len (INT32_MAX: never). Returns the
+// new ofs.
 int32_t S_MixResample(int32_t* buf, const int8_t* src, int32_t ofs, int32_t incr, int32_t count, int32_t amp,
                       int32_t loop_end, int32_t loop_len);
 
