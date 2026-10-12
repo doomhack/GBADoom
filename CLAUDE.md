@@ -65,6 +65,10 @@ IWRAM code and data share the 32 KB with the main stack, which grows down from `
 
 GbaWadUtil composites every TEXTURE1/TEXTURE2 texture into 128-byte columns (short textures repeated to tile, holes filled from the nearest opaque row), dedupes them into a `COLPOOL` lump and writes per-texture `u16` tables to `TEXCOLS`: `colid[width]` then `runid[width]`. Walls and the sky fetch `texcolpool + (texture->colids[x & widthmask] << 7)` (`R_GetTextureColumn` in `r_hotpath.iwram.c`); there is no runtime compositing or column cache. Masked midtextures (`R_DrawMaskedTextureColumn`) draw the same pool column, limited to the runs of opaque rows in `COLRUNS` (`texrun_t` pairs ending in `topdelta` 0xff). Nothing reads wall patches at runtime, so GbaWadUtil strips `PNAMES` and the `P_START`..`P_END` namespace. Tables are per texture number, so switches and animations (which only swap texture numbers) need nothing special.
 
+### Lighting
+
+Doom's diminishing light is as in vanilla: walls, masked midtextures and sprites pick a colormap per column/sprite from their scale (`scalelight`), flats per span from their distance (`zlight`). Both tables are `const` colormap numbers computed at compile time in `r_hotpath.iwram.c`. `scalelight` is indexed by `scale >> LIGHTSCALESHIFT_GBA`, with the difference between this port's `projectiony` and Doom's 160 folded into the table. All 32 light colormaps sit in one VRAM block (`vram_tail->lightColormaps`, filled by `R_InitBuffer`), so changing colormap is a pointer, never a copy. The powerup `fixedcolormap` is read from `objpal_spare->fixedColormap`.
+
 ### Sound
 
 Music and sound effects both come from the WAD, mixed in software to one mono signed 8-bit stream at 13379 Hz (224 samples per GBA frame):

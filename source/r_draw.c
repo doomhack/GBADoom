@@ -86,8 +86,8 @@ void R_InitBuffer()
 
     BlockCopy(vram1_spare->distscale, distscale, sizeof(vram1_spare->distscale));
 
-    //Colormap used directly by sky and full bright sprites.
-    BlockCopy(objpal_spare->fullColormap, colormaps, sizeof(objpal_spare->fullColormap));
+    //All light level colormaps.
+    BlockCopy(vram_tail->lightColormaps, colormaps, sizeof(vram_tail->lightColormaps));
 
     for(int i = 0; i < SCREENWIDTH; i++)
         oam_spare->negonearray[i] = -1;

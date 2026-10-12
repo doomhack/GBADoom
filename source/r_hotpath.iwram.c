@@ -162,7 +162,6 @@ static fixed_t  rw_midtexturemid;
 static fixed_t  rw_toptexturemid;
 static fixed_t  rw_bottomtexturemid;
 
-const lighttable_t *fullcolormap;
 const lighttable_t *colormaps;
 
 const lighttable_t* fixedcolormap;
@@ -208,16 +207,10 @@ static fixed_t  pixlowstep;
 static int      worldhigh;
 static int      worldlow;
 
-//Colormaps copied into IWRAM (ROM is slower), with the ROM copy each
-//slot holds. Walls, flats and masked textures switch between a few
-//light levels, so several slots avoid most of the copies.
-#define COLORMAP_SLOTS 4
-
-static lighttable_t colormapSlots[COLORMAP_SLOTS][256];
-static const lighttable_t* colormapSlotSrc[COLORMAP_SLOTS];
-static unsigned int colormapNextSlot;
-
 static fixed_t planeheight;
+
+//zlight row for the flat being drawn, NULL for a fixed colormap.
+static const byte* planezlight;
 
 size_t num_vissprite;
 
@@ -236,7 +229,11 @@ static const int centeryfrac = ((SCREENHEIGHT-ST_SCALED_HEIGHT)/2) << FRACBITS;
 
 const fixed_t projection = (SCREENWIDTH/2) << FRACBITS;
 
-static const fixed_t projectiony = ((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH * FRACUNIT;
+//Vertical projection, in whole units (Doom's is 160, centerx at 320 wide).
+//Wall and sprite (vis->scale) scales use it.
+#define PROJECTIONY_INT (((SCREENHEIGHT * (SCREENWIDTH/2) * 320) / 200) / SCREENWIDTH)
+
+static const fixed_t projectiony = PROJECTIONY_INT * FRACUNIT;
 
 static const fixed_t pspritescale = FRACUNIT*SCREENWIDTH/320;
 static const fixed_t pspriteiscale = FRACUNIT*320/SCREENWIDTH;
@@ -440,70 +437,83 @@ static CONSTFUNC R_BSP_OPT fixed_t R_PointToDist(fixed_t x, fixed_t y)
     return FixedApproxDivInline(dx, finesine[(tantoangle[FixedApproxDivInline(dy,dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT]);
 }
 
-static const lighttable_t* R_ColourMap(int lightlevel)
-{
-    if (fixedcolormap)
-        return fixedcolormap;
-    else
-    {
-        if (curline)
-        {
-            if (curline->v1.y == curline->v2.y)
-                lightlevel -= 1 << LIGHTSEGSHIFT;
-            else if (curline->v1.x == curline->v2.x)
-                lightlevel += 1 << LIGHTSEGSHIFT;
-        }
+//*****************************************
+// Lighting.
+// Doom's diminishing light: the colormap number for each light
+// level and distance, as R_InitLightTables built them, but
+// computed at compile time into ROM. The colormaps themselves
+// are all in VRAM (vram_tail->lightColormaps).
+//*****************************************
 
-        lightlevel += (extralight +_g->gamma) << LIGHTSEGSHIFT;
+#define LIGHTCLAMP(l) ((l) < 0 ? 0 : ((l) >= NUMCOLORMAPS ? NUMCOLORMAPS-1 : (l)))
+#define STARTMAP(i) (((LIGHTLEVELS-1-(i))*2)*NUMCOLORMAPS/LIGHTLEVELS)
 
-        int cm = ((256-lightlevel)>>2) - 24;
+//Walls and sprites, by k = scale >> LIGHTSCALESHIFT_GBA. Doom's
+//scales use a projection of 160 rather than PROJECTIONY_INT, so
+//Doom's index (scale >> LIGHTSCALESHIFT) is k*40/PROJECTIONY_INT.
+//The finer shift keeps the steps about as fine as Doom's.
+#define LIGHTSCALESHIFT_GBA 10
+#define NUMLIGHTSCALE 160
+#define SCALEJ(k) ((k)*(160 << LIGHTSCALESHIFT_GBA)/(PROJECTIONY_INT << LIGHTSCALESHIFT))
+#define SDIM(k) ((SCALEJ(k) < MAXLIGHTSCALE-1 ? SCALEJ(k) : MAXLIGHTSCALE-1) / DISTMAP)
 
-        if(cm >= NUMCOLORMAPS)
-            cm = NUMCOLORMAPS-1;
-        else if(cm < 0)
-            cm = 0;
+//Flats, by distance >> LIGHTZSHIFT. This is
+//FixedDiv(320/2*FRACUNIT, (j+1)<<LIGHTZSHIFT) >> LIGHTSCALESHIFT.
+//It uses 320, not SCREENWIDTH, like PrBoom, as distance doesn't
+//depend on the view width.
+#define ZDIM(j) (((int)((((int_64_t)(320/2*FRACUNIT)) << FRACBITS) / (((j)+1) << LIGHTZSHIFT)) >> LIGHTSCALESHIFT) / DISTMAP)
 
-        return fullcolormap + cm*256;
-    }
-}
+#define SL(i,k) LIGHTCLAMP(STARTMAP(i) - SDIM(k))
+#define SL4(i,k) SL(i,k), SL(i,(k)+1), SL(i,(k)+2), SL(i,(k)+3)
+#define SL8(i,k) SL4(i,k), SL4(i,(k)+4)
+#define SL32(i,k) SL8(i,k), SL8(i,(k)+8), SL8(i,(k)+16), SL8(i,(k)+24)
+#define SLROW(i) { SL32(i,0), SL32(i,32), SL32(i,64), SL32(i,96), SL32(i,128) }
 
+#define ZL(i,j) LIGHTCLAMP(STARTMAP(i) - ZDIM(j))
+#define ZL4(i,j) ZL(i,j), ZL(i,(j)+1), ZL(i,(j)+2), ZL(i,(j)+3)
+#define ZL16(i,j) ZL4(i,j), ZL4(i,(j)+4), ZL4(i,(j)+8), ZL4(i,(j)+12)
+#define ZL64(i,j) ZL16(i,j), ZL16(i,(j)+16), ZL16(i,(j)+32), ZL16(i,(j)+48)
+#define ZLROW(i) { ZL64(i,0), ZL64(i,64) }
+
+#define LIGHTROWS(R) R(0), R(1), R(2), R(3), R(4), R(5), R(6), R(7), R(8), R(9), R(10), R(11), R(12), R(13), R(14), R(15)
+
+static_assert(LIGHTLEVELS == 16 && NUMLIGHTSCALE == 160 && MAXLIGHTZ == 128, "light table initialisers need updating");
+static_assert(SCALEJ(NUMLIGHTSCALE-1) >= MAXLIGHTSCALE-1, "scalelight must reach Doom's nearest light");
+
+static const byte scalelight[LIGHTLEVELS][NUMLIGHTSCALE] = { LIGHTROWS(SLROW) };
+static const byte zlight[LIGHTLEVELS][MAXLIGHTZ] = { LIGHTROWS(ZLROW) };
 
 //Which colormap objpal_spare->fixedColormap holds.
 static const lighttable_t* objpalFixedSrc;
 
-//Colormaps used directly per pixel (not via R_LoadColorMap) are read
-//from the OBJ palette copies if there is one, as ROM is slower.
-static const lighttable_t* R_FastColormap(const lighttable_t* cm)
+static inline __attribute__((always_inline)) int R_LightNum(int lightlevel)
 {
-    if (cm == colormaps)
-        return objpal_spare->fullColormap;
-
-    if (cm && cm == fixedcolormap)
-        return objpal_spare->fixedColormap;
-
-    return cm;
+    return clamp(0, (lightlevel >> LIGHTSEGSHIFT) + extralight + _g->gamma, LIGHTLEVELS-1);
 }
 
-//Load a colormap into IWRAM. The slot replaced is the oldest one. That
-//is never one still in use, as every caller finishes drawing with its
-//colormap before the next load.
-static const lighttable_t* R_LoadColorMap(int lightlevel)
+//Doom's fake contrast: walls along the y axis one light level
+//darker, along the x axis one lighter.
+static inline __attribute__((always_inline)) int R_SegLightNum(int lightlevel, const seg_t* seg)
 {
-    const lighttable_t* lm = R_ColourMap(lightlevel);
+    int adjust = 0;
 
-    for(unsigned int i = 0; i < COLORMAP_SLOTS; i++)
-    {
-        if(colormapSlotSrc[i] == lm)
-            return colormapSlots[i];
-    }
+    if (seg->v1.y == seg->v2.y)
+        adjust = -1;
+    else if (seg->v1.x == seg->v2.x)
+        adjust = 1;
 
-    const unsigned int slot = colormapNextSlot;
-    colormapNextSlot = (slot + 1) & (COLORMAP_SLOTS - 1);
+    return clamp(0, (lightlevel >> LIGHTSEGSHIFT) + extralight + _g->gamma + adjust, LIGHTLEVELS-1);
+}
 
-    BlockCopy(colormapSlots[slot], lm, 256);
-    colormapSlotSrc[slot] = lm;
+//Colormap for a wall column or sprite at this scale.
+static inline __attribute__((always_inline)) const lighttable_t* R_ScaleColormap(const byte* lights, fixed_t scale)
+{
+    unsigned int k = (unsigned int)scale >> LIGHTSCALESHIFT_GBA;
 
-    return colormapSlots[slot];
+    if (k >= NUMLIGHTSCALE)
+        k = NUMLIGHTSCALE-1;
+
+    return vram_tail->lightColormaps[lights[k]];
 }
 
 //
@@ -700,7 +710,7 @@ static void R_DrawFuzzColumn (const draw_column_vars_t *dcvars)
     if (count <= 0)
         return;
 
-    const byte* colormap = &fullcolormap[6*256];
+    const byte* colormap = vram_tail->lightColormaps[6];
 
     unsigned short* dest = drawvars.byte_topleft + ScreenYToOffset(dc_yl) + dcvars->x;
 
@@ -992,7 +1002,13 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
 
     const texture_t* texture = R_GetOrLoadTexture(texnum);
 
-    dcvars.colormap = R_LoadColorMap(rw_lightlevel);
+    //Per column light from the scale, unless the colormap is fixed.
+    const byte* lights = NULL;
+
+    if (fixedcolormap)
+        dcvars.colormap = objpal_spare->fixedColormap;
+    else
+        lights = scalelight[R_SegLightNum(rw_lightlevel, curline)];
 
     // draw the columns
     for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
@@ -1001,6 +1017,9 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
 
         if (xc != SHRT_MAX) // dropoff overflow
         {
+            if (lights)
+                dcvars.colormap = R_ScaleColormap(lights, spryscale);
+
             sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
 
             dcvars.iscale = FixedReciprocal((unsigned)spryscale);
@@ -1012,7 +1031,7 @@ static void R_RenderMaskedSegRange(const drawseg_t *ds, int x1, int x2)
         }
     }
 
-    curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
+    curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it */
 }
 
 
@@ -1041,7 +1060,7 @@ static inline int R_PointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 // R_DrawSprite
 //
 
-//Number of entries in vram_tail->dsclip this frame.
+//Number of entries in the vram_tail->dsclip* arrays this frame.
 static unsigned int num_dsclip;
 
 //Summarise the drawsegs that can clip sprites (those with a
@@ -1049,36 +1068,35 @@ static unsigned int num_dsclip;
 static void R_BuildDrawsegClip(void)
 {
     const drawseg_t* drawsegs = _g->drawsegs;
-    drawseg_clip_t* dc = vram_tail->dsclip;
+    unsigned int n = 0;
 
     for (const drawseg_t* ds = drawsegs; ds < ds_p; ds++)
     {
         if (!ds->silhouette && !ds->maskedtexturecol)
             continue;
 
-        dc->xkey = ((unsigned int)ds->x2 << 16) | (255 - ds->x1);
+        vram_tail->dsclipXkey[n] = ((unsigned int)ds->x2 << 16) | (255 - ds->x1);
 
         if (ds->scale1 > ds->scale2)
         {
-            dc->lowscale = ds->scale2;
-            dc->scale = ds->scale1;
+            vram_tail->dsclipLowscale[n] = ds->scale2;
+            vram_tail->dsclipScale[n] = ds->scale1;
         }
         else
         {
-            dc->lowscale = ds->scale1;
-            dc->scale = ds->scale2;
+            vram_tail->dsclipLowscale[n] = ds->scale1;
+            vram_tail->dsclipScale[n] = ds->scale2;
         }
 
-        dc->index = ds - drawsegs;
-        dc->masked = (ds->maskedtexturecol != NULL);
+        vram1_spare->dsclipInfo[n] = (ds - drawsegs) | (ds->maskedtexturecol ? DSCLIP_MASKED : 0);
 
-        dc++;
+        n++;
     }
 
-    num_dsclip = dc - vram_tail->dsclip;
+    num_dsclip = n;
 }
 
-// Return the next summary entry below dc (scanning down to first)
+// Return the next summary xkey below xk (scanning down to first)
 // that overlaps the sprite, or NULL.
 // Both halves of (xkey - skey) are >= 0 only if the drawseg
 // overlaps the sprite: the high half is dx2 - sx1 and the
@@ -1086,12 +1104,12 @@ static void R_BuildDrawsegClip(void)
 // sets bit 31 or bit 15. (A borrow from the low half only
 // happens when the low test has already failed.)
 // Kept out of line so the scan loop has registers to itself.
-static __attribute__((noinline)) const drawseg_clip_t* R_NextClipSeg(const drawseg_clip_t* dc, const drawseg_clip_t* first, unsigned int skey)
+static __attribute__((noinline)) const unsigned int* R_NextClipSeg(const unsigned int* xk, const unsigned int* first, unsigned int skey)
 {
-    while (dc-- > first)
+    while (xk-- > first)
     {
-        if (!((dc->xkey - skey) & 0x80008000))
-            return dc;
+        if (!((*xk - skey) & 0x80008000))
+            return xk;
     }
 
     return NULL;
@@ -1126,24 +1144,27 @@ static void R_DrawSprite (const vissprite_t* spr)
     const unsigned int skey = ((unsigned int)sx1 << 16) | (255 - sx2);
 
     const drawseg_t* drawsegs  =_g->drawsegs;
-    const drawseg_clip_t* dsclip = vram_tail->dsclip;
+    const unsigned int* dsxkey = vram_tail->dsclipXkey;
 
     // determine which drawsegs obscure the sprite
-    for (const drawseg_clip_t* dc = dsclip + num_dsclip; (dc = R_NextClipSeg(dc, dsclip, skey)); )  // new -- killough
+    for (const unsigned int* xk = dsxkey + num_dsclip; (xk = R_NextClipSeg(xk, dsxkey, skey)); )  // new -- killough
     {
-        const unsigned int xkey = dc->xkey;
+        const unsigned int i = xk - dsxkey;
+        const unsigned int xkey = *xk;
 
         const int dx1 = 255 - (int)(xkey & 0xffff);
         const int dx2 = xkey >> 16;
 
-        const drawseg_t* ds = drawsegs + dc->index;
+        const unsigned int info = (unsigned short)vram1_spare->dsclipInfo[i];
+
+        const drawseg_t* ds = drawsegs + (info & ~DSCLIP_MASKED);
 
         const int r1 = dx1 < sx1 ? sx1 : dx1;
         const int r2 = dx2 > sx2 ? sx2 : dx2;
 
-        if (dc->scale < sprscale || (dc->lowscale < sprscale && !R_PointOnSegSide (spr->gx, spr->gy, ds->curline)))
+        if (vram_tail->dsclipScale[i] < sprscale || (vram_tail->dsclipLowscale[i] < sprscale && !R_PointOnSegSide (spr->gx, spr->gy, ds->curline)))
         {
-            if (dc->masked)       // masked mid texture?
+            if (info & DSCLIP_MASKED)       // masked mid texture?
                 R_RenderMaskedSegRange(ds, r1, r2);
 
             continue;               // seg is behind sprite
@@ -1265,11 +1286,11 @@ static void R_DrawPSprite (pspdef_t *psp, int lightlevel)
     if (shadow)
         vis.colormap = NULL;                    // shadow draw
     else if (fixedcolormap)
-        vis.colormap = R_FastColormap(fixedcolormap);           // fixed color
+        vis.colormap = objpal_spare->fixedColormap;             // fixed color
     else if (psp->state->frame & FF_FULLBRIGHT)
-        vis.colormap = R_FastColormap(fullcolormap);            // full bright // killough 3/20/98
+        vis.colormap = vram_tail->lightColormaps[0];            // full bright // killough 3/20/98
     else
-        vis.colormap = R_LoadColorMap(lightlevel);  // local light
+        vis.colormap = vram_tail->lightColormaps[scalelight[R_LightNum(lightlevel)][NUMLIGHTSCALE-1]];  // local light, nearest
 
     R_DrawVisSprite(&vis);
 }
@@ -1443,6 +1464,16 @@ static void __attribute__((flatten)) HOT_CODE R_MapPlane(unsigned int y, unsigne
 
     //UV steps are half-steps as we draw at full resolution. Shifts have been reduced/increased by 1
     dsvars->step = ((FixedMul(distance,basexscale) << 9) & 0xffff0000) | ((FixedMul(distance,baseyscale) >> 7) & 0x0000ffff);
+
+    if (planezlight)
+    {
+        unsigned int index = (unsigned int)distance >> LIGHTZSHIFT;
+
+        if (index >= MAXLIGHTZ)
+            index = MAXLIGHTZ-1;
+
+        dsvars->colormap = vram_tail->lightColormaps[planezlight[index]];
+    }
 
     R_DrawSpan(y, x1, count, dsvars);
 }
@@ -1620,7 +1651,7 @@ static void R_DoDrawPlane(visplane_t *pl)
            * Because of this hack, sky is not affected by INVUL inverse mapping.
            * Until Boom fixed this. Compat option added in MBF. */
 
-            dcvars.colormap = R_FastColormap(fixedcolormap ? fixedcolormap : fullcolormap);          // killough 3/20/98
+            dcvars.colormap = fixedcolormap ? objpal_spare->fixedColormap : vram_tail->lightColormaps[0];          // killough 3/20/98
 
             // proff 09/21/98: Changed for high-res
             dcvars.iscale = skyiscale;
@@ -1647,7 +1678,14 @@ static void R_DoDrawPlane(visplane_t *pl)
             const int lump = _g->firstflat + flattranslation[pl->picnum];
 
             dsvars.source = R_GetFlat(lump);
-            dsvars.colormap = R_LoadColorMap(pl->lightlevel);
+            //Per span light from the distance (R_MapPlane), unless the colormap is fixed.
+            if (fixedcolormap)
+            {
+                dsvars.colormap = objpal_spare->fixedColormap;
+                planezlight = NULL;
+            }
+            else
+                planezlight = zlight[R_LightNum(pl->lightlevel)];
 
             planeheight = D_abs(pl->height-viewz);
 
@@ -1840,12 +1878,12 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (thing->flags & MF_SHADOW)
         vis->colormap = NULL;             // shadow draw
     else if (fixedcolormap)
-        vis->colormap = R_FastColormap(fixedcolormap);      // fixed map
+        vis->colormap = objpal_spare->fixedColormap;      // fixed map
     else if (thing->state->frame & FF_FULLBRIGHT)
-        vis->colormap = R_FastColormap(fullcolormap);     // full bright  // killough 3/20/98
+        vis->colormap = vram_tail->lightColormaps[0];     // full bright  // killough 3/20/98
     else
     {      // diminished light
-        vis->colormap = R_ColourMap(lightlevel);
+        vis->colormap = R_ScaleColormap(scalelight[R_LightNum(lightlevel)], vis->scale);
     }
 }
 
@@ -2008,17 +2046,27 @@ static void R_BSP_OPT R_RenderSegLoop (int rw_x)
 
     R_SetDefaultDrawColumnVars(&dcvars);
 
-    dcvars.colormap = R_LoadColorMap(rw_lightlevel);
-
     //Copy the per-seg state into locals so it isn't reloaded
     //(and stepped values stored back) on every column.
     const int stopx = rw_stopx;
+
+    const bool textured = segtextured;
+
+    //Per column light from the scale, unless the colormap is fixed.
+    const byte* lights = NULL;
+
+    if (textured)
+    {
+        if (fixedcolormap)
+            dcvars.colormap = objpal_spare->fixedColormap;
+        else
+            lights = scalelight[R_SegLightNum(rw_lightlevel, curline)];
+    }
 
     short* const fclip = oam_spare->floorclip;
     short* const cclip = oam_spare->ceilingclip;
     const angle_t* const xtoangle = xtoviewangle;
 
-    const bool textured = segtextured;
     const bool markc = markceiling;
     const bool markf = markfloor;
 
@@ -2090,6 +2138,9 @@ static void R_BSP_OPT R_RenderSegLoop (int rw_x)
             dcvars.x = rw_x;
 
             dcvars.iscale = FixedReciprocalInline((unsigned)scale);
+
+            if (lights)
+                dcvars.colormap = R_ScaleColormap(lights, scale);
         }
 
         if (markc)
@@ -2792,7 +2843,7 @@ static R_BSP_OPT void R_Subsector(int num)
     {
         R_AddLine (line);
         line++;
-        curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
+        curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, */
     }
 }
 

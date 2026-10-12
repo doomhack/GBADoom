@@ -79,10 +79,8 @@ void R_SetupFrame (player_t *player)
     viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
     viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
-    fullcolormap = &colormaps[0];
-
     if (player->fixedcolormap)
-        fixedcolormap = fullcolormap + player->fixedcolormap*256*sizeof(lighttable_t);
+        fixedcolormap = colormaps + player->fixedcolormap*256*sizeof(lighttable_t);
     else
         fixedcolormap = 0;
 

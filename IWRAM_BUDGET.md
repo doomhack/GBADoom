@@ -5,26 +5,49 @@ how deep the stack that lives in the leftover space can get. The
 [VRAM section](#vram-oam-and-palette) covers the 96 KB of VRAM plus OAM and
 palette RAM, which also hold renderer tables.
 
-Measured on the GBA build of 2026-10-10: commit `9729c7b` (optimisation
-level defines) with the ARM code default switched from Os to O2
-(uncommitted). The one-state-action path carries over from the earlier
+The layout (memory map, `.bss`, VRAM) was measured on the GBA build of
+2026-10-12: `8d209e7` plus depth lighting (uncommitted). The stack analysis
+and the per-function code sizes are from the 2026-10-10 build: `9729c7b`
+with ARM code at O2. The one-state-action path carries over from the earlier
 static analysis, adjusted for `main`'s larger frame. Sizes are bytes.
 
 ## Summary
 
 | | Bytes |
 |---|---|
-| Static IWRAM (code + data) | 28,800 |
-| **Main stack (free gap)** | **3,712** |
+| Static IWRAM (code + data) | 27,664 |
+| **Main stack (free gap)** | **4,848** |
 | Stack the link guarantees (`__stack_reserve`) | 2,048 |
 | Worst realistic stack use (gameplay + sound IRQ) | ~1,890 |
-| Headroom at worst realistic depth | ~1,820 |
+| Headroom at worst realistic depth | ~2,960 |
 | Measured peak, Ultimate Doom demo4 at O2 | 1,272 |
 | Deepest measured peak, 7 timedemos (Doom 2 demo1–3, Ultimate Doom demo1–4; Os build) | 1,368 |
 
 The goal of the stack work is to make the deepest path shallower. That
 frees IWRAM for building more of the hot code at O2/O3 or moving more of it
 into IWRAM.
+
+### Depth lighting (uncommitted)
+
+- **Doom's diminishing light is back.** Walls, masked mid textures and
+  sprites take their colormap from the scale, and flats from the distance,
+  as in vanilla. `scalelight`/`zlight` are `const` tables of colormap
+  numbers built at compile time (ROM +4,608 B).
+- **All 32 light colormaps live in VRAM** (`vram_tail->lightColormaps`, one
+  8 KB block), so a drawer can switch colormap per column or span without
+  copying. The 4-slot IWRAM colormap cache (`colormapSlots`,
+  `R_LoadColorMap`) is gone: **IWRAM −1,040 B** (`.bss` −1,048, code +8),
+  so the stack grows from 3,808 to 4,848 B.
+- **To make room, the sprite-clip summary went from 16 B to 12 B an entry**
+  (separate `dsclipXkey`/`dsclipLowscale`/`dsclipScale` arrays, with the
+  drawseg index and masked flag in `vram1_spare->dsclipInfo`). The scan loop
+  is the same instructions with a 4 B stride. On its own this change was
+  pixel-identical.
+- **About 0.5% slower** (mGBA, same end states): Ultimate Doom demo4
+  1,787 → 1,798 realtics, Doom 2 demo1 2,039 → 2,049, demo3 6,393 → 6,428.
+- Code size changes: `R_Subsector` +256 (the per-column light in the inlined
+  seg loop), `R_RenderMaskedSegRange` +148, `R_MapPlane` +44,
+  `R_RenderPlayerView` −128, `R_AddSprites` −68, `R_LoadColorMap` −248.
 
 ### ARM code at O2 (uncommitted)
 
@@ -87,14 +110,14 @@ into IWRAM.
 
 | Region | Range | Bytes | Notes |
 |---|---|---|---|
-| `.iwram` (code) | 0x03000000–0x03006548 | 25,928 | |
-| `.bss` | 0x03006548–0x03007064 | 2,844 | cleared by crt0 |
-| `.data`, `.init_array`, `.fini_array` | 0x03007064–0x03007080 | 28 | |
-| **Main stack (User/System mode)** | 0x03007080–0x03007F00 | **3,712** | grows down from `__sp_usr` |
+| `.iwram` (code) | 0x03000000–0x030064F0 | 25,840 | |
+| `.bss` | 0x030064F0–0x03006BF4 | 1,796 | cleared by crt0 |
+| `.data`, `.init_array`, `.fini_array` | 0x03006BF4–0x03006C10 | 28 | |
+| **Main stack (User/System mode)** | 0x03006C10–0x03007F00 | **4,848** | grows down from `__sp_usr` |
 | IRQ-mode stack | 0x03007F00–0x03007FA0 | 160 | `__sp_irq`; uses 16 B (see below) |
 | SVC stack and BIOS area | 0x03007FA0–0x03008000 | 96 | BIOS SWIs, IRQ vector, `__irq_flags` |
 
-The stack has no guard. If it grows past 0x03007080 it silently overwrites
+The stack has no guard. If it grows past 0x03006C10 it silently overwrites
 `.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics). A
 trashed `IntrTable` sends the next VBlank to a garbage address. `I_Error` no
 longer depends on `IntrTable` or `_g`, so a later `I_Error` still displays.
@@ -113,11 +136,11 @@ An overflow itself is not detected.
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
 | Linker interworking stubs, alignment | 56 | |
 
-### `.bss` (2,844) and `.data` (28)
+### `.bss` (1,796) and `.data` (28)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 1,728 | `colormapSlots` 1,024 (4 × 256), `spanstart` 160, `flatStats` 128, `solidcol` 120, `colormapSlotSrc` 16 |
+| `r_hotpath.iwram.c` | 680 | `spanstart` 160, `flatStats` 128, `solidcol` 120 |
 | `s_mix_gba.s` | 896 | `mixbuf` 896 |
 | libgba | 158 | `IntrTable` 120 |
 | LTO globals, crtbegin, alignment | 62 | |
@@ -491,7 +514,9 @@ fixed-address macros:
 
 The compiler places the members, and `static_assert`s fail the build if a
 region overflows; `vram_tail_t` must fill its region exactly, so the flat
-cache always ends at the end of OBJ VRAM. The VRAM copies of ROM tables take
+cache always ends at the end of OBJ VRAM. The `vram1_spare_t` check is GBA
+only: on 64-bit desktop builds `vissprite_ptrs` is twice the size, and the
+regions there are ordinary memory. The VRAM copies of ROM tables take
 their array sizes from the ROM declarations, so the copy sizes always match.
 To add a table, add a member. Free space is the region size minus `sizeof`
 the struct, or the `unused` member in `vram_tail_t`.
@@ -501,10 +526,10 @@ the struct, or the `unused` member in `vram_tail_t`.
 | Region | Range | Bytes | Used | Free |
 |---|---|---|---|---|
 | Page 1 framebuffer | 0x06000000–0x06009600 | 38,400 | 38,400 | 0 |
-| Page 1 gap (`vram1_spare`) | 0x06009600–0x0600A000 | 2,560 | 2,100 | 460 |
+| Page 1 gap (`vram1_spare`) | 0x06009600–0x0600A000 | 2,560 | 2,484 | 76 |
 | Page 2 framebuffer | 0x0600A000–0x06013600 | 38,400 | 38,400 | 0 |
-| Page 2 gap + OBJ VRAM (`vram_tail`) | 0x06013600–0x06018000 | 18,944 | 11,264 | 7,680 |
-| **Total** | | **98,304** | **90,164** | **8,140** |
+| Page 2 gap + OBJ VRAM (`vram_tail`) | 0x06013600–0x06018000 | 18,944 | 18,688 | 256 |
+| **Total** | | **98,304** | **97,972** | **332** |
 
 Contents (offsets are bytes into the region, as laid out by the compiler):
 
@@ -515,17 +540,23 @@ Contents (offsets are bytes into the region, as laid out by the compiler):
 | | 992 | `xtoviewangle` (copy of ROM `xtoviewangle[121]`) | 484 |
 | | 1476 | `wipe_y_lookup` | 240 |
 | | 1716 | `vissprite_ptrs` (`MAXVISSPRITES` × 4) | 384 |
-| `vram_tail` | 0 | `unused` (free, 0x06013600–0x06015400) | 7,680 |
-| | 7680 | `dsclip` (`MAXDRAWSEGS` × 16, per-frame drawseg summary for sprite clipping, 0x06015400–0x06016000) | 3,072 |
+| | 2100 | `dsclipInfo` (`MAXDRAWSEGS` × 2: drawseg index, bit 15 = masked) | 384 |
+| `vram_tail` | 0 | `lightColormaps`, all 32 light levels of COLORMAP (0x06013600–0x06015600) | 8,192 |
+| | 8192 | `dsclipXkey`, `dsclipLowscale`, `dsclipScale` (`MAXDRAWSEGS` × 4 each, per-frame drawseg summary for sprite clipping, 0x06015600–0x06015F00) | 2,304 |
+| | 10496 | `unused` (free, 0x06015F00–0x06016000) | 256 |
 | | 10752 | `flatCache`, 2 slots × 4,096 (0x06016000–0x06018000) | 8,192 |
 
 The page 2 gap and OBJ VRAM are adjacent, so the free space is kept in one
-block at the start and the flat cache at the end. `screenheightarray` and
+block and the flat cache at the end. The light colormaps are one block so
+colormap `n` is `lightColormaps[n]` (a constant base plus `n << 8`), with no
+pointer table. The sprite-clip summary is split into arrays of 4 B fields
+(plus `dsclipInfo`) rather than 16 B structs, to make room for them. Every
+entry still indexes by a shift. `screenheightarray` and
 `negonearray` moved from the page 2 gap to OAM to empty it. 4 flat slots
 measured no faster than 2.
 
-`R_InitBuffer` (`r_draw.c`) fills the tables and `R_LoadFlat` fills the flat
-cache with `BlockCopy`. Nothing else writes past row 160 of either page.
+`R_InitBuffer` (`r_draw.c`) fills the tables and the light colormaps, and
+`R_LoadFlat` fills the flat cache, all with `BlockCopy`. Nothing else writes past row 160 of either page.
 `I_CreateWindow_e32` clears exactly 240 × 160 bytes, and the wipe and patch
 drawers stay inside the page. A VRAM dump after 1,200 tics of the Doom 2 demo
 showed the `unused` block still all zero and both flat slots matching their
@@ -569,21 +600,22 @@ saves clip ranges to the openings array with 16-bit DMA (`BlockCopy16`).
 | Range | Bytes | Use |
 |---|---|---|
 | 0x05000000–0x05000200 | 512 | BG palette: the 256-colour game palette (`I_SetPallete_e32`); entries 0 and 241 are also set for the text console |
-| 0x05000200–0x05000300 | 256 | `objpal_spare->fullColormap`: colormap 0 (full bright), filled once by `R_InitBuffer`. Used for the sky, fullbright sprites and the weapon. |
-| 0x05000300–0x05000400 | 256 | `objpal_spare->fixedColormap`: the current `fixedcolormap` (invulnerability or light amplification), copied by `R_RenderPlayerView` only when it changes |
+| 0x05000200–0x05000300 | 256 | `objpal_spare->fixedColormap`: the current `fixedcolormap` (invulnerability or light amplification), copied by `R_RenderPlayerView` only when it changes |
+| 0x05000300–0x05000400 | 256 | free (held colormap 0 until the light colormaps moved to VRAM) |
 
-`R_FastColormap` hands drawers these copies instead of loading a colormap
-slot. In mGBA, lookups from palette RAM run at IWRAM speed (sky: 19.0
+Drawers read the fixed colormap from here when one is active. In mGBA,
+lookups from palette RAM and VRAM run at IWRAM speed (sky: 19.0
 cycles/pixel against 18.9 from IWRAM). On hardware, a CPU access can take one
-extra cycle when the display reads the palette at the same time.
+extra cycle when the display reads the palette or VRAM at the same time.
 
 ### Free video memory
 
 | Where | Bytes | Notes |
 |---|---|---|
-| `vram_tail->unused`, 0x06013600–0x06015400 | 7,680 | one contiguous block |
-| `vram1_spare` | 460 | |
+| `vram_tail->unused`, 0x06015F00–0x06016000 | 256 | |
+| `vram1_spare` | 76 | |
 | OAM | 48 | |
+| OBJ palette, 0x05000300–0x05000400 | 256 | |
 
 VRAM, OAM and palette RAM need 16- or 32-bit writes, because 8-bit writes to
 VRAM store the byte to both halves of the halfword. Any table moved there

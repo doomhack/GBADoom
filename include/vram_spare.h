@@ -27,6 +27,7 @@
 #include "m_fixed.h"
 #include "tables.h"
 #include "r_defs.h"
+#include "r_main.h"
 
 #define VRAM_PAGE_SPARE_SIZE (0xA000 - 0x9600)
 #define VRAM_TAIL_SIZE (0x18000 - 0x13600)
@@ -34,18 +35,6 @@
 
 #define FLAT_SIZE 4096
 #define FLAT_CACHE_SLOTS 2
-
-//Per frame summary of a drawseg that can clip sprites, so
-//R_DrawSprite can reject most drawsegs without reading them
-//from EWRAM. Only shorts and fixed_t, so stores are 16/32 bit.
-typedef struct drawseg_clip_s
-{
-    //x2 << 16 | (255 - x1). See R_DrawSprite for the overlap test.
-    unsigned int xkey;
-    fixed_t lowscale, scale;    //min/max of scale1, scale2.
-    short index;                //into _g->drawsegs.
-    short masked;               //has a masked mid texture.
-} drawseg_clip_t;
 
 //Gap after page 1: 0x06009600.
 typedef struct vram1_spare_s
@@ -58,17 +47,34 @@ typedef struct vram1_spare_s
 
     short wipe_y_lookup[SCREENWIDTH];
     vissprite_t* vissprite_ptrs[MAXVISSPRITES];
+
+    //Per frame drawseg summary (see vram_tail_t): the index into
+    //_g->drawsegs, with DSCLIP_MASKED set if it has a masked mid
+    //texture.
+    short dsclipInfo[MAXDRAWSEGS];
 } vram1_spare_t;
 
+#define DSCLIP_MASKED 0x8000
+
 //Gap after page 2 plus all of OBJ VRAM: 0x06013600 - 0x06018000.
-//These are contiguous, so keep the free space in one block at
-//the start and the flat cache at the end.
+//These are contiguous, so keep the free space in one block and
+//the flat cache at the end.
 typedef struct vram_tail_s
 {
-    short unused[(VRAM_TAIL_SIZE - FLAT_CACHE_SLOTS * FLAT_SIZE - MAXDRAWSEGS * sizeof(drawseg_clip_t)) / 2];
+    //Every light level of the COLORMAP lump, so drawers can switch
+    //colormap per column or span without copying. Filled once by
+    //R_InitBuffer.
+    lighttable_t lightColormaps[NUMCOLORMAPS][256];
 
-    //Filled by R_DrawMasked each frame.
-    drawseg_clip_t dsclip[MAXDRAWSEGS];
+    //Per frame summary of the drawsegs that can clip sprites, so
+    //R_DrawSprite can reject most drawsegs without reading them
+    //from EWRAM. Filled by R_DrawMasked each frame. Separate arrays
+    //(plus vram1_spare->dsclipInfo) so an entry indexes by a shift.
+    unsigned int dsclipXkey[MAXDRAWSEGS];   //x2 << 16 | (255 - x1). See R_DrawSprite.
+    fixed_t dsclipLowscale[MAXDRAWSEGS];    //min of scale1, scale2.
+    fixed_t dsclipScale[MAXDRAWSEGS];       //max of scale1, scale2.
+
+    short unused[(VRAM_TAIL_SIZE - NUMCOLORMAPS * 256 - MAXDRAWSEGS * 12 - FLAT_CACHE_SLOTS * FLAT_SIZE) / 2];
 
     //Flats are read from here as VRAM is faster than ROM.
     //Filled with BlockCopy.
@@ -86,22 +92,22 @@ typedef struct oam_spare_s
 } oam_spare_t;
 
 //OBJ palette: 0x05000200. Unused as OBJs are disabled (the game
-//palette is the BG half). Colormaps read per pixel straight from a
-//pointer (sky, fullbright sprites, weapon, fixed colormaps) are kept
-//here rather than read from ROM.
+//palette is the BG half). The powerup colormap is kept here rather
+//than read from ROM.
 #define OBJPAL_SPARE_SIZE 512
 
 typedef struct objpal_spare_s
 {
-    //colormaps[0], full bright. Filled once by R_InitBuffer.
-    lighttable_t fullColormap[256];
-
     //The powerup fixedcolormap (invulnerability or light amp).
     //Filled by R_RenderPlayerView when fixedcolormap changes.
     lighttable_t fixedColormap[256];
 } objpal_spare_t;
 
+#ifdef GBA
+//vissprite_ptrs is wider with 64 bit pointers, and off the GBA
+//this is ordinary memory anyway.
 static_assert(sizeof(vram1_spare_t) <= VRAM_PAGE_SPARE_SIZE, "vram1_spare overflows the gap after page 1");
+#endif
 static_assert(sizeof(objpal_spare_t) <= OBJPAL_SPARE_SIZE, "objpal_spare overflows the OBJ palette");
 static_assert(sizeof(vram_tail_t) == VRAM_TAIL_SIZE, "vram_tail must exactly fill the page 2 gap and OBJ VRAM");
 static_assert(sizeof(oam_spare_t) <= OAM_SPARE_SIZE, "oam_spare overflows OAM");

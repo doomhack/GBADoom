@@ -61,6 +61,8 @@
 
 #define NUMCOLORMAPS 32
 
+#define DISTMAP 2
+
 extern const int viewheight;
 
 extern const int centery;
@@ -79,7 +81,6 @@ extern fixed_t  viewx, viewy, viewz;
 
 extern angle_t  viewangle;
 
-extern const lighttable_t *fullcolormap;
 extern const lighttable_t *colormaps;
 extern const lighttable_t* fixedcolormap;
 
