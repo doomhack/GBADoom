@@ -31,7 +31,7 @@
  *
  * GBADoom: the plain, loop and bidir (and vibrato) resamplers are merged
  * into one function that hands spans of constant increment to the mixer's
- * inner loop (s_mix.iwram.c), which resamples and mixes in one pass.
+ * inner loop (S_MixResample), which resamples and mixes in one pass.
  * No floating point: pitch is computed with the bank's pitch_ratio and the
  * bend tables.
  */

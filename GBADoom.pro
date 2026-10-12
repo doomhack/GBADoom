@@ -93,7 +93,7 @@ SOURCES += \
         source/r_plane.c \
         source/r_things.c \
         source/s_mix.c \
-        source/s_mix.iwram.c \
+        source/s_mix_ref.c \
         source/s_sound.c \
         source/sounds.c \
         source/st_gfx.c \
@@ -201,7 +201,8 @@ HEADERS += \
 
 DISTFILES += \
     Makefile \
-    source/fixeddiv.s
+    source/fixeddiv.s \
+    source/s_mix_gba.s
 
 
 win32-msvc* {

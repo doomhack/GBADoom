@@ -12,8 +12,8 @@ The same source tree also builds as a Windows desktop app (via Qt) for faster it
 
 **GBA target (DevKitArm + make):**
 ```
-make            # requires DEVKITARM env var set, run from msys2 shell (see msys2.bat)
-make clean
+build           # build.bat: sets DEVKITPRO/DEVKITARM and runs devkitPro's make, from cmd or PowerShell
+build clean
 ```
 Produces `GBADoom.elf` and `GBADoom.gba`.
 
@@ -71,7 +71,7 @@ Music and sound effects both come from the WAD, mixed in software to one mono si
 
 - GbaWadUtil converts `D_*` MUS lumps to type 0 MIDI, resamples `DS*` lumps to signed 8-bit at 13379 Hz (windowed sinc, so sound effects mix without interpolation), and with `-gus <cfg>` builds a `GUSBANK` lump: GUS patches from `GbaWadUtil/dgguspat/`, preprocessed for the fixed output rate (format in `include/gusbank.h`; keep it in step with GbaWadUtil's copy).
 - `source/libtimidity/` is a fixed-point, mono port of libtimidity that reads the bank and streams MIDI from ROM (no event list in RAM).
-- `source/s_mix.c` mixes music and up to 8 sfx voices; the inner loops are in `source/s_mix.iwram.c`, and libtimidity's per-voice driver is in IWRAM too (`TIMI_IWRAM`). Instrument samples are resampled by taking the nearest sample (`S_MixResample`), not interpolated: by ear it sounds the same through the 8-bit output and roughly halves the kernel's cost.
+- `source/s_mix.c` mixes music and up to 8 sfx voices; the inner loops are ARM assembly in IWRAM on the GBA (`source/s_mix_gba.s`) and C elsewhere (`source/s_mix_ref.c`, which is also the reference: keep the two bit-identical), and libtimidity's per-voice driver is in IWRAM too (`TIMI_IWRAM`). Instrument samples are resampled by taking the nearest sample (`S_MixResample`), not interpolated: by ear it sounds the same through the 8-bit output and roughly halves the kernel's cost.
 - `source/i_audio.c`: on the GBA, Timer 0 (1254 cycles) + DMA1 feed Direct Sound A, and the mixer runs in the VBlank interrupt (so changes from the game thread mask `REG_IME`). The Qt build plays the same output through waveOut (`source/i_audio_win.c`).
 
 ### Screen geometry

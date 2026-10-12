@@ -108,7 +108,7 @@ An overflow itself is not detected.
 |---|---|---|
 | `r_hotpath.iwram.c` | 22,276 | `R_Subsector` 6,936 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 4,264, `P_CrossBSPNode` 1,936, `R_DrawVisSprite` 1,308, `R_AddSprites` 1,180, `R_MapPlane` 1,144, `R_RenderMaskedSegRange` 896, `R_RenderBSPNode` 832, `R_DrawColumn` 664 |
 | libtimidity (`TIMI_IWRAM`) | 2,372 | `_timi_resample_voice` 1,616, `update_signal` 424, `_timi_mix_voice` 332 |
-| `s_mix.iwram.c` | 628 | `S_MixResample` 264, `S_MixOutput` 188, `S_MixDirect` 164 |
+| `s_mix_gba.s` | 532 | `S_MixResample` 212, `S_MixDirect` 156, `S_MixOutput` 152 |
 | `fixeddiv.s` | 412 | |
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
 | Linker interworking stubs, alignment | 56 | |
@@ -118,7 +118,7 @@ An overflow itself is not detected.
 | Owner | Bytes | Largest items |
 |---|---|---|
 | `r_hotpath.iwram.c` | 1,728 | `colormapSlots` 1,024 (4 × 256), `spanstart` 160, `flatStats` 128, `solidcol` 120, `colormapSlotSrc` 16 |
-| `s_mix.iwram.c` | 896 | `mixbuf` 896 |
+| `s_mix_gba.s` | 896 | `mixbuf` 896 |
 | libgba | 158 | `IntrTable` 120 |
 | LTO globals, crtbegin, alignment | 62 | |
 | `.data` + init/fini arrays | 28 | |
@@ -378,9 +378,9 @@ but every reader calls `P_LineOpening` first.
 
 | Define | Default | Used by |
 |---|---|---|
-| `HOT_CODE_OPT_LEVEL` (`HOT_CODE`) | O3 | `R_DrawColumn`, `R_MapPlane` (both also `flatten`), `S_MixResample`, `S_MixDirect`, `S_MixOutput` |
+| `HOT_CODE_OPT_LEVEL` (`HOT_CODE`) | O3 | `R_DrawColumn`, `R_MapPlane` (both also `flatten`) |
 | `WARM_CODE_OPT_LEVEL` (`WARM_CODE`) | O3 | the BSP chain (`R_BSP_OPT`, 20 functions) and `R_RenderSegLoop`, which inlines into it |
-| `ARM_CODE_OPT_LEVEL` (`ARM_CODE_DEFAULT`) | O2 (was Os) | the rest of `r_hotpath.iwram.c` and `s_mix.iwram.c`, and `TIMI_IWRAM` |
+| `ARM_CODE_OPT_LEVEL` (`ARM_CODE_DEFAULT`) | O2 (was Os) | the rest of `r_hotpath.iwram.c`, and `TIMI_IWRAM` |
 
 With O3 / O3 / Os the defines built byte-identical code to before they were
 added. IWRAM code size for other settings (measured with ARM at Os = 22,288 B):
@@ -431,7 +431,7 @@ names are `char[8]` and aren't terminated when a name is 8 characters long.
 ## What to watch
 
 - **Every byte added to IWRAM comes off the stack.** That includes code or
-  statics in `r_hotpath.iwram.c`, `s_mix.iwram.c` and `TIMI_IWRAM` functions.
+  statics in `r_hotpath.iwram.c`, `s_mix_gba.s` and `TIMI_IWRAM` functions.
   At the realistic worst case (~1.89 KB), about 1.8 KB can still be added
   before the stack has no margin. The old ~4 KB floor came from the
   three-nested-action case (3,476 B), which the action queue removed. No

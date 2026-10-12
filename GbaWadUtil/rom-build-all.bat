@@ -5,4 +5,3 @@ gbawadutil.exe -in plutonia.wad -rom ..\GBADoom.gba -romout ..\GBADoomPlut.gba -
 gbawadutil.exe -in tnt.wad -rom ..\GBADoom.gba -romout ..\GBADoomTNT.gba -gus dgguspat\timidity.cfg
 
 gbawadutil.exe -in doomu.wad -pwad sigil.wad -rom ..\GBADoom.gba -romout ..\GBADoomSigil.gba -gus dgguspat\timidity.cfg
-gbawadutil.exe -in doom2.wad -pwad scythe.wad -rom ..\GBADoom.gba -romout ..\scythe.gba -gus dgguspat\timidity.cfg

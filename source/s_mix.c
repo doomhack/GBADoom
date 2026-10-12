@@ -15,6 +15,10 @@
 #include "s_mix.h"
 #include "timidity.h"
 
+#ifdef GBA
+static_assert(SND_MIX_FRACBITS == 12 && SND_MIX_SAMPLES == 224, "s_mix_gba.s has these built in");
+#endif
+
 // Sound effect volume (0-127) to mixer amp. A full scale sample at the
 // loudest volume uses about half of the output range, leaving room for music.
 #define SFX_AMP_SCALE 32

@@ -29,8 +29,9 @@ typedef struct snd_sfx_voice_t
 } snd_sfx_voice_t;
 
 //
-// Inner loops, in IWRAM (s_mix.iwram.c). The sample data is the top byte of
-// a 16 bit sample: buf accumulates sample * 256 * amp.
+// Inner loops: ARM assembly in IWRAM on the GBA (s_mix_gba.s), C elsewhere
+// (s_mix_ref.c, also the reference for the assembly). The sample data is the
+// top byte of a 16 bit sample: buf accumulates sample * 256 * amp.
 //
 
 // Mix count samples of src from ofs, stepping by incr (both SND_MIX_FRACBITS),
