@@ -2,6 +2,7 @@
 #define WADPROCESSOR_H
 
 #include <QtCore>
+#include <vector>
 #include "wadfile.h"
 
 class WadProcessor : public QObject
@@ -39,5 +40,9 @@ private:
     WadFile& wadFile;
 
 };
+
+//Kaiser windowed sinc resampler from rate to outRate (any ratio). Lowpasses
+//at the lower of the two Nyquist frequencies.
+std::vector<double> SincResample(const std::vector<double>& in, double rate, double outRate);
 
 #endif // WADPROCESSOR_H

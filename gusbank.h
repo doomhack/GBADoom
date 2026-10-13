@@ -53,7 +53,9 @@ typedef struct gusbank_header_t
 #pragma pack(pop)
 
 //Build a GUSBANK lump from a timidity .cfg (bank 0 / drumset 0), including only
-//the instruments that the MIDI lumps (D_*) in the WAD use.
-bool BuildGusBank(WadFile& wadFile, const QString& cfgPath, Lump& bankLump);
+//the instruments that the MIDI lumps (D_*) in the WAD use. oversample (1, 2 or 4)
+//stores the samples that the player pitches at runtime at that multiple of their
+//rate: the player takes the nearest sample, so it costs ROM but no CPU.
+bool BuildGusBank(WadFile& wadFile, const QString& cfgPath, Lump& bankLump, int oversample = 1);
 
 #endif // GUSBANK_H

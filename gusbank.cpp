@@ -3,6 +3,8 @@
 #include <cmath>
 #include <vector>
 
+#include "wadprocessor.h"
+
 //
 // This is libtimidity's instrument loader (instrum.c, resample.c pre_resample)
 // run offline for GUSBANK_RATE, so that the GBA player doesn't need any
@@ -429,6 +431,34 @@ static qint32 PitchRatio(const GusSample& sp)
     return qint32(qBound(1.0, std::round(r), double(INT32_MAX)));
 }
 
+//Resamples a sample that the player pitches at runtime up by factor, with the
+//sound effects' windowed sinc. The player takes the nearest sample, so each
+//doubling halves its error, for twice the ROM. Skipped if the longer sample
+//would overflow the player's fixed point positions.
+static void Oversample(GusSample& sp, int factor)
+{
+    gusbank_sample_t& s = sp.s;
+
+    if(factor <= 1 || !sp.sample_rate || double(s.data_length) * factor >= 0x40000000)
+        return;
+
+    const std::vector<double> in(sp.data.begin(), sp.data.end());
+    const std::vector<double> out = SincResample(in, 1.0, factor);
+
+    //Halved so the sinc's overshoot can't clip, and the volume doubled to make up.
+    sp.data.resize(out.size());
+
+    for(size_t k = 0; k < out.size(); k++)
+        sp.data[k] = qint16(qBound(-32768L, std::lround(out[k] * 0.5), 32767L));
+
+    sp.volume *= 2.0;
+
+    s.data_length *= factor;
+    s.loop_start *= factor;
+    s.loop_end *= factor;
+    sp.sample_rate *= factor;
+}
+
 static bool ParseConfig(const QString& cfgPath, ToneEntry tone[128], ToneEntry drum[128])
 {
     QFile f(cfgPath);
@@ -589,7 +619,7 @@ static void ScanMidi(const QByteArray& midi, bool toneUsed[128], bool drumUsed[1
     }
 }
 
-bool BuildGusBank(WadFile& wadFile, const QString& cfgPath, Lump& bankLump)
+bool BuildGusBank(WadFile& wadFile, const QString& cfgPath, Lump& bankLump, int oversample)
 {
     ToneEntry tone[128], drum[128];
 
@@ -680,6 +710,8 @@ bool BuildGusBank(WadFile& wadFile, const QString& cfgPath, Lump& bankLump)
     {
         for(GusSample& sp : instruments[i].samples)
         {
+            Oversample(sp, oversample);
+
             sp.s.pitch_ratio = PitchRatio(sp);
             sp.s.data_offset = offset + sampleData.size();
 
@@ -708,7 +740,7 @@ bool BuildGusBank(WadFile& wadFile, const QString& cfgPath, Lump& bankLump)
     for(const GusInstrument& ip : instruments)
         numSamples += ip.samples.size();
 
-    qInfo("GUSBANK: %d instruments, %d samples, %d bytes.", int(instruments.size()), numSamples, int(out.size()));
+    qInfo("GUSBANK: %d instruments, %d samples, %d bytes, oversampled %dx.", int(instruments.size()), numSamples, int(out.size()), oversample);
 
     return true;
 }

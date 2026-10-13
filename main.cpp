@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
     QString romIn;
     QString romOut;
     QString gusCfg;
+    int oversample = 1;
     QStringList pwads;
 
     for(int i = 0; i < args.count()-1; i++)
@@ -42,6 +43,8 @@ int main(int argc, char *argv[])
             romOut = args.at(++i);
         else if(args.at(i) == "-gus")
             gusCfg = args.at(++i);
+        else if(args.at(i) == "-oversample")
+            oversample = args.at(++i).toInt();
         else if(args.at(i) == "-pwad")
         {
             i++;
@@ -81,7 +84,7 @@ int main(int argc, char *argv[])
     {
         Lump bankLump;
 
-        if(!BuildGusBank(wf, gusCfg, bankLump))
+        if(!BuildGusBank(wf, gusCfg, bankLump, oversample))
             return 1;
 
         wf.InsertLump(wf.LumpCount(), bankLump);

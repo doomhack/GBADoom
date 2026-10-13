@@ -1123,7 +1123,7 @@ static double BesselI0(double x)
 
 //Kaiser windowed sinc resampler. Lowpasses at the lower of the two Nyquist
 //frequencies, so 22050Hz sounds don't alias when they're brought down.
-static QByteArray ResampleSound(const std::vector<double>& in, double rate, double outRate)
+std::vector<double> SincResample(const std::vector<double>& in, double rate, double outRate)
 {
     const double step = rate / outRate;
     const double cutoff = 0.5 * qMin(1.0, outRate / rate) * 0.95; //Cycles per input sample.
@@ -1152,7 +1152,7 @@ static QByteArray ResampleSound(const std::vector<double>& in, double rate, doub
     const qint64 inCount = qint64(in.size());
     const qint64 outCount = qint64(std::ceil(inCount / step));
 
-    QByteArray out(outCount, 0);
+    std::vector<double> out(outCount, 0.0);
 
     for(qint64 n = 0; n < outCount; n++)
     {
@@ -1176,7 +1176,7 @@ static QByteArray ResampleSound(const std::vector<double>& in, double rate, doub
             sum += in[k] * (kernel[i] + (kernel[i + 1] - kernel[i]) * frac);
         }
 
-        out[n] = char(qBound(-128L, std::lround(sum), 127L));
+        out[n] = sum;
     }
 
     return out;
@@ -1222,7 +1222,12 @@ bool WadProcessor::ProcessSounds()
         for(quint32 j = 0; j < count; j++)
             samples[j] = double(p[8 + first + j]) - 128.0;
 
-        const QByteArray resampled = ResampleSound(samples, rate, GUSBANK_RATE);
+        const std::vector<double> out = SincResample(samples, rate, GUSBANK_RATE);
+
+        QByteArray resampled(qsizetype(out.size()), 0);
+
+        for(size_t j = 0; j < out.size(); j++)
+            resampled[j] = char(qBound(-128L, std::lround(out[j]), 127L));
 
         char header[8];
         qToLittleEndian<quint16>(3, header);
