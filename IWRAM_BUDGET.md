@@ -32,7 +32,7 @@ into IWRAM.
 - **Doom's diminishing light is back.** Walls, masked mid textures and
   sprites take their colormap from the scale, and flats from the distance,
   as in vanilla. `scalelight`/`zlight` are `const` tables of colormap
-  numbers built at compile time (ROM +4,608 B).
+  numbers in `tables.c` (ROM +4,608 B).
 - **All 32 light colormaps live in VRAM** (`vram_tail->lightColormaps`, one
   8 KB block), so a drawer can switch colormap per column or span without
   copying. The 4-slot IWRAM colormap cache (`colormapSlots`,

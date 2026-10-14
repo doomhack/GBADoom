@@ -67,7 +67,7 @@ GbaWadUtil composites every TEXTURE1/TEXTURE2 texture into 128-byte columns (sho
 
 ### Lighting
 
-Doom's diminishing light is as in vanilla: walls, masked midtextures and sprites pick a colormap per column/sprite from their scale (`scalelight`), flats per span from their distance (`zlight`). Both tables are `const` colormap numbers computed at compile time in `r_hotpath.iwram.c`. `scalelight` is indexed by `scale >> LIGHTSCALESHIFT_GBA`, with the difference between this port's `projectiony` and Doom's 160 folded into the table. All 32 light colormaps sit in one VRAM block (`vram_tail->lightColormaps`, filled by `R_InitBuffer`), so changing colormap is a pointer, never a copy. The powerup `fixedcolormap` is read from `objpal_spare->fixedColormap`.
+Doom's diminishing light is as in vanilla: walls, masked midtextures and sprites pick a colormap per column/sprite from their scale (`scalelight`), flats per span from their distance (`zlight`). Both are plain `const` arrays of colormap numbers in `tables.c`, with the formulas they came from in comments there; regenerate them if `projectiony` changes (`r_hotpath.iwram.c` asserts it is 128). `scalelight` is indexed by `scale >> LIGHTSCALESHIFT_GBA`, with the difference between this port's `projectiony` and Doom's 160 folded into the table. All 32 light colormaps sit in one VRAM block (`vram_tail->lightColormaps`, filled by `R_InitBuffer`), so changing colormap is a pointer, never a copy. The powerup `fixedcolormap` is read from `objpal_spare->fixedColormap`.
 
 ### Sound
 
