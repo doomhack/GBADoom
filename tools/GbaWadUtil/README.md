@@ -1,5 +1,7 @@
 Utility to process Doom IWAD files for GBA Doom.
 
+This is part of the GBADoom repository. It includes the engine's include/gusbank.h and include/doom_iwad.h, so the two can't disagree on those formats. Release builds go to GBADoom's GbaWadUtil/ directory, where the exe finds gbadoom.wad and the GUS patches (dgguspat/).
+
 It can write either a new WAD file and/or a C Source file.
 
 This is required to reduce the memory footprint of some of the data structures in Doom to get it to fit in 256Kb.

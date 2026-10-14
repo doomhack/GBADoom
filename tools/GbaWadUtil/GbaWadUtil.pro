@@ -26,12 +26,18 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+# Release builds go straight into GBADoom's GbaWadUtil/ folder, next to
+# gbadoom.wad, the GUS patches and the build scripts that the exe needs.
+CONFIG(release, debug|release): DESTDIR = $$PWD/../../GbaWadUtil
+
 HEADERS += \
     doomtypes.h \
     gusbank.h \
     mus2mid.h \
     wadfile.h \
-    wadprocessor.h
+    wadprocessor.h \
+    ../../include/doom_iwad.h \
+    ../../include/gusbank.h
 
 DISTFILES += \
-    gbadoom.wad
+    ../../GbaWadUtil/gbadoom.wad

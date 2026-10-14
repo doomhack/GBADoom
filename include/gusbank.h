@@ -7,8 +7,9 @@
 // loads a .pat file is done offline for the fixed output rate below, so the
 // player reads samples and parameters straight out of ROM.
 //
-// Must match gusbank.h in GbaWadUtil. Bump GUSBANK_VERSION (and the WAD
-// version) whenever the layout or the baked-in rate changes.
+// GbaWadUtil (tools/GbaWadUtil) builds the lump from this header too. Bump
+// GUSBANK_VERSION (and the WAD version) whenever the layout or the baked-in
+// rate changes, and rebuild GbaWadUtil.
 //
 
 #include <stdint.h>

@@ -3,14 +3,16 @@
 #include "wadfile.h"
 #include "wadprocessor.h"
 #include "gusbank.h"
+#include "../../include/doom_iwad.h"
 
 void SaveBytesAsCFile(QByteArray& bytes, QString file);
 bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut);
 
-//Must match doom_iwad_header_t / DOOM_IWAD_VERSION in GBADoom's doom_iwad.h.
+//Layout of doom_iwad_header_t in the engine's doom_iwad.h.
 static const char romIwadMagic[16] = {'G','B','A','D','O','O','M','-','I','W','A','D','-','H','D','R'};
-static const quint32 romIwadVersion = 12;
+static const quint32 romIwadVersion = DOOM_IWAD_VERSION;
 static const int romIwadHeaderSize = 32;
+static_assert(sizeof(doom_iwad_header_t) == romIwadHeaderSize, "doom_iwad_header_t size changed");
 static const int romMaxSize = 32 * 1024 * 1024;
 
 

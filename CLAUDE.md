@@ -24,7 +24,9 @@ Produces `GBADoom.elf` and `GBADoom.gba`.
 GbaWadUtil -in <wad> -gus GbaWadUtil/dgguspat/timidity.cfg -rom GBADoom.gba -romout <game>.gba
 ```
 (`timidity.cfg` is the preferred, modern-sounding instrument mapping and what `rom-build-all.bat`/`wad-build-all.bat` use for every game; `timid_d1.cfg`/`timid_d2.cfg` are retro-sounding alternatives. Without `-gus` there is no `GUSBANK` lump and the music is silent. A PWAD such as Sigil goes on top of its IWAD: `-in doomu.wad -pwad sigil.wad`.)
-GbaWadUtil finds the header by its magic (`GBADOOM-IWAD-HDR`, 32-byte aligned), writes version/length, drops anything already after it and appends the processed WAD, so a ROM that already has a WAD can be re-patched. `doom_iwad` is a link-time address right after the header; `doom_iwad_len` reads the header. `IdentifyVersion()` errors at startup if no WAD is attached or `DOOM_IWAD_VERSION` doesn't match — bump it (and `romIwadVersion` in GbaWadUtil's `main.cpp`) whenever the processed WAD format changes.
+GbaWadUtil finds the header by its magic (`GBADOOM-IWAD-HDR`, 32-byte aligned), writes version/length, drops anything already after it and appends the processed WAD, so a ROM that already has a WAD can be re-patched. `doom_iwad` is a link-time address right after the header; `doom_iwad_len` reads the header. `IdentifyVersion()` errors at startup if no WAD is attached or `DOOM_IWAD_VERSION` doesn't match — bump it whenever the processed WAD format changes, then rebuild GbaWadUtil (it includes `doom_iwad.h`).
+
+**GbaWadUtil itself** lives in this repo: source in `tools/GbaWadUtil/` (Qt 6 console app, `GbaWadUtil.pro`), and the ready-to-run Windows build in `GbaWadUtil/` alongside what it needs at runtime (`gbadoom.wad`, which it loads from its own directory and merges into every WAD; `dgguspat/`; the `.bat` scripts and DLLs). Release builds of the `.pro` are written straight into `GbaWadUtil/`, so commit the rebuilt exe with any change to the tool. The tool includes the engine's `include/gusbank.h` and `include/doom_iwad.h` directly; the map/texture structs in its `doomtypes.h` are still hand-mirrored (only their sizes are checked, by the `static_assert`s in `r_defs.h`).
 
 **The Qt build still compiles the IWAD in:** use `GbaWadUtil -in <wad> -cfile <name>.c` (or `GbaWadUtil\build_*.bat`), copy the output to `source/iwad/`, and pick it in `source/doom_iwad.c` (the `#include` there is `#ifndef GBA`).
 
@@ -73,7 +75,7 @@ Doom's diminishing light is as in vanilla: walls, masked midtextures and sprites
 
 Music and sound effects both come from the WAD, mixed in software to one mono signed 8-bit stream at 13379 Hz (224 samples per GBA frame):
 
-- GbaWadUtil converts `D_*` MUS lumps to type 0 MIDI, resamples `DS*` lumps to signed 8-bit at 13379 Hz (windowed sinc, so sound effects mix without interpolation), and with `-gus <cfg>` builds a `GUSBANK` lump: GUS patches from `GbaWadUtil/dgguspat/`, preprocessed for the fixed output rate (format in `include/gusbank.h`; keep it in step with GbaWadUtil's copy).
+- GbaWadUtil converts `D_*` MUS lumps to type 0 MIDI, resamples `DS*` lumps to signed 8-bit at 13379 Hz (windowed sinc, so sound effects mix without interpolation), and with `-gus <cfg>` builds a `GUSBANK` lump: GUS patches from `GbaWadUtil/dgguspat/`, preprocessed for the fixed output rate (format in `include/gusbank.h`, which GbaWadUtil includes too).
 - `source/libtimidity/` is a fixed-point, mono port of libtimidity that reads the bank and streams MIDI from ROM (no event list in RAM).
 - `source/s_mix.c` mixes music and up to 8 sfx voices; the inner loops are ARM assembly in IWRAM on the GBA (`source/s_mix_gba.s`) and C elsewhere (`source/s_mix_ref.c`, which is also the reference: keep the two bit-identical), and libtimidity's per-voice driver is in IWRAM too (`TIMI_IWRAM`). Instrument samples are resampled by taking the nearest sample (`S_MixResample`), not interpolated: by ear it sounds the same through the 8-bit output and roughly halves the kernel's cost.
 - `source/i_audio.c`: on the GBA, Timer 0 (1254 cycles) + DMA1 feed Direct Sound A, and the mixer runs in the VBlank interrupt (so changes from the game thread mask `REG_IME`). The Qt build plays the same output through waveOut (`source/i_audio_win.c`).
@@ -90,7 +92,8 @@ Doom's original fixed-point (`fixed_t`, `include/m_fixed.h`) and angle/trig tabl
 
 - `source/`, `include/` — engine and game code (prBoom/Doom lineage, heavily trimmed and GBA-adapted).
 - `source/iwad/` — generated IWAD C headers (not checked in by default; generated per the build steps above).
-- `GbaWadUtil/` — the external tool (and prebuilt IWADs/binaries) used to convert `.wad` files into embeddable C source.
+- `tools/GbaWadUtil/` — source of the WAD converter (see Building).
+- `GbaWadUtil/` — its prebuilt Windows exe, runtime data and build scripts; IWADs go here (the commercial ones are gitignored).
 - `source/libtimidity/`, `include/libtimidity/` — the music player (see Sound).
 - `data/` — binary data directory wired into the Makefile's `BINFILES` mechanism.
 - `build/` — GBA build output/object directory (generated).

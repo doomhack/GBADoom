@@ -60,7 +60,7 @@ KippyKip is maintaining an upstream fork with new features and fixes. [KippyKip 
 
 To build the GBA version, you will need DevKitArm. The easiest way to get up and running for Windows users is download the installer from here (https://github.com/devkitPro/installer/releases) and install the GBA dev components.
 
-You will also need to use GBAWadUtil, included in the "GBAWadUtil\" directory. Alternatively download the latest build from the main source: (https://github.com/doomhack/GbaWadUtil). Windows (x64) users can download the Binary release from the releases page.
+You will also need GbaWadUtil. A Windows (x64) build is included in the "GbaWadUtil\" directory, and its source is in "tools\GbaWadUtil\" (open GbaWadUtil.pro in Qt Creator, Qt 6; release builds are written straight into "GbaWadUtil\").
 
 1) Download or Clone GBADoom source code.
 Extract the contents to a folder: (Eg: C:\DevKitPro\Projects\GBADoom)
