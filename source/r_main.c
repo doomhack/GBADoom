@@ -53,8 +53,6 @@
 
 void R_Init (void)
 {
-    lprintf("R_LoadTrigTables");
-    R_LoadTrigTables();
     lprintf("R_InitData");
     R_InitData();
     lprintf("R_InitPlanes");

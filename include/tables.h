@@ -70,9 +70,6 @@
 
 typedef unsigned angle_t;
 
-// Load trig tables if needed
-void R_LoadTrigTables(void);
-
 // Effective size is 10240.
 extern const fixed_t finesine[10240];
 
@@ -96,6 +93,11 @@ extern const angle_t xtoviewangle[121];
 extern const fixed_t yslope[128];
 
 extern const fixed_t distscale[120];
+
+//Colormap numbers for Doom's diminishing light, by light level
+//and wall/sprite scale or flat distance (see tables.c).
+extern const unsigned char scalelight[16][160];
+extern const unsigned char zlight[16][128];
 
 
 #endif

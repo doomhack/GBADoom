@@ -439,56 +439,26 @@ static CONSTFUNC R_BSP_OPT fixed_t R_PointToDist(fixed_t x, fixed_t y)
 
 //*****************************************
 // Lighting.
-// Doom's diminishing light: the colormap number for each light
-// level and distance, as R_InitLightTables built them, but
-// computed at compile time into ROM. The colormaps themselves
-// are all in VRAM (vram_tail->lightColormaps).
+// Doom's diminishing light: scalelight and zlight (tables.c) give
+// the colormap number for each light level and scale or distance.
+// The colormaps themselves are all in VRAM (vram_tail->lightColormaps).
 //*****************************************
 
-#define LIGHTCLAMP(l) ((l) < 0 ? 0 : ((l) >= NUMCOLORMAPS ? NUMCOLORMAPS-1 : (l)))
-#define STARTMAP(i) (((LIGHTLEVELS-1-(i))*2)*NUMCOLORMAPS/LIGHTLEVELS)
-
-//Walls and sprites, by k = scale >> LIGHTSCALESHIFT_GBA. Doom's
-//scales use a projection of 160 rather than PROJECTIONY_INT, so
-//Doom's index (scale >> LIGHTSCALESHIFT) is k*40/PROJECTIONY_INT.
-//The finer shift keeps the steps about as fine as Doom's.
+//scalelight is indexed by scale >> LIGHTSCALESHIFT_GBA, and its
+//entries are worked out for this projectiony.
 #define LIGHTSCALESHIFT_GBA 10
 #define NUMLIGHTSCALE 160
-#define SCALEJ(k) ((k)*(160 << LIGHTSCALESHIFT_GBA)/(PROJECTIONY_INT << LIGHTSCALESHIFT))
-#define SDIM(k) ((SCALEJ(k) < MAXLIGHTSCALE-1 ? SCALEJ(k) : MAXLIGHTSCALE-1) / DISTMAP)
 
-//Flats, by distance >> LIGHTZSHIFT. This is
-//FixedDiv(320/2*FRACUNIT, (j+1)<<LIGHTZSHIFT) >> LIGHTSCALESHIFT.
-//It uses 320, not SCREENWIDTH, like PrBoom, as distance doesn't
-//depend on the view width.
-#define ZDIM(j) (((int)((((int_64_t)(320/2*FRACUNIT)) << FRACBITS) / (((j)+1) << LIGHTZSHIFT)) >> LIGHTSCALESHIFT) / DISTMAP)
-
-#define SL(i,k) LIGHTCLAMP(STARTMAP(i) - SDIM(k))
-#define SL4(i,k) SL(i,k), SL(i,(k)+1), SL(i,(k)+2), SL(i,(k)+3)
-#define SL8(i,k) SL4(i,k), SL4(i,(k)+4)
-#define SL32(i,k) SL8(i,k), SL8(i,(k)+8), SL8(i,(k)+16), SL8(i,(k)+24)
-#define SLROW(i) { SL32(i,0), SL32(i,32), SL32(i,64), SL32(i,96), SL32(i,128) }
-
-#define ZL(i,j) LIGHTCLAMP(STARTMAP(i) - ZDIM(j))
-#define ZL4(i,j) ZL(i,j), ZL(i,(j)+1), ZL(i,(j)+2), ZL(i,(j)+3)
-#define ZL16(i,j) ZL4(i,j), ZL4(i,(j)+4), ZL4(i,(j)+8), ZL4(i,(j)+12)
-#define ZL64(i,j) ZL16(i,j), ZL16(i,(j)+16), ZL16(i,(j)+32), ZL16(i,(j)+48)
-#define ZLROW(i) { ZL64(i,0), ZL64(i,64) }
-
-#define LIGHTROWS(R) R(0), R(1), R(2), R(3), R(4), R(5), R(6), R(7), R(8), R(9), R(10), R(11), R(12), R(13), R(14), R(15)
-
-static_assert(LIGHTLEVELS == 16 && NUMLIGHTSCALE == 160 && MAXLIGHTZ == 128, "light table initialisers need updating");
-static_assert(SCALEJ(NUMLIGHTSCALE-1) >= MAXLIGHTSCALE-1, "scalelight must reach Doom's nearest light");
-
-static const byte scalelight[LIGHTLEVELS][NUMLIGHTSCALE] = { LIGHTROWS(SLROW) };
-static const byte zlight[LIGHTLEVELS][MAXLIGHTZ] = { LIGHTROWS(ZLROW) };
+static_assert(PROJECTIONY_INT == 128, "scalelight in tables.c is built for projectiony 128");
+static_assert(sizeof(scalelight) == LIGHTLEVELS * NUMLIGHTSCALE, "scalelight size");
+static_assert(sizeof(zlight) == LIGHTLEVELS * MAXLIGHTZ, "zlight size");
 
 //Which colormap objpal_spare->fixedColormap holds.
 static const lighttable_t* objpalFixedSrc;
 
 static inline __attribute__((always_inline)) int R_LightNum(int lightlevel)
 {
-    return clamp(0, (lightlevel >> LIGHTSEGSHIFT) + extralight + _g->gamma, LIGHTLEVELS-1);
+    return clamp(0, (lightlevel >> LIGHTSEGSHIFT) + extralight, LIGHTLEVELS-1);
 }
 
 //Doom's fake contrast: walls along the y axis one light level
@@ -502,7 +472,7 @@ static inline __attribute__((always_inline)) int R_SegLightNum(int lightlevel, c
     else if (seg->v1.x == seg->v2.x)
         adjust = 1;
 
-    return clamp(0, (lightlevel >> LIGHTSEGSHIFT) + extralight + _g->gamma + adjust, LIGHTLEVELS-1);
+    return clamp(0, (lightlevel >> LIGHTSEGSHIFT) + extralight + adjust, LIGHTLEVELS-1);
 }
 
 //Colormap for a wall column or sprite at this scale.
@@ -523,9 +493,6 @@ static inline __attribute__((always_inline)) const lighttable_t* R_ScaleColormap
 // Thus a special case loop for very fast rendering can
 //  be used. It has also been used with Wolfenstein 3D.
 //
-
-
-
 
 #define COLEXTRABITS 9
 #define COLBITS (FRACBITS + COLEXTRABITS)

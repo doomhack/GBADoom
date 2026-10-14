@@ -61,8 +61,6 @@
 
 #define NUMCOLORMAPS 32
 
-#define DISTMAP 2
-
 extern const int viewheight;
 
 extern const int centery;
