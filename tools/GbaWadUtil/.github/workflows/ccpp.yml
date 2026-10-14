@@ -1,0 +1,39 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  build-native:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu, windows, macos]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+    - name: "*nix: Install Qt"
+      uses: jurplel/install-qt-action@v2
+      if: matrix.os != 'windows'
+    - name: "Windows: Install Qt"
+      uses: jurplel/install-qt-action@v2
+      if: matrix.os == 'windows'
+      with:
+        arch: win64_mingw73
+    - name: Build
+      run: |
+        qmake
+        make
+    - name: "*nix: Stash"
+      if: matrix.os != 'windows'
+      uses: actions/upload-artifact@v1
+      with:
+        name: GbaWadUtil-${{ matrix.os }}
+        path: GbaWadUtil
+    - name: "Windows: Stash"
+      if: matrix.os == 'windows'
+      uses: actions/upload-artifact@v1
+      with:
+        name: GbaWadUtil-${{ matrix.os }}
+        path: release/GbaWadUtil.exe
+

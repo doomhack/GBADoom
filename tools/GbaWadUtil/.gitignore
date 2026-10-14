@@ -1,0 +1,13 @@
+
+*.user
+*.o
+.qmake.stash
+.vscode/settings.json
+GbaWadUtil
+Makefile
+moc_*.h
+moc_*.cpp
+build/Makefile.Debug
+build/Makefile.Release
+.qtcreator/GbaWadUtil.pro.user.a5de1a1
+build/Desktop_Qt_6_9_1_MinGW_64_bit_Debug/.qtc_clangd/compile_commands.json
