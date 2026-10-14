@@ -1448,8 +1448,11 @@ static void __attribute__((flatten)) HOT_CODE R_MapPlane(unsigned int y, unsigne
 //
 // R_MakeSpans
 //
+// Out of line: R_DoDrawPlane only calls it where a column changes,
+// and inlined it starves the column scan of registers.
+//
 
-static void R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2, unsigned int b2, draw_span_vars_t *dsvars)
+static void __attribute__((noinline)) R_MakeSpans(int x, unsigned int t1, unsigned int b1, unsigned int t2, unsigned int b2, draw_span_vars_t *dsvars)
 {
     for (; t1 < t2 && t1 <= b1; t1++)
         R_MapPlane(t1, spanstart[t1], x, dsvars);
@@ -1658,19 +1661,34 @@ static void R_DoDrawPlane(visplane_t *pl)
 
             const int stop = pl->maxx + 1;
 
-            pl->limits[pl->minx-1].top = pl->limits[stop].top = 0xff; // dropoff overflow
+            //Empty column after the plane closes the spans still open.
+            pl->limits[stop].limits = 0x00ff; // dropoff overflow
 
             unsigned int area = 0;
+            unsigned int height = 0; //Pixels per column in the current run, 0 if empty.
+            int runx = pl->minx;
+
+            unsigned int prev = 0x00ff; //Column before minx is empty.
 
             for (x = pl->minx ; x <= stop ; x++)
             {
-                const unsigned int top = pl->limits[x].top;
-                const unsigned int bottom = pl->limits[x].bottom;
+                const unsigned int cur = pl->limits[x].limits;
 
-                if(top != 0xff)
-                    area += (bottom - top) + 1;
+                //Most columns repeat the previous one (including the empty
+                //gaps left by R_CheckPlane merging ranges): no span starts or ends.
+                if (cur == prev)
+                    continue;
 
-                R_MakeSpans(x,pl->limits[x-1].top,pl->limits[x-1].bottom, top, bottom, &dsvars);
+                const unsigned int top = cur & 0xff;
+                const unsigned int bottom = cur >> 8;
+
+                area += height * (x - runx);
+                height = (top != 0xff) ? (bottom - top) + 1 : 0;
+                runx = x;
+
+                R_MakeSpans(x, prev & 0xff, prev >> 8, top, bottom, &dsvars);
+
+                prev = cur;
             }
 
             R_AddFlatStat(lump, area);
