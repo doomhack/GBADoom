@@ -83,6 +83,10 @@ bool WadFile::SaveWadFile(QIODevice* device)
 
     fileOffset = ROUND_UP4(fileOffset);
 
+    //Lumps with the same data (Doom 2 reuses music under several names,
+    //some sprite frames are the same) point at one copy of it.
+    QHash<QByteArray, quint32> written;
+    QList<QByteArray> toWrite;
 
     //Write the file info blocks.
     for(int i = 0; i < lumps.count(); i++)
@@ -95,33 +99,37 @@ bool WadFile::SaveWadFile(QIODevice* device)
         strncpy(fl.name, l.name.toLatin1().toUpper().constData(), 8);
 
         fl.size = l.length;
+        fl.filepos = 0;
 
         if(l.length > 0)
-            fl.filepos = fileOffset;
-        else
-            fl.filepos = 0;
+        {
+            const QByteArray data = l.data.left(l.length);
+
+            auto it = written.constFind(data);
+
+            if(it != written.constEnd())
+            {
+                fl.filepos = it.value();
+            }
+            else
+            {
+                fl.filepos = fileOffset;
+                written.insert(data, fileOffset);
+                toWrite.append(data);
+
+                fileOffset += l.length;
+                fileOffset = ROUND_UP4(fileOffset);
+            }
+        }
 
         device->write(reinterpret_cast<const char*>(&fl), sizeof(fl));
-
-        fileOffset += l.length;
-        fileOffset = ROUND_UP4(fileOffset);
     }
 
     //Write the lump data out.
-    for(int i = 0; i < lumps.count(); i++)
+    for(const QByteArray& data : toWrite)
     {
-        Lump l = lumps.at(i);
-
-        if(l.length == 0)
-            continue;
-
-        quint32 pos = device->pos();
-
-        pos = ROUND_UP4(pos);
-
-        device->seek(pos);
-
-        device->write(l.data, l.length);
+        device->seek(ROUND_UP4(device->pos()));
+        device->write(data);
     }
 
     return true;

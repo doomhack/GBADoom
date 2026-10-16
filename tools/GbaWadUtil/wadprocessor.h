@@ -15,8 +15,7 @@ public:
 
 private:
 
-    bool ProcessD2Levels();
-    bool ProcessD1Levels();
+    QStringList MapNames();
 
     bool ProcessLevel(quint32 lumpNum);
 
@@ -31,7 +30,8 @@ private:
     bool RemovePatches();
     bool ProcessTextureColumns();
     bool RemoveOverriddenMaps();
-    bool RemoveUnusedLumps();
+    bool RemoveUnusedTextures();
+    bool KeepUsedLumps();
     bool ProcessSounds();
     bool ProcessMusic();
     bool ProcessPalette();

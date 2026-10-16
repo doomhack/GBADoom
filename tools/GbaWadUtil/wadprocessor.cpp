@@ -17,12 +17,14 @@ WadProcessor::WadProcessor(WadFile& wad, QObject *parent)
 
 bool WadProcessor::ProcessWad()
 {
-    //Figure out if our IWAD is Doom or Doom2. (E1M1 or MAP01)
+    const QStringList maps = MapNames();
 
-    Lump mapLump;
+    //Can't find any maps.
+    if(maps.isEmpty())
+        return false;
 
     RemoveOverriddenMaps();
-    RemoveUnusedLumps();
+    RemoveUnusedTextures();
     ProcessTextureColumns();
     ProcessSounds();
     ProcessMusic();
@@ -34,63 +36,13 @@ bool WadProcessor::ProcessWad()
     if(!ProcessPalette())
         return false;
 
-    int lumpNum = wadFile.GetLumpByName("MAP01", mapLump);
-
-    if(lumpNum != -1)
-    {
-        return ProcessD2Levels();
-    }
-    else
-    {
-        int lumpNum = wadFile.GetLumpByName("E1M1", mapLump);
-
-        //Can't find any maps.
-        if(lumpNum == -1)
-            return false;
-    }
-
-    return ProcessD1Levels();
-}
-
-bool WadProcessor::ProcessD2Levels()
-{
-    for(int m = 1; m <= 32; m++)
+    for(const QString& map : maps)
     {
         Lump l;
-
-        QString mapName = QString("MAP%1").arg(m, 2, 10, QChar('0'));
-
-        int lumpNum = wadFile.GetLumpByName(mapName, l);
-
-        if(lumpNum != -1)
-        {
-            ProcessLevel(lumpNum);
-        }
+        ProcessLevel(wadFile.GetLumpByName(map, l));
     }
 
-    return true;
-}
-
-bool WadProcessor::ProcessD1Levels()
-{
-    for(int e = 1; e <= 4; e++)
-    {
-        for(int m = 1; m <= 9; m++)
-        {
-            Lump l;
-
-            QString mapName = QString("E%1M%2").arg(e).arg(m);
-
-            int lumpNum = wadFile.GetLumpByName(mapName, l);
-
-            if(lumpNum != -1)
-            {
-                ProcessLevel(lumpNum);
-            }
-        }
-    }
-
-    return true;
+    return KeepUsedLumps();
 }
 
 bool WadProcessor::ProcessLevel(quint32 lumpNum)
@@ -1488,30 +1440,6 @@ bool WadProcessor::ProcessPages()
         ReplacePageLump(wadFile, "BUNNYPIC", DownscalePage(strip, 640, 200, BUNNYPIC_WIDTH, RAWPAGE_HEIGHT, playpal));
         RemoveLumpsNamed(wadFile, "PFUB1");
         RemoveLumpsNamed(wadFile, "PFUB2");
-    }
-
-    return true;
-}
-
-bool WadProcessor::RemoveUnusedLumps()
-{
-    for(quint32 i = 0; i < wadFile.LumpCount(); i++)
-    {
-        Lump l;
-
-        wadFile.GetLumpByNum(i, l);
-
-        //HELP1 and Doom 2's HELP are the read this screens, which the menu
-        //doesn't have. (HELP2 is the E1 ending outside Ultimate Doom.)
-        if(     l.name.startsWith("DP") ||
-                l.name.startsWith("GENMIDI") ||
-                l.name.startsWith("DMXGUS") ||
-                l.name == "HELP1" ||
-                l.name == "HELP")
-        {
-            wadFile.RemoveLump(i);
-            i--;
-        }
     }
 
     return true;

@@ -21,6 +21,8 @@ GbaWadUtil -in iwad_file_path -rom gbadoom_rom_path -romout output_rom_path
 The ROM must be built with IWAD header support (ends with a "GBADOOM-IWAD-HDR" header). Anything already after the header is replaced, so a ROM with a WAD attached can be patched again with a different WAD.
 
 
-I plan to add PWAD support so that an IWAD and 1 or more PWADS can be converted to a GBA IWAD.
+PWADs go on top of the IWAD with -pwad pwad_path [pwad_path ...].
+
+Only the lumps the engine reads are written out (see usedlumps.cpp): unused textures, flats, sprites, sounds, music and any lumps the engine doesn't know about are dropped.
 
 It is a command line util so it can be integrated into a build process.

@@ -18,6 +18,7 @@ SOURCES += \
         gusbank.cpp \
         main.cpp \
         mus2mid.cpp \
+        usedlumps.cpp \
         wadfile.cpp \
         wadprocessor.cpp
 
