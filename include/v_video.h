@@ -99,6 +99,16 @@ void V_DrawPatchNoScale(int x, int y, const patch_t* patch);
 // V_DrawNamePatch - Draws the patch from lump "name"
 #define V_DrawNamePatch(x,y,s,n) V_DrawNumPatch(x,y,s,W_GetNumForName(n))
 
+// V_DrawRawPage - Copies a full-screen picture converted by GbaWadUtil
+// (RAWPAGE_WIDTH in doom_iwad.h) to the screen.
+void V_DrawRawPage(int lump);
+
+#define V_DrawNameRawPage(n) V_DrawRawPage(W_GetNumForName(n))
+
+// V_DrawRawStrip - As V_DrawRawPage, from a picture width pixels wide,
+// starting at column x.
+void V_DrawRawStrip(const byte* pic, int width, int x);
+
 /* cph -
  * Functions to return width & height of a patch.
  * Doesn't really belong here, but is often used in conjunction with

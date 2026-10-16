@@ -276,7 +276,7 @@ static void WI_slamBackground(void)
         lsnprintf(name, sizeof(name), "WIMAP%d", _g->wbs->epsd);
 
     // background
-    V_DrawNamePatch(0, 0, FB, name);
+    V_DrawNameRawPage(name);
 }
 
 // ====================================================================

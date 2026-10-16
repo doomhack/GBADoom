@@ -42,6 +42,7 @@
 #include "lprintf.h"
 
 #include "global_data.h"
+#include "doom_iwad.h"
 
 
 
@@ -545,7 +546,7 @@ void F_CastDrawer (void)
 
     // erase the entire screen to a background
     // CPhipps - patch drawing updated
-    V_DrawNamePatch(0,0,0, "BOSSBACK"); // Ty 03/30/98 bg texture extern
+    V_DrawNameRawPage("BOSSBACK"); // Ty 03/30/98 bg texture extern
 
     F_CastPrint ((castorder[_g->castnum].name));
 
@@ -561,9 +562,9 @@ void F_CastDrawer (void)
 //
 // F_BunnyScroll
 //
-static const char pfub2[] = { "PFUB2" };
-static const char pfub1[] = { "PFUB1" };
-
+// BUNNYPIC is PFUB2 then PFUB1 (see doom_iwad.h). Vanilla draws PFUB2 at
+// -scrolled, so the screen shows the strip from scrolled on.
+//
 static void F_BunnyScroll (void)
 {
     char        name[10];
@@ -571,19 +572,12 @@ static void F_BunnyScroll (void)
 
     {
         int scrolled = 320 - (_g->finalecount-230)/2;
-        if (scrolled <= 0)
-        {
-            V_DrawNamePatch(0, 0, 0, pfub2);
-        }
-        else if (scrolled >= 320)
-        {
-            V_DrawNamePatch(0, 0, 0, pfub1);
-        }
-        else
-        {
-            V_DrawNamePatch(320-scrolled, 0, 0, pfub1);
-            V_DrawNamePatch(-scrolled, 0, 0, pfub2);
-        }
+        if (scrolled < 0)
+            scrolled = 0;
+        else if (scrolled > 320)
+            scrolled = 320;
+
+        V_DrawRawStrip(W_CacheLumpName("BUNNYPIC"), BUNNYPIC_WIDTH, (scrolled * RAWPAGE_WIDTH) / 320);
     }
 
     if (_g->finalecount < 1130)
@@ -631,18 +625,18 @@ void F_Drawer (void)
         // CPhipps - patch drawing updated
         case 1:
             if ( _g->gamemode == retail )
-                V_DrawNamePatch(0, 0, 0, "CREDIT");
+                V_DrawNameRawPage("CREDIT");
             else
-                V_DrawNamePatch(0, 0, 0, "HELP2");
+                V_DrawNameRawPage("HELP2");
             break;
         case 2:
-            V_DrawNamePatch(0, 0, 0, "VICTORY2");
+            V_DrawNameRawPage("VICTORY2");
             break;
         case 3:
             F_BunnyScroll ();
             break;
         case 4:
-            V_DrawNamePatch(0, 0, 0, "ENDPIC");
+            V_DrawNameRawPage("ENDPIC");
             break;
         }
     }

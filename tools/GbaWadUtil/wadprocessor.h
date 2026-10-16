@@ -35,6 +35,7 @@ private:
     bool ProcessSounds();
     bool ProcessMusic();
     bool ProcessPalette();
+    bool ProcessPages();
 
     int GetTextureNumForName(const char* tex_name);
 

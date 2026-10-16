@@ -6,7 +6,18 @@
 //2: DS lumps kept as signed 8 bit, D_ lumps converted to MIDI, GUSBANK added.
 //3: DS lumps resampled to the mixer rate (GUSBANK_RATE).
 //13: PLAYPAL replaced by GBAPAL.
-#define DOOM_IWAD_VERSION 13
+//14: Full-screen pictures stored as raw pixels (RAWPAGE_WIDTH), PFUB1/2 as BUNNYPIC.
+#define DOOM_IWAD_VERSION 14
+
+//Full-screen pictures (TITLEPIC, INTERPIC, ENDPIC etc.): GbaWadUtil draws
+//each 320x200 patch and downscales it to RAWPAGE_WIDTH x RAWPAGE_HEIGHT
+//palette indices (PLAYPAL 0), row by row, ready to copy to the screen.
+#define RAWPAGE_WIDTH 240
+#define RAWPAGE_HEIGHT 160
+
+//The E3 ending's two scrolling pictures, PFUB2 then PFUB1, downscaled as
+//one RAWPAGE_HEIGHT high picture BUNNYPIC_WIDTH wide. PFUB1/2 are removed.
+#define BUNNYPIC_WIDTH (RAWPAGE_WIDTH * 2)
 
 //GBAPAL: the WAD's PLAYPAL converted by GbaWadUtil to GBA RGB15
 //(little endian, red in the low bits), ready to copy to palette RAM.

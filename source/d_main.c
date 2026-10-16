@@ -348,7 +348,7 @@ static void D_PageDrawer(void)
     // proff - added M_DrawCredits
     if (_g->pagelump)
     {
-        V_DrawNumPatch(0, 0, 0, _g->pagelump);
+        V_DrawRawPage(_g->pagelump);
     }
 }
 

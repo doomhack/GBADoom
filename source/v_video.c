@@ -39,6 +39,7 @@
 #include "w_wad.h"   /* needed for color translation lump lookup */
 #include "v_video.h"
 #include "i_video.h"
+#include "lprintf.h"
 
 #include "global_data.h"
 #include "gba_functions.h"
@@ -181,6 +182,49 @@ void V_DrawPatch(int x, int y, int scrn, const patch_t* patch)
 void V_DrawNumPatch(int x, int y, int scrn, int lump)
 {
     V_DrawPatch(x, y, scrn, W_CacheLumpNum(lump));
+}
+
+//
+// V_DrawRawStrip
+//
+// One DMA per row: a whole screen in one would hold off the VBlank
+// interrupt that restarts the sound DMA for longer than mix_out's padding.
+//
+void V_DrawRawStrip(const byte* pic, int width, int x)
+{
+    unsigned short* dest = _g->screens[0].data;
+    const byte* src = pic + x;
+
+    for(int y = 0; y < RAWPAGE_HEIGHT; y++, src += width, dest += SCREENPITCH)
+    {
+        if(!(x & 1))
+        {
+            BlockCopy16(dest, src, RAWPAGE_WIDTH);
+        }
+        else
+        {
+            //The screen takes 16 bit writes and the row starts mid halfword,
+            //so put each pair of pixels together from the halfwords either side.
+            const unsigned short* s = (const unsigned short*)(src - 1);
+            unsigned int prev = *s++;
+
+            for(int i = 0; i < RAWPAGE_WIDTH / 2; i++)
+            {
+                const unsigned int next = *s++;
+
+                dest[i] = (prev >> 8) | (next << 8);
+                prev = next;
+            }
+        }
+    }
+}
+
+void V_DrawRawPage(int lump)
+{
+    if(W_LumpLength(lump) != RAWPAGE_WIDTH * RAWPAGE_HEIGHT)
+        I_Error("V_DrawRawPage: %.8s is not a GbaWadUtil page", W_GetNameForNum(lump));
+
+    V_DrawRawStrip(W_CacheLumpNum(lump), RAWPAGE_WIDTH, 0);
 }
 
 //

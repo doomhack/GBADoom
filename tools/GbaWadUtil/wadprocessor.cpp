@@ -27,6 +27,10 @@ bool WadProcessor::ProcessWad()
     ProcessSounds();
     ProcessMusic();
 
+    //Before ProcessPalette, which removes PLAYPAL.
+    if(!ProcessPages())
+        return false;
+
     if(!ProcessPalette())
         return false;
 
@@ -1257,6 +1261,238 @@ bool WadProcessor::ProcessPalette()
     return true;
 }
 
+//Draw a patch lump onto a canvas of palette indices, at x,y less its
+//offsets, as V_DrawPatch would. False if it isn't a valid patch.
+static bool DrawPatch(const QByteArray& lump, int x, int y, std::vector<quint8>& canvas, int canvasWidth, int canvasHeight)
+{
+    const quint8* patch = reinterpret_cast<const quint8*>(lump.constData());
+    const quint32 size = quint32(lump.size());
+
+    if(size < 8)
+        return false;
+
+    const int width = qFromLittleEndian<qint16>(patch);
+    const int height = qFromLittleEndian<qint16>(patch + 2);
+
+    if(width <= 0 || height <= 0 || size < 8 + quint32(width) * 4)
+        return false;
+
+    x -= qFromLittleEndian<qint16>(patch + 4);
+    y -= qFromLittleEndian<qint16>(patch + 6);
+
+    for(int c = 0; c < width; c++)
+    {
+        quint32 post = qFromLittleEndian<quint32>(patch + 8 + c*4);
+
+        while(true)
+        {
+            if(post >= size)
+                return false;
+
+            if(patch[post] == 0xff)
+                break;
+
+            const int top = patch[post];
+            const int length = (post + 1 < size) ? patch[post + 1] : 0;
+
+            if(post + 4 + length > size)
+                return false;
+
+            for(int i = 0; i < length; i++)
+            {
+                const int px = x + c;
+                const int py = y + top + i;
+
+                if(px >= 0 && px < canvasWidth && py >= 0 && py < canvasHeight)
+                    canvas[py * canvasWidth + px] = patch[post + 3 + i];
+            }
+
+            post += length + 4;
+        }
+    }
+
+    return true;
+}
+
+//For each destination pixel along one axis, the source pixels it covers
+//and how much of each.
+static std::vector<std::vector<std::pair<int, double>>> BoxWeights(int srcSize, int dstSize)
+{
+    std::vector<std::vector<std::pair<int, double>>> weights(dstSize);
+
+    const double scale = double(srcSize) / dstSize;
+
+    for(int d = 0; d < dstSize; d++)
+    {
+        const double a = d * scale;
+        const double b = (d + 1) * scale;
+
+        for(int s = int(a); s < b && s < srcSize; s++)
+        {
+            const double w = qMin(b, s + 1.0) - qMax(a, double(s));
+
+            if(w > 1e-9)
+                weights[d].push_back({s, w / scale});
+        }
+    }
+
+    return weights;
+}
+
+//Box filter: each destination pixel is the average, in linear light, of
+//the source area it covers, matched to the nearest palette colour. Areas
+//of one colour keep it exactly.
+static QByteArray DownscalePage(const std::vector<quint8>& src, int srcWidth, int srcHeight,
+                                int dstWidth, int dstHeight, const quint8* playpal)
+{
+    double toLinear[256];
+
+    for(int i = 0; i < 256; i++)
+        toLinear[i] = std::pow(i / 255.0, 2.2);
+
+    const auto xWeights = BoxWeights(srcWidth, dstWidth);
+    const auto yWeights = BoxWeights(srcHeight, dstHeight);
+
+    QByteArray out(dstWidth * dstHeight, 0);
+
+    for(int dy = 0; dy < dstHeight; dy++)
+    {
+        for(int dx = 0; dx < dstWidth; dx++)
+        {
+            double rgb[3] = {0, 0, 0};
+
+            const int first = src[yWeights[dy][0].first * srcWidth + xWeights[dx][0].first];
+            bool oneColour = true;
+
+            for(const auto& wy : yWeights[dy])
+            {
+                for(const auto& wx : xWeights[dx])
+                {
+                    const int p = src[wy.first * srcWidth + wx.first];
+                    const double w = wy.second * wx.second;
+
+                    oneColour = oneColour && (p == first);
+
+                    for(int c = 0; c < 3; c++)
+                        rgb[c] += toLinear[playpal[p*3 + c]] * w;
+                }
+            }
+
+            int best = first;
+
+            if(!oneColour)
+            {
+                for(int c = 0; c < 3; c++)
+                    rgb[c] = 255.0 * std::pow(rgb[c], 1.0 / 2.2);
+
+                //"Redmean" weighted distance, closer to how different colours look than plain RGB.
+                double bestErr = 1e30;
+
+                for(int i = 0; i < GBAPAL_COLOURS; i++)
+                {
+                    const double r = playpal[i*3 + 0], g = playpal[i*3 + 1], b = playpal[i*3 + 2];
+                    const double rmean = (r + rgb[0]) / 2;
+                    const double dr = r - rgb[0], dg = g - rgb[1], db = b - rgb[2];
+
+                    const double err = (2 + rmean / 256) * dr*dr + 4 * dg*dg + (2 + (255 - rmean) / 256) * db*db;
+
+                    if(err < bestErr)
+                    {
+                        best = i;
+                        bestErr = err;
+                    }
+                }
+            }
+
+            out[dy * dstWidth + dx] = char(best);
+        }
+    }
+
+    return out;
+}
+
+//Draw the last lump called name onto the canvas at x,0.
+static bool DrawPageLump(WadFile& wadFile, const char* name, int x, std::vector<quint8>& canvas, int canvasWidth)
+{
+    Lump l;
+
+    if(wadFile.GetLumpByName(name, l) == -1)
+        return false;
+
+    if(!DrawPatch(l.data, x, 0, canvas, canvasWidth, 200))
+    {
+        qWarning("%s is not a valid patch, so it isn't converted. The game will stop when it shows it.", name);
+        return false;
+    }
+
+    return true;
+}
+
+static void RemoveLumpsNamed(WadFile& wadFile, const char* name)
+{
+    Lump l;
+
+    for(qint32 i; (i = wadFile.GetLumpByName(name, l)) != -1; )
+        wadFile.RemoveLump(i);
+}
+
+//Replace every lump called name with one new one.
+static void ReplacePageLump(WadFile& wadFile, const char* name, const QByteArray& data)
+{
+    RemoveLumpsNamed(wadFile, name);
+
+    Lump newLump;
+    newLump.name = name;
+    newLump.data = data;
+    newLump.length = data.size();
+
+    wadFile.InsertLump(wadFile.LumpCount(), newLump);
+}
+
+//Full-screen pictures, all drawn at 0,0 on Doom's 320x200 screen. They
+//become raw pixels at the GBA's resolution (RAWPAGE_WIDTH in doom_iwad.h),
+//so the game copies them to the screen instead of scaling a patch every
+//frame. The E3 ending scrolls from PFUB2 to PFUB1, so those two are drawn
+//side by side and downscaled together as BUNNYPIC, with no seam.
+bool WadProcessor::ProcessPages()
+{
+    static const char* const pageNames[] = {"TITLEPIC", "INTERPIC", "WIMAP0", "WIMAP1", "WIMAP2",
+                                            "CREDIT", "HELP2", "VICTORY2", "ENDPIC", "BOSSBACK"};
+
+    Lump pal;
+
+    if(wadFile.GetLumpByName("PLAYPAL", pal) == -1 || pal.length < GBAPAL_COLOURS * 3)
+    {
+        qCritical("PLAYPAL missing or too short.");
+        return false;
+    }
+
+    const quint8* playpal = reinterpret_cast<const quint8*>(pal.data.constData());
+
+    for(const char* name : pageNames)
+    {
+        std::vector<quint8> canvas(320 * 200, 0);
+
+        if(DrawPageLump(wadFile, name, 0, canvas, 320))
+            ReplacePageLump(wadFile, name, DownscalePage(canvas, 320, 200, RAWPAGE_WIDTH, RAWPAGE_HEIGHT, playpal));
+    }
+
+    //F_BunnyScroll draws PFUB1 at 320-scrolled, then PFUB2 at -scrolled.
+    std::vector<quint8> strip(640 * 200, 0);
+
+    const bool pfub1 = DrawPageLump(wadFile, "PFUB1", 320, strip, 640);
+    const bool pfub2 = DrawPageLump(wadFile, "PFUB2", 0, strip, 640);
+
+    if(pfub1 || pfub2)
+    {
+        ReplacePageLump(wadFile, "BUNNYPIC", DownscalePage(strip, 640, 200, BUNNYPIC_WIDTH, RAWPAGE_HEIGHT, playpal));
+        RemoveLumpsNamed(wadFile, "PFUB1");
+        RemoveLumpsNamed(wadFile, "PFUB2");
+    }
+
+    return true;
+}
+
 bool WadProcessor::RemoveUnusedLumps()
 {
     for(quint32 i = 0; i < wadFile.LumpCount(); i++)
@@ -1265,9 +1501,13 @@ bool WadProcessor::RemoveUnusedLumps()
 
         wadFile.GetLumpByNum(i, l);
 
+        //HELP1 and Doom 2's HELP are the read this screens, which the menu
+        //doesn't have. (HELP2 is the E1 ending outside Ultimate Doom.)
         if(     l.name.startsWith("DP") ||
                 l.name.startsWith("GENMIDI") ||
-                l.name.startsWith("DMXGUS"))
+                l.name.startsWith("DMXGUS") ||
+                l.name == "HELP1" ||
+                l.name == "HELP")
         {
             wadFile.RemoveLump(i);
             i--;
