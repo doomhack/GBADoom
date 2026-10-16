@@ -71,6 +71,10 @@ GbaWadUtil composites every TEXTURE1/TEXTURE2 texture into 128-byte columns (sho
 
 Doom's diminishing light is as in vanilla: walls, masked midtextures and sprites pick a colormap per column/sprite from their scale (`scalelight`), flats per span from their distance (`zlight`). Both are plain `const` arrays of colormap numbers in `tables.c`, with the formulas they came from in comments there; regenerate them if `projectiony` changes (`r_hotpath.iwram.c` asserts it is 128). `scalelight` is indexed by `scale >> LIGHTSCALESHIFT_GBA`, with the difference between this port's `projectiony` and Doom's 160 folded into the table. All 32 light colormaps sit in one VRAM block (`vram_tail->lightColormaps`, filled by `R_InitBuffer`), so changing colormap is a pointer, never a copy. The powerup `fixedcolormap` is read from `objpal_spare->fixedColormap`.
 
+### Palette
+
+GbaWadUtil replaces `PLAYPAL` (the last one, so a PWAD's custom palette wins) with `GBAPAL`: all 14 palettes in GBA RGB15 for each of Doom's 5 gamma levels (vanilla's `gammatable`), each channel converted on its own to the 5 bit level that displays closest to it (`To5Bit` in `wadprocessor.cpp`; the GBA shows 5 bits as `(c << 3) | (c >> 2)`). This leaves dark scenes 4–9% darker than PC, because Doom's dark greys sit just above GBA levels (36 shows as 33). Keeping brightness by mixing levels across channels was tried and gave visible green/purple tints on greys, so don't. Layout constants are in `include/doom_iwad.h`. `V_SetPalLump(gamma)` picks a level's block, and `I_SetPallete_e32` DMAs one 512 byte palette to palette RAM, with no conversion at runtime. The Qt build expands the same RGB15 palettes for display. The brightness menu is the gamma level (0–4); there are no palette lumps in `gbadoom.wad`.
+
 ### Sound
 
 Music and sound effects both come from the WAD, mixed in software to one mono signed 8-bit stream at 13379 Hz (224 samples per GBA frame):

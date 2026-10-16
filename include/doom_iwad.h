@@ -5,7 +5,16 @@
 //(tools/GbaWadUtil), which writes it into the ROM's header.
 //2: DS lumps kept as signed 8 bit, D_ lumps converted to MIDI, GUSBANK added.
 //3: DS lumps resampled to the mixer rate (GUSBANK_RATE).
-#define DOOM_IWAD_VERSION 12
+//13: PLAYPAL replaced by GBAPAL.
+#define DOOM_IWAD_VERSION 13
+
+//GBAPAL: the WAD's PLAYPAL converted by GbaWadUtil to GBA RGB15
+//(little endian, red in the low bits), ready to copy to palette RAM.
+//GBAPAL_GAMMA_LEVELS blocks, one per Doom gamma level (its gammatable),
+//each GBAPAL_PALETTES palettes of 256 colours.
+#define GBAPAL_GAMMA_LEVELS 5
+#define GBAPAL_PALETTES 14
+#define GBAPAL_COLOURS 256
 
 typedef struct
 {

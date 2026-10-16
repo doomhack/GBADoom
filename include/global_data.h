@@ -254,8 +254,8 @@ unsigned int mix_out_index;
 //i_video.c
 //******************************************************************************
 
-const unsigned char* current_pallete;
-const unsigned char* pallete_lump;
+const unsigned short* current_pallete;  //GBAPAL palette being shown.
+const unsigned short* pallete_lump;     //GBAPAL palettes for the gamma level.
 int newpal;
 
 //******************************************************************************

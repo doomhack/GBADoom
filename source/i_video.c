@@ -52,6 +52,7 @@
 #include "i_system_e32.h"
 
 #include "global_data.h"
+#include "doom_iwad.h"
 
 //
 // I_StartTic
@@ -109,11 +110,9 @@ static void I_UploadNewPalette(int pal)
   // Used by 256 colour PseudoColor modes
   
     if(!_g->pallete_lump)
-    {
-        _g->pallete_lump = W_CacheLumpName("PLAYPAL");
-    }
+        V_SetPalLump(_g->gamma);
 
-    _g->current_pallete = &_g->pallete_lump[pal*256*3];
+    _g->current_pallete = &_g->pallete_lump[pal*GBAPAL_COLOURS];
 
     I_SetPallete_e32(_g->current_pallete);
 }

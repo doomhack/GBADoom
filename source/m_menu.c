@@ -51,6 +51,7 @@
 #include "lprintf.h"
 
 #include "global_data.h"
+#include "doom_iwad.h"
 
 static void (*messageRoutine)(int response);
 
@@ -611,7 +612,7 @@ void M_DrawOptions(void)
     V_DrawNamePatch(OptionsDef.x + 176, OptionsDef.y+LINEHEIGHT*detail, 0,
                     detailNames[_g->highDetail]);
 
-    M_DrawThermo(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma+2,6,_g->gamma);
+    M_DrawThermo(OptionsDef.x + 158, OptionsDef.y+LINEHEIGHT*gamma+2,GBAPAL_GAMMA_LEVELS,_g->gamma);
 }
 
 void M_Options(int)
@@ -788,7 +789,7 @@ void M_ChangeGamma(int choice)
             _g->gamma--;
         break;
     case 1:
-        if (_g->gamma < 5)
+        if (_g->gamma < GBAPAL_GAMMA_LEVELS-1)
             _g->gamma++;
         break;
     }

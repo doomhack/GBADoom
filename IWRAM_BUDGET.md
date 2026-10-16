@@ -599,7 +599,7 @@ saves clip ranges to the openings array with 16-bit DMA (`BlockCopy16`).
 
 | Range | Bytes | Use |
 |---|---|---|
-| 0x05000000–0x05000200 | 512 | BG palette: the 256-colour game palette (`I_SetPallete_e32`); entries 0 and 241 are also set for the text console |
+| 0x05000000–0x05000200 | 512 | BG palette: the 256-colour game palette, DMA copied from the `GBAPAL` lump by `I_SetPallete_e32`; entries 0 and 241 are also set for the text console |
 | 0x05000200–0x05000300 | 256 | `objpal_spare->fixedColormap`: the current `fixedcolormap` (invulnerability or light amplification), copied by `R_RenderPlayerView` only when it changes |
 | 0x05000300–0x05000400 | 256 | free (held colormap 0 until the light colormaps moved to VRAM) |
 

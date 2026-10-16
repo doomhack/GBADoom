@@ -20,9 +20,10 @@ int I_GetVideoWidth_e32();
 
 int I_GetVideoHeight_e32();
 
-void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsigned int width, const unsigned int height);
+void I_FinishUpdate_e32(const byte* srcBuffer, const unsigned short* pallete, const unsigned int width, const unsigned int height);
 
-void I_SetPallete_e32(const byte* pallete);
+//256 colours of GBAPAL (RGB15).
+void I_SetPallete_e32(const unsigned short* pallete);
 
 void I_ProcessKeyEvents();
 

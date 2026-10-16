@@ -32,7 +32,7 @@ DoomWindow* window = NULL;
 QApplication * app = NULL;
 
 unsigned char* pb = NULL;
-unsigned char* pl = NULL;
+const unsigned short* pl = NULL;
 
 unsigned short backbuffer[120 *160];
 unsigned short frontbuffer[120 *160];
@@ -113,13 +113,13 @@ void I_CreateBackBuffer_e32()
 
 //**************************************************************************************
 
-void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsigned int width, const unsigned int height)
+void I_FinishUpdate_e32(const byte* srcBuffer, const unsigned short* pallete, const unsigned int width, const unsigned int height)
 {
     Q_UNUSED(width)
     Q_UNUSED(height)
 
     pb = (unsigned char*)srcBuffer;
-    pl = (unsigned char*)pallete;
+    pl = pallete;
 
     window->repaint();
 
@@ -130,7 +130,7 @@ void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsign
 
 //**************************************************************************************
 
-void I_SetPallete_e32(const byte* pallete)
+void I_SetPallete_e32(const unsigned short* pallete)
 {
     Q_UNUSED(pallete)
 }

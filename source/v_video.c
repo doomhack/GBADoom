@@ -42,6 +42,7 @@
 
 #include "global_data.h"
 #include "gba_functions.h"
+#include "doom_iwad.h"
 
 /*
  * V_DrawBackground tiles a 64x64 patch over the entire screen, providing the
@@ -186,29 +187,25 @@ void V_DrawNumPatch(int x, int y, int scrn, int lump)
 // V_SetPalette
 //
 // CPhipps - New function to set the palette to palette number pal.
-// Handles loading of PLAYPAL and calls I_SetPalette
+// Calls I_SetPalette with a palette of the current gamma level's GBAPAL
 
 void V_SetPalette(int pal)
 {
 	I_SetPalette(pal);
 }
 
-//Colour corrected PLAYPAL lumps ~ Kippykip
+//Select the GBAPAL palettes for a gamma level (Doom's gammatable,
+//applied by GbaWadUtil).
 void V_SetPalLump(int index)
 {
     if(index < 0)
         index = 0;
-    else if(index > 5)
-        index = 5;
+    else if(index > GBAPAL_GAMMA_LEVELS-1)
+        index = GBAPAL_GAMMA_LEVELS-1;
 
-    char lumpName[9] = "PLAYPAL0";
+    const unsigned short* gbapal = (const unsigned short*)W_CacheLumpName("GBAPAL");
 
-    if(index == 0)
-        lumpName[7] = 0;
-    else
-        lumpName[7] = '0' + index;
-
-    _g->pallete_lump = W_CacheLumpName(lumpName);
+    _g->pallete_lump = gbapal + index * GBAPAL_PALETTES * GBAPAL_COLOURS;
 }
 
 //

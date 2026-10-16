@@ -47,7 +47,7 @@ void I_UpdateSound(void);
 }
 
 extern unsigned char* pb;
-extern unsigned char* pl;
+extern const unsigned short* pl;   //GBAPAL palette, RGB15.
 
 class DoomWindow : public QWidget
 {
@@ -64,13 +64,14 @@ class DoomWindow : public QWidget
         QImage i((uchar*)pb, 240, 160, QImage::Format_Indexed8);
         i.setColorCount(256);
 
+        //RGB15 to 8 bits per channel, the way the GBA shows it.
         for(int p = 0; p < 256; p++)
         {
-            int r = pl[3*p];
-            int g = pl[(3*p)+1];
-            int b = pl[(3*p)+2];
+            const int r = pl[p] & 31;
+            const int g = (pl[p] >> 5) & 31;
+            const int b = (pl[p] >> 10) & 31;
 
-            i.setColor(p, qRgb(r, g, b));
+            i.setColor(p, qRgb((r << 3) | (r >> 2), (g << 3) | (g >> 2), (b << 3) | (b >> 2)));
         }
 
         p.drawImage(this->rect(), i, i.rect());

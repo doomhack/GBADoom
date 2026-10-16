@@ -21,6 +21,8 @@ extern "C"
     #include "global_data.h"
 
     #include "tables.h"
+
+    #include "doom_iwad.h"
 }
 
 #include "i_system_e32.h"
@@ -281,25 +283,18 @@ void I_CreateBackBuffer_e32()
 
 //**************************************************************************************
 
-void I_FinishUpdate_e32(const byte* srcBuffer, const byte* pallete, const unsigned int width, const unsigned int height)
+void I_FinishUpdate_e32(const byte* srcBuffer, const unsigned short* pallete, const unsigned int width, const unsigned int height)
 {
     REG_DISPCNT ^= DCNT_PAGE;
 }
 
 //**************************************************************************************
 
-void I_SetPallete_e32(const byte* pallete)
+//GbaWadUtil already converted GBAPAL to RGB15, and 4 byte aligns every
+//lump, so the palette is a straight 32 bit DMA copy.
+void I_SetPallete_e32(const unsigned short* pallete)
 {
-    unsigned short* pal_ram = (unsigned short*)0x5000000;
-
-    for(int i = 0; i< 256; i++)
-    {
-        unsigned int r = *pallete++;
-        unsigned int g = *pallete++;
-        unsigned int b = *pallete++;
-
-        pal_ram[i] = RGB5(r >> 3, g >> 3, b >> 3);
-    }
+    DMA3COPY(pallete, (void*)0x5000000, DMA_DST_INC | DMA_SRC_INC | DMA32 | DMA_IMMEDIATE | (GBAPAL_COLOURS * 2 / 4))
 }
 
 //**************************************************************************************

@@ -67,6 +67,7 @@
 #include "i_system.h"
 
 #include "global_data.h"
+#include "doom_iwad.h"
 
 #include "gba_functions.h"
 
@@ -882,7 +883,7 @@ void G_DoLoadGame()
     _g->gameepisode = savedata->gameepisode;
     _g->gamemap = savedata->gamemap;
 	_g->alwaysRun = savedata->alwaysRun;
-	_g->gamma = savedata->gamma;
+	_g->gamma = ((unsigned int)savedata->gamma > GBAPAL_GAMMA_LEVELS-1) ? GBAPAL_GAMMA_LEVELS-1 : savedata->gamma;
 	V_SetPalLump(_g->gamma);
 	
     G_InitNew (_g->gameskill, _g->gameepisode, _g->gamemap);
@@ -970,7 +971,7 @@ void G_LoadSettings()
 
     if(settings.cookie == settings_cookie)
     {
-        _g->gamma = (settings.gamma > 0) ? 1 : 0;
+        _g->gamma = (settings.gamma > GBAPAL_GAMMA_LEVELS-1) ? GBAPAL_GAMMA_LEVELS-1 : settings.gamma;
         _g->alwaysRun = (settings.alwaysRun > 0) ? 1 : 0;
 
         _g->showMessages = (settings.showMessages > 0) ? 1 : 0;
