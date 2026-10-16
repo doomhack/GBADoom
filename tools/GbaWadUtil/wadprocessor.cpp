@@ -53,6 +53,7 @@ bool WadProcessor::ProcessLevel(quint32 lumpNum)
     ProcessSides(lumpNum);
     ProcessBlockmap(lumpNum);
     ProcessReject(lumpNum);
+    ProcessSectors(lumpNum);
     ProcessSectorLines(lumpNum);
 
     //Lines and segs now hold their own vertex coordinates, so the
@@ -411,6 +412,31 @@ bool WadProcessor::ProcessReject(quint32 lumpNum)
     emptyRl.length = 0;
 
     wadFile.ReplaceLump(rejectLumpNum, emptyRl);
+
+    return true;
+}
+
+//The engine finds sector flats by name and lump names are uppercase, but
+//some maps have lowercase flat names (TNT's MAP11 has ceil3_4 and flat10).
+bool WadProcessor::ProcessSectors(quint32 lumpNum)
+{
+    Lump sectors;
+
+    if(!wadFile.GetLumpByNum(lumpNum+ML_SECTORS, sectors))
+        return false;
+
+    mapsector_t* sector = reinterpret_cast<mapsector_t*>(sectors.data.data());
+
+    for(quint32 i = 0; i < sectors.length / sizeof(mapsector_t); i++)
+    {
+        for(int c = 0; c < 8 && sector[i].floorpic[c]; c++)
+            sector[i].floorpic[c] = toupper(sector[i].floorpic[c]);
+
+        for(int c = 0; c < 8 && sector[i].ceilingpic[c]; c++)
+            sector[i].ceilingpic[c] = toupper(sector[i].ceilingpic[c]);
+    }
+
+    wadFile.ReplaceLump(lumpNum+ML_SECTORS, sectors);
 
     return true;
 }
