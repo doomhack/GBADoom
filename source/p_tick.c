@@ -138,8 +138,17 @@ void P_RemoveThinker(thinker_t *thinker)
     thinker->function = (think_t)P_RemoveThinkerDelayed;
 }
 
+// The free is delayed for things that don't think too: iterators such as
+// P_BlockThingsIterator read the next link of a thing after a callback
+// that removed it, and a spawn in the same tic could otherwise reuse its
+// pool slot. Things that never think aren't in the thinker list
+// (P_SpawnMobj), so link them in now.
+
 void P_RemoveThing(mobj_t *thing)
 {
+    if (!thing->thinker.next)
+        P_AddThinker(&thing->thinker);
+
     thing->thinker.function = (think_t)P_RemoveThingDelayed;
 }
 

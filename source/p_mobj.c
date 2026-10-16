@@ -575,7 +575,12 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
     mobj->thinker.function = P_ThinkerFunctionForType(type, mobj);
 
     mobj->target = mobj->tracer = NULL;
-    P_AddThinker (&mobj->thinker);
+
+    // Things that never think stay out of the thinker list, so
+    // P_RunThinkers doesn't step over them every tic. P_RemoveThing
+    // links them in when they are removed.
+    if (mobj->thinker.function)
+        P_AddThinker (&mobj->thinker);
     if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
         _g->totallive++;
     return mobj;
