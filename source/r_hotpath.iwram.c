@@ -2021,6 +2021,27 @@ static void R_DrawSegTextureColumn(const texture_t* tex, int texcolumn, draw_col
 #define HEIGHTBITS 12
 #define HEIGHTUNIT (1<<HEIGHTBITS)
 
+enum
+{
+    SEG_MARKC = 1,
+    SEG_MARKF = 2,
+    SEG_MID = 4,
+    SEG_TOP = 8,
+    SEG_BOTTOM = 16,
+    SEG_MASKED = 32
+};
+
+//Hides x from GCC's induction variable optimisation, so a store indexed by
+//x is addressed when it happens instead of by a pointer stepped (and
+//spilled) on every column.
+static inline __attribute__((always_inline)) int R_OpaqueIndex(int x)
+{
+#ifdef GBA
+    __asm__("" : "+r"(x));
+#endif
+    return x;
+}
+
 //Optimise me
 //Inlined into R_StoreWallRange, so it shares the BSP chain's level.
 static void R_BSP_OPT R_RenderSegLoop (int rw_x)
@@ -2079,18 +2100,22 @@ static void R_BSP_OPT R_RenderSegLoop (int rw_x)
     const unsigned int toptex = toptexture;
     const unsigned int bottomtex = bottomtexture;
 
-    const fixed_t midtexturemid = rw_midtexturemid;
-    const fixed_t toptexturemid = rw_toptexturemid;
+    //The upper tier is the mid texture of a one sided line
+    //(which has no top or bottom), else the top texture.
+    const unsigned int uppertex = midtex ? midtex : toptex;
+    const fixed_t uppertexturemid = midtex ? rw_midtexturemid : rw_toptexturemid;
     const fixed_t bottomtexturemid = rw_bottomtexturemid;
 
     //Look textures up once per seg rather than per column.
-    const texture_t* const midtex_t = midtex ? R_GetOrLoadTexture(midtex) : NULL;
-    const texture_t* const toptex_t = toptex ? R_GetOrLoadTexture(toptex) : NULL;
+    const texture_t* const uppertex_t = uppertex ? R_GetOrLoadTexture(uppertex) : NULL;
     const texture_t* const bottomtex_t = bottomtex ? R_GetOrLoadTexture(bottomtex) : NULL;
 
     short* const maskedcol = maskedtexture ? maskedtexturecol : NULL;
 
-    bool solid = false;
+    //The per seg flags, as bits of one word.
+    const unsigned int flags = (markc ? SEG_MARKC : 0) | (markf ? SEG_MARKF : 0) |
+                               (midtex ? SEG_MID : 0) | (toptex ? SEG_TOP : 0) |
+                               (bottomtex ? SEG_BOTTOM : 0) | (maskedcol ? SEG_MASKED : 0);
 
     //The loop always runs at least once (rw_stopx = stop + 1, stop >= start).
     if(markc)
@@ -2112,30 +2137,14 @@ static void R_BSP_OPT R_RenderSegLoop (int rw_x)
         if (yl <= cc_rwx)
           yl = cc_rwx + 1;
 
-        // texturecolumn and lighting are independent of wall tiers
-        if (textured)
-        {
-            // calculate texture offset
-            angle_t angle =(centerangle+xtoangle[rw_x])>>ANGLETOFINESHIFT;
-
-            texturecolumn = (offset-FixedMul(finetangent[angle],distance)) >> FRACBITS;
-
-            dcvars.x = rw_x;
-
-            dcvars.iscale = FixedReciprocalInline((unsigned)scale);
-
-            if (lights)
-                dcvars.colormap = R_ScaleColormap(lights, scale);
-        }
-
-        if (markc)
+        if (flags & SEG_MARKC)
         {
             int bottom = min(yl, fc_rwx) - 1;
 
             int top = cc_rwx+1;
 
             if (top <= bottom)
-                cplane->limits[rw_x].limits = ((top) | (bottom << 8));
+                cplane->limits[R_OpaqueIndex(rw_x)].limits = ((top) | (bottom << 8));
 
             cc_rwx = bottom;
         }
@@ -2143,86 +2152,106 @@ static void R_BSP_OPT R_RenderSegLoop (int rw_x)
         if (yh >= fc_rwx)
             yh = fc_rwx - 1;
 
-        if (markf)
+        if (flags & SEG_MARKF)
         {
             int top = max(yh, cc_rwx) + 1;
 
             if (top <= fc_rwx-1)
-                fplane->limits[rw_x].limits = ((top) | ((fc_rwx-1) << 8));
+                fplane->limits[R_OpaqueIndex(rw_x)].limits = ((top) | ((fc_rwx-1) << 8));
 
             fc_rwx = top;
         }
 
-        // draw the wall tiers
-        if (midtex)
-        {
-            dcvars.texturemid = midtexturemid;
+        // The upper tier (top or mid texture) covers yl..uppermid and the
+        // bottom tier lowermid..yh. A tier with no rows draws nothing.
+        int uppermid, lowermid;
 
-            dcvars.yl = yl;
-            dcvars.yh = yh;
-            R_DrawSegTextureColumn(midtex_t, texturecolumn, &dcvars);
+        if (flags & SEG_MID)
+        {
+            uppermid = yh;
+            lowermid = yh + 1;
 
             cc_rwx = viewheight;
             fc_rwx = -1;
         }
         else
         {
-            if (toptex)
+            uppermid = yl - 1;
+
+            if (flags & SEG_TOP)
             {
                 // top wall
-                int mid = min((phigh >> HEIGHTBITS), fc_rwx - 1);
+                uppermid = max(min((phigh >> HEIGHTBITS), fc_rwx - 1), yl - 1);
                 phigh += phighstep;
 
-                if (mid >= yl)
-                {
-                    dcvars.yl = yl;
-                    dcvars.yh = mid;
-                    dcvars.texturemid = toptexturemid;
-                    R_DrawSegTextureColumn(toptex_t, texturecolumn, &dcvars);
-                    cc_rwx = mid;
-                }
-                else
-                    cc_rwx = yl - 1;
+                cc_rwx = uppermid;
             }
-            else
-            {
-                if (markc)
-                    cc_rwx = yl-1;
-            }
+            else if (flags & SEG_MARKC)
+                cc_rwx = yl - 1;
 
-            if (bottomtex)          // bottom wall
+            lowermid = yh + 1;
+
+            if (flags & SEG_BOTTOM)
             {
-                int mid = max(((plow + HEIGHTUNIT - 1) >> HEIGHTBITS), cc_rwx + 1);
+                // bottom wall
+                lowermid = min(max(((plow + HEIGHTUNIT - 1) >> HEIGHTBITS), cc_rwx + 1), yh + 1);
                 plow += plowstep;
 
-                if (mid <= yh)
-                {
-                    dcvars.yl = mid;
-                    dcvars.yh = yh;
-                    dcvars.texturemid = bottomtexturemid;
-                    R_DrawSegTextureColumn(bottomtex_t, texturecolumn, &dcvars);
-                    fc_rwx = mid;
-                }
-                else
-                    fc_rwx = yh + 1;
+                fc_rwx = lowermid;
             }
-            else        // no bottom wall
-            {
-                if (markf)
-                    fc_rwx = yh + 1;
-            }
+            else if (flags & SEG_MARKF)
+                fc_rwx = yh + 1;
 
             // cph - if we completely blocked further sight through this column,
             // add this info to the solid columns array for r_bsp.c
-            if ((markc || markf) && (fc_rwx <= cc_rwx + 1))
+            if ((flags & (SEG_MARKC | SEG_MARKF)) && (fc_rwx <= cc_rwx + 1))
             {
                 solidcol[rw_x] = 1;
-                solid = true;
+                didsolidcol = 1;
             }
+        }
+
+        const bool drawupper = (uppermid >= yl);
+        const bool drawlower = (lowermid <= yh);
+
+        // The texture column is needed by the tiers that draw and to back
+        // draw a masked mid texture; scale and light only by the tiers.
+        // Many textured columns draw neither tier (hidden behind nearer walls).
+        if (drawupper || drawlower || (flags & SEG_MASKED))
+        {
+            angle_t angle =(centerangle+xtoangle[rw_x])>>ANGLETOFINESHIFT;
+
+            texturecolumn = (offset-FixedMul(finetangent[angle],distance)) >> FRACBITS;
 
             // save texturecol for backdrawing of masked mid texture
-            if (maskedcol)
-                maskedcol[rw_x] = texturecolumn;
+            if (flags & SEG_MASKED)
+                maskedcol[R_OpaqueIndex(rw_x)] = texturecolumn;
+
+            if (drawupper || drawlower)
+            {
+                dcvars.x = rw_x;
+
+                dcvars.iscale = FixedReciprocalInline((unsigned)scale);
+
+                if (lights)
+                    dcvars.colormap = R_ScaleColormap(lights, scale);
+
+                if (drawupper)
+                {
+                    dcvars.yl = yl;
+                    dcvars.yh = uppermid;
+                    dcvars.texturemid = uppertexturemid;
+                    R_DrawSegTextureColumn(uppertex_t, texturecolumn, &dcvars);
+                }
+
+                if (drawlower)
+                {
+                    dcvars.yl = lowermid;
+                    dcvars.yh = yh;
+                    dcvars.texturemid = bottomtexturemid;
+                    R_DrawSegTextureColumn(bottomtex_t, texturecolumn, &dcvars);
+                }
+            }
         }
 
         scale += scalestep;
@@ -2232,9 +2261,6 @@ static void R_BSP_OPT R_RenderSegLoop (int rw_x)
         fclip[rw_x] = fc_rwx;
         cclip[rw_x] = cc_rwx;
     }
-
-    if(solid)
-        didsolidcol = 1;
 }
 
 static R_BSP_OPT bool R_CheckOpenings(const int start)
