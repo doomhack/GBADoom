@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     QString gusCfg;
     int oversample = 1;
     QStringList pwads;
+    QStringList dehs;
 
     for(int i = 0; i < args.count()-1; i++)
     {
@@ -60,6 +61,18 @@ int main(int argc, char *argv[])
             //Let the for loop's i++ land on the next option.
             i--;
         }
+        else if(args.at(i) == "-deh")
+        {
+            i++;
+
+            while( (i < args.count()) && !args.at(i).startsWith("-"))
+            {
+                dehs.append(args.at(i));
+                i++;
+            }
+
+            i--;
+        }
     }
 
     //Also insert the GBADoom wad file. (Extra menu options etc)
@@ -69,6 +82,7 @@ int main(int argc, char *argv[])
     wf.LoadWadFile();
 
     WadProcessor wp(wf);
+    wp.SetDehackedFiles(dehs);
 
     for(int i = 0; i < pwads.length(); i++)
     {
@@ -79,7 +93,11 @@ int main(int argc, char *argv[])
     }
 
 
-    wp.ProcessWad();
+    if(!wp.ProcessWad())
+    {
+        qCritical("Processing %s failed.", qPrintable(inFile));
+        return 1;
+    }
 
     //GUS patches for the music. Without it the music is silent.
     if(gusCfg.length())

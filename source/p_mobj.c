@@ -631,20 +631,8 @@ static bool P_RunStateActions(mobj_t* mobj, statenum_t state)
 
     while(true)
     {
-        actionf_t action = st->action;
-
-        if(action)
-        {
-            if(_g->player.cheats & CF_ENEMY_ROCKETS)
-            {
-                const mobjinfo_t* info = &mobjinfo[mobj->type];
-
-                if(info->missilestate && state >= info->missilestate && state < info->painstate)
-                    action = (actionf_t)A_CyberAttack;
-            }
-
-            action(mobj, NULL);
-        }
+        if(st->action)
+            actions[st->action](mobj, NULL);
 
         if(mobj->tics)
             return true;

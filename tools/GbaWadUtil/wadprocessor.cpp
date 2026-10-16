@@ -23,6 +23,10 @@ bool WadProcessor::ProcessWad()
     if(maps.isEmpty())
         return false;
 
+    //First, so later steps see its renamed lumps and new lump names.
+    if(!ProcessDehacked())
+        return false;
+
     RemoveOverriddenMaps();
     RemoveUnusedTextures();
     ProcessTextureColumns();

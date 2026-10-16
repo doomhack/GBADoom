@@ -1,6 +1,6 @@
 #include "m_cheat.h"
 #include "doomdef.h"
-#include "d_englsh.h"
+#include "dstrings.h"
 #include "p_inter.h"
 #include "g_game.h"
 #include "global_data.h"
@@ -17,7 +17,6 @@ static void cheat_invisibility(void);
 static void cheat_map(void);
 static void cheat_goggles(void);
 static void cheat_exit(void);
-static void cheat_rockets(void);
 static void cheat_fps(void);
 
 
@@ -48,8 +47,6 @@ static const c_cheat cheat_def[] =
     {"Lite-Amp Goggles",CHEAT_SEQ(KEYD_DOWN,KEYD_LEFT,  KEYD_R,     KEYD_LEFT,  KEYD_R,     KEYD_L,         KEYD_L,         KEYD_SELECT),   cheat_goggles},
     {"Exit Level",      CHEAT_SEQ(KEYD_LEFT,KEYD_R,     KEYD_LEFT,  KEYD_L,     KEYD_B,     KEYD_LEFT,      KEYD_RIGHT,     KEYD_A),        cheat_exit},
 
-    //Because Goldeneye!
-    {"Enemy Rockets",   CHEAT_SEQ(KEYD_A,   KEYD_B,     KEYD_L,     KEYD_R,     KEYD_R,     KEYD_L,         KEYD_B,         KEYD_A),        cheat_rockets},
 	{"FPS Counter Ammo",CHEAT_SEQ(KEYD_A,   KEYD_B,     KEYD_L,     KEYD_UP,    KEYD_DOWN,  KEYD_B,         KEYD_LEFT,     KEYD_LEFT),      cheat_fps},
 };
 
@@ -108,11 +105,11 @@ static void cheat_god()
     {
         _g->player.health = god_health;
 
-        _g->player.message = STSTR_DQDON;
+        _g->player.message = D_TEXT(STSTR_DQDON);
     }
     else
     {
-        _g->player.message = STSTR_DQDOFF;
+        _g->player.message = D_TEXT(STSTR_DQDOFF);
 
     }
 }
@@ -124,7 +121,7 @@ static void cheat_choppers()
 
     P_GivePower(&_g->player, pw_invulnerability);
 
-    _g->player.message = STSTR_CHOPPERS;
+    _g->player.message = D_TEXT(STSTR_CHOPPERS);
 }
 
 static void cheat_idkfa()
@@ -157,7 +154,7 @@ static void cheat_idkfa()
     for (i=0;i<NUMCARDS;i++)
             plyr->cards[i] = true;
 
-    plyr->message = STSTR_KFAADDED;
+    plyr->message = D_TEXT(STSTR_KFAADDED);
 }
 
 static void cheat_ammo()
@@ -186,7 +183,7 @@ static void cheat_ammo()
         if (i!=am_cell || _g->gamemode!=shareware)
             plyr->ammo[i] = plyr->maxammo[i];
 
-    plyr->message = STSTR_FAADDED;
+    plyr->message = D_TEXT(STSTR_FAADDED);
 }
 
 static void cheat_noclip()
@@ -195,11 +192,11 @@ static void cheat_noclip()
 
     if(_g->player.cheats & CF_NOCLIP)
     {
-        _g->player.message = STSTR_NCON;
+        _g->player.message = D_TEXT(STSTR_NCON);
     }
     else
     {
-        _g->player.message = STSTR_NCOFF;
+        _g->player.message = D_TEXT(STSTR_NCOFF);
 
     }
 }
@@ -232,27 +229,6 @@ static void cheat_goggles()
 static void cheat_exit()
 {
     G_ExitLevel();
-}
-
-static void cheat_rockets()
-{
-    _g->player.cheats ^= CF_ENEMY_ROCKETS;
-
-    if(_g->player.cheats & CF_ENEMY_ROCKETS)
-    {
-        _g->player.health = god_health;
-
-        _g->player.weaponowned[wp_missile] = true;
-        _g->player.ammo[am_misl] = _g->player.maxammo[am_misl];
-
-        _g->player.pendingweapon = wp_missile;
-
-        _g->player.message = STSTR_ROCKETON;
-    }
-    else
-    {
-        _g->player.message = STSTR_ROCKETOFF;
-    }
 }
 
 static void cheat_fps()

@@ -14,6 +14,8 @@ A port of prBoom to the GBA.
 
 - Sound and music support. Big thanks to BloodShedder for his Chiptune Doom MOD files.
 
+- Vanilla DeHackEd patches. GbaWadUtil applies a WAD's DEHACKED lump, or a .deh file with -deh, when it builds the ROM.
+
 **What's not?**
 
 - My Markdown skills.
@@ -22,7 +24,7 @@ A port of prBoom to the GBA.
 
 - General optimisation. We're never going to get a perfect 35FPS but I think there is still another 25% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
 
-- Although it is based on prBoom, most of the engine enhancements (dehacked, limit removing etc) have been reverted back to Vanilla. This is either for memory or performance reasons. Sadly, NUTS.wad and Okuplok are right out!
+- Although it is based on prBoom, most of the engine enhancements (BEX, limit removing etc) have been reverted back to Vanilla. This is either for memory or performance reasons. Sadly, NUTS.wad and Okuplok are right out!
 
 - No multiplayer. 
 
@@ -43,7 +45,6 @@ KippyKip is maintaining an upstream fork with new features and fixes. [KippyKip 
 **Auto-map:** L, SELECT,R, B, A, R, L, UP  
 **Lite-Amp Goggles:** DOWN,LEFT, R, LEFT, R, L, L, SELECT  
 **Exit Level:** LEFT,R, LEFT, L, B, LEFT, RIGHT, A  
-**Enemy Rockets (Goldeneye):** A, B, L, R, R, L, B, A  
 **Toggle FPS counter:** A, B, L, UP, DOWN, B, LEFT, LEFT  
 
 ## Controls:  

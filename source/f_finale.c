@@ -92,20 +92,20 @@ void F_StartFinale (void)
             switch (_g->gameepisode)
             {
                 case 1:
-                    _g->finaleflat = "FLOOR4_8";
-                    _g->finaletext = E1TEXT;
+                    _g->finaleflat = D_TEXT(FLOOR4_8);
+                    _g->finaletext = D_TEXT(E1TEXT);
                     break;
                 case 2:
-                    _g->finaleflat = "SFLR6_1";
-                    _g->finaletext = E2TEXT;
+                    _g->finaleflat = D_TEXT(SFLR6_1);
+                    _g->finaletext = D_TEXT(E2TEXT);
                     break;
                 case 3:
-                    _g->finaleflat = "MFLR8_4";
-                    _g->finaletext = E3TEXT;
+                    _g->finaleflat = D_TEXT(MFLR8_4);
+                    _g->finaletext = D_TEXT(E3TEXT);
                     break;
                 case 4:
-                    _g->finaleflat = "MFLR8_3";
-                    _g->finaletext = E4TEXT;
+                    _g->finaleflat = D_TEXT(MFLR8_3);
+                    _g->finaletext = D_TEXT(E4TEXT);
                     break;
                 default:
                     // Ouch.
@@ -123,34 +123,34 @@ void F_StartFinale (void)
             switch (_g->gamemap)
             {
                 case 6:
-                    _g->finaleflat = "SLIME16";
-                    _g->finaletext = (_g->gamemission==pack_tnt)  ? T1TEXT :
-                                                                    (_g->gamemission==pack_plut) ? P1TEXT : C1TEXT;
+                    _g->finaleflat = D_TEXT(SLIME16);
+                    _g->finaletext = (_g->gamemission==pack_tnt)  ? D_TEXT(T1TEXT) :
+                                                                    (_g->gamemission==pack_plut) ? D_TEXT(P1TEXT) : D_TEXT(C1TEXT);
                     break;
                 case 11:
-                    _g->finaleflat = "RROCK14";
-                    _g->finaletext = (_g->gamemission==pack_tnt)  ? T2TEXT :
-                                                                    (_g->gamemission==pack_plut) ? P2TEXT : C2TEXT;
+                    _g->finaleflat = D_TEXT(RROCK14);
+                    _g->finaletext = (_g->gamemission==pack_tnt)  ? D_TEXT(T2TEXT) :
+                                                                    (_g->gamemission==pack_plut) ? D_TEXT(P2TEXT) : D_TEXT(C2TEXT);
                     break;
                 case 20:
-                    _g->finaleflat = "RROCK07";
-                    _g->finaletext = (_g->gamemission==pack_tnt)  ? T3TEXT :
-                                                                    (_g->gamemission==pack_plut) ? P3TEXT : C3TEXT;
+                    _g->finaleflat = D_TEXT(RROCK07);
+                    _g->finaletext = (_g->gamemission==pack_tnt)  ? D_TEXT(T3TEXT) :
+                                                                    (_g->gamemission==pack_plut) ? D_TEXT(P3TEXT) : D_TEXT(C3TEXT);
                     break;
                 case 30:
-                    _g->finaleflat = "RROCK17";
-                    _g->finaletext = (_g->gamemission==pack_tnt)  ? T4TEXT :
-                                                                    (_g->gamemission==pack_plut) ? P4TEXT : C4TEXT;
+                    _g->finaleflat = D_TEXT(RROCK17);
+                    _g->finaletext = (_g->gamemission==pack_tnt)  ? D_TEXT(T4TEXT) :
+                                                                    (_g->gamemission==pack_plut) ? D_TEXT(P4TEXT) : D_TEXT(C4TEXT);
                     break;
                 case 15:
-                    _g->finaleflat = "RROCK13";
-                    _g->finaletext = (_g->gamemission==pack_tnt)  ? T5TEXT :
-                                                                    (_g->gamemission==pack_plut) ? P5TEXT : C5TEXT;
+                    _g->finaleflat = D_TEXT(RROCK13);
+                    _g->finaletext = (_g->gamemission==pack_tnt)  ? D_TEXT(T5TEXT) :
+                                                                    (_g->gamemission==pack_plut) ? D_TEXT(P5TEXT) : D_TEXT(C5TEXT);
                     break;
                 case 31:
-                    _g->finaleflat = "RROCK19";
-                    _g->finaletext = (_g->gamemission==pack_tnt)  ? T6TEXT :
-                                                                    (_g->gamemission==pack_plut) ? P6TEXT : C6TEXT;
+                    _g->finaleflat = D_TEXT(RROCK19);
+                    _g->finaletext = (_g->gamemission==pack_tnt)  ? D_TEXT(T6TEXT) :
+                                                                    (_g->gamemission==pack_plut) ? D_TEXT(P6TEXT) : D_TEXT(C6TEXT);
                     break;
                 default:
                     // Ouch.
@@ -164,7 +164,7 @@ void F_StartFinale (void)
         default:  // Ty 03/30/98 - not externalized
             S_ChangeMusic(mus_read_m, true);
             _g->finaleflat = "F_SKY1"; // Not used anywhere else.
-            _g->finaletext = C1TEXT;  // FIXME - other text, music?
+            _g->finaletext = D_TEXT(C1TEXT);  // FIXME - other text, music?
             break;
         }
 
@@ -291,6 +291,12 @@ static void F_TextWrite (void)
             }
 
             w = _g->hu_font[c]->width;
+
+            // Text past the edge of the screen is cut off, not drawn over
+            // the next row. GbaWadUtil rewraps DeHackEd text to fit.
+            if (cx + w > SCREENWIDTH*2 || cy + _g->hu_font[c]->height > SCREENHEIGHT)
+                continue;
+
             // CPhipps - patch drawing updated
             V_DrawPatchNoScale(cx, cy, _g->hu_font[c]);
             cx+=w;
@@ -305,31 +311,31 @@ static void F_TextWrite (void)
 //
 typedef struct
 {
-    const char *name; // CPhipps - const**
+    textnum_t    name; // deh_text.h
     mobjtype_t   type;
 } castinfo_t;
 
 #define MAX_CASTORDER 18 /* Ty - hard coded for now */
 static const castinfo_t castorder[] =
 { // CPhipps - static const, initialised here
-  { CC_ZOMBIE,  MT_POSSESSED },
-  { CC_SHOTGUN, MT_SHOTGUY },
-  { CC_HEAVY,   MT_CHAINGUY },
-  { CC_IMP,     MT_TROOP },
-  { CC_DEMON,   MT_SERGEANT },
-  { CC_LOST,    MT_SKULL },
-  { CC_CACO,    MT_HEAD },
-  { CC_HELL,    MT_KNIGHT },
-  { CC_BARON,   MT_BRUISER },
-  { CC_ARACH,   MT_BABY },
-  { CC_PAIN,    MT_PAIN },
-  { CC_REVEN,   MT_UNDEAD },
-  { CC_MANCU,   MT_FATSO },
-  { CC_ARCH,    MT_VILE },
-  { CC_SPIDER,  MT_SPIDER },
-  { CC_CYBER,   MT_CYBORG },
-  { CC_HERO,    MT_PLAYER },
-  { NULL,         0}
+  { TXT_CC_ZOMBIE,  MT_POSSESSED },
+  { TXT_CC_SHOTGUN, MT_SHOTGUY },
+  { TXT_CC_HEAVY,   MT_CHAINGUY },
+  { TXT_CC_IMP,     MT_TROOP },
+  { TXT_CC_DEMON,   MT_SERGEANT },
+  { TXT_CC_LOST,    MT_SKULL },
+  { TXT_CC_CACO,    MT_HEAD },
+  { TXT_CC_HELL,    MT_KNIGHT },
+  { TXT_CC_BARON,   MT_BRUISER },
+  { TXT_CC_ARACH,   MT_BABY },
+  { TXT_CC_PAIN,    MT_PAIN },
+  { TXT_CC_REVEN,   MT_UNDEAD },
+  { TXT_CC_MANCU,   MT_FATSO },
+  { TXT_CC_ARCH,    MT_VILE },
+  { TXT_CC_SPIDER,  MT_SPIDER },
+  { TXT_CC_CYBER,   MT_CYBORG },
+  { TXT_CC_HERO,    MT_PLAYER },
+  { NUMTEXTS,     0}
 };
 
 
@@ -368,7 +374,7 @@ void F_CastTicker (void)
         // switch from deathstate to next monster
         _g->castnum++;
         _g->castdeath = false;
-        if (castorder[_g->castnum].name == NULL)
+        if (castorder[_g->castnum].name == NUMTEXTS)
             _g->castnum = 0;
         if (mobjinfo[castorder[_g->castnum].type].seesound)
             S_StartSound (NULL, mobjinfo[castorder[_g->castnum].type].seesound);
@@ -548,7 +554,7 @@ void F_CastDrawer (void)
     // CPhipps - patch drawing updated
     V_DrawNameRawPage("BOSSBACK"); // Ty 03/30/98 bg texture extern
 
-    F_CastPrint ((castorder[_g->castnum].name));
+    F_CastPrint (D_TEXTNUM(castorder[_g->castnum].name));
 
     // draw the current frame in the middle of the screen
     sprdef = &_g->sprites[_g->caststate->sprite];

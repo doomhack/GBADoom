@@ -5,11 +5,12 @@
 #include <cstddef>
 #include <vector>
 
-//GbaWadUtil keeps only the lumps the engine reads: anything else (a PWAD's
-//DEHACKED, intermission animations, PC speaker sounds, textures, flats and
-//sprites no map or thing uses, ...) is dropped. The tables here mirror the
-//engine's own, so keep them in step with it: a lump the engine looks for
-//that isn't kept stops the game with "W_GetNumForName: ... not found".
+//GbaWadUtil keeps only the lumps the engine reads: anything else (DEHACKED,
+//which ProcessDehacked has applied, intermission animations, PC speaker
+//sounds, textures, flats and sprites no map or thing uses, ...) is dropped.
+//The tables here mirror the engine's own, so keep them in step with it: a
+//lump the engine looks for that isn't kept stops the game with
+//"W_GetNumForName: ... not found".
 
 //sprnames in info.c.
 static const char* const spriteNames[] =
@@ -65,6 +66,9 @@ static const char* const lumpNames[] =
     //r_data.c, v_video.c, s_mix.c (GUSBANK is added after ProcessWad).
     "TEXTURE1","TEXTURE2","TEXCOLS","COLPOOL","COLRUNS","COLORMAP","GBAPAL","GUSBANK",
 
+    //info.c, from ProcessDehacked.
+    "GBASTATE","GBAMOBJ","GBAWEAP","GBAMISC","GBATEXT",
+
     //d_main.c's demo loop.
     "DEMO1","DEMO2","DEMO3",
 
@@ -102,11 +106,11 @@ static const char* const animFlats[][2] =
     {"SLIME09","SLIME12"}
 };
 
-//Flats read by name: the sky (g_game.c) and the finale text backgrounds (f_finale.c).
+//Flats read by name: the sky (g_game.c). The finale text backgrounds
+//(f_finale.c) are deh_text.h strings, TXT_FLOOR4_8 to TXT_RROCK19.
 static const char* const flatNames[] =
 {
-    "F_SKY1","FLOOR4_8","SFLR6_1","MFLR8_4","MFLR8_3","SLIME16",
-    "RROCK14","RROCK07","RROCK17","RROCK13","RROCK19"
+    "F_SKY1"
 };
 
 //Map lumps after the marker, as they are after ProcessLevel.
@@ -116,6 +120,35 @@ static const QStringList mapLumpNames = {"THINGS", "LINEDEFS", "SIDEDEFS", "SEGS
 static QString LumpName8(const char* name)
 {
     return QString::fromLatin1(name, int(strnlen(name, 8))).toUpper();
+}
+
+template <size_t N>
+static QStringList UpperNames(const char* const (&names)[N])
+{
+    QStringList list;
+
+    for(const char* n : names)
+        list.append(QString(n).toUpper());
+
+    return list;
+}
+
+const QStringList& EngineSpriteNames()
+{
+    static const QStringList names = UpperNames(spriteNames);
+    return names;
+}
+
+const QStringList& EngineSoundNames()
+{
+    static const QStringList names = UpperNames(soundNames);
+    return names;
+}
+
+const QStringList& EngineMusicNames()
+{
+    static const QStringList names = UpperNames(musicNames);
+    return names;
 }
 
 static QSet<QString> UsedLumpNames()
@@ -284,9 +317,9 @@ bool WadProcessor::RemoveUnusedTextures()
         }
     }
 
-    //g_game.c picks one by game and episode.
-    for(int i = 1; i <= 4; i++)
-        use(QString("SKY%1").arg(i));
+    //g_game.c picks one by game and episode, by name in deh_text.h.
+    for(int t = TXT_SKY1; t <= TXT_SKY4; t++)
+        use(QString::fromLatin1(deh.text[t]));
 
     //p_switch.c's switches are all SW1xxx and SW2xxx pairs.
     for(size_t i = 0; i < textures.size(); i++)
@@ -411,6 +444,9 @@ bool WadProcessor::KeepUsedLumps()
 
     for(const char* n : flatNames)
         usedFlats.insert(n);
+
+    for(int t = TXT_FLOOR4_8; t <= TXT_RROCK19; t++)
+        usedFlats.insert(QString::fromLatin1(deh.text[t]));
 
     std::vector<Lump> kept;
 

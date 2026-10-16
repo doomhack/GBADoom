@@ -50,6 +50,14 @@
 #include "d_englsh.h"
 #endif
 
+/* The strings DeHackEd can replace, from the GBATEXT lump (read by
+ * P_InitInfoTables): D_TEXT(GOTARMOR), or D_TEXTNUM(n) for a textnum_t.
+ * Uses _g (global_data.h). */
+#include "deh_text.h"
+
+#define D_TEXTNUM(n) ((const char*)_g->text + _g->text[n])
+#define D_TEXT(id)   D_TEXTNUM(TXT_##id)
+
 /* Note this is not externally modifiable through DEH/BEX
  * Misc. other strings.
  * #define SAVEGAMENAME  "boomsav"      * killough 3/22/98 *

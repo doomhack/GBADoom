@@ -42,5 +42,6 @@
 
 void P_SetupLevel(int episode, int map);
 void P_Init(void);               /* Called by startup code. */
+void P_InitInfoTables(void);     /* info.c: the dehackable tables, from the WAD. */
 
 #endif

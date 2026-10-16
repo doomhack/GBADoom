@@ -328,27 +328,27 @@ static void G_DoLoadLevel (void)
     // depending on the current episode, and the game version.
     if (_g->gamemode == commercial)
     {
-        _g->skytexture = R_LoadTextureByName("SKY3");
+        _g->skytexture = R_LoadTextureByName(D_TEXT(SKY3));
         if (_g->gamemap < 12)
-            _g->skytexture = R_LoadTextureByName ("SKY1");
+            _g->skytexture = R_LoadTextureByName(D_TEXT(SKY1));
         else
             if (_g->gamemap < 21)
-                _g->skytexture = R_LoadTextureByName ("SKY2");
+                _g->skytexture = R_LoadTextureByName(D_TEXT(SKY2));
     }
     else //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
         switch (_g->gameepisode)
         {
             case 1:
-                _g->skytexture = R_LoadTextureByName ("SKY1");
+                _g->skytexture = R_LoadTextureByName(D_TEXT(SKY1));
                 break;
             case 2:
-                _g->skytexture = R_LoadTextureByName ("SKY2");
+                _g->skytexture = R_LoadTextureByName(D_TEXT(SKY2));
                 break;
             case 3:
-                _g->skytexture = R_LoadTextureByName ("SKY3");
+                _g->skytexture = R_LoadTextureByName(D_TEXT(SKY3));
                 break;
             case 4: // Special Edition sky
-                _g->skytexture = R_LoadTextureByName ("SKY4");
+                _g->skytexture = R_LoadTextureByName(D_TEXT(SKY4));
                 break;
         }//jff 3/27/98 end sky setting fix
 
@@ -604,7 +604,7 @@ void G_PlayerReborn ()
     p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values
 
     for (i=0 ; i<NUMAMMO ; i++)
-        p->maxammo[i] = maxammo[i];
+        p->maxammo[i] = miscinfo->maxammo[i];
 }
 
 //
@@ -894,7 +894,7 @@ void G_DoLoadGame()
     memcpy(_g->player.maxammo, savedata->maxammo, sizeof(savedata->maxammo));
 	
     //If stored maxammo is more than no backpack ammo, player had a backpack.
-    if(_g->player.maxammo[am_clip] > maxammo[am_clip])
+    if(_g->player.maxammo[am_clip] > miscinfo->maxammo[am_clip])
 		_g->player.backpack = true;
 
     Z_Free(loadbuffer);

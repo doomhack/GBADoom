@@ -15,7 +15,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        dehacked.cpp \
         gusbank.cpp \
+        infotables.cpp \
         main.cpp \
         mus2mid.cpp \
         usedlumps.cpp \
@@ -32,13 +34,18 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 CONFIG(release, debug|release): DESTDIR = $$PWD/../../GbaWadUtil
 
 HEADERS += \
+    dehacked.h \
     doomtypes.h \
     gusbank.h \
+    infotables.h \
     mus2mid.h \
     wadfile.h \
     wadprocessor.h \
+    ../../include/deh_text.h \
     ../../include/doom_iwad.h \
-    ../../include/gusbank.h
+    ../../include/gusbank.h \
+    ../../include/info.h \
+    ../../include/sounds.h
 
 DISTFILES += \
     ../../GbaWadUtil/gbadoom.wad

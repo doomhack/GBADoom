@@ -36,7 +36,6 @@ INCLUDEPATH += "C:\devkitPro\libgba\include"
 SOURCES += \
         source/am_map.c \
         source/d_client.c \
-        source/d_items.c \
         source/d_main.c \
         source/doom_iwad.c \
         source/f_finale.c \
@@ -118,12 +117,12 @@ HEADERS += \
     include/config.h \
     include/d_englsh.h \
     include/d_event.h \
-    include/d_items.h \
     include/d_main.h \
     include/d_net.h \
     include/d_player.h \
     include/d_think.h \
     include/d_ticcmd.h \
+    include/deh_text.h \
     include/doom_iwad.h \
     include/doomdata.h \
     include/doomdef.h \

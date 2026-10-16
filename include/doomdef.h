@@ -189,32 +189,8 @@ typedef enum {
   NUMCARDS
 } card_t;
 
-// The defined weapons, including a marker
-// indicating user has not changed weapon.
-typedef enum {
-  wp_fist,
-  wp_pistol,
-  wp_shotgun,
-  wp_chaingun,
-  wp_missile,
-  wp_plasma,
-  wp_bfg,
-  wp_chainsaw,
-  wp_supershotgun,
-
-  NUMWEAPONS,
-  wp_nochange              // No pending weapon change.
-} weapontype_t;
-
-// Ammunition types defined.
-typedef enum {
-  am_clip,    // Pistol / chaingun ammo.
-  am_shell,   // Shotgun / double barreled shotgun.
-  am_cell,    // Plasma rifle, BFG.
-  am_misl,    // Missile launcher.
-  NUMAMMO,
-  am_noammo   // Unlimited for chainsaw / fist.
-} ammotype_t;
+// The weapon and ammo types (weapontype_t, ammotype_t) are in info.h.
+#include "info.h"
 
 // Power up artifacts.
 typedef enum {

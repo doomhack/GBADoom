@@ -7,7 +7,8 @@
 //3: DS lumps resampled to the mixer rate (GUSBANK_RATE).
 //13: PLAYPAL replaced by GBAPAL.
 //14: Full-screen pictures stored as raw pixels (RAWPAGE_WIDTH), PFUB1/2 as BUNNYPIC.
-#define DOOM_IWAD_VERSION 14
+//15: The dehackable tables in GBASTATE, GBAMOBJ, GBAWEAP, GBAMISC and GBATEXT.
+#define DOOM_IWAD_VERSION 15
 
 //Full-screen pictures (TITLEPIC, INTERPIC, ENDPIC etc.): GbaWadUtil draws
 //each 320x200 patch and downscales it to RAWPAGE_WIDTH x RAWPAGE_HEIGHT

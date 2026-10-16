@@ -42,7 +42,7 @@
 #include "p_spec.h"
 #include "p_tick.h"
 #include "m_random.h"
-#include "d_englsh.h"
+#include "dstrings.h"
 #include "w_wad.h"
 #include "r_main.h"
 #include "r_data.h"
@@ -793,7 +793,7 @@ bool P_CanUnlockGenDoor
                  (!skulliscard || !player->cards[it_redskull])
                  )
         {
-            player->message = skulliscard? PD_REDK : PD_REDC; // Ty 03/27/98 - externalized
+            player->message = skulliscard? D_TEXT(PD_REDK) : PD_REDC; // Ty 03/27/98 - externalized
             S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
             return false;
         }
@@ -805,7 +805,7 @@ bool P_CanUnlockGenDoor
                  (!skulliscard || !player->cards[it_blueskull])
                  )
         {
-            player->message = skulliscard? PD_BLUEK : PD_BLUEC; // Ty 03/27/98 - externalized
+            player->message = skulliscard? D_TEXT(PD_BLUEK) : PD_BLUEC; // Ty 03/27/98 - externalized
             S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
             return false;
         }
@@ -817,7 +817,7 @@ bool P_CanUnlockGenDoor
                  (!skulliscard || !player->cards[it_yellowskull])
                  )
         {
-            player->message = skulliscard? PD_YELLOWK : PD_YELLOWC; // Ty 03/27/98 - externalized
+            player->message = skulliscard? D_TEXT(PD_YELLOWK) : PD_YELLOWC; // Ty 03/27/98 - externalized
             S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
             return false;
         }
@@ -829,7 +829,7 @@ bool P_CanUnlockGenDoor
                  (!skulliscard || !player->cards[it_redcard])
                  )
         {
-            player->message = skulliscard? PD_REDK : PD_REDS; // Ty 03/27/98 - externalized
+            player->message = skulliscard? D_TEXT(PD_REDK) : PD_REDS; // Ty 03/27/98 - externalized
             S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
             return false;
         }
@@ -841,7 +841,7 @@ bool P_CanUnlockGenDoor
                  (!skulliscard || !player->cards[it_bluecard])
                  )
         {
-            player->message = skulliscard? PD_BLUEK : PD_BLUES; // Ty 03/27/98 - externalized
+            player->message = skulliscard? D_TEXT(PD_BLUEK) : PD_BLUES; // Ty 03/27/98 - externalized
             S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
             return false;
         }
@@ -853,7 +853,7 @@ bool P_CanUnlockGenDoor
                  (!skulliscard || !player->cards[it_yellowcard])
                  )
         {
-            player->message = skulliscard? PD_YELLOWK : PD_YELLOWS; // Ty 03/27/98 - externalized
+            player->message = skulliscard? D_TEXT(PD_YELLOWK) : PD_YELLOWS; // Ty 03/27/98 - externalized
             S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
             return false;
         }

@@ -41,8 +41,8 @@
 #pragma interface
 #endif
 
-/* Ty 03/09/98 Moved to an int in p_inter.c for deh and externalization */
-#define MAXHEALTH maxhealth
+/* Medikits, stimpacks and berserk heal up to this. */
+#define MAXHEALTH 100
 
 /* follow a player exlusively for 3 seconds */
 #define BASETHRESHOLD   (100)
@@ -51,24 +51,20 @@ bool P_GivePower(player_t *, int);
 void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void P_DamageMobj(mobj_t *target,mobj_t *inflictor,mobj_t *source,int damage);
 
-/* killough 5/2/98: moved from d_deh.c, g_game.c, m_misc.c, others: */
-
-extern const int god_health;   /* Ty 03/09/98 - deh support, see also p_inter.c */
-extern const int idfa_armor;
-extern const int idfa_armor_class;
-extern const int idkfa_armor;
-extern const int idkfa_armor_class;  /* Ty - end */
-/* Ty 03/13/98 - externalized initial settings for respawned player */
-extern const int initial_health;
-extern const int initial_bullets;
-extern const int maxhealth;
-extern const int max_armor;
-extern const int green_armor_class;
-extern const int blue_armor_class;
-extern const int max_soul;
-extern const int soul_health;
-extern const int mega_health;
-extern const int bfgcells;
-extern const int maxammo[], clipammo[];
+/* The DeHackEd Misc values, from the GBAMISC lump (miscinfo_t, info.h).
+ * The ammo per clip and maximums are miscinfo->clipammo and maxammo. */
+#define initial_health    (miscinfo->initial_health)
+#define initial_bullets   (miscinfo->initial_bullets)
+#define maxhealth         (miscinfo->maxhealth)        /* health bonuses */
+#define max_armor         (miscinfo->max_armor)
+#define green_armor_class (miscinfo->green_armor_class)
+#define blue_armor_class  (miscinfo->blue_armor_class)
+#define max_soul          (miscinfo->max_soul)
+#define soul_health       (miscinfo->soul_health)
+#define mega_health       (miscinfo->mega_health)
+#define god_health        (miscinfo->god_health)
+#define idfa_armor        (miscinfo->idfa_armor)
+#define idfa_armor_class  (miscinfo->idfa_armor_class)
+#define bfgcells          (miscinfo->bfgcells)
 
 #endif

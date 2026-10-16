@@ -704,6 +704,9 @@ static void D_DoomMainSetup(void)
     lprintf("W_Init: Init WADfiles.");
     W_Init(); // CPhipps - handling of wadfiles init changed
 
+    lprintf("P_InitInfoTables: Init dehackable tables.");
+    P_InitInfoTables();
+
     //jff 9/3/98 use logical output routine
     lprintf("M_Init: Init misc info.");
     M_Init();

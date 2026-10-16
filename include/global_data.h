@@ -259,6 +259,20 @@ const unsigned short* pallete_lump;     //GBAPAL palettes for the gamma level.
 int newpal;
 
 //******************************************************************************
+//info.c
+//******************************************************************************
+
+//The dehackable tables, in the WAD (P_InitInfoTables). Use them through
+//the states, mobjinfo, weaponinfo and miscinfo macros below.
+const state_t* states;
+const mobjinfo_t* mobjinfo;
+const weaponinfo_t* weaponinfo;
+const miscinfo_t* miscinfo;
+
+//GBATEXT: offsets from its start to each textnum_t's string (D_TEXT).
+const unsigned int* text;
+
+//******************************************************************************
 //m_cheat.c
 //******************************************************************************
 
@@ -814,5 +828,12 @@ bool snl_pointeron;
 void InitGlobals();
 
 extern globals_t* _g;
+
+//The dehackable tables (info.c). A macro doesn't expand inside its own
+//expansion, so these don't recurse.
+#define states      (_g->states)
+#define mobjinfo    (_g->mobjinfo)
+#define weaponinfo  (_g->weaponinfo)
+#define miscinfo    (_g->miscinfo)
 
 #endif // GLOBAL_DATA_H
