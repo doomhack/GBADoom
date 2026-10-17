@@ -1,6 +1,7 @@
-QT -= gui
+# A console app: run with no arguments (or with -gui) it shows a window instead.
+QT += widgets svg
 
-CONFIG += c++11 console
+CONFIG += c++17 console
 CONFIG -= app_bundle
 
 # The following define makes your compiler emit warnings if you use
@@ -16,10 +17,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         dehacked.cpp \
+        gui/buildpage.cpp \
+        gui/mainwindow.cpp \
+        gui/spacechart.cpp \
+        gui/ui.cpp \
         gusbank.cpp \
         infotables.cpp \
         main.cpp \
         mus2mid.cpp \
+        options.cpp \
+        sizereport.cpp \
         usedlumps.cpp \
         wadfile.cpp \
         wadprocessor.cpp
@@ -30,15 +37,22 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 # Release builds go straight into GBADoom's GbaWadUtil/ folder, next to
-# gbadoom.wad, the GUS patches and the build scripts that the exe needs.
+# data/ (gbadoom.wad, the GUS patches) and the build scripts that the exe needs.
 CONFIG(release, debug|release): DESTDIR = $$PWD/../../GbaWadUtil
 
 HEADERS += \
     dehacked.h \
     doomtypes.h \
+    gui/buildpage.h \
+    gui/gui.h \
+    gui/mainwindow.h \
+    gui/spacechart.h \
+    gui/ui.h \
     gusbank.h \
     infotables.h \
     mus2mid.h \
+    options.h \
+    sizereport.h \
     wadfile.h \
     wadprocessor.h \
     ../../include/deh_text.h \
@@ -48,4 +62,4 @@ HEADERS += \
     ../../include/sounds.h
 
 DISTFILES += \
-    ../../GbaWadUtil/gbadoom.wad
+    ../../GbaWadUtil/data/gbadoom.wad

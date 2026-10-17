@@ -1,7 +1,7 @@
-gbawadutil.exe -in doom1.wad -rom ..\GBADoom.gba -romout ..\GBADoom1.gba -gus dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in doomu.wad -rom ..\GBADoom.gba -romout ..\GBADoomU.gba -gus dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in doom2.wad -rom ..\GBADoom.gba -romout ..\GBADoom2.gba -gus dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in plutonia.wad -rom ..\GBADoom.gba -romout ..\GBADoomPlut.gba -gus dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in tnt.wad -rom ..\GBADoom.gba -romout ..\GBADoomTNT.gba -gus dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in doom1.wad -rom ..\GBADoom.gba -romout ..\GBADoom1.gba -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in doomu.wad -rom ..\GBADoom.gba -romout ..\GBADoomU.gba -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in doom2.wad -rom ..\GBADoom.gba -romout ..\GBADoom2.gba -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in plutonia.wad -rom ..\GBADoom.gba -romout ..\GBADoomPlut.gba -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in tnt.wad -rom ..\GBADoom.gba -romout ..\GBADoomTNT.gba -gus data\dgguspat\timidity.cfg -oversample 4
 
-gbawadutil.exe -in doomu.wad -pwad sigil.wad -rom ..\GBADoom.gba -romout ..\GBADoomSigil.gba -gus dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in doomu.wad -pwad sigil.wad -rom ..\GBADoom.gba -romout ..\GBADoomSigil.gba -gus data\dgguspat\timidity.cfg -oversample 4

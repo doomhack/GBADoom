@@ -29,7 +29,11 @@ bool WadProcessor::ProcessWad()
 
     RemoveOverriddenMaps();
     RemoveUnusedTextures();
-    ProcessTextureColumns();
+
+    //Without the column tables the engine can't draw a wall.
+    if(!ProcessTextureColumns())
+        return false;
+
     ProcessSounds();
     ProcessMusic();
 
@@ -725,7 +729,10 @@ bool WadProcessor::ProcessTextureColumns()
 
     Lump pnamesLump;
     if(wadFile.GetLumpByName("PNAMES", pnamesLump) == -1)
+    {
+        qCritical("No PNAMES lump: not an IWAD, or no IWAD under the PWADs.");
         return false;
+    }
 
     const char* pnamesData = pnamesLump.data.constData();
     const quint32 pnameCount = *((const quint32*)pnamesData);
@@ -746,7 +753,10 @@ bool WadProcessor::ProcessTextureColumns()
 
     Lump tex1lump;
     if(wadFile.GetLumpByName("TEXTURE1", tex1lump) == -1)
+    {
+        qCritical("No TEXTURE1 lump: not an IWAD, or no IWAD under the PWADs.");
         return false;
+    }
 
     texLumps.append(tex1lump.data);
 
@@ -873,7 +883,7 @@ bool WadProcessor::ProcessTextureColumns()
                 {
                     if((runs.size() / 2) > 0xffff)
                     {
-                        qCritical("Too many unique texture run lists.");
+                        qCritical("Too many unique texture run lists: the WAD's wall textures have more holes than GBADoom can hold. This WAD has too many textures for GBADoom.");
                         return false;
                     }
 
@@ -922,9 +932,10 @@ bool WadProcessor::ProcessTextureColumns()
                 }
                 else
                 {
+                    //TEXCOLS ids are 16 bit.
                     if(poolIds.size() > 0xffff)
                     {
-                        qCritical("Too many unique texture columns.");
+                        qCritical("Too many unique texture columns: the WAD's wall textures need more than 65536 (8 MB), the most GBADoom can hold. This WAD has too many textures for GBADoom.");
                         return false;
                     }
 

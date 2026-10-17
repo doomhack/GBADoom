@@ -171,6 +171,10 @@ bool WadFile::ReplaceLump(quint32 lumpnum, Lump newLump)
 
 bool WadFile::InsertLump(quint32 lumpnum, Lump newLump)
 {
+    //Past the end is undefined in QList: append with LumpCount().
+    if(lumpnum > LumpCount())
+        return false;
+
     lumps.insert(lumpnum, newLump);
 
     return true;
@@ -199,7 +203,7 @@ bool WadFile::MergeWadFile(WadFile& wadFile)
 
         wadFile.GetLumpByNum(i, l);
 
-        InsertLump(0xffff, l);
+        InsertLump(LumpCount(), l);
     }
 
     return true;

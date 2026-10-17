@@ -78,8 +78,9 @@ more of the work ahead of time.
 ### GbaWadUtil (now part of this repo)
 
 - The source has moved into `tools/GbaWadUtil/` (Qt 6) and keeps its own history. A
-  prebuilt Windows exe, the GUS patches (`dgguspat/`) and the batch scripts are in
-  `GbaWadUtil/`.
+  prebuilt Windows exe and the batch scripts are in `GbaWadUtil/`, with
+  `gbadoom.wad` and the GUS patches tidied into `GbaWadUtil/data/` (`data/dgguspat/`).
+  `-gus timidity.cfg` finds a config there by name.
 - New options: `-rom`/`-romout` to patch a ROM, `-gus <cfg>` to build the instrument
   bank, `-pwad` to merge a PWAD over its IWAD.
 - Instrument configs: `timidity.cfg` (modern sound, the default in the batch scripts),
@@ -96,6 +97,18 @@ more of the work ahead of time.
 - Lowercase flat names, as used in TNT, are fixed.
 - New `rom-build-all.bat`/`wad-build-all.bat` scripts build every supported game in one
   go.
+- A window for building ROMs, WADs and C files: run GbaWadUtil with no arguments (or
+  double-click it). It checks the inputs before the build (missing files, an engine ROM
+  without the IWAD header, DeHackEd blocks that will be skipped), estimates the ROM
+  size, shows the equivalent command line, and shows each build's stages, log and
+  warnings. Settings can be saved as presets. `GbaWadUtil -gui ...` opens it filled in
+  from the command line.
+- Every build reports what the space goes on: engine, maps, wall textures, flats,
+  sprites, graphics, sound effects, music, instruments. `-size` gives the report
+  without writing anything, and the window uses it in the background to show the real
+  ROM size and a breakdown chart as the settings change.
+- The command line now warns about arguments it ignores and stops with an error if a
+  WAD can't be read.
 
 ### Memory and ROM size
 

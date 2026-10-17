@@ -1,1 +1,1 @@
-gbawadutil.exe -in plutonia.wad -cfile ..\source\iwad\plutonia.c -gus dgguspat\timidity.cfg
+gbawadutil.exe -in plutonia.wad -cfile ..\source\iwad\plutonia.c -gus data\dgguspat\timidity.cfg

@@ -1,6 +1,6 @@
 Utility to process Doom IWAD files for GBA Doom.
 
-This is part of the GBADoom repository. It includes the engine's include/gusbank.h and include/doom_iwad.h, so the two can't disagree on those formats. Release builds go to GBADoom's GbaWadUtil/ directory, where the exe finds gbadoom.wad and the GUS patches (dgguspat/).
+This is part of the GBADoom repository. It includes the engine's include/gusbank.h and include/doom_iwad.h, so the two can't disagree on those formats. Release builds go to GBADoom's GbaWadUtil/ directory, where the exe finds gbadoom.wad and the GUS patches in its data/ folder (data/gbadoom.wad, data/dgguspat/). gbadoom.wad is merged into every WAD and the tool stops if it's missing. -gus takes a path to a timidity .cfg, or just the name of one in data/dgguspat/ (-gus timidity.cfg).
 
 It can write either a new WAD file and/or a C Source file.
 
@@ -27,4 +27,8 @@ DeHackEd patches are applied from the WADs' DEHACKED lumps (IWAD first, then eac
 
 Only the lumps the engine reads are written out (see usedlumps.cpp): unused textures, flats, sprites, sounds, music and any lumps the engine doesn't know about are dropped.
 
+Every build prints what the space goes on ("Space used:", then engine, maps, wall textures, flats, sprites, graphics, sound effects, music, instruments and other; sizereport.cpp). Shared lump data counts once, so the parts add up to the file's size exactly. -size does the whole conversion and prints that report without writing anything; -rom then only needs the engine ROM, to count it in.
+
 It is a command line util so it can be integrated into a build process.
+
+Run with no arguments (double-click the exe) it opens a window instead (gui/). GbaWadUtil -gui followed by any of the options above opens the window filled in from them and lists the arguments it couldn't use. The window shows the command line it will run and runs builds as a GbaWadUtil child process with exactly those arguments, from the exe's folder, so a build from the window and from the command line are the same. Builds read the child's messages through QT_MESSAGE_PATTERN, so the window relies on the "Loaded", "Merged", "Wrote" and DeHackEd messages for its stages, and on the "Space used" report: keep them when changing what the tool prints. While the settings change, the window runs GbaWadUtil -size in the background (after a short pause, cancelled by the next change, cached per inputs) to show the real ROM size and its breakdown before a build. The window needs Qt6Gui, Qt6Widgets, Qt6Svg and platforms/qwindows.dll next to the exe.

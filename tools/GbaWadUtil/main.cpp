@@ -1,101 +1,90 @@
 #include <QCoreApplication>
 
+#include "options.h"
 #include "wadfile.h"
 #include "wadprocessor.h"
 #include "gusbank.h"
+#include "sizereport.h"
+#include "gui/gui.h"
 #include "../../include/doom_iwad.h"
 
-void SaveBytesAsCFile(QByteArray& bytes, QString file);
+bool SaveBytesAsCFile(const QByteArray& bytes, QString file);
 bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut);
+bool ReadEngineRom(const QString& romIn, QByteArray& rom, int& headerOffset);
 
 //Layout of doom_iwad_header_t in the engine's doom_iwad.h.
-static const char romIwadMagic[16] = {'G','B','A','D','O','O','M','-','I','W','A','D','-','H','D','R'};
 static const quint32 romIwadVersion = DOOM_IWAD_VERSION;
-static const int romIwadHeaderSize = 32;
 static_assert(sizeof(doom_iwad_header_t) == romIwadHeaderSize, "doom_iwad_header_t size changed");
 static const int romMaxSize = 32 * 1024 * 1024;
 
 
 int main(int argc, char *argv[])
 {
+    //No arguments, or -gui: the window. -gui fills it in from the other arguments.
+    bool gui = argc < 2;
+
+    for(int i = 1; i < argc; i++)
+    {
+        if(!strcmp(argv[i], "-gui"))
+            gui = true;
+    }
+
+    if(gui)
+        return RunGui(argc, argv);
+
     QCoreApplication a(argc, argv);
 
-    QStringList args = QCoreApplication::arguments();
+    QStringList ignored;
+    const WadUtilOptions o = ParseArguments(QCoreApplication::arguments().mid(1), &ignored);
 
-    QString inFile;
-    QString outFile;
-    QString cFile;
-    QString romIn;
-    QString romOut;
-    QString gusCfg;
-    int oversample = 1;
-    QStringList pwads;
-    QStringList dehs;
+    for(const QString& s : ignored)
+        qWarning("Ignored %s.", qPrintable(s));
 
-    for(int i = 0; i < args.count()-1; i++)
+    WadFile wf(o.inFile);
+
+    if(!wf.LoadWadFile())
     {
-        if(args.at(i) == "-in")
-            inFile = args.at(++i);
-        else if(args.at(i) == "-out")
-            outFile = args.at(++i);
-        else if(args.at(i) == "-cfile")
-            cFile = args.at(++i);
-        else if(args.at(i) == "-rom")
-            romIn = args.at(++i);
-        else if(args.at(i) == "-romout")
-            romOut = args.at(++i);
-        else if(args.at(i) == "-gus")
-            gusCfg = args.at(++i);
-        else if(args.at(i) == "-oversample")
-            oversample = args.at(++i).toInt();
-        else if(args.at(i) == "-pwad")
+        qCritical("Can't read WAD %s", qPrintable(o.inFile));
+        return 1;
+    }
+
+    qInfo("Loaded %s.", qPrintable(QFileInfo(o.inFile).fileName()));
+
+    WadProcessor wp(wf);
+    wp.SetDehackedFiles(o.dehs);
+
+    for(const QString& pwad : o.pwads)
+    {
+        WadFile pf(pwad);
+
+        if(!pf.LoadWadFile())
         {
-            i++;
-
-            while( (i < args.count()) && !args.at(i).startsWith("-"))
-            {
-                pwads.append(args.at(i));
-                i++;
-            }
-
-            //Let the for loop's i++ land on the next option.
-            i--;
+            qCritical("Can't read WAD %s", qPrintable(pwad));
+            return 1;
         }
-        else if(args.at(i) == "-deh")
-        {
-            i++;
 
-            while( (i < args.count()) && !args.at(i).startsWith("-"))
-            {
-                dehs.append(args.at(i));
-                i++;
-            }
-
-            i--;
-        }
+        wf.MergeWadFile(pf);
+        qInfo("Merged %s.", qPrintable(QFileInfo(pwad).fileName()));
     }
 
     //Also insert the GBADoom wad file. (Extra menu options etc)
-    pwads.append(QCoreApplication::applicationDirPath().append("/gbadoom.wad"));
+    //The engine can't start without its lumps, so it's not optional.
+    WadFile gf(GbaWadPath());
 
-    WadFile wf(inFile);
-    wf.LoadWadFile();
-
-    WadProcessor wp(wf);
-    wp.SetDehackedFiles(dehs);
-
-    for(int i = 0; i < pwads.length(); i++)
+    if(!gf.LoadWadFile())
     {
-        WadFile pf(pwads.at(i));
-        pf.LoadWadFile();
-
-        wf.MergeWadFile(pf);
+        qCritical("Can't read %s. GbaWadUtil needs it in data/ next to GbaWadUtil.exe.", qPrintable(QDir::toNativeSeparators(GbaWadPath())));
+        return 1;
     }
 
+    wf.MergeWadFile(gf);
+    qInfo("Merged gbadoom.wad.");
+
+    const QString gusCfg = FindGusConfig(o.gusCfg);
 
     if(!wp.ProcessWad())
     {
-        qCritical("Processing %s failed.", qPrintable(inFile));
+        qCritical("Processing %s failed.", qPrintable(o.inFile));
         return 1;
     }
 
@@ -104,50 +93,83 @@ int main(int argc, char *argv[])
     {
         Lump bankLump;
 
-        if(!BuildGusBank(wf, gusCfg, bankLump, oversample))
+        if(!BuildGusBank(wf, gusCfg, bankLump, o.oversample))
             return 1;
 
         wf.InsertLump(wf.LumpCount(), bankLump);
     }
 
-    if(outFile.length())
-        wf.SaveWadFile(outFile);
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
 
-    if(cFile.length())
+    wf.SaveWadFile(&buffer);
+
+    //The engine, up to the end of its IWAD header.
+    qint64 engineBytes = 0;
+
+    if(o.romIn.length())
     {
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        buffer.open(QIODevice::WriteOnly);
+        QByteArray rom;
+        int headerOffset;
 
-        wf.SaveWadFile(&buffer);
+        if(!ReadEngineRom(o.romIn, rom, headerOffset))
+            return 1;
 
-        SaveBytesAsCFile(byteArray, cFile);
+        engineBytes = headerOffset + romIwadHeaderSize;
     }
 
-    if(romIn.length() || romOut.length())
+    PrintSizes(wf, byteArray.size(), engineBytes);
+
+    if(o.sizeOnly)
     {
-        if(!romIn.length() || !romOut.length())
+        if(engineBytes && engineBytes + byteArray.size() > romMaxSize)
+            qWarning("The ROM would be %lld bytes, more than the 32MB a GBA cart can hold.", engineBytes + byteArray.size());
+
+        return 0;
+    }
+
+    if(o.outFile.length())
+    {
+        QFile f(o.outFile);
+
+        if(!f.open(QIODevice::Truncate | QIODevice::WriteOnly) || f.write(byteArray) != byteArray.size())
+        {
+            qCritical("Can't write WAD %s", qPrintable(o.outFile));
+            return 1;
+        }
+
+        qInfo("Wrote %s, %d bytes.", qPrintable(o.outFile), int(byteArray.size()));
+    }
+
+    if(o.cFile.length())
+    {
+        if(!SaveBytesAsCFile(byteArray, o.cFile))
+        {
+            qCritical("Can't write C file %s", qPrintable(o.cFile));
+            return 1;
+        }
+
+        qInfo("Wrote %s.", qPrintable(o.cFile));
+    }
+
+    if(o.romIn.length() || o.romOut.length())
+    {
+        if(!o.romIn.length() || !o.romOut.length())
         {
             qCritical("-rom and -romout must both be given.");
             return 1;
         }
 
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        buffer.open(QIODevice::WriteOnly);
-
-        wf.SaveWadFile(&buffer);
-
-        if(!SaveBytesToRom(byteArray, romIn, romOut))
+        if(!SaveBytesToRom(byteArray, o.romIn, o.romOut))
             return 1;
     }
 
     return 0;
 }
 
-//Find the IWAD header that gbadoom.ld puts at the end of the ROM,
-//drop anything after it (a previously attached IWAD) and append this one.
-bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut)
+//Reads an engine ROM and finds the IWAD header that gbadoom.ld puts at its end.
+bool ReadEngineRom(const QString& romIn, QByteArray& rom, int& headerOffset)
 {
     QFile in(romIn);
 
@@ -157,26 +179,29 @@ bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut)
         return false;
     }
 
-    QByteArray rom = in.readAll();
-    in.close();
-
-    int headerOffset = -1;
-
-    //Header is 32 byte aligned.
-    for(int i = 0; i + romIwadHeaderSize <= rom.size(); i += romIwadHeaderSize)
-    {
-        if(memcmp(rom.constData() + i, romIwadMagic, sizeof(romIwadMagic)) == 0)
-        {
-            headerOffset = i;
-            break;
-        }
-    }
+    rom = in.readAll();
+    headerOffset = FindRomIwadHeader(rom);
 
     if(headerOffset < 0)
     {
         qCritical("IWAD header not found in %s. Not a GBADoom ROM, or too old a version.", qPrintable(romIn));
         return false;
     }
+
+    return true;
+}
+
+//Drop anything after the ROM's IWAD header (a previously attached IWAD) and append this one.
+bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut)
+{
+    QByteArray rom;
+    int headerOffset;
+
+    if(!ReadEngineRom(romIn, rom, headerOffset))
+        return false;
+
+    if(rom.size() > headerOffset + romIwadHeaderSize)
+        qInfo("Replaced the WAD already in %s.", qPrintable(QFileInfo(romIn).fileName()));
 
     rom.truncate(headerOffset + romIwadHeaderSize);
 
@@ -204,15 +229,17 @@ bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut)
 
     out.close();
 
+    qInfo("Wrote %s, %d bytes.", qPrintable(romOut), int(rom.size()));
+
     return true;
 }
 
-void SaveBytesAsCFile(QByteArray& bytes, QString file)
+bool SaveBytesAsCFile(const QByteArray& bytes, QString file)
 {
     QFile f(file);
 
     if(!f.open(QIODevice::Truncate | QIODevice::ReadWrite))
-        return;
+        return false;
 
     QString decl = QString("const unsigned char doom_iwad[%1UL] = {\n").arg(bytes.size());
 
@@ -232,4 +259,6 @@ void SaveBytesAsCFile(QByteArray& bytes, QString file)
     f.write(close.toLatin1());
 
     f.close();
+
+    return f.error() == QFileDevice::NoError;
 }
