@@ -246,6 +246,22 @@ QStringList WadProcessor::MapNames()
 //half of each switch and the whole of each animation they are in. Texture 0
 //stays first, since sidedefs use it for no texture. Must run before
 //ProcessTextureColumns and before ProcessSides turns names into numbers.
+//"<intro>: ROCKF3D (MAP01), ... and 3 more. If ...": missing names by first map using them.
+static QString MissingMessage(const char* intro, const QMap<QString, QString>& missing)
+{
+    QStringList named;
+
+    for(auto it = missing.constBegin(); it != missing.constEnd() && named.size() < 6; ++it)
+        named.append(QString("%1 (%2)").arg(it.key(), it.value()));
+
+    QString message = QString("%1: %2").arg(intro, named.join(", "));
+
+    if(missing.size() > named.size())
+        message += QString(" and %1 more").arg(missing.size() - named.size());
+
+    return message + ". If the maps come with a resource WAD, add it as a PWAD too.";
+}
+
 bool WadProcessor::RemoveUnusedTextures()
 {
     struct Texture
@@ -283,7 +299,10 @@ bool WadProcessor::RemoveUnusedTextures()
     }
 
     if(textures.empty())
+    {
+        qCritical("No TEXTURE1 lump: not an IWAD, or no IWAD under the PWADs.");
         return false;
+    }
 
     std::vector<bool> used(textures.size(), false);
     QHash<QString, int> numForName;
@@ -302,20 +321,47 @@ bool WadProcessor::RemoveUnusedTextures()
 
     used[0] = true;
 
+    //A wall texture that isn't there becomes none, as PrBoom (and the Qt build)
+    //draws it: on the GBA the engine doesn't check, so the name must not reach it.
+    QMap<QString, QString> missing;
+
     for(const QString& map : MapNames())
     {
         Lump sides;
-        wadFile.GetLumpByNum(wadFile.GetLumpByName(map, sides) + ML_SIDEDEFS, sides);
+        const qint32 sidesNum = wadFile.GetLumpByName(map, sides) + ML_SIDEDEFS;
+        wadFile.GetLumpByNum(sidesNum, sides);
 
-        const mapsidedef_t* side = reinterpret_cast<const mapsidedef_t*>(sides.data.constData());
+        mapsidedef_t* side = reinterpret_cast<mapsidedef_t*>(sides.data.data());
+        bool changed = false;
 
         for(quint32 i = 0; i < sides.length / sizeof(mapsidedef_t); i++)
         {
-            use(LumpName8(side[i].toptexture));
-            use(LumpName8(side[i].bottomtexture));
-            use(LumpName8(side[i].midtexture));
+            for(char* t : {side[i].toptexture, side[i].bottomtexture, side[i].midtexture})
+            {
+                const QString name = LumpName8(t);
+
+                //R_LoadTextureByName takes any name starting with - as none.
+                if(!name.isEmpty() && !name.startsWith('-') && !numForName.contains(name))
+                {
+                    if(!missing.contains(name))
+                        missing.insert(name, map);
+
+                    memset(t, 0, 8);
+                    t[0] = '-';
+                    changed = true;
+                    continue;
+                }
+
+                use(name);
+            }
         }
+
+        if(changed)
+            wadFile.ReplaceLump(sidesNum, sides);
     }
+
+    if(!missing.isEmpty())
+        qWarning("%s", qPrintable(MissingMessage("The maps use wall textures that aren't in the WADs, so those walls have none", missing)));
 
     //g_game.c picks one by game and episode, by name in deh_text.h.
     for(int t = TXT_SKY1; t <= TXT_SKY4; t++)
@@ -448,6 +494,9 @@ bool WadProcessor::KeepUsedLumps()
     for(int t = TXT_FLOOR4_8; t <= TXT_RROCK19; t++)
         usedFlats.insert(QString::fromLatin1(deh.text[t]));
 
+    //The sectors' flats, each with the first map using it.
+    QMap<QString, QString> mapFlats;
+
     std::vector<Lump> kept;
 
     quint32 removed = 0, removedBytes = 0;
@@ -492,8 +541,12 @@ bool WadProcessor::KeepUsedLumps()
         {
             kept.push_back(l);
 
-            for(Lump m; wadFile.GetLumpByNum(i + 1, m) && mapLumpNames.contains(m.name, Qt::CaseInsensitive); i++)
+            //Up to a name seen again: a map's lumps with no marker (OBTIC1) are not this map's.
+            QStringList seen;
+
+            for(Lump m; wadFile.GetLumpByNum(i + 1, m) && mapLumpNames.contains(m.name, Qt::CaseInsensitive) && !seen.contains(m.name.toUpper()); i++)
             {
+                seen.append(m.name.toUpper());
                 kept.push_back(m);
 
                 if(m.name.compare("SECTORS", Qt::CaseInsensitive))
@@ -503,8 +556,14 @@ bool WadProcessor::KeepUsedLumps()
 
                 for(quint32 s = 0; s < m.length / sizeof(mapsector_t); s++)
                 {
-                    usedFlats.insert(LumpName8(sector[s].floorpic));
-                    usedFlats.insert(LumpName8(sector[s].ceilingpic));
+                    for(const char* f : {sector[s].floorpic, sector[s].ceilingpic})
+                    {
+                        const QString flat = LumpName8(f);
+                        usedFlats.insert(flat);
+
+                        if(!mapFlats.contains(flat))
+                            mapFlats.insert(flat, name);
+                    }
                 }
             }
 
@@ -523,6 +582,21 @@ bool WadProcessor::KeepUsedLumps()
         removed++;
         removedBytes += l.length;
         removedNames.append(name);
+    }
+
+    //R_FlatNumForName stops the game on a flat that isn't there.
+    QMap<QString, QString> missingFlats;
+
+    for(auto it = mapFlats.constBegin(); it != mapFlats.constEnd(); ++it)
+    {
+        if(!flats.index.contains(it.key()))
+            missingFlats.insert(it.key(), it.value());
+    }
+
+    if(!missingFlats.isEmpty())
+    {
+        qCritical("%s", qPrintable(MissingMessage("The maps use flats that aren't in the WADs", missingFlats)));
+        return false;
     }
 
     //Plus whole animations.

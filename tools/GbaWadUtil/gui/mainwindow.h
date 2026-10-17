@@ -9,6 +9,7 @@ class BuildPage;
 class ChoiceCard;
 class CheckCard;
 class SizeBar;
+class Spinner;
 class StatusLine;
 class ToggleSwitch;
 
@@ -179,6 +180,7 @@ private:
     QTimer* measureTimer;
     SpaceReport lastSpace;
 
+    Spinner* spaceSpinner;
     QLabel* spaceState;
     SpaceChart* spaceChart;
     QLabel* spaceNote;

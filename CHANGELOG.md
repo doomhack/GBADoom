@@ -107,6 +107,14 @@ more of the work ahead of time.
   sprites, graphics, sound effects, music, instruments. `-size` gives the report
   without writing anything, and the window uses it in the background to show the real
   ROM size and a breakdown chart as the settings change.
+- Checks what the maps need: a flat that isn't in the WADs fails the build (usually a
+  map WAD without its resource WAD), a missing wall texture becomes no texture with a
+  warning, and a line or seg pointing past its map's vertexes, lines or sidedefs fails
+  the build as a damaged map instead of reading past the end of it.
+- Fixed map lumps with no marker (OBTIC1, FULLONL) taking the previous map's BLOCKMAP
+  with them when overridden maps were removed, which broke the maps after them.
+- Fixed a crash when a PWAD has a flat named like a wall patch (INVASIO2's WOOD1):
+  patches now come from outside the flat and sprite namespaces, and are checked.
 - The command line now warns about arguments it ignores and stops with an error if a
   WAD can't be read.
 

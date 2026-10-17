@@ -143,6 +143,24 @@ private:
     int textPx;
 };
 
+//A turning arc for work in progress. It only animates while shown.
+class Spinner : public QWidget
+{
+public:
+    explicit Spinner(int size = 14, QWidget* parent = nullptr);
+    QSize sizeHint() const override { return QSize(size, size); }
+
+protected:
+    void paintEvent(QPaintEvent*) override;
+    void showEvent(QShowEvent*) override { timer.start(); }
+    void hideEvent(QHideEvent*) override { timer.stop(); }
+
+private:
+    QTimer timer;
+    int size;
+    int angle = 0;
+};
+
 //Two columns side by side, stacked when the window is narrow. The right
 //column keeps the width the design gives it.
 class Columns : public QWidget

@@ -508,6 +508,36 @@ void StatusLine::Set(const QString& icon, const QColor& color, const QString& te
 }
 
 
+Spinner::Spinner(int s, QWidget* parent) : QWidget(parent), size(s)
+{
+    setFixedSize(size, size);
+    setAccessibleName("Working");
+
+    timer.setInterval(16);
+    connect(&timer, &QTimer::timeout, this, [this]()
+    {
+        angle = (angle + 8) % 360;
+        update();
+    });
+}
+
+void Spinner::paintEvent(QPaintEvent*)
+{
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
+
+    const qreal pen = qMax(2.0, size / 7.0);
+    const QRectF r = QRectF(rect()).adjusted(pen / 2, pen / 2, -pen / 2, -pen / 2);
+
+    //A faint full ring, with a quarter of it in the accent going round.
+    p.setPen(QPen(Theme::BarGround, pen));
+    p.drawEllipse(r);
+
+    p.setPen(QPen(Theme::AccentText, pen, Qt::SolidLine, Qt::RoundCap));
+    p.drawArc(r, (90 - angle) * 16, -90 * 16);
+}
+
+
 Columns::Columns(QWidget* l, QWidget* r, int stack, int rw, QWidget* parent)
     : QWidget(parent), right(r), stackBelow(stack), rightWidth(rw)
 {

@@ -1098,8 +1098,16 @@ QWidget* MainWindow::BuildSpace()
     QVBoxLayout* v;
     QFrame* card = CardFrame(&v, 14);
 
+    QWidget* state = new QWidget;
+    QHBoxLayout* sh = new QHBoxLayout(state);
+    sh->setContentsMargins(0, 0, 0, 0);
+    sh->setSpacing(8);
+    spaceSpinner = new Spinner(14);
+    spaceSpinner->hide();
+    sh->addWidget(spaceSpinner);
     spaceState = Label(QString(), "dim");
-    v->addWidget(SectionHeader(QString(), "Space used", spaceState));
+    sh->addWidget(spaceState);
+    v->addWidget(SectionHeader(QString(), "Space used", state));
 
     spaceChart = new SpaceChart;
     v->addWidget(spaceChart);
@@ -1730,6 +1738,7 @@ void MainWindow::Refresh()
 
     spaceChart->setVisible(chart);
     spaceChart->setEnabled(!measuring);
+    spaceSpinner->setVisible(measuring);
     spaceState->setText(measuring ? "Measuring…" : (exact ? QString("%1 MB%2").arg(mb, 0, 'f', 1).arg(s.rom ? " of 32 MB" : "") : QString()));
     spaceNote->setVisible(!chart && !failed);
     spaceNote->setText(!canMeasure ? (s.iwad.isEmpty() ? "Choose a base IWAD to see what the space goes on." : "Can't measure it: " + InputProblem()) :

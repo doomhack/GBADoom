@@ -28,7 +28,8 @@ bool WadProcessor::ProcessWad()
         return false;
 
     RemoveOverriddenMaps();
-    RemoveUnusedTextures();
+    if(!RemoveUnusedTextures())
+        return false;
 
     //Without the column tables the engine can't draw a wall.
     if(!ProcessTextureColumns())
@@ -149,8 +150,35 @@ bool WadProcessor::ProcessLines(quint32 lumpNum)
         exit(1);
     }
 
+    const quint32 vertexCount = vxl.length / sizeof(vertex_t);
+
+    Lump sxl;
+    wadFile.GetLumpByNum(lumpNum+ML_SIDEDEFS, sxl);
+    const quint32 sideCount = sxl.length / sizeof(mapsidedef_t);
+
     for(unsigned int i = 0; i < lineCount; i++)
     {
+        //A damaged map points past its own lumps, and reading there gives a different answer every run.
+        const quint32 used[] = {oldLines[i].v1, oldLines[i].v2};
+
+        for(quint32 v : used)
+        {
+            if(v >= vertexCount)
+            {
+                qCritical("%s: line %u uses vertex %u, but the map has %u. The map is damaged.", qPrintable(mapLump.name), i, v, vertexCount);
+                exit(1);
+            }
+        }
+
+        for(int s = 0; s < 2; s++)
+        {
+            if(oldLines[i].sidenum[s] != NO_INDEX && oldLines[i].sidenum[s] >= sideCount)
+            {
+                qCritical("%s: line %u uses sidedef %u, but the map has %u. The map is damaged.", qPrintable(mapLump.name), i, quint32(oldLines[i].sidenum[s]), sideCount);
+                exit(1);
+            }
+        }
+
         //vtx is in fixed point (ProcessVertexes), lines keep map units.
         const int x1 = vtx[oldLines[i].v1].x >> FRACBITS;
         const int y1 = vtx[oldLines[i].v1].y >> FRACBITS;
@@ -261,11 +289,25 @@ bool WadProcessor::ProcessSegs(quint32 lumpNum)
 
     const mapsidedef_t* sides = reinterpret_cast<const mapsidedef_t*>(sxl.data.constData());
 
+    const quint32 vertexCount = vxl.length / sizeof(vertex_t);
+    const quint32 lineCount = lxl.length / sizeof(line_t);
+
+    Lump mapLump;
+    wadFile.GetLumpByNum(lumpNum, mapLump);
 
     //****************************
 
     for(unsigned int i = 0; i < segCount; i++)
     {
+        //ProcessLines has checked the lines' sidedefs.
+        if(oldSegs[i].v1 >= vertexCount || oldSegs[i].v2 >= vertexCount || oldSegs[i].linedef >= lineCount || quint16(oldSegs[i].side) > 1)
+        {
+            qCritical("%s: seg %u uses vertexes %u and %u, line %u and side %u, but the map has %u vertexes and %u lines. The map is damaged.",
+                      qPrintable(mapLump.name), i, quint32(oldSegs[i].v1), quint32(oldSegs[i].v2), quint32(oldSegs[i].linedef),
+                      quint32(oldSegs[i].side), vertexCount, lineCount);
+            exit(1);
+        }
+
         //vtx is in fixed point (ProcessVertexes), segs keep map units.
         newSegs[i].v1.x = vtx[oldSegs[i].v1].x >> FRACBITS;
         newSegs[i].v1.y = vtx[oldSegs[i].v1].y >> FRACBITS;
@@ -1091,6 +1133,10 @@ bool WadProcessor::RemoveOverriddenMaps()
     static const QStringList mapLumpNames = {"THINGS", "LINEDEFS", "SIDEDEFS", "VERTEXES", "SEGS",
                                              "SSECTORS", "NODES", "SECTORS", "REJECT", "BLOCKMAP"};
 
+    //Only a map's name is a marker: OBTIC1 has a map's lumps with no marker after
+    //MAP10, and MAP10's BLOCKMAP before them mustn't be taken for one.
+    static const QRegularExpression markerRe("^(E\\dM\\d|MAP\\d\\d)$", QRegularExpression::CaseInsensitiveOption);
+
     quint32 removedLumps = 0, removedBytes = 0;
 
     for(quint32 i = 0; i + 1 < wadFile.LumpCount(); i++)
@@ -1100,7 +1146,7 @@ bool WadProcessor::RemoveOverriddenMaps()
         wadFile.GetLumpByNum(i, marker);
         wadFile.GetLumpByNum(i+1, next);
 
-        if(next.name.compare("THINGS", Qt::CaseInsensitive))
+        if(next.name.compare("THINGS", Qt::CaseInsensitive) || !markerRe.match(marker.name).hasMatch())
             continue;
 
         //Is there a later map with this name?
@@ -1110,9 +1156,14 @@ bool WadProcessor::RemoveOverriddenMaps()
             continue;
 
         quint32 end = i + 1;
+        QStringList seen;
 
-        for(Lump l; wadFile.GetLumpByNum(end, l) && mapLumpNames.contains(l.name, Qt::CaseInsensitive); end++)
+        //Up to a name seen again: the start of lumps that aren't this map's.
+        for(Lump l; wadFile.GetLumpByNum(end, l) && mapLumpNames.contains(l.name, Qt::CaseInsensitive) && !seen.contains(l.name.toUpper()); end++)
+        {
+            seen.append(l.name.toUpper());
             removedBytes += l.length;
+        }
 
         removedBytes += marker.length;
         removedLumps += end - i;
