@@ -24,6 +24,7 @@ SOURCES += \
         gusbank.cpp \
         infotables.cpp \
         main.cpp \
+        mapgame.cpp \
         mus2mid.cpp \
         options.cpp \
         sizereport.cpp \
@@ -50,6 +51,7 @@ HEADERS += \
     gui/ui.h \
     gusbank.h \
     infotables.h \
+    mapgame.h \
     mus2mid.h \
     options.h \
     sizereport.h \

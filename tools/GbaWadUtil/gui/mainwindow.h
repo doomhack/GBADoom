@@ -3,6 +3,7 @@
 
 #include <QtWidgets>
 #include "../options.h"
+#include "../mapgame.h"
 #include "spacechart.h"
 
 class BuildPage;
@@ -31,6 +32,10 @@ struct DehScan
 
     //Binary or unreadable: as a -deh file, the build stops on it.
     bool unusable = false;
+
+    //A WAD's maps: which game they're for, and their markers.
+    MapGame mapGame = MapGame::None;
+    QStringList maps;
 };
 
 //What the window builds, with absolute paths.
@@ -135,6 +140,7 @@ private:
     QLabel* iwadTag;
     QLabel* iwadRowName;
     QWidget* pwadRows;
+    QList<QLabel*> pwadWarnings;
     QLabel* gbaWadOrder;
 
     QWidget* dehRows;

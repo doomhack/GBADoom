@@ -200,9 +200,9 @@ DehScan ScanDehacked(const QString& path)
     return ScanPatch(f.readAll(), QFileInfo(path).fileName());
 }
 
-//A WAD's DEHACKED lumps as one patch. Reads only the directory and those lumps,
-//and only again if the file changes, as Refresh runs on every key press.
-DehScan ScanWadDehacked(const QString& path)
+//A WAD's DEHACKED lumps as one patch, and its maps. Reads only the directory and
+//those lumps, and only again if the file changes, as Refresh runs on every key press.
+DehScan ScanWad(const QString& path)
 {
     const QFileInfo fi(path);
 
@@ -227,12 +227,14 @@ DehScan ScanWadDehacked(const QString& path)
         if((header.startsWith("IWAD") || header.startsWith("PWAD")) && f.seek(dirOfs))
         {
             const QByteArray dir = f.read(qint64(numLumps) * 16);
+            QStringList names;
 
             for(quint32 i = 0; i < numLumps && (i + 1) * 16 <= quint32(dir.size()); i++)
             {
                 const char* e = dir.constData() + i * 16;
+                names.append(QString::fromLatin1(e + 8, int(strnlen(e + 8, 8))));
 
-                if(QByteArray(e + 8, int(strnlen(e + 8, 8))).toUpper() != "DEHACKED" || !f.seek(qFromLittleEndian<quint32>(e)))
+                if(names.last().toUpper() != "DEHACKED" || !f.seek(qFromLittleEndian<quint32>(e)))
                     continue;
 
                 DehScan lump = ScanPatch(f.read(qFromLittleEndian<quint32>(e + 4)), QString("DEHACKED lump %1").arg(i));
@@ -247,6 +249,8 @@ DehScan ScanWadDehacked(const QString& path)
                 if(!lump.note.isEmpty() && !notes.contains(lump.note))
                     notes.append(lump.note);
             }
+
+            scan.mapGame = MapGameOf(names, &scan.maps);
         }
     }
 
@@ -691,6 +695,7 @@ QWidget* MainWindow::BuildSources()
 void MainWindow::RebuildPwadRows()
 {
     ClearLayout(pwadRows->layout());
+    pwadWarnings.clear();
 
     for(int i = 0; i < s.pwads.size(); i++)
     {
@@ -701,6 +706,22 @@ void MainWindow::RebuildPwadRows()
         QFrame* row = ListRow("row", &h, true);
         h->addWidget(OrderLabel(QString::number(i + 2)));
         h->addWidget(NameLabel(path), 1);
+
+        //Doom 1 maps on a Doom 2 IWAD or the other way round: filled in by Refresh,
+        //as it depends on the IWAD too.
+        QWidget* warn = new QWidget;
+        QHBoxLayout* wh = new QHBoxLayout(warn);
+        wh->setContentsMargins(0, 0, 0, 0);
+        wh->setSpacing(6);
+        wh->addWidget(IconLabel("warn", Warn, 14));
+        QLabel* note = Label(QString(), "dim");
+        note->setStyleSheet(QString("color: %1").arg(Warn.name()));
+        note->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+        wh->addWidget(note, 1);
+        warn->hide();
+        h->addWidget(warn, 2);
+        pwadWarnings.append(note);
+
         h->addWidget(Label("PWAD", "badge"), 0, Qt::AlignVCenter);
 
         QPushButton* up = IconButton("up", "Move " + name + " earlier");
@@ -1576,6 +1597,19 @@ void MainWindow::Refresh()
     iwadRowName->setToolTip(QDir::toNativeSeparators(s.iwad));
     gbaWadOrder->setText(QString::number(s.pwads.size() + 2));
 
+    //PWADs whose maps are for the other game than the IWAD's.
+    const MapGame iwadGame = s.iwad.isEmpty() ? MapGame::None : ScanWad(s.iwad).mapGame;
+
+    for(int i = 0; i < pwadWarnings.size() && i < s.pwads.size(); i++)
+    {
+        const DehScan p = ScanWad(s.pwads[i]);
+        const QString warning = MapGameWarning(QFileInfo(s.pwads[i]).fileName(), p.mapGame, p.maps, QFileInfo(s.iwad).fileName(), iwadGame);
+
+        pwadWarnings[i]->setText(p.mapGame == MapGame::Doom1 ? "Doom 1 maps, left out on a Doom 2 IWAD" : "Doom 2 maps, need a Doom 2 IWAD");
+        pwadWarnings[i]->setToolTip(warning);
+        pwadWarnings[i]->parentWidget()->setVisible(!warning.isEmpty());
+    }
+
     //DeHackEd: light the blocks that the WADs' DEHACKED lumps and the patch files change.
     QStringList changedBy[numDehBlocks];
     QStringList withLumps;
@@ -1594,7 +1628,7 @@ void MainWindow::Refresh()
 
     for(const QString& w : wads)
     {
-        const DehScan d = w.isEmpty() ? DehScan() : ScanWadDehacked(w);
+        const DehScan d = w.isEmpty() ? DehScan() : ScanWad(w);
         const QString name = QFileInfo(w).fileName();
 
         if(!d.lumps)

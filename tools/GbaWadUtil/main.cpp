@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 
 #include "options.h"
+#include "mapgame.h"
 #include "wadfile.h"
 #include "wadprocessor.h"
 #include "gusbank.h"
@@ -11,6 +12,20 @@
 bool SaveBytesAsCFile(const QByteArray& bytes, QString file);
 bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut);
 bool ReadEngineRom(const QString& romIn, QByteArray& rom, int& headerOffset);
+
+static QStringList LumpNames(WadFile& wad)
+{
+    QStringList names;
+
+    for(quint32 i = 0; i < wad.LumpCount(); i++)
+    {
+        Lump l;
+        wad.GetLumpByNum(i, l);
+        names.append(l.name);
+    }
+
+    return names;
+}
 
 //Layout of doom_iwad_header_t in the engine's doom_iwad.h.
 static const quint32 romIwadVersion = DOOM_IWAD_VERSION;
@@ -53,6 +68,8 @@ int main(int argc, char *argv[])
     WadProcessor wp(wf);
     wp.SetDehackedFiles(o.dehs);
 
+    const MapGame iwadGame = MapGameOf(LumpNames(wf));
+
     for(const QString& pwad : o.pwads)
     {
         WadFile pf(pwad);
@@ -62,6 +79,14 @@ int main(int argc, char *argv[])
             qCritical("Can't read WAD %s", qPrintable(pwad));
             return 1;
         }
+
+        //Doom 1 maps on Doom 2 or the other way round: it builds, but not as meant.
+        QStringList maps;
+        const QString mismatch = MapGameWarning(QFileInfo(pwad).fileName(), MapGameOf(LumpNames(pf), &maps), maps,
+                                                QFileInfo(o.inFile).fileName(), iwadGame);
+
+        if(!mismatch.isEmpty())
+            qWarning("%s", qPrintable(mismatch));
 
         wf.MergeWadFile(pf);
         qInfo("Merged %s.", qPrintable(QFileInfo(pwad).fileName()));
