@@ -195,15 +195,56 @@ quint32 WadFile::LumpCount()
     return lumps.count();
 }
 
+//Namespace markers count within the WAD they're in, as in source ports: a
+//start left open is closed at the end of its WAD and an end with no start is
+//dropped. Otherwise STARSNDS.WAD's lone PP_START would take every lump after
+//it, gbadoom.wad and GbaWadUtil's own lumps too, into the patches to remove.
 bool WadFile::MergeWadFile(WadFile& wadFile)
 {
+    static const QRegularExpression markerRe("^([PFS])(\\1|\\d)?_(START|END)$");
+
+    const QString source = QFileInfo(wadFile.wadPath).fileName();
+
+    //Open starts by kind (P, F or S), innermost last.
+    QHash<QChar, QStringList> open;
+
     for(quint32 i = 0; i < wadFile.LumpCount(); i++)
     {
         Lump l;
 
         wadFile.GetLumpByNum(i, l);
 
+        const QRegularExpressionMatch m = markerRe.match(l.name.toUpper());
+
+        if(m.hasMatch())
+        {
+            QStringList& starts = open[m.captured(1)[0]];
+
+            if(m.captured(3) == "START")
+                starts.append(l.name.toUpper());
+            else if(!starts.isEmpty())
+                starts.removeLast();
+            else
+            {
+                qWarning("%s: %s has no start, so it's left out.", qPrintable(source), qPrintable(l.name.toUpper()));
+                continue;
+            }
+        }
+
         InsertLump(LumpCount(), l);
+    }
+
+    for(auto it = open.begin(); it != open.end(); ++it)
+    {
+        while(!it->isEmpty())
+        {
+            Lump end;
+            end.name = it->takeLast().replace("_START", "_END");
+            end.length = 0;
+
+            qWarning("%s: %s has no end, so it's closed at the end of the WAD.", qPrintable(source), qPrintable(QString(end.name).replace("_END", "_START")));
+            InsertLump(LumpCount(), end);
+        }
     }
 
     return true;
