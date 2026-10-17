@@ -723,6 +723,8 @@ int WadProcessor::GetTextureNumForName(const char* tex_name)
 //Every texture gets a table, in TEXTURE1/TEXTURE2 order, so switches and
 //animations (which just swap texture numbers) need nothing special.
 //After this the wall patches and PNAMES are not needed and are removed.
+static bool DrawPatch(const QByteArray& lump, int x, int y, std::vector<quint8>& canvas, int canvasWidth, int canvasHeight);
+
 bool WadProcessor::ProcessTextureColumns()
 {
     static const int colHeight = 128;
@@ -737,6 +739,34 @@ bool WadProcessor::ProcessTextureColumns()
     const char* pnamesData = pnamesLump.data.constData();
     const quint32 pnameCount = *((const quint32*)pnamesData);
 
+    //Patches by name: the last lump of the name outside the flat and sprite
+    //namespaces, as a PWAD can have a flat named like a wall patch (WOOD1 in
+    //INVASIO2), else the last lump of the name anywhere.
+    QHash<QString, QByteArray> outsideLumps;
+    QHash<QString, QByteArray> anyLumps;
+    int nsDepth = 0;
+
+    for(quint32 i = 0; i < wadFile.LumpCount(); i++)
+    {
+        Lump l;
+        wadFile.GetLumpByNum(i, l);
+
+        const QString name = l.name.toUpper();
+        const bool flatsOrSprites = name.startsWith('F') || name.startsWith('S');
+
+        if(flatsOrSprites && name.endsWith("_START"))
+            nsDepth++;
+        else if(flatsOrSprites && name.endsWith("_END"))
+            nsDepth = qMax(nsDepth - 1, 0);
+        else
+        {
+            anyLumps.insert(name, l.data.left(l.length));
+
+            if(!nsDepth)
+                outsideLumps.insert(name, l.data.left(l.length));
+        }
+    }
+
     QVector<QByteArray> patches(pnameCount);
 
     for(quint32 i = 0; i < pnameCount; i++)
@@ -744,9 +774,22 @@ bool WadProcessor::ProcessTextureColumns()
         char n[9] = {0};
         strncpy(n, &pnamesData[4 + i*8], 8);
 
-        Lump patchLump;
-        if(wadFile.GetLumpByName(QString(QLatin1String(n)), patchLump) != -1)
-            patches[i] = patchLump.data;
+        const QString name = QString(QLatin1String(n)).toUpper();
+        const QByteArray data = outsideLumps.contains(name) ? outsideLumps.value(name) : anyLumps.value(name);
+
+        if(data.isEmpty())
+            continue;
+
+        //The compositing below trusts the column offsets and posts, so check them.
+        std::vector<quint8> none;
+
+        if(!DrawPatch(data, 0, 0, none, 0, 0))
+        {
+            qWarning("Wall patch %s is not a valid patch, so textures using it are drawn without it.", n);
+            continue;
+        }
+
+        patches[i] = data;
     }
 
     QList<QByteArray> texLumps;

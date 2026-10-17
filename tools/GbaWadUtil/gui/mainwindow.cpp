@@ -127,6 +127,7 @@ DehScan ScanPatch(const QByteArray& data, const QString& source)
     if(!ok)
     {
         scan.note = "Binary patch, not supported";
+        scan.unusable = true;
         return scan;
     }
 
@@ -192,6 +193,7 @@ DehScan ScanDehacked(const QString& path)
     {
         DehScan scan;
         scan.note = "Can't read this file";
+        scan.unusable = true;
         return scan;
     }
 
@@ -233,7 +235,12 @@ DehScan ScanWadDehacked(const QString& path)
                 if(QByteArray(e + 8, int(strnlen(e + 8, 8))).toUpper() != "DEHACKED" || !f.seek(qFromLittleEndian<quint32>(e)))
                     continue;
 
-                const DehScan lump = ScanPatch(f.read(qFromLittleEndian<quint32>(e + 4)), QString("DEHACKED lump %1").arg(i));
+                DehScan lump = ScanPatch(f.read(qFromLittleEndian<quint32>(e + 4)), QString("DEHACKED lump %1").arg(i));
+
+                //In a WAD, a binary patch is skipped rather than stopping the build.
+                if(lump.unusable)
+                    lump.note = "a binary DEHACKED lump will be skipped";
+
                 scan.changes |= lump.changes;
                 scan.lumps++;
 
@@ -1420,6 +1427,9 @@ QString MainWindow::InputProblem() const
     {
         if(!QFileInfo(d).isFile())
             return "Can't find " + name(d) + ".";
+
+        if(dehScans.value(d).unusable)
+            return name(d) + " can't be applied: " + dehScans.value(d).note.toLower() + ". Convert it to text with DeHackEd 3, or use a text version of it.";
     }
 
     if(s.music && !QFileInfo(s.gusCfg).isFile())
@@ -1722,7 +1732,7 @@ void MainWindow::Refresh()
     spaceChart->setEnabled(!measuring);
     spaceState->setText(measuring ? "Measuring…" : (exact ? QString("%1 MB%2").arg(mb, 0, 'f', 1).arg(s.rom ? " of 32 MB" : "") : QString()));
     spaceNote->setVisible(!chart && !failed);
-    spaceNote->setText(!canMeasure ? "Choose a base IWAD to see what the space goes on." :
+    spaceNote->setText(!canMeasure ? (s.iwad.isEmpty() ? "Choose a base IWAD to see what the space goes on." : "Can't measure it: " + InputProblem()) :
                                      "Converting the WADs to measure them. Big megawads take a while.");
     spaceError->Set("error", Error, failed ? "This can't be built: " + measured->error : QString());
 

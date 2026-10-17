@@ -31,7 +31,7 @@ public:
 //Applies one vanilla DeHackEd patch (patch format 6, from DeHackEd 2.3 to
 //3.1) to tables: its Thing, Frame, Pointer, Weapon, Ammo, Misc and Text
 //sections. Anything else is skipped with a warning naming source and line.
-//Returns false if the patch couldn't be read at all.
+//Returns false, printing nothing, for a binary patch (DeHackEd 2.x and before).
 bool ApplyDehacked(const QByteArray& patch, const QString& source, DehTables& tables);
 
 #endif // DEHACKED_H

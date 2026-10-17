@@ -27,6 +27,9 @@ struct DehScan
 
     //A WAD's DEHACKED lumps.
     int lumps = 0;
+
+    //Binary or unreadable: as a -deh file, the build stops on it.
+    bool unusable = false;
 };
 
 //What the window builds, with absolute paths.

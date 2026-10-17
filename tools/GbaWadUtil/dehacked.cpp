@@ -677,12 +677,10 @@ void Parser::ApplyText(const QByteArray& from, const QByteArray& to)
 
 bool Parser::Run()
 {
-    //Binary patches are from DeHackEd 2.x and before.
+    //Binary patches are from DeHackEd 2.x and before. The caller says whether
+    //that's an error (a -deh file) or a lump to skip.
     if(data.left(1024).contains('\0'))
-    {
-        qWarning("%s: a binary DeHackEd patch, not supported. Convert it to text with DeHackEd 3.", qPrintable(source));
         return false;
-    }
 
     //DOS text files can end with a Ctrl-Z.
     const int eof = data.indexOf('\x1a');
@@ -1045,8 +1043,8 @@ bool WadProcessor::ProcessDehacked()
         Lump l;
         wadFile.GetLumpByNum(i, l);
 
-        if(!l.name.compare("DEHACKED", Qt::CaseInsensitive))
-            ApplyDehacked(l.data.left(l.length), QString("DEHACKED lump %1").arg(i), deh);
+        if(!l.name.compare("DEHACKED", Qt::CaseInsensitive) && !ApplyDehacked(l.data.left(l.length), QString("DEHACKED lump %1").arg(i), deh))
+            qWarning("DEHACKED lump %u is a binary DeHackEd patch, not supported, so it's skipped.", i);
     }
 
     for(const QString& file : dehFiles)
@@ -1055,12 +1053,16 @@ bool WadProcessor::ProcessDehacked()
 
         if(!f.open(QIODevice::ReadOnly))
         {
-            qCritical("Can't open DeHackEd patch %s", qPrintable(file));
+            qCritical("Can't read DeHackEd patch %s.", qPrintable(QDir::toNativeSeparators(file)));
             return false;
         }
 
         if(!ApplyDehacked(f.readAll(), QFileInfo(file).fileName(), deh))
+        {
+            qCritical("Can't apply DeHackEd patch %s: it's a binary patch, from DeHackEd 2.x or before. Convert it to text with DeHackEd 3, or use a text version of it.",
+                      qPrintable(QFileInfo(file).fileName()));
             return false;
+        }
     }
 
     RenameLumps(wadFile, "DS", deh.soundRenames);
