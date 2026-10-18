@@ -467,6 +467,46 @@ void P_NightmareRespawn(mobj_t* mobj)
     P_RemoveMobj (mobj);
 }
 
+//
+// P_MobjThinkerStill
+// P_MobjThinker's tail for a thing in a state that never ends
+// (tics == -1). Out of IWRAM, as few things get here.
+//
+
+void P_MobjThinkerStill(mobj_t* mobj)
+{
+    // A corpse that has come to rest has nothing left to do, unless
+    // monsters respawn. Stop thinking (it stays in the thinker list,
+    // so the order is kept) until P_WakeCorpse.
+    if ((mobj->flags & MF_CORPSE) && mobj->type != MT_PLAYER && !_g->respawnmonsters &&
+            !(mobj->momx | mobj->momy | mobj->momz) && mobj->z == mobj->floorz)
+    {
+        mobj->thinker.function = NULL;
+        return;
+    }
+
+    // check for nightmare respawn
+
+    if (! (mobj->flags & MF_COUNTKILL) )
+        return;
+
+    if (!_g->respawnmonsters)
+        return;
+
+    mobj->movecount++;
+
+    if (mobj->movecount < 12*35)
+        return;
+
+    if (_g->leveltime & 31)
+        return;
+
+    if (P_Random () > 4)
+        return;
+
+    P_NightmareRespawn (mobj);
+}
+
 //Thinker function for stuff that doesn't need to do anything
 //interesting.
 //Just cycles through the states. Allows sprite animation to work.
@@ -487,6 +527,14 @@ void P_MobjBrainlessThinker(mobj_t* mobj, void*)
 }
 
 
+
+//Corpses at rest stop thinking (P_MobjThinker). Call this after
+//changing a corpse's state from outside its own thinker.
+void P_WakeCorpse(mobj_t* mobj)
+{
+    if ((mobj->flags & MF_CORPSE) && !mobj->thinker.function)
+        mobj->thinker.function = (think_t)P_MobjThinker;
+}
 
 static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)
 {

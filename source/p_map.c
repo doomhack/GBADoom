@@ -1471,6 +1471,7 @@ bool PIT_ChangeSector (mobj_t* thing)
     if (thing->health <= 0)
     {
         P_SetMobjState (thing, S_GIBS);
+        P_WakeCorpse (thing); // in case a patch makes S_GIBS animate
 
         thing->flags &= ~MF_SOLID;
         thing->height = 0;

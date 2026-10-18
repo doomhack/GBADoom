@@ -1431,6 +1431,7 @@ static bool PIT_AvoidDropoff(const line_t *line)
                     info = &mobjinfo[_g->corpsehit->type];
 
                     P_SetMobjState(_g->corpsehit,info->raisestate);
+                    P_WakeCorpse(_g->corpsehit); // before flags lose MF_CORPSE
 
                     _g->corpsehit->height = info->height; // fix Ghost bug
                     _g->corpsehit->radius = info->radius >> FRACBITS; // fix Ghost bug

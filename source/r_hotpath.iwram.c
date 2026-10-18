@@ -3345,7 +3345,7 @@ bool P_CrossBSPNode(int bspnum)
 // P_MobjThinker
 //
 
-void P_NightmareRespawn(mobj_t* mobj);
+void P_MobjThinkerStill(mobj_t* mobj);
 void P_XYMovement (mobj_t* mo);
 void P_ZMovement (mobj_t* mo);
 
@@ -3385,29 +3385,7 @@ void P_MobjThinker (mobj_t* mobj, void*)
                 return;     // freed itself
     }
     else
-    {
-
-        // check for nightmare respawn
-
-        if (! (mobj->flags & MF_COUNTKILL) )
-            return;
-
-        if (!_g->respawnmonsters)
-            return;
-
-        mobj->movecount++;
-
-        if (mobj->movecount < 12*35)
-            return;
-
-        if (_g->leveltime & 31)
-            return;
-
-        if (P_Random () > 4)
-            return;
-
-        P_NightmareRespawn (mobj);
-    }
+        P_MobjThinkerStill(mobj);   // ROM: rarely reached
 
 }
 

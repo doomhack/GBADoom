@@ -264,6 +264,7 @@ void P_RunPendingActions(void);
 
 void    P_MobjThinker(mobj_t *mobj, void *);
 void    P_MobjBrainlessThinker(mobj_t* mobj, void *);
+void    P_WakeCorpse(mobj_t* mobj);
 
 void    P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
 void    P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
