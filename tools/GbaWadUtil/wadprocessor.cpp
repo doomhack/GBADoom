@@ -200,6 +200,14 @@ bool WadProcessor::ProcessLines(quint32 lumpNum)
 
         newLines[i].special = oldLines[i].special;
         newLines[i].flags = oldLines[i].flags;
+
+        //The engine reads the back sector of every two-sided line, so clear the flag
+        //where there is no back side (as PrBoom does), rather than crash.
+        if((newLines[i].flags & ML_TWOSIDED) && oldLines[i].sidenum[1] == NO_INDEX)
+        {
+            qWarning("%s: line %u is two-sided but has no back side. Made one-sided.", qPrintable(mapLump.name), i);
+            newLines[i].flags &= ~ML_TWOSIDED;
+        }
         newLines[i].tag = oldLines[i].tag;
 
         newLines[i].dx = x2 - x1;
