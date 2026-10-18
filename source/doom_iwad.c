@@ -3,15 +3,47 @@
 //On GBA the IWAD isn't compiled in. GbaWadUtil -rom appends it to the ROM.
 #ifndef GBA
 
-//Uncomment which edition you want to compile
-//#include "iwad/doom1.c"
-//#include "iwad/doomu.c"
-//#include "iwad/doom2.c"
-//#include "iwad/tnt.c"
-//#include "iwad/plutonia.c"
-//#include "iwad/sigil.c"
-#include "iwad/ge64.c"
+#include <stdio.h>
+#include <stdlib.h>
 
-const unsigned int doom_iwad_len = sizeof(doom_iwad);
+#include "lprintf.h"
+
+//A WAD written by GbaWadUtil -out, loaded whole by I_LoadIwad.
+const unsigned char* doom_iwad = NULL;
+unsigned int doom_iwad_len = 0;
+
+void I_LoadIwad(const char* path)
+{
+    if(!path)
+    {
+        I_Error("No IWAD. Build one with GbaWadUtil -out and run GBADoom -iwad <file>.");
+        exit(1);
+    }
+
+    FILE* f = fopen(path, "rb");
+
+    if(!f)
+    {
+        I_Error("Can't open IWAD %s.", path);
+        exit(1);
+    }
+
+    fseek(f, 0, SEEK_END);
+    const long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    unsigned char* buf = malloc(len > 0 ? len : 1);
+
+    if(len <= 0 || !buf || fread(buf, 1, len, f) != (size_t)len)
+    {
+        I_Error("Can't read IWAD %s.", path);
+        exit(1);
+    }
+
+    fclose(f);
+
+    doom_iwad = buf;
+    doom_iwad_len = len;
+}
 
 #endif

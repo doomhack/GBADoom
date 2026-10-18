@@ -600,6 +600,18 @@ static void IdentifyVersion()
 
     CheckIWAD2(doom_iwad, &_g->gamemode, &_g->haswolflevels);
 
+#ifndef GBA
+    const int verlump = W_CheckNumForName(DOOM_IWAD_VERSION_LUMP);
+    const unsigned int version = (verlump != -1 && W_LumpLength(verlump) == 4) ? *(const unsigned int*)W_CacheLumpNum(verlump) : 0;
+
+    //The Qt I_Error returns.
+    if(version != DOOM_IWAD_VERSION)
+    {
+        I_Error("IWAD version %d, expected %d.\nRebuild it with GbaWadUtil -out", version, DOOM_IWAD_VERSION);
+        exit(1);
+    }
+#endif
+
     /* jff 8/23/98 set gamemission global appropriately in all cases
      * cphipps 12/1999 - no version output here, leave that to the caller
      */

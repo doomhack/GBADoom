@@ -120,7 +120,7 @@ private:
 
 static QString OutputName(BuildOutput::Kind k)
 {
-    return k == BuildOutput::Rom ? "GBA ROM" : (k == BuildOutput::Wad ? "WAD file" : "C source");
+    return k == BuildOutput::Rom ? "GBA ROM" : "WAD file";
 }
 
 static QString Megabytes(qint64 bytes)
@@ -181,7 +181,7 @@ BuildPage::BuildPage(QWidget* parent) : QWidget(parent)
     QVBoxLayout* names = new QVBoxLayout;
     names->setSpacing(0);
     names->addWidget(Label("GbaWadUtil", "appName"));
-    names->addWidget(Label("Build a GBADoom ROM, WAD or C source", "dim"));
+    names->addWidget(Label("Build a GBADoom ROM or WAD", "dim"));
     hh->addLayout(names);
     hh->addStretch(1);
 
@@ -638,7 +638,7 @@ void BuildPage::UpdateStages()
                 QStringList kinds;
 
                 for(const BuildOutput& o : outputs)
-                    kinds.append(o.kind == BuildOutput::Rom ? "ROM" : (o.kind == BuildOutput::Wad ? "WAD" : "C file"));
+                    kinds.append(o.kind == BuildOutput::Rom ? "ROM" : "WAD");
 
                 note = kinds.join(", ");
                 break;

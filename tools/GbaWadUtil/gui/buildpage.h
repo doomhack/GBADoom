@@ -9,7 +9,7 @@ class SpaceChart;
 
 struct BuildOutput
 {
-    enum Kind { Rom, Wad, CSource };
+    enum Kind { Rom, Wad };
 
     Kind kind;
     QString path;

@@ -44,8 +44,14 @@ extern const doom_iwad_header_t doom_iwad_header;
 extern const unsigned char doom_iwad[] __attribute__((aligned(32)));
 #define doom_iwad_len (doom_iwad_header.length)
 #else
-extern const unsigned char doom_iwad[];
-extern const unsigned int doom_iwad_len;
+//The Qt build loads a WAD written by GbaWadUtil -out at startup.
+extern const unsigned char* doom_iwad;
+extern unsigned int doom_iwad_len;
+void I_LoadIwad(const char* path);
 #endif
+
+//GbaWadUtil writes DOOM_IWAD_VERSION as a 32 bit lump of this name, so the
+//Qt build can tell a stale WAD (the GBA build checks the ROM header).
+#define DOOM_IWAD_VERSION_LUMP "GBAVER"
 
 #endif // DOOM_IWAD_H

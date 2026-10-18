@@ -9,7 +9,6 @@ struct WadUtilOptions
 {
     QString inFile;
     QString outFile;
-    QString cFile;
     QString romIn;
     QString romOut;
     QString gusCfg;

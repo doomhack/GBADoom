@@ -50,6 +50,9 @@
 #include "i_main.h"
 #include "lprintf.h"
 #include "global_data.h"
+#include "doom_iwad.h"
+
+#include <string.h>
 
 /* Most of the following has been rewritten by Lee Killough
  *
@@ -67,6 +70,21 @@ int main(int argc, const char * const * argv)
 {
     (void)argc;
     (void)argv;
+
+#ifndef GBA
+    //The WAD built by GbaWadUtil -out: -iwad <file>, or just <file>.
+    const char* iwad = NULL;
+
+    for(int i = 1; i < argc; i++)
+    {
+        if(!strcmp(argv[i], "-iwad") && i + 1 < argc)
+            iwad = argv[++i];
+        else if(argv[i][0] != '-')
+            iwad = argv[i];
+    }
+
+    I_LoadIwad(iwad);
+#endif
 
     /* cphipps - call to video specific startup code */
     I_PreInitGraphics();

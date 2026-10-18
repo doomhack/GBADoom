@@ -1,7 +1,8 @@
-gbawadutil.exe -in doom1.wad -cfile ..\source\iwad\doom1.c -gus data\dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in doomu.wad -cfile ..\source\iwad\doomu.c -gus data\dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in doom2.wad -cfile ..\source\iwad\doom2.c -gus data\dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in plutonia.wad -cfile ..\source\iwad\plutonia.c -gus data\dgguspat\timidity.cfg -oversample 4
-gbawadutil.exe -in tnt.wad -cfile ..\source\iwad\tnt.c -gus data\dgguspat\timidity.cfg -oversample 4
+if not exist ..\wads mkdir ..\wads
+gbawadutil.exe -in doom1.wad -out ..\wads\doom1.wad -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in doomu.wad -out ..\wads\doomu.wad -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in doom2.wad -out ..\wads\doom2.wad -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in plutonia.wad -out ..\wads\plutonia.wad -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in tnt.wad -out ..\wads\tnt.wad -gus data\dgguspat\timidity.cfg -oversample 4
 
-gbawadutil.exe -in doomu.wad -cfile ..\source\iwad\sigil.c -pwad sigil.wad -gus data\dgguspat\timidity.cfg -oversample 4
+gbawadutil.exe -in doomu.wad -out ..\wads\sigil.wad -pwad sigil.wad -gus data\dgguspat\timidity.cfg -oversample 4

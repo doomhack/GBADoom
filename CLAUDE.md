@@ -30,7 +30,7 @@ GbaWadUtil finds the header by its magic (`GBADOOM-IWAD-HDR`, 32-byte aligned), 
 
 **GbaWadUtil keeps only the lumps the engine reads** (`KeepUsedLumps` in `tools/GbaWadUtil/usedlumps.cpp`, run last): named lumps from tables there that mirror the engine's (menu, status bar and intermission patch names, `S_sfx`, `musicNames`, `sprnames`, `animdefs`, the finale flats, by their possibly dehacked names), the loadable maps, and the textures and flats those maps use (`RemoveUnusedTextures` also keeps the skies, the other half of each switch and whole animations). Every flat and sprite namespace in the input (`FF_START`, `SS_START`, ...) is merged into one `F_START`/`S_START` block, last copy of a name wins. Anything else, such as `DEHACKED` (already applied, see Dehacked), is dropped. **When the engine starts reading a lump by a new name, add it to those tables**, or the ROM dies in `W_GetNumForName`.
 
-**The Qt build still compiles the IWAD in:** use `GbaWadUtil -in <wad> -cfile <name>.c` (or `GbaWadUtil\build_*.bat`), copy the output to `source/iwad/`, and pick it in `source/doom_iwad.c` (the `#include` there is `#ifndef GBA`).
+**The Qt build loads the processed WAD at startup:** build one with `GbaWadUtil -in <wad> -out <name>.wad` (or `GbaWadUtil\build-*.bat` / `wad-build-all.bat`, which write to the gitignored `wads/`) and run `GBADoom -iwad <name>.wad` (set it in Qt Creator's run arguments). `I_LoadIwad` (`source/doom_iwad.c`) reads the whole file into memory, so `doom_iwad` is a pointer there rather than an array. GbaWadUtil also writes `DOOM_IWAD_VERSION` as the `GBAVER` lump, which `IdentifyVersion()` checks in the Qt build (the GBA checks the ROM header instead).
 
 There is no automated test suite — verification is done by running the game (Qt build for quick checks, GBA emulator/hardware for platform-accurate checks).
 
@@ -110,7 +110,7 @@ Doom's original fixed-point (`fixed_t`, `include/m_fixed.h`) and angle/trig tabl
 ### Source layout
 
 - `source/`, `include/` — engine and game code (prBoom/Doom lineage, heavily trimmed and GBA-adapted).
-- `source/iwad/` — generated IWAD C headers (not checked in by default; generated per the build steps above).
+- `wads/` — processed WADs for the Qt build (gitignored; written by the `GbaWadUtil/*.bat` scripts, see Building).
 - `tools/GbaWadUtil/` — source of the WAD converter (see Building).
 - `GbaWadUtil/` — its prebuilt Windows exe, runtime data and build scripts; IWADs go here (the commercial ones are gitignored).
 - `source/libtimidity/`, `include/libtimidity/` — the music player (see Sound).

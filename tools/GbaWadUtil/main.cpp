@@ -9,7 +9,6 @@
 #include "gui/gui.h"
 #include "../../include/doom_iwad.h"
 
-bool SaveBytesAsCFile(const QByteArray& bytes, QString file);
 bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut);
 bool ReadEngineRom(const QString& romIn, QByteArray& rom, int& headerOffset);
 
@@ -124,6 +123,14 @@ int main(int argc, char *argv[])
         wf.InsertLump(wf.LumpCount(), bankLump);
     }
 
+    //The format version, so the Qt build can tell a stale WAD from -out.
+    Lump versionLump;
+    versionLump.name = DOOM_IWAD_VERSION_LUMP;
+    versionLump.data.resize(4);
+    qToLittleEndian<quint32>(romIwadVersion, versionLump.data.data());
+    versionLump.length = 4;
+    wf.InsertLump(wf.LumpCount(), versionLump);
+
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
     buffer.open(QIODevice::WriteOnly);
@@ -165,17 +172,6 @@ int main(int argc, char *argv[])
         }
 
         qInfo("Wrote %s, %d bytes.", qPrintable(o.outFile), int(byteArray.size()));
-    }
-
-    if(o.cFile.length())
-    {
-        if(!SaveBytesAsCFile(byteArray, o.cFile))
-        {
-            qCritical("Can't write C file %s", qPrintable(o.cFile));
-            return 1;
-        }
-
-        qInfo("Wrote %s.", qPrintable(o.cFile));
     }
 
     if(o.romIn.length() || o.romOut.length())
@@ -257,33 +253,4 @@ bool SaveBytesToRom(const QByteArray& bytes, QString romIn, QString romOut)
     qInfo("Wrote %s, %d bytes.", qPrintable(romOut), int(rom.size()));
 
     return true;
-}
-
-bool SaveBytesAsCFile(const QByteArray& bytes, QString file)
-{
-    QFile f(file);
-
-    if(!f.open(QIODevice::Truncate | QIODevice::ReadWrite))
-        return false;
-
-    QString decl = QString("const unsigned char doom_iwad[%1UL] = {\n").arg(bytes.size());
-
-    f.write(decl.toLatin1());
-
-    for(int i = 0; i < bytes.size(); i++)
-    {
-        QString element = QString("0x%1,").arg((quint8)bytes.at(i),2, 16, QChar('0'));
-
-        if(( (i+1) % 40) == 0)
-            element += "\n";
-
-        f.write(element.toLatin1());
-    }
-
-    QString close = QString("\n};");
-    f.write(close.toLatin1());
-
-    f.close();
-
-    return f.error() == QFileDevice::NoError;
 }

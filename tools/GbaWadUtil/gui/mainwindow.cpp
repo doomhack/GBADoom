@@ -541,7 +541,7 @@ QWidget* MainWindow::BuildHeader()
     QVBoxLayout* names = new QVBoxLayout;
     names->setSpacing(0);
     names->addWidget(Label("GbaWadUtil", "appName"));
-    names->addWidget(Label("Build a GBADoom ROM, WAD or C source", "dim"));
+    names->addWidget(Label("Build a GBADoom ROM or WAD", "dim"));
     h->addLayout(names);
     h->addStretch(1);
 
@@ -1077,7 +1077,7 @@ QWidget* MainWindow::BuildOutputs()
     v->addWidget(OutputCard(romCheck, romBody, &romFrame));
 
     //WAD
-    wadCheck = new CheckCard("WAD file", "The processed WAD on its own", "file");
+    wadCheck = new CheckCard("WAD file", "For the Qt desktop build", "file");
     connect(wadCheck, &CheckCard::toggled, this, [this](bool on) { s.wad = on; Refresh(); });
 
     QVBoxLayout* wb;
@@ -1088,24 +1088,6 @@ QWidget* MainWindow::BuildOutputs()
     wb->addLayout(FieldBlock("Save WAD as", wadOutEdit, wadOutBrowse));
 
     v->addWidget(OutputCard(wadCheck, wadBody, &wadFrame));
-
-    //C source
-    cCheck = new CheckCard("C source", "For the Qt desktop build", "code");
-    connect(cCheck, &CheckCard::toggled, this, [this](bool on) { s.cfile = on; Refresh(); });
-
-    QVBoxLayout* cb;
-    cBody = Body(&cb);
-    QLineEdit* cOutEdit = PathEdit(&s.cOut, &cOutEdited, "Choose a file name");
-    QPushButton* cOutBrowse = BrowseButton("Choose where to save the C file");
-    connect(cOutBrowse, &QPushButton::clicked, this, [this]() { BrowseSave(&s.cOut, &cOutEdited, "Save C file as", "C files (*.c)"); });
-    QVBoxLayout* cField = FieldBlock("Save C file as", cOutEdit, cOutBrowse);
-    const QString mono = QString("<span style=\"font-family: '%1'; color: %2\">").arg(MonoFamily(), TextDim.name());
-    QLabel* cNote = Label("Copy it to " + mono + "source/iwad/</span> and select it in " + mono + "source/doom_iwad.c</span>", "faint");
-    cNote->setWordWrap(true);
-    cField->addWidget(cNote);
-    cb->addLayout(cField);
-
-    v->addWidget(OutputCard(cCheck, cBody, &cFrame));
 
     //Here rather than below the other cards, so it's on screen without scrolling.
     v->addSpacing(8);
@@ -1155,7 +1137,6 @@ void MainWindow::UpdateMeasurement()
         o.romIn.clear();
         o.romOut.clear();
         o.outFile.clear();
-        o.cFile.clear();
         o.sizeOnly = true;
         args = BuildArguments(o);
 
@@ -1345,10 +1326,6 @@ void MainWindow::FillFromArguments(const QStringList& args)
     s.wadOut = abs(o.outFile);
     wadOutEdited = s.wad;
 
-    s.cfile = !o.cFile.isEmpty();
-    s.cOut = abs(o.cFile);
-    cOutEdited = s.cfile;
-
     //Just -gui: nothing was filled in.
     if(args.size() == 1 && ignored.isEmpty())
         return;
@@ -1383,9 +1360,6 @@ void MainWindow::SuggestNames()
 
         if(!wadOutEdited)
             s.wadOut.clear();
-
-        if(!cOutEdited)
-            s.cOut.clear();
 
         return;
     }
@@ -1422,9 +1396,6 @@ void MainWindow::SuggestNames()
 
     if(!wadOutEdited)
         s.wadOut = unused(wadDir + "/" + stem + ".wad");
-
-    if(!cOutEdited)
-        s.cOut = unused(wadDir + "/" + QString(stem).replace('-', '_') + ".c");
 }
 
 QString MainWindow::InputProblem() const
@@ -1476,7 +1447,7 @@ QString MainWindow::Blocker() const
     if(!input.isEmpty())
         return input;
 
-    if(!s.rom && !s.wad && !s.cfile)
+    if(!s.rom && !s.wad)
         return "Pick at least one output.";
 
     if(s.rom)
@@ -1496,12 +1467,9 @@ QString MainWindow::Blocker() const
     if(s.wad && s.wadOut.isEmpty())
         return "Choose where to save the WAD.";
 
-    if(s.cfile && s.cOut.isEmpty())
-        return "Choose where to save the C file.";
-
     const QStringList inputs = QStringList() << s.iwad << s.pwads << s.dehs << s.gusCfg;
 
-    for(const QString& out : {s.rom ? s.romOut : QString(), s.wad ? s.wadOut : QString(), s.cfile ? s.cOut : QString()})
+    for(const QString& out : {s.rom ? s.romOut : QString(), s.wad ? s.wadOut : QString()})
     {
         for(const QString& in : inputs)
         {
@@ -1539,9 +1507,6 @@ WadUtilOptions MainWindow::Options() const
 
     if(s.wad)
         o.outFile = Shown(s.wadOut);
-
-    if(s.cfile)
-        o.cFile = Shown(s.cOut);
 
     return o;
 }
@@ -1685,7 +1650,7 @@ void MainWindow::Refresh()
     //Outputs
     const struct { CheckCard* check; QWidget* body; QFrame* frame; bool on; } outs[] =
     {
-        {romCheck, romBody, romFrame, s.rom}, {wadCheck, wadBody, wadFrame, s.wad}, {cCheck, cBody, cFrame, s.cfile}
+        {romCheck, romBody, romFrame, s.rom}, {wadCheck, wadBody, wadFrame, s.wad}
     };
 
     for(const auto& o : outs)
@@ -1795,7 +1760,7 @@ void MainWindow::Refresh()
     QString html = QString("<div style=\"font-family: '%1'; font-size: 12px; line-height: 160%\"><span style=\"color: %2\">GbaWadUtil</span>")
                        .arg(MonoFamily(), Text.name());
     //One option per line. Options that take one value can take one starting with -.
-    static const QStringList singles = {"-in", "-gus", "-oversample", "-rom", "-romout", "-out", "-cfile"};
+    static const QStringList singles = {"-in", "-gus", "-oversample", "-rom", "-romout", "-out"};
     bool isValue = false;
 
     for(const QString& a : args)
@@ -1818,7 +1783,7 @@ void MainWindow::Refresh()
 
     //Build
     const QString blocker = Blocker();
-    const int count = int(s.rom) + int(s.wad) + int(s.cfile);
+    const int count = int(s.rom) + int(s.wad);
 
     buildButton->setEnabled(blocker.isEmpty());
     buildButton->setText(blocker.isEmpty() ? (count == 1 ? "Build 1 output" : QString("Build %1 outputs").arg(count)) : "Build");
@@ -1974,12 +1939,9 @@ void MainWindow::OpenPreset()
     s.romOut = path("romOut");
     s.wad = o.value("wad").toBool(false);
     s.wadOut = path("wadOut");
-    s.cfile = o.value("cfile").toBool(false);
-    s.cOut = path("cOut");
 
     romOutEdited = !s.romOut.isEmpty();
     wadOutEdited = !s.wadOut.isEmpty();
-    cOutEdited = !s.cOut.isEmpty();
 
     for(const QString& d : s.dehs)
         dehScans.insert(d, ScanDehacked(d));
@@ -2012,8 +1974,6 @@ void MainWindow::SavePreset()
     o["romOut"] = s.romOut;
     o["wad"] = s.wad;
     o["wadOut"] = s.wadOut;
-    o["cfile"] = s.cfile;
-    o["cOut"] = s.cOut;
 
     QFile f(file);
 
@@ -2033,9 +1993,6 @@ void MainWindow::StartBuild()
 
     if(s.wad)
         outputs.append({BuildOutput::Wad, s.wadOut});
-
-    if(s.cfile)
-        outputs.append({BuildOutput::CSource, s.cOut});
 
     buildPage->Start(QCoreApplication::applicationFilePath(), BuildArguments(Options()), exeDir, outputs, s.music ? s.oversample : 0);
     stack->setCurrentWidget(buildPage);

@@ -12,8 +12,8 @@ WadUtilOptions ParseArguments(const QStringList& args, QStringList* ignored)
             ignored->append(what);
     };
 
-    QString* const values[] = {&o.inFile, &o.outFile, &o.cFile, &o.romIn, &o.romOut, &o.gusCfg};
-    const char* const names[] = {"-in", "-out", "-cfile", "-rom", "-romout", "-gus"};
+    QString* const values[] = {&o.inFile, &o.outFile, &o.romIn, &o.romOut, &o.gusCfg};
+    const char* const names[] = {"-in", "-out", "-rom", "-romout", "-gus"};
 
     for(int i = 0; i < args.count(); i++)
     {
@@ -22,7 +22,7 @@ WadUtilOptions ParseArguments(const QStringList& args, QStringList* ignored)
 
         int named = -1;
 
-        for(int n = 0; n < 6; n++)
+        for(int n = 0; n < 5; n++)
         {
             if(a == names[n])
                 named = n;
@@ -110,9 +110,6 @@ QStringList BuildArguments(const WadUtilOptions& o)
 
     if(o.outFile.length())
         a << "-out" << o.outFile;
-
-    if(o.cFile.length())
-        a << "-cfile" << o.cFile;
 
     if(o.sizeOnly)
         a << "-size";

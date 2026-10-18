@@ -49,11 +49,9 @@ struct GuiSettings
     int oversample = 4;
     bool rom = true;
     bool wad = false;
-    bool cfile = false;
     QString engine;
     QString romOut;
     QString wadOut;
-    QString cOut;
 };
 
 //The build settings page and, while and after a build runs, its result page.
@@ -118,7 +116,6 @@ private:
     GuiSettings s;
     bool romOutEdited = false;
     bool wadOutEdited = false;
-    bool cOutEdited = false;
     bool refreshing = false;
 
     //DeHackEd patches by path, read when they are added.
@@ -155,13 +152,10 @@ private:
 
     QFrame* romFrame;
     QFrame* wadFrame;
-    QFrame* cFrame;
     CheckCard* romCheck;
     CheckCard* wadCheck;
-    CheckCard* cCheck;
     QWidget* romBody;
     QWidget* wadBody;
-    QWidget* cBody;
     QLineEdit* engineEdit;
     StatusLine* engineStatus;
     QLabel* romSizeLabel;
