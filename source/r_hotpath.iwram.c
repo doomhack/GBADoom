@@ -3242,7 +3242,10 @@ static bool P_CrossSubsector(int num)
         {
 
             // no wall to block sight with?
-            if ((front = SG_FRONTSECTOR(seg))->floorheight == (back = SG_BACKSECTOR(seg))->floorheight && front->ceilingheight == back->ceilingheight)
+            front = SG_FRONTSECTOR(seg);
+            back = SG_BACKSECTOR(seg);
+
+            if (front->floorheight == back->floorheight && front->ceilingheight == back->ceilingheight)
                 continue;
 
             // possible occluder
