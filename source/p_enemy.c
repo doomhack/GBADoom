@@ -785,7 +785,8 @@ static bool PIT_AvoidDropoff(const line_t *line)
                 // scan the remaining thinkers to see if all Keens are dead
 
                 for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-                if (th->function == (think_t)P_MobjThinker)
+                if (th->function == (think_t)P_MobjThinker || // any type can have A_KeenDie
+                    th->function == (think_t)P_MobjBrainlessThinker)
         {
                 mobj_t *mo2 = (mobj_t *) th;
                 if (mo2 != mo && mo2->type == mo->type && mo2->health > 0)
@@ -1431,7 +1432,7 @@ static bool PIT_AvoidDropoff(const line_t *line)
                     info = &mobjinfo[_g->corpsehit->type];
 
                     P_SetMobjState(_g->corpsehit,info->raisestate);
-                    P_WakeCorpse(_g->corpsehit); // before flags lose MF_CORPSE
+                    P_WakeMobj(_g->corpsehit); // before flags lose MF_CORPSE
 
                     _g->corpsehit->height = info->height; // fix Ghost bug
                     _g->corpsehit->radius = info->radius >> FRACBITS; // fix Ghost bug
@@ -1441,7 +1442,7 @@ static bool PIT_AvoidDropoff(const line_t *line)
                     * Keep MF_POOLED so P_RemoveThing doesn't Z_Free a thingPool entry.
                     */
                     _g->corpsehit->flags =
-                            (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND) |
+                            (info->flags & ~(MF_FRIEND|MF_DRAWANIM)) | (actor->flags & MF_FRIEND) |
                             (_g->corpsehit->flags & MF_POOLED);
 
                     if (!((_g->corpsehit->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
@@ -1552,6 +1553,7 @@ void A_VileAttack(mobj_t *actor, void*)
     S_StartSound(actor, sfx_barexp);
     P_DamageMobj(actor->target, actor, actor, 20);
     actor->target->momz = 1000*FRACUNIT/mobjinfo[actor->target->type].mass;
+    P_WakeMobj(actor->target); // a corpse at rest flies too
 
     an = actor->angle >> ANGLETOFINESHIFT;
 
@@ -1676,6 +1678,7 @@ void A_SkullAttack(mobj_t *actor, void*)
     if (dist < 1)
         dist = 1;
     actor->momz = (dest->z+(dest->height>>1) - actor->z) / dist;
+    P_WakeMobj(actor);
 }
 
 //

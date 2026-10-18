@@ -477,7 +477,7 @@ void P_MobjThinkerStill(mobj_t* mobj)
 {
     // A corpse that has come to rest has nothing left to do, unless
     // monsters respawn. Stop thinking (it stays in the thinker list,
-    // so the order is kept) until P_WakeCorpse.
+    // so the order is kept) until P_WakeMobj.
     if ((mobj->flags & MF_CORPSE) && mobj->type != MT_PLAYER && !_g->respawnmonsters &&
             !(mobj->momx | mobj->momy | mobj->momz) && mobj->z == mobj->floorz)
     {
@@ -528,18 +528,27 @@ void P_MobjBrainlessThinker(mobj_t* mobj, void*)
 
 
 
-//Corpses at rest stop thinking (P_MobjThinker). Call this after
-//changing a corpse's state from outside its own thinker.
-void P_WakeCorpse(mobj_t* mobj)
+//Corpses at rest stop thinking (P_MobjThinker), and brainless things
+//never move. Call this after changing a corpse's state, or giving a
+//thing momentum, from outside P_MobjThinker (a DeHackEd patch can put
+//A_SkullAttack on a brainless type).
+void P_WakeMobj(mobj_t* mobj)
 {
-    if ((mobj->flags & MF_CORPSE) && !mobj->thinker.function)
+    if (((mobj->flags & MF_CORPSE) && !mobj->thinker.function) ||
+            mobj->thinker.function == (think_t)P_MobjBrainlessThinker)
         mobj->thinker.function = (think_t)P_MobjThinker;
 }
 
 static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)
 {
-    //Full thinking ability.
-    if(type < MT_MISC0)
+    const mobjinfo_t* info = &mobjinfo[type];
+
+    //Full thinking ability: monsters, projectiles and the other types the
+    //code spawns (below MT_MISC0), and anything a DeHackEd patch lets move,
+    //be pushed (thrust needs MF_SHOOTABLE), respawn or fall from the ceiling.
+    if(type < MT_MISC0 || info->speed ||
+            (info->flags & (MF_SHOOTABLE|MF_COUNTKILL|MF_MISSILE|MF_FLOAT|MF_SKULLFLY)) ||
+            (info->flags & (MF_SPAWNCEILING|MF_NOGRAVITY)) == MF_SPAWNCEILING)
         return (think_t)P_MobjThinker;
 
     //Just state cycles.
@@ -548,6 +557,79 @@ static think_t P_ThinkerFunctionForType(mobjtype_t type, mobj_t* mobj)
 
     //No thinking at all.
     return NULL;
+}
+
+//
+// Draw time animation (MF_DRAWANIM)
+//
+// A map thing whose brainless thinking is only a pure animation loop
+// (back to its spawn state; every state lasts > 0 tics, has no action and
+// the same sprite) needs no thinker: R_ProjectSprite asks P_AnimatedState
+// for its frame. state stays the spawn state (the sprite is all the game
+// reads), movecount is the loop length in tics and tics is the phase:
+// how far into the loop it was at leveltime 0.
+//
+
+static void P_StartDrawAnim(mobj_t* mobj)
+{
+    //Map things only: they spawn at leveltime 0, so the phase is exact.
+    if (mobj->thinker.function != (think_t)P_MobjBrainlessThinker)
+        return;
+
+    const state_t* s0 = mobj->state;
+    const state_t* st = s0;
+    int len = 0;
+    int n = 0;
+
+    do
+    {
+        if (st->tics <= 0 || st->action || st->sprite != s0->sprite || ++n > 32)
+            return;
+
+        len += st->tics;
+        st = &states[st->nextstate];
+    } while (st != s0);
+
+    if (len > SHRT_MAX)
+        return;
+
+    //tics counts down from its (random) start, so this many tics of
+    //the spawn state have already gone.
+    mobj->tics = s0->tics - mobj->tics;
+    mobj->movecount = len;
+    mobj->flags |= MF_DRAWANIM;
+
+    mobj->thinker.function = NULL;
+    P_UnlinkThinker(&mobj->thinker);
+}
+
+//Back to a thinker, when something sets the thing's state (damage, crushing).
+static void P_StopDrawAnim(mobj_t* mobj)
+{
+    mobj->flags &= ~MF_DRAWANIM;
+    mobj->movecount = 0;
+
+    if (mobj->thinker.function != NULL)
+        return; //Already removed.
+
+    mobj->thinker.function = P_ThinkerFunctionForType(mobj->type, mobj);
+
+    if (mobj->thinker.function)
+        P_AddThinker(&mobj->thinker);
+}
+
+const state_t* P_AnimatedState(const mobj_t* mobj)
+{
+    int pos = (_g->leveltime + mobj->tics) % mobj->movecount;
+    const state_t* st = mobj->state;
+
+    while (pos >= st->tics)
+    {
+        pos -= st->tics;
+        st = &states[st->nextstate];
+    }
+
+    return st;
 }
 
 //
@@ -592,7 +674,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
     mobj->y = y;
     mobj->radius = info->radius >> FRACBITS;
     mobj->height = info->height;                                      // phares
-    mobj->flags  |= info->flags;
+    mobj->flags  |= info->flags & ~MF_DRAWANIM;
 
     if (type == MT_PLAYER)         // Except in old demos, players
         mobj->flags |= MF_FRIEND;    // are always friends.
@@ -723,6 +805,9 @@ bool P_SetMobjState(mobj_t* mobj, statenum_t state)
     const state_t* st = &states[state];
     mobj->state = st;
     mobj->tics = st->tics;
+
+    if (mobj->flags & MF_DRAWANIM)
+        P_StopDrawAnim(mobj);
 
     if(_g->runningaction)
     {
@@ -991,6 +1076,8 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 
     if (mobj->tics > 0)
         mobj->tics = 1 + (P_Random () % mobj->tics);
+
+    P_StartDrawAnim(mobj);
 
     if (!(mobj->flags & MF_FRIEND) &&
             options & MTF_FRIEND)

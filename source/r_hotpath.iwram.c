@@ -1774,9 +1774,12 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     if (D_abs(tx)>(tz<<2))
         return;
 
+    // Looping decorations are animated here, not by a thinker (ROM call).
+    const state_t* st = (thing->flags & MF_DRAWANIM) ? P_AnimatedState(thing) : thing->state;
+
     // decide which patch to use for sprite relative to player
-    const spritedef_t* sprdef = &_g->sprites[thing->state->sprite];
-    const spriteframe_t* sprframe = &sprdef->spriteframes[thing->state->frame & FF_FRAMEMASK];
+    const spritedef_t* sprdef = &_g->sprites[st->sprite];
+    const spriteframe_t* sprframe = &sprdef->spriteframes[st->frame & FF_FRAMEMASK];
 
     unsigned int rot = 0;
 
@@ -1864,7 +1867,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
         vis->colormap = NULL;             // shadow draw
     else if (fixedcolormap)
         vis->colormap = objpal_spare->fixedColormap;      // fixed map
-    else if (thing->state->frame & FF_FULLBRIGHT)
+    else if (st->frame & FF_FULLBRIGHT)
         vis->colormap = vram_tail->lightColormaps[0];     // full bright  // killough 3/20/98
     else
     {      // diminished light

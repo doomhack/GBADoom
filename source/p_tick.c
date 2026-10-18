@@ -138,6 +138,16 @@ void P_RemoveThinker(thinker_t *thinker)
     thinker->function = (think_t)P_RemoveThinkerDelayed;
 }
 
+// P_UnlinkThinker
+// Takes a thing that stops thinking out of the list, without freeing it
+// (see P_StartDrawAnim). P_RemoveThing links it back in.
+
+void P_UnlinkThinker(thinker_t *thinker)
+{
+    (thinker->next->prev = thinker->prev)->next = thinker->next;
+    thinker->next = thinker->prev = NULL;
+}
+
 // The free is delayed for things that don't think too: iterators such as
 // P_BlockThingsIterator read the next link of a thing after a callback
 // that removed it, and a spawn in the same tic could otherwise reuse its
