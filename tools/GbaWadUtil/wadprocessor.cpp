@@ -56,6 +56,8 @@ bool WadProcessor::ProcessWad()
 
 bool WadProcessor::ProcessLevel(quint32 lumpNum)
 {
+    CheckLevelMemory(lumpNum);
+
     ProcessVertexes(lumpNum);
     ProcessLines(lumpNum);
     ProcessSegs(lumpNum);
@@ -71,6 +73,33 @@ bool WadProcessor::ProcessLevel(quint32 lumpNum)
     wadFile.RemoveLump(lumpNum+ML_VERTEXES);
 
     return true;
+}
+
+//The level's biggest heap blocks on the GBA: P_LoadThings makes a mobj_t
+//for every THINGS entry and P_LoadSectors a sector_t plus a u16 sound
+//queue slot for every sector. Sizes are the GBA's (static_asserted in
+//p_mobj.h and r_defs.h). The zone is 256 KB and the rest of the level
+//needs some of it, so a map past this limit runs out of memory.
+static const int mapthingSize = 10;
+static const int mobjSize = 100;
+static const int sectorSize = 40 + 2;
+static const int levelMemoryLimit = 200 * 1024;
+
+void WadProcessor::CheckLevelMemory(quint32 lumpNum)
+{
+    Lump mapLump, things, sectors;
+
+    if(!wadFile.GetLumpByNum(lumpNum, mapLump) || !wadFile.GetLumpByNum(lumpNum+ML_THINGS, things) ||
+       !wadFile.GetLumpByNum(lumpNum+ML_SECTORS, sectors))
+        return;
+
+    const int numThings = things.length / mapthingSize;
+    const int numSectors = sectors.length / sizeof(mapsector_t);
+    const int bytes = numThings * mobjSize + numSectors * sectorSize;
+
+    if(bytes > levelMemoryLimit)
+        qWarning("%s: its %d things and %d sectors need %d KB of RAM, more than %d KB, so it can't load on the GBA.",
+                 qPrintable(mapLump.name), numThings, numSectors, bytes / 1024, levelMemoryLimit / 1024);
 }
 
 bool WadProcessor::ProcessVertexes(quint32 lumpNum)

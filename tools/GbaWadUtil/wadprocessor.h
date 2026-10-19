@@ -22,6 +22,7 @@ private:
     QStringList MapNames();
 
     bool ProcessLevel(quint32 lumpNum);
+    void CheckLevelMemory(quint32 lumpNum);
 
     bool ProcessVertexes(quint32 lumpNum);
     bool ProcessLines(quint32 lumpNum);

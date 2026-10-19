@@ -131,6 +131,10 @@ typedef struct sector_s
 
 } sector_t;
 
+#ifdef GBA
+static_assert(sizeof(sector_t) == 40, "sector_t must match GbaWadUtil's CheckLevelMemory");
+#endif
+
 //
 // The SideDef.
 //

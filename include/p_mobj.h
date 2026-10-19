@@ -217,6 +217,10 @@ typedef struct mobj_s
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!
 } mobj_t;
 
+#ifdef GBA
+static_assert(sizeof(mobj_t) == 100, "mobj_t must match GbaWadUtil's CheckLevelMemory");
+#endif
+
 #define P_RADIUS(mo) ((fixed_t)(mo)->radius << FRACBITS)
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
