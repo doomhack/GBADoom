@@ -77,7 +77,7 @@ more of the work ahead of time.
 
 ### GbaWadUtil (now part of this repo)
 
-- The source has moved into `tools/GbaWadUtil/` (Qt 6) and keeps its own history. A
+- The source has moved into `tools/GbaWadUtil/` (Qt 6.12) and keeps its own history. A
   prebuilt Windows exe and the batch scripts are in `GbaWadUtil/`, with
   `gbadoom.wad` and the GUS patches tidied into `GbaWadUtil/data/` (`data/dgguspat/`).
   `-gus timidity.cfg` finds a config there by name.
@@ -146,7 +146,8 @@ more of the work ahead of time.
 ### Build and repo
 
 - `build.bat` builds the GBA target from cmd or PowerShell.
-- The Qt build still compiles a WAD in. Generate it with `GbaWadUtil -cfile`.
+- The Qt build (Qt 6.12, MinGW 64-bit) loads a processed WAD at startup (`-iwad`)
+  instead of compiling one in.
 - Removed: the Maxmod soundbank and `music/` tracker files, stray save files, and other
   leftover files (`CodeProphet.lib`, `make.sh`, `msys2.bat`).
 - Added `CLAUDE.md` (architecture notes) and `IWRAM_BUDGET.md` (what's in IWRAM and how
