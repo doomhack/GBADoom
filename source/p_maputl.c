@@ -253,8 +253,16 @@ void P_UnsetThingPosition (mobj_t *thing)
 // killough 5/3/98: reformatted, cleaned up
 
 void P_SetThingPosition(mobj_t *thing)
+{
+    P_SetThingPositionInSector(thing, R_PointInSector(thing->x, thing->y));
+}
+
+// As P_SetThingPosition, for a caller that already knows the sector at
+// thing->x, thing->y.
+
+void P_SetThingPositionInSector(mobj_t *thing, sector_t *sec)
 {                                                      // link into sector
-    sector_t *sec = thing->sector = R_PointInSector(thing->x, thing->y);
+    thing->sector = sec;
     if (!(thing->flags & MF_NOSECTOR))
     {
         // invisible things don't go into the sector links

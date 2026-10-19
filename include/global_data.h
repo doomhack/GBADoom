@@ -339,6 +339,11 @@ ceiling_t *activeceilings[MAXCEILINGS];
 
 unsigned short* soundqueue; // P_NoiseAlert's sector queue: numsectors entries, PU_LEVEL.
 
+// The last flood's inputs, so P_NoiseAlert can skip an identical one.
+const mobj_t* noisetarget;
+const sector_t* noisesector;  // reset by P_LoadSectors
+unsigned int noiseplanemoves;
+
 mobj_t* corpsehit;
 fixed_t viletryx;
 fixed_t viletryy;
@@ -367,6 +372,7 @@ int ls_y; // Lost Soul position for Lost Soul checks      // phares
 // line or object intersection checking
 
 fixed_t   *tmbbox;  // bounding box for line intersection checks
+sector_t  *tmsector;  // sector at tmx, tmy
 fixed_t   tmfloorz;   // floor you'd hit if free to fall
 fixed_t   tmceilingz; // ceiling of sector you're in
 fixed_t   tmdropoffz; // dropoff on other side of line you're crossing
@@ -459,6 +465,12 @@ bool runningaction;         // A state action is running: P_SetMobjState queues 
 
 unsigned int numpendingactions;
 pendingaction_t pendingactions[MAXPENDINGACTIONS];
+
+//******************************************************************************
+//p_floor.c
+//******************************************************************************
+
+unsigned int planemoves;    // T_MovePlane calls, so P_NoiseAlert knows heights may have changed.
 
 //******************************************************************************
 //p_plats.c

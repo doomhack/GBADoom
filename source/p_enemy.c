@@ -134,9 +134,21 @@ static unsigned int P_SoundSpread(const sector_t *sec, unsigned int blocking, un
 // blocking line, then one blocking line further. Each sector is queued at
 // most once, so the queue needs numsectors entries.
 //
+// What it reaches depends only on the target, the emitter's sector and the
+// floor and ceiling heights (closed doors), which only T_MovePlane changes,
+// so a flood with the same inputs as the last one is skipped.
+//
 
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
+    if (target == _g->noisetarget && emitter->sector == _g->noisesector &&
+            _g->planemoves == _g->noiseplanemoves)
+        return;
+
+    _g->noisetarget = target;
+    _g->noisesector = emitter->sector;
+    _g->noiseplanemoves = _g->planemoves;
+
     _g->validcount++;
 
     unsigned int count = P_SoundReach(emitter->sector, 1, target, 0);

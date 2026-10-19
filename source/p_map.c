@@ -158,7 +158,7 @@ bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
     thing->x = x;
     thing->y = y;
 
-    P_SetThingPosition (thing);
+    P_SetThingPositionInSector (thing, newsec);
 
     //thing->PrevX = x;
     //thing->PrevY = y;
@@ -532,7 +532,7 @@ bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
     _g->tmbbox[BOXRIGHT] = x + P_RADIUS(_g->tmthing);
     _g->tmbbox[BOXLEFT] = x - P_RADIUS(_g->tmthing);
 
-    newsec = R_PointInSector (x,y);
+    _g->tmsector = newsec = R_PointInSector (x,y);
     _g->floorline = _g->blockline = _g->ceilingline = NULL; // killough 8/1/98
 
     // Whether object can get out of a sticky situation:
@@ -652,7 +652,7 @@ bool P_TryMove(mobj_t* thing,fixed_t x,fixed_t y, bool dropoff)
     thing->x = x;
     thing->y = y;
 
-    P_SetThingPosition (thing);
+    P_SetThingPositionInSector (thing, _g->tmsector);
 
     // if any special lines were hit, do the effect
 

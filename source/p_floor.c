@@ -76,6 +76,8 @@ result_e T_MovePlane
     fixed_t       destheight; //jff 02/04/98 used to keep floors/ceilings
     // from moving thru each other
 
+    _g->planemoves++;
+
     switch(floorOrCeiling)
     {
     case 0:

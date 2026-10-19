@@ -86,6 +86,7 @@ fixed_t P_InterceptVector2(const divline_t *v2, const divline_t *v1);
 void    P_LineOpening (const line_t *linedef);
 void    P_UnsetThingPosition(mobj_t *thing);
 void    P_SetThingPosition(mobj_t *thing);
+void    P_SetThingPositionInSector(mobj_t *thing, sector_t *sec);
 bool P_BlockLinesIterator (int x, int y, bool func(const line_t *));
 bool P_BlockThingsIterator(int x, int y, bool func(mobj_t *));
 void P_SectorBBox(const sector_t* sec, fixed_t* bbox);
