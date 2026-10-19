@@ -99,5 +99,8 @@ extern const fixed_t distscale[120];
 extern const unsigned char scalelight[16][160];
 extern const unsigned char zlight[16][128];
 
+//ceil(2^32 / n), for exact small divides (R_DivSmall).
+extern const unsigned int smallRecip[128];
+
 
 #endif

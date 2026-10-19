@@ -2279,14 +2279,6 @@ static R_BSP_OPT bool R_CheckOpenings(const int start)
     return need <= MAXOPENINGS;
 }
 
-//ceil(2^32 / n) for 2 <= n < 128 (entries 0 and 1 unused).
-#define RECIP32(n) ((n) < 2 ? 0u : 0xFFFFFFFFu / ((n) < 2 ? 2u : (unsigned int)(n)) + 1u)
-#define RECIP32_4(n) RECIP32(n), RECIP32(n+1), RECIP32(n+2), RECIP32(n+3)
-#define RECIP32_16(n) RECIP32_4(n), RECIP32_4(n+4), RECIP32_4(n+8), RECIP32_4(n+12)
-#define RECIP32_64(n) RECIP32_16(n), RECIP32_16(n+16), RECIP32_16(n+32), RECIP32_16(n+48)
-
-static const unsigned int smallRecip[128] = { RECIP32_64(0), RECIP32_64(64) };
-
 //Exactly a / n (truncated, like FixedDiv(a, n << FRACBITS)) for
 //|a| < 2^22 and 1 <= n < 128, without a 64 bit divide.
 //With m = ceil(2^32 / n), m * n = 2^32 + e where 0 <= e < n, so
