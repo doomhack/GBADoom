@@ -1231,29 +1231,19 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 {
     mobj_t *th;
-    fixed_t x, y, z, slope = 0;
+    fixed_t x, y, z, slope;
 
     // see which target is to be aimed at
 
     angle_t an = source->angle;
 
-    // killough 7/19/98: autoaiming was not in original beta
-    {
-        // killough 8/2/98: prefer autoaiming at enemies
-        unsigned int mask = MF_FRIEND;
-
-        do
-        {
-            slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
-            if (!_g->linetarget)
-                slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
-            if (!_g->linetarget)
-                slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
-            if (!_g->linetarget)
-                an = source->angle, slope = 0;
-        }
-        while (mask && (mask=0, !_g->linetarget));  // killough 8/2/98
-    }
+    slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, 0);
+    if (!_g->linetarget)
+        slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, 0);
+    if (!_g->linetarget)
+        slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, 0);
+    if (!_g->linetarget)
+        an = source->angle, slope = 0;
 
     x = source->x;
     y = source->y;
