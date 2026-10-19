@@ -55,8 +55,7 @@ void    P_SlideMove(mobj_t *mo);
 bool P_CheckSight(mobj_t *t1, mobj_t *t2);
 void    P_UseLines(player_t *player);
 
-// killough 8/2/98: add 'mask' argument to prevent friends autoaiming at others
-fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance, uint_64_t mask);
+fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance);
 
 void    P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
                      fixed_t slope, int damage );

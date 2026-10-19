@@ -330,7 +330,7 @@ void P_SetupLevel(int episode, int map)
     char  lumpname[9];
     int   lumpnum;
 
-    _g->totallive = _g->totalkills = _g->totalitems = _g->totalsecret = 0;
+    _g->totalkills =_g->totalitems = _g->totalsecret = 0;
     _g->wminfo.partime = 180;
 
     for (i=0; i<MAXPLAYERS; i++)
@@ -369,7 +369,7 @@ void P_SetupLevel(int episode, int map)
 
     lumpnum = W_GetNumForName(lumpname);
 
-    _g->leveltime = 0; _g->totallive = 0;
+    _g->leveltime = 0;
 
     P_LoadSectors   (lumpnum+ML_SECTORS);
     P_LoadLineDefs  (lumpnum+ML_LINEDEFS);

@@ -457,9 +457,6 @@ void P_NightmareRespawn(mobj_t* mobj)
     mo = P_SpawnMobj (x,y,z, mobj->type);
     mo->angle = mobj->angle;
 
-    /* killough 11/98: transfer friendliness from deceased */
-    mo->flags = (mo->flags & ~MF_FRIEND) | (mobj->flags & MF_FRIEND);
-
     mo->reactiontime = 18;
 
     // remove the old monster,
@@ -676,9 +673,6 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
     mobj->height = info->height;                                      // phares
     mobj->flags  |= info->flags & ~MF_DRAWANIM;
 
-    if (type == MT_PLAYER)         // Except in old demos, players
-        mobj->flags |= MF_FRIEND;    // are always friends.
-
     mobj->health = info->spawnhealth;
 
     if (_g->gameskill != sk_nightmare)
@@ -711,8 +705,6 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
     // links them in when they are removed.
     if (mobj->thinker.function)
         P_AddThinker (&mobj->thinker);
-    if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
-        _g->totallive++;
     return mobj;
 }
 
@@ -1079,14 +1071,7 @@ void P_SpawnMapThing (const mapthing_t* mthing)
 
     P_StartDrawAnim(mobj);
 
-    if (!(mobj->flags & MF_FRIEND) &&
-            options & MTF_FRIEND)
-    {
-        mobj->flags |= MF_FRIEND;            // killough 10/98:
-    }
-
-    /* killough 7/20/98: exclude friends */
-    if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+    if (mobj->flags & MF_COUNTKILL)
         _g->totalkills++;
 
     if (mobj->flags & MF_COUNTITEM)
@@ -1237,11 +1222,11 @@ void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
     angle_t an = source->angle;
 
-    slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, 0);
+    slope = P_AimLineAttack(source, an, 16*64*FRACUNIT);
     if (!_g->linetarget)
-        slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, 0);
+        slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT);
     if (!_g->linetarget)
-        slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, 0);
+        slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT);
     if (!_g->linetarget)
         an = source->angle, slope = 0;
 

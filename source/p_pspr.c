@@ -644,11 +644,7 @@ void A_Punch(player_t *player, void*)
     t = P_Random();
     angle += (t - P_Random())<<18;
 
-    /* killough 8/2/98: make autoaiming prefer enemies */
-    if (
-            (slope = P_AimLineAttack(player->mo, angle, MELEERANGE, MF_FRIEND),
-             !_g->linetarget))
-        slope = P_AimLineAttack(player->mo, angle, MELEERANGE, 0);
+    slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
 
     P_LineAttack(player->mo, angle, MELEERANGE, slope, damage);
 
@@ -675,12 +671,8 @@ void A_Saw(player_t *player, void*)
     int t = P_Random();
     angle += (t - P_Random())<<18;
 
-    /* Use meleerange + 1 so that the puff doesn't skip the flash
-   * killough 8/2/98: make autoaiming prefer enemies */
-    if (
-            (slope = P_AimLineAttack(player->mo, angle, MELEERANGE+1, MF_FRIEND),
-             !_g->linetarget))
-        slope = P_AimLineAttack(player->mo, angle, MELEERANGE+1, 0);
+    // Use meleerange + 1 so that the puff doesn't skip the flash
+    slope = P_AimLineAttack(player->mo, angle, MELEERANGE+1);
 
     P_LineAttack(player->mo, angle, MELEERANGE+1, slope, damage);
 
@@ -755,11 +747,11 @@ static void P_BulletSlope(mobj_t *mo)
 {
     angle_t an = mo->angle;    // see which target is to be aimed at
 
-    _g->bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, 0);
+    _g->bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT);
     if (!_g->linetarget)
-        _g->bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, 0);
+        _g->bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT);
     if (!_g->linetarget)
-        _g->bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, 0);
+        _g->bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT);
 }
 
 //
@@ -898,12 +890,7 @@ void A_BFGSpray(mobj_t *mo, void*)
         angle_t an = mo->angle - ANG90/2 + ANG90/40*i;
 
         // mo->target is the originator (player) of the missile
-
-        // killough 8/2/98: make autoaiming prefer enemies
-        if (
-                (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND),
-                 !_g->linetarget))
-            P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, 0);
+        P_AimLineAttack(mo->target, an, 16*64*FRACUNIT);
 
         if (!_g->linetarget)
             continue;

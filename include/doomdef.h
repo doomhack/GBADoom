@@ -163,7 +163,6 @@ typedef enum {
 #define MTF_NOTSINGLE          16
 #define MTF_NOTDM              32
 #define MTF_NOTCOOP            64
-#define MTF_FRIEND            128
 #define MTF_RESERVED          256
 
 typedef enum {

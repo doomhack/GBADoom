@@ -1614,10 +1614,6 @@ typedef enum {
 // Animated at draw time from leveltime (P_AnimatedState) instead of by a
 // thinker; set by P_SpawnMapThing, never taken from mobjinfo.
 #define MF_DRAWANIM     (unsigned int)(0x0000000020000000)
-// Standing over a dropoff of more than 24 units (replaces killough's dropoffz).
-#define MF_OVERDROPOFF  (unsigned int)(0x0000000040000000)
-
-#define MF_FRIEND       (unsigned int)(0x0000000080000000)
 
 /********************************************************************
  * Definition of the Thing structure

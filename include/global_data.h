@@ -174,7 +174,7 @@ int             starttime;     // for comparative timing purposes
 
 int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
-int             totalkills, totallive, totalitems, totalsecret;    // for intermission
+int             totalkills, totalitems, totalsecret;    // for intermission
 int             demover;
 wbstartstruct_t wminfo;               // parms for world map / intermission
 int             totalleveltimes;      // CPhipps - total time for all completed levels
@@ -337,8 +337,6 @@ ceiling_t *activeceilings[MAXCEILINGS];
 //p_enemy.c
 //******************************************************************************
 
-fixed_t dropoff_deltax, dropoff_deltay, floorz;
-
 unsigned short* soundqueue; // P_NoiseAlert's sector queue: numsectors entries, PU_LEVEL.
 
 mobj_t* corpsehit;
@@ -355,9 +353,6 @@ brain_t brain;   // killough 3/26/98: global state of boss brain
 //******************************************************************************
 //p_map.c
 //******************************************************************************
-
-/* killough 8/2/98: for more intelligent autoaiming */
-uint_64_t aim_flags_mask;
 
 mobj_t    *tmthing;
 fixed_t   tmx;

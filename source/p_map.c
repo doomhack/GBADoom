@@ -47,17 +47,11 @@
 #include "global_data.h"
 
 
-// Update floorz/ceilingz from the last P_CheckPosition and remember
-// whether the thing is hanging over a tall dropoff (killough 11/98).
+// Update floorz/ceilingz from the last P_CheckPosition.
 static void P_SetThingFloorCeiling(mobj_t* thing)
 {
     thing->floorz = _g->tmfloorz;
     thing->ceilingz = _g->tmceilingz;
-
-    if (_g->tmfloorz - _g->tmdropoffz > 24*FRACUNIT)
-        thing->flags |= MF_OVERDROPOFF;
-    else
-        thing->flags &= ~MF_OVERDROPOFF;
 }
 
 //
@@ -276,9 +270,7 @@ bool PIT_CheckLine (const line_t* ld)
         if (ld->flags & ML_BLOCKING)           // explicitly blocking everything
             return _g->tmunstuck && !untouched(ld);  // killough 8/1/98: allow escape
 
-        // killough 8/9/98: monster-blockers don't affect friends
-        if (!(_g->tmthing->flags & MF_FRIEND || P_MobjIsPlayer(_g->tmthing))
-                && ld->flags & ML_BLOCKMONSTERS)
+        if (!P_MobjIsPlayer(_g->tmthing) && ld->flags & ML_BLOCKMONSTERS)
             return false; // block monsters only
     }
 
@@ -1038,12 +1030,6 @@ bool PTR_AimTraverse (intercept_t* in)
     if (!(th->flags&MF_SHOOTABLE))
         return true;    // corpse or something
 
-    /* killough 7/19/98, 8/2/98:
-   * friends don't aim at friends (except players), at least not first
-   */
-    if (th->flags & _g->shootthing->flags & _g->aim_flags_mask && !P_MobjIsPlayer(th))
-        return true;
-
     // check angles to see if the thing can be aimed at
 
     dist = FixedMul (_g->attackrange, in->frac);
@@ -1190,7 +1176,7 @@ bool PTR_ShootTraverse (intercept_t* in)
 //
 // P_AimLineAttack
 //
-fixed_t P_AimLineAttack(mobj_t* t1,angle_t angle,fixed_t distance, uint_64_t mask)
+fixed_t P_AimLineAttack(mobj_t* t1,angle_t angle,fixed_t distance)
 {
     fixed_t x2;
     fixed_t y2;
@@ -1209,9 +1195,6 @@ fixed_t P_AimLineAttack(mobj_t* t1,angle_t angle,fixed_t distance, uint_64_t mas
 
     _g->attackrange = distance;
     _g->linetarget = NULL;
-
-    /* killough 8/2/98: prevent friends from aiming at friends */
-    _g->aim_flags_mask = mask;
 
     P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_AimTraverse);
 

@@ -202,9 +202,6 @@ typedef struct mobj_s
     // matter what (even if shot by another object)
     unsigned char       threshold;
 
-    // killough 9/9/98: How long a monster pursues a target. 0-100.
-    unsigned char       pursuecount;
-
     // Movement direction, movement generation (zig-zagging).
     unsigned char       movedir:4;
 
