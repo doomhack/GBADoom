@@ -539,7 +539,7 @@ bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
     fixed_t xt1, yt1;
     fixed_t xt2, yt2;
     fixed_t xstep, ystep;
-    fixed_t partial;
+    fixed_t partial, xpartial;
     fixed_t xintercept, yintercept;
     int     mapx, mapy;
     int     mapxstep, mapystep;
@@ -590,6 +590,7 @@ bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
         }
 
     yintercept = (y1>>MAPBTOFRAC) + FixedMul(partial, ystep);
+    xpartial = partial;
 
     if (yt2 > yt1)
     {
@@ -613,6 +614,24 @@ bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
 
     xintercept = (x1>>MAPBTOFRAC) + FixedMul (partial, xstep);
 
+    // Rather than walking the whole trace before traversing (a hitscan is
+    // 2048 units long however close the wall that stops it), traverse
+    // whatever can't be preceded by anything still unwalked each time the
+    // walk enters a new block column (row, if the trace is nearer vertical).
+    // Lines in unwalked blocks cross the trace beyond that column's edge.
+    // Things are linked by their centre, so they can be crossed up to their
+    // radius before it, and a little more covers rounding.
+    // walked is the distance along the major axis to the edge, less that
+    // margin, in blocks; blockfrac converts blocks to trace fractions.
+    bool xmajor = D_abs(x2 - x1) >= D_abs(y2 - y1);
+    fixed_t major = D_abs(xmajor ? x2 - x1 : y2 - y1);
+    fixed_t walked = (xmajor ? xpartial : partial) -
+            ((_g->maxthingradius + 16*FRACUNIT) >> MAPBTOFRAC);
+    fixed_t blockfrac = 0;
+
+    if (major > MAPBLOCKSIZE) // shorter traces gain nothing
+        blockfrac = FixedDiv(FRACUNIT, major >> MAPBTOFRAC);
+
     // Step through map blocks.
     // Count is present to prevent a round off error
     // from skipping the break.
@@ -633,17 +652,29 @@ bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
         if (mapx == xt2 && mapy == yt2)
             break;
 
+        bool newmajor = false;
+
         if ((yintercept >> FRACBITS) == mapy)
         {
             yintercept += ystep;
             mapx += mapxstep;
+            newmajor = xmajor;
         }
         else
             if ((xintercept >> FRACBITS) == mapx)
             {
                 xintercept += xstep;
                 mapy += mapystep;
+                newmajor = !xmajor;
             }
+
+        if (newmajor && blockfrac)
+        {
+            if (walked > 0 && !P_TraverseIntercepts(trav, FixedMul(walked, blockfrac)))
+                return false;
+
+            walked += FRACUNIT;
+        }
     }
 
     // go through the sorted list

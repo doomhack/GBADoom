@@ -122,4 +122,8 @@ void P_InitInfoTables(void)
         I_Error("P_InitInfoTables: GBATEXT doesn't have %d strings.\nRebuild the WAD with this GbaWadUtil.", NUMTEXTS);
 
     _g->text = text;
+
+    for (int i = 0; i < NUMMOBJTYPES; i++)
+        if (mobjinfo[i].radius > _g->maxthingradius)
+            _g->maxthingradius = mobjinfo[i].radius;
 }

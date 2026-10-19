@@ -272,6 +272,9 @@ const miscinfo_t* miscinfo;
 //GBATEXT: offsets from its start to each textnum_t's string (D_TEXT).
 const unsigned int* text;
 
+//The largest radius in mobjinfo, for P_PathTraverse.
+fixed_t maxthingradius;
+
 //******************************************************************************
 //m_cheat.c
 //******************************************************************************
