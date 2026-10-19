@@ -40,6 +40,7 @@
 #include "st_stuff.h"
 #include "v_video.h"
 #include "p_spec.h"
+#include "m_bbox.h"
 #include "am_map.h"
 #include "dstrings.h"
 #include "g_game.h"
@@ -90,8 +91,10 @@ static const int f_h = SCREENHEIGHT-ST_SCALED_HEIGHT;// to allow runtime setting
 #define PLAYERRADIUS    (16*(1<<MAPBITS)) // e6y
 
 // translates between frame-buffer and map distances
+// MTOF skips FixedMul's 16.16 pixels, which overflow 2^15 pixels out
+// (8192 map units at full zoom).
 #define FTOM(x) FixedMul(((x)<<16),_g->scale_ftom)
-#define MTOF(x) (FixedMul((x),_g->scale_mtof)>>16)
+#define MTOF(x) ((fixed_t)(((int_64_t)(x) * _g->scale_mtof) >> 32))
 // translates between frame-buffer and map coordinates
 #define CXMTOF(x)  (MTOF((x)- _g->m_x))
 #define CYMTOF(y)  ((f_h - MTOF((y)- _g->m_y)))
@@ -505,6 +508,22 @@ static void AM_changeWindowScale(void)
 }
 
 //
+// AM_snapToPixel()
+//
+// Moves a map coordinate back to the pixel edge at or below it, so the
+// follow window sits on whole pixels and the map scrolls without shimmer.
+// The low 32 bits of x * scale_mtof are how far into its pixel x is.
+// (FTOM(MTOF(x)) overflowed far from the origin when zoomed in, and
+// scale_ftom's rounding pulled the player off centre.)
+//
+static fixed_t AM_snapToPixel(fixed_t x)
+{
+    const unsigned int frac = (unsigned int)((int_64_t)x * _g->scale_mtof);
+
+    return x - (fixed_t)(((uint_64_t)frac * (unsigned int)_g->scale_ftom) >> 32);
+}
+
+//
 // AM_doFollowPlayer()
 //
 // Turn on follow mode - the map scrolls opposite to player motion
@@ -515,8 +534,8 @@ static void AM_doFollowPlayer(void)
 {
     if (_g->f_oldloc.x != _g->player.mo->x || _g->f_oldloc.y != _g->player.mo->y)
     {
-        _g->m_x = FTOM(MTOF(_g->player.mo->x >> FRACTOMAPBITS)) - _g->m_w/2;//e6y
-        _g->m_y = FTOM(MTOF(_g->player.mo->y >> FRACTOMAPBITS)) - _g->m_h/2;//e6y
+        _g->m_x = AM_snapToPixel(_g->player.mo->x >> FRACTOMAPBITS) - _g->m_w/2;//e6y
+        _g->m_y = AM_snapToPixel(_g->player.mo->y >> FRACTOMAPBITS) - _g->m_h/2;//e6y
         _g->m_x2 =  _g->m_x + _g->m_w;
         _g->m_y2 =  _g->m_y + _g->m_h;
         _g->f_oldloc.x = _g->player.mo->x;
@@ -549,19 +568,17 @@ void AM_Ticker (void)
 }
 
 //
-// AM_clipMline()
+// AM_clipFline()
 //
 // Automap clipping of lines.
 //
-// Based on Cohen-Sutherland clipping algorithm but with a slightly
-// faster reject and precalculated slopes. If the speed is needed,
-// use a hash algorithm to handle the common cases.
+// Based on Cohen-Sutherland clipping algorithm. Callers have already
+// rejected lines nowhere near the screen.
 //
-// Passed the line's coordinates on map and in the frame buffer performs
-// clipping on them in the lines frame coordinates.
+// Passed the line's frame buffer coordinates, clips them to the frame.
 // Returns true if any part of line was not clipped
 //
-static bool AM_clipMline(mline_t*  ml, fline_t*  fl)
+static bool AM_clipFline(fline_t*  fl)
 {
     enum
     {
@@ -587,39 +604,6 @@ static bool AM_clipMline(mline_t*  ml, fline_t*  fl)
     if ((mx) < 0) (oc) |= LEFT; \
     else if ((mx) >= f_w) (oc) |= RIGHT;
 
-
-    // do trivial rejects and outcodes
-    if (ml->a.y >  _g->m_y2)
-        outcode1 = TOP;
-    else if (ml->a.y <  _g->m_y)
-        outcode1 = BOTTOM;
-
-    if (ml->b.y >  _g->m_y2)
-        outcode2 = TOP;
-    else if (ml->b.y <  _g->m_y)
-        outcode2 = BOTTOM;
-
-    if (outcode1 & outcode2)
-        return false; // trivially outside
-
-    if (ml->a.x <  _g->m_x)
-        outcode1 |= LEFT;
-    else if (ml->a.x >  _g->m_x2)
-        outcode1 |= RIGHT;
-
-    if (ml->b.x <  _g->m_x)
-        outcode2 |= LEFT;
-    else if (ml->b.x >  _g->m_x2)
-        outcode2 |= RIGHT;
-
-    if (outcode1 & outcode2)
-        return false; // trivially outside
-
-    // transform to frame-buffer coordinates.
-    fl->a.x = CXMTOF(ml->a.x);
-    fl->a.y = CYMTOF(ml->a.y);
-    fl->b.x = CXMTOF(ml->b.x);
-    fl->b.y = CYMTOF(ml->b.y);
 
     DOOUTCODE(outcode1, fl->a.x, fl->a.y)
             DOOUTCODE(outcode2, fl->b.x, fl->b.y)
@@ -686,27 +670,102 @@ static bool AM_clipMline(mline_t*  ml, fline_t*  fl)
 #undef DOOUTCODE
 
 //
-// AM_drawMline()
+// AM_drawFline()
 //
 // Clip lines, draw visible parts of lines.
 //
-// Passed the map coordinates of the line, and the color to draw it
+// Passed the frame buffer coordinates of the line, and the color to draw it
 // Color -1 is special and prevents drawing. Color 247 is special and
 // is translated to black, allowing Color 0 to represent feature disable
 // in the defaults file.
 // Returns nothing.
 //
-static void AM_drawMline(mline_t* ml,int color)
+static void AM_drawFline(fline_t* fl, int color)
 {
-    fline_t fl;
-
     if (color==-1)  // jff 4/3/98 allow not drawing any sort of line
         return;       // by setting its color to -1
     if (color==247) // jff 4/3/98 if color is 247 (xparent), use black
         color=0;
 
-    if (AM_clipMline(ml, &fl))
-        V_DrawLine(&fl, color); // draws it on frame buffer using fb coords
+    if (AM_clipFline(fl))
+        V_DrawLine(fl, color); // draws it on frame buffer using fb coords
+}
+
+//
+// The map to frame buffer transform for walls: rotation about the player
+// (in rotate mode) and scale_mtof in one, set up once a frame so that a
+// vertex takes four 32 bit multiplies. Thumb has no 64 bit multiply, so
+// FixedMul is a call into ARM code.
+//
+typedef struct
+{
+    int kc, ks;     // cos and sin of the rotation times the scale
+    int px, py;     // Origin: the player's position in whole map units
+    int ox, oy;     // The origin's frame position, in fixed point pixels
+    int fracbits;   // Fraction bits of the above and of the products
+} amtransform_t;
+
+static void AM_setupTransform(amtransform_t* t)
+{
+    // scale_mtof takes whole map units to pixels with 2*FRACBITS-MAPBITS
+    // fraction bits. Drop it to 14 bits, so that offsets of up to 2^16.5
+    // map units (the largest map, corner to corner) multiply in 32 bits.
+    int shift = 0;
+    while ((_g->scale_mtof >> shift) >= (1 << 14))
+        shift++;
+
+    const fixed_t scale = _g->scale_mtof >> shift;
+
+    fixed_t cosa = FRACUNIT, sina = 0;
+
+    if (_g->automapmode & am_rotate)
+    {
+        const angle_t a = ANG90 - _g->player.mo->angle;
+        cosa = finecosine[a >> ANGLETOFINESHIFT];
+        sina = finesine[a >> ANGLETOFINESHIFT];
+    }
+
+    t->kc = FixedMul(scale, cosa);
+    t->ks = FixedMul(scale, sina);
+    t->fracbits = 2*FRACBITS - MAPBITS - shift;
+
+    // The player and the origin, in MAPBITS fixed point.
+    const fixed_t mx = _g->player.mo->x >> FRACTOMAPBITS;
+    const fixed_t my = _g->player.mo->y >> FRACTOMAPBITS;
+
+    t->px = mx >> MAPBITS;
+    t->py = my >> MAPBITS;
+
+    // The origin relative to the player, rotated, then relative to the
+    // window, then scaled like the vertices.
+    const fixed_t fx = -(mx & ((1 << MAPBITS) - 1));
+    const fixed_t fy = -(my & ((1 << MAPBITS) - 1));
+
+    const fixed_t ux = FixedMul(fx, cosa) - FixedMul(fy, sina) + mx - _g->m_x;
+    const fixed_t uy = FixedMul(fx, sina) + FixedMul(fy, cosa) + my - _g->m_y;
+
+    t->ox = FixedMul(ux, scale) * (1 << (FRACBITS - MAPBITS));
+    t->oy = FixedMul(uy, scale) * (1 << (FRACBITS - MAPBITS));
+}
+
+//
+// AM_drawLine()
+//
+// Draws a linedef through the transform.
+//
+static void AM_drawLine(const line_t* line, const amtransform_t* t, int color)
+{
+    const int x1 = line->v1.x - t->px, y1 = line->v1.y - t->py;
+    const int x2 = line->v2.x - t->px, y2 = line->v2.y - t->py;
+
+    fline_t fl;
+
+    fl.a.x = (x1 * t->kc - y1 * t->ks + t->ox) >> t->fracbits;
+    fl.a.y = f_h - ((x1 * t->ks + y1 * t->kc + t->oy) >> t->fracbits);
+    fl.b.x = (x2 * t->kc - y2 * t->ks + t->ox) >> t->fracbits;
+    fl.b.y = f_h - ((x2 * t->ks + y2 * t->kc + t->oy) >> t->fracbits);
+
+    AM_drawFline(&fl, color);
 }
 
 //
@@ -765,59 +824,93 @@ static int AM_DoorColor(int type)
 // jff 4/3/98 changed mapcolor_xxxx=0 as control to disable feature
 // jff 4/3/98 changed mapcolor_xxxx=-1 to disable drawing line completely
 //
-static void AM_drawWalls(void)
+// noinline: inlined into main (via AM_Drawer and D_Display), the loop's
+// invariants live on the stack and are reloaded for every line.
+static __attribute__((noinline)) void AM_drawWalls(void)
 {
     int i;
-    mline_t l;
+    amtransform_t t;
+
+    AM_setupTransform(&t);
+
+    const bool allmap = _g->player.powers[pw_allmap] != 0;
+
+    // The map area (MAPBITS fixed point) a line must touch to be drawn.
+    fixed_t x0 = _g->m_x, x1 = _g->m_x2;
+    fixed_t y0 = _g->m_y, y1 = _g->m_y2;
+
+    if (_g->automapmode & am_rotate)
+    {
+        // Rotating about the player keeps distances to the player, so
+        // a line on screen is no further away than the furthest window
+        // corner. max + min/2 is never less than the hypotenuse, and a
+        // map unit of slack covers rounding in the transform.
+        const fixed_t px = _g->player.mo->x >> FRACTOMAPBITS;
+        const fixed_t py = _g->player.mo->y >> FRACTOMAPBITS;
+
+        const fixed_t dx = (x1 - px) > (px - x0) ? (x1 - px) : (px - x0);
+        const fixed_t dy = (y1 - py) > (py - y0) ? (y1 - py) : (py - y0);
+
+        const fixed_t d = (dx > dy ? dx + dy/2 : dy + dx/2) + (1 << MAPBITS);
+
+        x0 = px - d;
+        x1 = px + d;
+        y0 = py - d;
+        y1 = py + d;
+    }
+
+    // In whole map units, like the line bboxes (rounded outward).
+    const int xl = x0 >> MAPBITS, xh = x1 >> MAPBITS;
+    const int yl = y0 >> MAPBITS, yh = y1 >> MAPBITS;
 
     // draw the unclipped visible portions of all lines
     for (i=0;i<_g->numlines;i++)
     {
-        l.a.x = MAPTOFIXED(_g->lines[i].v1.x) >> FRACTOMAPBITS;//e6y
-        l.a.y = MAPTOFIXED(_g->lines[i].v1.y) >> FRACTOMAPBITS;//e6y
-        l.b.x = MAPTOFIXED(_g->lines[i].v2.x) >> FRACTOMAPBITS;//e6y
-        l.b.y = MAPTOFIXED(_g->lines[i].v2.y) >> FRACTOMAPBITS;//e6y
+        const line_t* line = &_g->lines[i];
 
+        // Reject unseen and off-screen lines before any other work:
+        // most lines are one or the other.
+        if (!_g->linedata[i].r_mapped && !allmap)
+            continue;
 
-        const sector_t* backsector = LN_BACKSECTOR(&_g->lines[i]);
-        const sector_t* frontsector = LN_FRONTSECTOR(&_g->lines[i]);
+        if (line->bbox[BOXRIGHT] < xl || line->bbox[BOXLEFT] > xh ||
+            line->bbox[BOXTOP] < yl || line->bbox[BOXBOTTOM] > yh)
+            continue;
 
-        const unsigned int line_special =  LN_SPECIAL(&_g->lines[i]);
+        if (line->flags & ML_DONTDRAW)
+            continue;
 
-        if (_g->automapmode & am_rotate)
-        {
-            AM_rotate(&l.a.x, &l.a.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
-            AM_rotate(&l.b.x, &l.b.y, ANG90-_g->player.mo->angle, _g->player.mo->x, _g->player.mo->y);
-        }
+        const sector_t* backsector = LN_BACKSECTOR(line);
+        const sector_t* frontsector = LN_FRONTSECTOR(line);
+
+        const unsigned int line_special =  LN_SPECIAL(line);
 
         // if line has been seen or IDDT has been used
         if (_g->linedata[i].r_mapped)
         {
-            if (_g->lines[i].flags & ML_DONTDRAW)
-                continue;
             {
                 /* cph - show keyed doors and lines */
                 int amd;
-                if (!(_g->lines[i].flags & ML_SECRET) && (amd = AM_DoorColor(line_special)) != -1)
+                if (!(line->flags & ML_SECRET) && (amd = AM_DoorColor(line_special)) != -1)
                 {
                     {
                         switch (amd) /* closed keyed door */
                         {
                         case 1:
                             /*bluekey*/
-                            AM_drawMline(&l,mapcolor_bdor);
+                            AM_drawLine(line, &t, mapcolor_bdor);
                             continue;
                         case 2:
                             /*yellowkey*/
-                            AM_drawMline(&l,mapcolor_ydor);
+                            AM_drawLine(line, &t, mapcolor_ydor);
                             continue;
                         case 0:
                             /*redkey*/
-                            AM_drawMline(&l,mapcolor_rdor);
+                            AM_drawLine(line, &t, mapcolor_rdor);
                             continue;
                         case 3:
                             /*any or all*/
-                            AM_drawMline(&l, mapcolor_clsd);
+                            AM_drawLine(line, &t, mapcolor_clsd);
                             continue;
                         }
                     }
@@ -835,7 +928,7 @@ static void AM_drawWalls(void)
                         line_special==198
                         )
                     ) {
-                AM_drawMline(&l, mapcolor_exit); /* exit line */
+                AM_drawLine(line, &t, mapcolor_exit); /* exit line */
                 continue;
             }
 
@@ -856,35 +949,35 @@ static void AM_drawWalls(void)
                                 )
                             )
                         )
-                    AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
+                    AM_drawLine(line, &t, mapcolor_secr); // line bounding secret sector
                 else                               //jff 2/16/98 fixed bug
-                    AM_drawMline(&l, mapcolor_wall); // special was cleared
+                    AM_drawLine(line, &t, mapcolor_wall); // special was cleared
             }
             else /* now for 2S lines */
             {
                 // jff 1/10/98 add color change for all teleporter types
                 if
                         (
-                         mapcolor_tele && !(_g->lines[i].flags & ML_SECRET) &&
+                         mapcolor_tele && !(line->flags & ML_SECRET) &&
                          (line_special == 39 || line_special == 97 ||
                           line_special == 125 || line_special == 126)
                          )
                 { // teleporters
-                    AM_drawMline(&l, mapcolor_tele);
+                    AM_drawLine(line, &t, mapcolor_tele);
                 }
-                else if (_g->lines[i].flags & ML_SECRET)    // secret door
+                else if (line->flags & ML_SECRET)    // secret door
                 {
-                    AM_drawMline(&l, mapcolor_wall);      // wall color
+                    AM_drawLine(line, &t, mapcolor_wall);      // wall color
                 }
                 else if
                         (
                          mapcolor_clsd &&
-                         !(_g->lines[i].flags & ML_SECRET) &&    // non-secret closed door
+                         !(line->flags & ML_SECRET) &&    // non-secret closed door
                          ((backsector->floorheight==backsector->ceilingheight) ||
                           (frontsector->floorheight==frontsector->ceilingheight))
                          )
                 {
-                    AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
+                    AM_drawLine(line, &t, mapcolor_clsd);      // non-secret closed door
                 } //jff 1/6/98 show secret sector 2S lines
                 else if
                         (
@@ -907,38 +1000,35 @@ static void AM_drawWalls(void)
                                               )
                          )
                 {
-                    AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
+                    AM_drawLine(line, &t, mapcolor_secr); // line bounding secret sector
                 } //jff 1/6/98 end secret sector line change
                 else if (backsector->floorheight !=
                          frontsector->floorheight)
                 {
-                    AM_drawMline(&l, mapcolor_fchg); // floor level change
+                    AM_drawLine(line, &t, mapcolor_fchg); // floor level change
                 }
                 else if (backsector->ceilingheight !=
                          frontsector->ceilingheight)
                 {
-                    AM_drawMline(&l, mapcolor_cchg); // ceiling level change
+                    AM_drawLine(line, &t, mapcolor_cchg); // ceiling level change
                 }
             }
         } // now draw the lines only visible because the player has computermap
-        else if (_g->player.powers[pw_allmap]) // computermap visible lines
+        else // computermap visible lines
         {
-            if (!(_g->lines[i].flags & ML_DONTDRAW)) // invisible flag lines do not show
-            {
-                if
-                        (
-                         mapcolor_flat
-                         ||
-                         !backsector
-                         ||
-                         backsector->floorheight
-                         != frontsector->floorheight
-                         ||
-                         backsector->ceilingheight
-                         != frontsector->ceilingheight
-                         )
-                    AM_drawMline(&l, mapcolor_unsn);
-            }
+            if
+                    (
+                     mapcolor_flat
+                     ||
+                     !backsector
+                     ||
+                     backsector->floorheight
+                     != frontsector->floorheight
+                     ||
+                     backsector->ceilingheight
+                     != frontsector->ceilingheight
+                     )
+                AM_drawLine(line, &t, mapcolor_unsn);
         }
     }
 }
@@ -992,7 +1082,9 @@ static void AM_drawLineCharacter(const mline_t* lineguy, int lineguylines, fixed
         l.b.x += x;
         l.b.y += y;
 
-        AM_drawMline(&l, color);
+        fline_t fl = {{CXMTOF(l.a.x), CYMTOF(l.a.y)}, {CXMTOF(l.b.x), CYMTOF(l.b.y)}};
+
+        AM_drawFline(&fl, color);
     }
 }
 

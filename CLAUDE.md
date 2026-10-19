@@ -61,7 +61,7 @@ Gameplay-critical collections are fixed-size arrays sized by constants in the re
 
 ### IWRAM-critical rendering path
 
-`source/r_hotpath.iwram.c` contains the hot inner-loop rendering code and is compiled with special handling because **the whole file must fit in the GBA's small IWRAM region**: the Makefile has dedicated `%.iwram.o` rules that force `-fno-lto -marm` (ARM mode, no whole-program LTO) instead of the default Thumb+LTO flags used elsewhere, and the file itself forces `#pragma GCC optimize ("Os")` under `#ifdef GBA` to keep code size down. Be careful about adding code here — growing this file risks it no longer fitting in IWRAM.
+`source/r_hotpath.iwram.c` contains the hot inner-loop rendering code and is compiled with special handling because **the whole file must fit in the GBA's small IWRAM region**: the Makefile has dedicated `%.iwram.o` rules that force `-fno-lto -marm` (ARM mode, no whole-program LTO) instead of the default Thumb+LTO flags used elsewhere (`IWRAM_FLAGS` also turns `-finline-functions-called-once` back on: the Thumb code is built with `-fno-inline-functions-called-once`, which keeps LTO from folding whole subsystems into `main` and hiding them from the profiler, at no measured cost), and the file itself forces `#pragma GCC optimize ("Os")` under `#ifdef GBA` to keep code size down. Be careful about adding code here — growing this file risks it no longer fitting in IWRAM.
 
 IWRAM code and data share the 32 KB with the main stack, which grows down from `__sp_usr` into whatever is left. `gbadoom.ld` asserts that at least `__stack_reserve` (2 KB) stays free, so the link fails with "IWRAM overflow" before IWRAM growth can eat the stack. `IWRAM_BUDGET.md` tracks what's in IWRAM and how deep the stack gets.
 

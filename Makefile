@@ -27,16 +27,19 @@ INCLUDES	:= include include/libtimidity
 DATA		:= data
 
 #---------------------------------------------------------------------------------
-# Disable LTO for IWRAM
+# Disable LTO for IWRAM. The hot path still inlines functions called once
+# (the Thumb code doesn't, so main doesn't swallow whole subsystems).
 #---------------------------------------------------------------------------------
+IWRAM_FLAGS	:=	-fno-lto -marm -finline-functions-called-once
+
 %.iwram.o: %.iwram.cpp
 	$(SILENTMSG) $(notdir $<)
-	$(SILENTCMD)$(CXX) -MMD -MP -MF $(DEPSDIR)/$*.iwram.d $(CXXFLAGS) -fno-lto -marm -c $< -o $@ $(ERROR_FILTER)
+	$(SILENTCMD)$(CXX) -MMD -MP -MF $(DEPSDIR)/$*.iwram.d $(CXXFLAGS) $(IWRAM_FLAGS) -c $< -o $@ $(ERROR_FILTER)
 
 #---------------------------------------------------------------------------------
 %.iwram.o: %.iwram.c
 	$(SILENTMSG) $(notdir $<)
-	$(SILENTCMD)$(CC) -MMD -MP -MF $(DEPSDIR)/$*.iwram.d $(CFLAGS) -fno-lto -marm -c $< -o $@ $(ERROR_FILTER)
+	$(SILENTCMD)$(CC) -MMD -MP -MF $(DEPSDIR)/$*.iwram.d $(CFLAGS) $(IWRAM_FLAGS) -c $< -o $@ $(ERROR_FILTER)
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -47,6 +50,7 @@ CFLAGS	:=	-g -Wall -O3 -gdwarf-4\
                 -mcpu=arm7tdmi -mtune=arm7tdmi -flto=8\
 		-fgcse-after-reload -fallow-store-data-races\
 		-ffast-math\
+		-fno-inline-functions-called-once\
 		-DGBA\
 		$(ARCH) $(INCLUDE)
 

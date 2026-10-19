@@ -269,67 +269,106 @@ void V_FillRect(int x, int y, int width, int height, byte colour)
     }
 }
 
-static inline void V_PlotPixel(int x, int y, int color)
+// Write one byte of a VRAM halfword (VRAM can't take byte writes).
+// volatile, so GCC can't narrow the halfword store to strb.
+static inline void V_PlotPixel(byte* p, unsigned int color)
 {
-    byte* fb = (byte*)_g->screens[0].data;
+    volatile unsigned short* d = (volatile unsigned short*)((uintptr_t)p & ~1);
 
-    // Compute the byte pointer for the pixel
-    byte* dest = &fb[(ScreenYToOffset(y) << 1) + x];
-
-    // Use 16-bit aligned pointer for read-modify-write
-    unsigned short* dest16 = (unsigned short*)((uintptr_t)dest & ~1);
-    unsigned short old = *dest16;
-
-    if ((uintptr_t)dest & 1)
-        *dest16 = (old & 0x00FF) | ((color & 0xFF) << 8);
+    if ((uintptr_t)p & 1)
+        *d = (*d & 0x00ff) | (color << 8);
     else
-        *dest16 = (old & 0xFF00) | (color & 0xFF);
+        *d = (*d & 0xff00) | color;
 }
 
 //
-// WRAP_V_DrawLine()
+// V_DrawLine()
 //
 // Draw a line in the frame buffer.
-// Classic Bresenham w/ whatever optimizations needed for speed
+// Bresenham, stepping a pointer, with one loop for lines that are mostly
+// horizontal and one for mostly vertical. Draws the same pixels as the
+// general form (err = dx - dy, step x if 2err >= -dy, y if 2err <= dx),
+// in which the major axis steps every pixel.
 //
 // Passed the frame coordinates of line, and the color to be drawn
 // Returns nothing
 //
 void V_DrawLine(fline_t* fl, int color)
 {
-    int x0 = fl->a.x;
-    int x1 = fl->b.x;
+    const int dx = D_abs(fl->b.x - fl->a.x);
+    const int dy = D_abs(fl->b.y - fl->a.y);
 
-    int y0 = fl->a.y;
-    int y1 = fl->b.y;
+    const int sx = fl->a.x < fl->b.x ? 1 : -1;
+    const int sy = fl->a.y < fl->b.y ? (SCREENPITCH*2) : -(SCREENPITCH*2);
 
-    int dx =  D_abs(x1-x0);
-    int sx = x0<x1 ? 1 : -1;
+    byte* p = (byte*)_g->screens[0].data + (ScreenYToOffset(fl->a.y) << 1) + fl->a.x;
 
-    int dy = -D_abs(y1-y0);
-    int sy = y0<y1 ? 1 : -1;
+    int err = dx - dy;
 
-    int err = dx + dy;
+    color &= 0xff;
 
-    while(true)
+    if (dx >= dy)
     {
-        V_PlotPixel(x0, y0, color);
+        // Two pixels in one halfword on the same row are one write with no
+        // read: the first of a pair is even going right, odd going left.
+        const unsigned int pair = color | (color << 8);
+        const uintptr_t first = sx < 0;
 
-        if (x0==x1 && y0==y1)
-            break;
+        int n = dx;
 
-        int e2 = 2*err;
-
-        if (e2 >= dy)
+        for (;;)
         {
-            err += dy;
-            x0 += sx;
+            int e2 = 2*err;
+
+            if (n && e2 > dx && ((uintptr_t)p & 1) == first)
+            {
+                *(volatile unsigned short*)((uintptr_t)p & ~1) = pair;
+
+                p += sx;
+                err -= dy;
+                n--;
+
+                e2 = 2*err;
+            }
+            else
+                V_PlotPixel(p, color);
+
+            if (!n)
+                break;
+
+            p += sx;
+            err -= dy;
+            n--;
+
+            if (e2 <= dx)
+            {
+                err += dx;
+                p += sy;
+            }
         }
+    }
+    else
+    {
+        int n = dy;
 
-        if (e2 <= dx)
+        for (;;)
         {
+            V_PlotPixel(p, color);
+
+            if (!n)
+                break;
+
+            const int e2 = 2*err;
+
+            p += sy;
             err += dx;
-            y0 += sy;
+            n--;
+
+            if (e2 >= -dy)
+            {
+                err -= dy;
+                p += sx;
+            }
         }
     }
 }
