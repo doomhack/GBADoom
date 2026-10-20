@@ -5,29 +5,60 @@ how deep the stack that lives in the leftover space can get. The
 [VRAM section](#vram-oam-and-palette) covers the 96 KB of VRAM plus OAM and
 palette RAM, which also hold renderer tables.
 
-The layout (memory map, `.bss`, VRAM) was measured on the GBA build of
-2026-10-12: `8d209e7` plus depth lighting (uncommitted). The stack analysis
-and the per-function code sizes are from the 2026-10-10 build: `9729c7b`
-with ARM code at O2. The one-state-action path carries over from the earlier
-static analysis, adjusted for `main`'s larger frame. Sizes are bytes.
+The layout (memory map, `.bss`, per-function code sizes), the static stack
+analysis and the measured peaks are from the GBA build of 2026-10-20:
+`a4ffab9`. VRAM, OAM and palette RAM are unchanged since the 2026-10-12
+snapshot (`37dbcc7`). Sizes are bytes.
 
 ## Summary
 
 | | Bytes |
 |---|---|
-| Static IWRAM (code + data) | 27,664 |
-| **Main stack (free gap)** | **4,848** |
+| Static IWRAM (code + data) | 27,472 |
+| **Main stack (free gap)** | **5,040** |
 | Stack the link guarantees (`__stack_reserve`) | 2,048 |
-| Worst realistic stack use (gameplay + sound IRQ) | ~1,890 |
-| Headroom at worst realistic depth | ~2,960 |
-| Measured peak, Ultimate Doom demo4 at O2 | 1,272 |
-| Deepest measured peak, 7 timedemos (Doom 2 demo1–3, Ultimate Doom demo1–4; Os build) | 1,368 |
+| Static worst case (one state action + sound IRQ) | ~1,740 |
+| Headroom at the static worst case | ~3,300 |
+| Deepest measured peak, 6 timedemos (Doom 2 and Ultimate Doom demo1–3) | MEASURED_MAX |
 
 The goal of the stack work is to make the deepest path shallower. That
 frees IWRAM for building more of the hot code at O2/O3 or moving more of it
-into IWRAM.
+into IWRAM. ARM code at O3 now fits (see
+[Optimisation levels](#optimisation-levels)).
 
-### Depth lighting (uncommitted)
+### Since the 2026-10-12 snapshot
+
+- **IWRAM code −192 B, so the stack grows from 4,848 to 5,040 B.** All of
+  it is in `r_hotpath.iwram.c` (−188) and libtimidity (−4):
+
+  | Function | Before | Now | Change | Why |
+  |---|---|---|---|---|
+  | `R_RenderPlayerView` | 4,136 | 3,764 | −372 | `R_MakeSpans` no longer inlined into it (`83bf164`) |
+  | `R_MakeSpans` | (inlined) | 320 | +320 | |
+  | `P_MobjThinker` | 344 | 244 | −100 | corpses and decorations stop thinking (`cfaa515`, `50ea3ef`) |
+  | `R_Subsector` | 7,192 | 7,112 | −80 | `R_RenderSegLoop` rewrite (`1f8cb44`) |
+  | `R_AddSprites` | 1,112 | 1,160 | +48 | |
+  | `R_RenderMaskedSegRange` | 1,044 | 1,032 | −12 | |
+  | others | | | +4 | `P_CrossBSPNode` +8, `R_FindPlane` +4, `R_DivSmall` −4, `update_signal` −4 |
+
+- **Thumb code is built with `-fno-inline-functions-called-once`
+  (`89f805b`).** LTO no longer folds the main loop into `main`: `main`'s
+  frame is 24 B and `D_DoomLoop` (with `D_Display` and the drawers inlined)
+  is 136 B, 160 B together against `main`'s old 168. `G_Ticker` went from
+  120 to 72 B and `P_XYMovement` from 104 to 64.
+- **The sound IRQ is 48 B deeper** (~340 B). `mid_song_render` is no longer
+  inlined into `I_SoundVBlank` (72 → 48 B), and has its own 64 B frame.
+- **New static analysis.** It follows the IWRAM code's long calls into ROM
+  and the calls through data pointers (thinkers, state actions, line
+  traversers), which the old direct-call analysis didn't. The one-action
+  worst case is ~1,400 B, against 1,472 B with the same tool on `37dbcc7`
+  (the ~1,600 B figure before was a hand-adjusted estimate). See
+  [Main loop](#main-loop).
+- **DeHackEd patches can put any action on any state** (`b8dd09b`), so the
+  worst case now allows any action wherever a state is set. The action
+  queue still limits it to one action at a time.
+
+### Depth lighting (`37dbcc7`)
 
 - **Doom's diminishing light is back.** Walls, masked mid textures and
   sprites take their colormap from the scale, and flats from the distance,
@@ -49,7 +80,7 @@ into IWRAM.
   seg loop), `R_RenderMaskedSegRange` +148, `R_MapPlane` +44,
   `R_RenderPlayerView` −128, `R_AddSprites` −68, `R_LoadColorMap` −248.
 
-### ARM code at O2 (uncommitted)
+### ARM code at O2 (`807859c`)
 
 - **`ARM_CODE_OPT_LEVEL` is now O2** (`include/code_opt.h`; HOT and WARM
   stay O3). It applies to the rest of `r_hotpath.iwram.c` and
@@ -63,7 +94,7 @@ into IWRAM.
 - **IWRAM code can grow another 1,664 B** (3,712 − 2,048) before the link
   fails.
 
-### Deferred state actions (uncommitted)
+### Deferred state actions
 
 - **State actions no longer nest.** Setting a state from inside an action
   used to run the new action straight away, on top of the running one. Now
@@ -74,7 +105,7 @@ into IWRAM.
 - **`P_SetMobjState` moved from `r_hotpath.iwram.c` to `p_mobj.c` (ROM).**
   IWRAM code −216 B, stack +216 B. Timedemos are 0.5–0.6% slower.
 
-### Iterative sound flood (uncommitted)
+### Iterative sound flood
 
 - **`P_RecursiveSound` replaced by a breadth-first queue in `P_NoiseAlert`**
   (`p_enemy.c`). The old flood recursed once per sector (40 B a level) and
@@ -88,7 +119,7 @@ into IWRAM.
 - **Same game state.** All seven timedemos end in exactly the same state as
   the action-queue build, and run equal or up to 8 realtics faster.
 
-### Since the 2026-10-08 snapshot
+### 2026-10-08 to 2026-10-10
 
 - **`printf` replaced (`66899ab`).** Every newlib printf-family call is gone.
   Console output and lump-name formatting now go through `lprintf.c` (see
@@ -110,14 +141,14 @@ into IWRAM.
 
 | Region | Range | Bytes | Notes |
 |---|---|---|---|
-| `.iwram` (code) | 0x03000000–0x030064F0 | 25,840 | |
-| `.bss` | 0x030064F0–0x03006BF4 | 1,796 | cleared by crt0 |
-| `.data`, `.init_array`, `.fini_array` | 0x03006BF4–0x03006C10 | 28 | |
-| **Main stack (User/System mode)** | 0x03006C10–0x03007F00 | **4,848** | grows down from `__sp_usr` |
+| `.iwram` (code) | 0x03000000–0x03006430 | 25,648 | |
+| `.bss` | 0x03006430–0x03006B34 | 1,796 | cleared by crt0 |
+| `.data`, `.init_array`, `.fini_array` | 0x03006B34–0x03006B50 | 28 | |
+| **Main stack (User/System mode)** | 0x03006B50–0x03007F00 | **5,040** | grows down from `__sp_usr` |
 | IRQ-mode stack | 0x03007F00–0x03007FA0 | 160 | `__sp_irq`; uses 16 B (see below) |
 | SVC stack and BIOS area | 0x03007FA0–0x03008000 | 96 | BIOS SWIs, IRQ vector, `__irq_flags` |
 
-The stack has no guard. If it grows past 0x03006C10 it silently overwrites
+The stack has no guard. If it grows past 0x03006B50 it silently overwrites
 `.data`, then `.bss` (`IntrTable`, then `r_hotpath`/`s_mix` statics). A
 trashed `IntrTable` sends the next VBlank to a garbage address. `I_Error` no
 longer depends on `IntrTable` or `_g`, so a later `I_Error` still displays.
@@ -125,25 +156,25 @@ An overflow itself is not detected.
 
 ## Static contents
 
-### `.iwram` code (25,928, ARM default at O2)
+### `.iwram` code (25,648, ARM default at O2)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 22,276 | `R_Subsector` 6,936 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 4,264, `P_CrossBSPNode` 1,936, `R_DrawVisSprite` 1,308, `R_AddSprites` 1,180, `R_MapPlane` 1,144, `R_RenderMaskedSegRange` 896, `R_RenderBSPNode` 832, `R_DrawColumn` 664 |
-| libtimidity (`TIMI_IWRAM`) | 2,372 | `_timi_resample_voice` 1,616, `update_signal` 424, `_timi_mix_voice` 332 |
+| `r_hotpath.iwram.c` (code + 8 B `.data`) | 22,092 | `R_Subsector` 7,112 (with `R_AddLine`, `R_StoreWallRange` and `R_RenderSegLoop` inlined), `R_RenderPlayerView` 3,764, `P_CrossBSPNode` 1,944, `R_DrawVisSprite` 1,308, `R_MapPlane` 1,188, `R_AddSprites` 1,160, `R_RenderMaskedSegRange` 1,032, `R_RenderBSPNode` 824, `R_DrawColumn` 664, `R_MakeSpans` 320 |
+| libtimidity (`TIMI_IWRAM`) | 2,368 | `_timi_resample_voice` 1,616, `update_signal` 420, `_timi_mix_voice` 332 |
 | `s_mix_gba.s` | 532 | `S_MixResample` 212, `S_MixDirect` 156, `S_MixOutput` 152 |
 | `fixeddiv.s` | 412 | |
 | libgba IRQ dispatcher (`IntrMain`) | 184 | |
-| Linker interworking stubs, alignment | 56 | |
+| Linker interworking stubs, alignment | 60 | |
 
 ### `.bss` (1,796) and `.data` (28)
 
 | Owner | Bytes | Largest items |
 |---|---|---|
-| `r_hotpath.iwram.c` | 680 | `spanstart` 160, `flatStats` 128, `solidcol` 120 |
+| `r_hotpath.iwram.c` | 684 | `spanstart` 160, `flatStats` 128, `solidcol` 120 |
 | `s_mix_gba.s` | 896 | `mixbuf` 896 |
 | libgba | 158 | `IntrTable` 120 |
-| LTO globals, crtbegin, alignment | 62 | |
+| LTO globals (`_g`, `mainzone`, ...), crtbegin, alignment | 58 | |
 | `.data` + init/fini arrays | 28 | |
 
 ### Kept out of IWRAM on purpose
@@ -158,25 +189,59 @@ which uses the handle table.
 
 ## Stack depth
 
-Static analysis of the linked ELF. Each function's frame comes from its
-prologue (`push` / `sub sp`), cross-checked against GCC's `-fstack-usage` for
-`r_hotpath.iwram.c`. Function-pointer calls (thinkers, state actions, menu
-routines, traversers, column drawers, the voice mixer) are resolved by name.
+Static analysis of the linked ELF (`objdump -d`). Each function's frame
+comes from its prologue (`push` / `sub sp`). The call graph has:
+
+- direct `bl` calls, with interworking veneers resolved to their target;
+- register calls whose address comes from a literal pool. That covers the
+  ARM code in IWRAM calling into ROM (`mov lr, pc; bx r3`) and Thumb long
+  calls into IWRAM;
+- calls through data pointers, added by hand: `P_RunThinkers` calls every
+  thinker, the line traversers get their `PTR_*` callbacks (per caller where
+  the call site fixes it), and `P_SetMobjState`, `P_SetPsprite`,
+  `P_MovePsprites` and `P_RunPendingActions` call every state action.
+
+A state action runs at most once on a path: inside an action,
+`P_SetMobjState` / `P_SetPsprite` only queue (see
+[Deferred state actions](#deferred-state-actions)). Any action is allowed at
+any state change, since DeHackEd can put any action on any state. The
+analysis doesn't know about flag checks (for example that missiles don't
+take line teleports), so its figures are upper bounds. `I_Error` is left out
+of the gameplay rows; it is covered [below](#i_error).
 
 ### Main loop
 
+`main` 24 → `D_DoomLoop` 136 is under every row (160 B).
+
 | Path | Depth | Notes |
 |---|---|---|
-| Render (`main` → `R_RenderPlayerView`) | 816 | 168 + 648: `R_RenderPlayerView` 152 → `R_RenderBSPNode` 184 → `R_Subsector` 224 → `R_AddSprites` 80 → `FixedDiv` 8 (ARM default at O2; 840 at Os). A texture-cache miss under `R_Subsector` is 24 B shallower. |
-| Gameplay tick, one state action | ~1,600 | `G_Ticker` → `P_SetMobjState` → action → move/teleport → damage → `P_SetMobjState` (queues). Deepest path. |
-| Level load / Load Game with an `lprintf` | 688 | `main` 168 → `G_Ticker` 120 → `G_DoLoadGame` 80 → `G_DoLoadLevel` 104 → `lprintf` 216. Was 1,944 with newlib. |
-| Finale music change (`S_ChangeMusic` → `lsnprintf`) | ~500 | `main` → `G_Ticker` → `F_Ticker` 328 → `S_ChangeMusic` 72 → `lsnprintf` ~96. Was 1,728 with `snprintf`. |
-| Startup (`D_DoomMainSetup`) | ≤ 456 + 168 | the deepest direct call chain ends in `I_Error`. Was 1,608 + 152. |
+| Render (`main` → `R_RenderPlayerView`) | 820 | 160 + 660: `R_RenderPlayerView` 144 → `R_RenderBSPNode` 176 → `R_Subsector` 224 → `R_AddSprites` 88 → `P_AnimatedState` 16 → `__aeabi_idivmod` 12 |
+| Gameplay tick, one state action | ~1,400 | Deepest path, below |
+| Level load with a state action | ~1,220 | 160 + `G_Ticker` 72 → `G_DoLoadGame` 72 → `G_DoLoadLevel` 32 → `P_SetupLevel` 96 → `P_LoadThings` 64 → `P_SetPsprite` 40 (player weapon) → `P_RunPendingActions` 40 → action (as below, 640) |
+| Level load / Load Game with an `lprintf` | 656 | 160 + `G_Ticker` 72 → `G_DoLoadGame` 72 → `G_DoLoadLevel` 32 → `P_SetupLevel` 96 → `P_LoadThings` 64 → `lprintf` 160. Was 1,944 with newlib. |
+| Finale music change (`S_ChangeMusic` → `lsnprintf`) | ≤ 464 | 160 + `G_Ticker` 72 → `F_StartFinale` 8 → `S_ChangeMusic` 72 → `lsnprintf` ≤ 152. Was 1,728 with `snprintf`. |
+| Startup (`D_DoomMainSetup`) | ≤ 488 | `main` 24 → `D_DoomMainSetup` 104 → `R_InitSpriteDefs` 64 → `R_InstallSpriteLump` 24 → `I_Error` 272. Was 1,608 + 152. |
 
-The state-action row is the earlier figure plus `main`'s 16 B growth, 8 B
-for the new `P_SetMobjState` frame (32 B, with the loop and queue drain
-inlined), and `G_Ticker`'s frame shrinking from 128 to 120 B (`398ad03`). It follows function pointers, which the direct-call analysis used
-for the other rows can't resolve.
+The deepest gameplay path, 1,400 B: a monster walks over a teleport line and
+telefrags a monster, whose new state's action fires a missile that telefrags
+again:
+
+| Frames | Depth | Running total |
+|---|---|---|
+| `main` 24 → `D_DoomLoop` 136 → `G_Ticker` 72 → `P_RunThinkers` 16 → `P_MobjThinker` 16 → `P_XYMovement` 64 | 328 | 328 |
+| → `P_TryMove` 72 → `P_CrossSpecialLine` 48 → `EV_SilentLineTeleport` 8 + 88 → `P_TeleportMove` 80 → `P_DamageMobj` 56 | 352 | 680 |
+| → `P_SetMobjState` 40 → `P_RunPendingActions` 40 | 80 | 760 |
+| → `A_Mushroom` 152 → `P_SpawnMissile` 32 → `P_CheckMissileSpawn` 16 | 200 | 960 |
+| → `P_TryMove` 72 → … → `P_DamageMobj` 56 (as above) | 352 | 1,312 |
+| → `P_SetMobjState` 40, which queues the action (what it calls adds ≤ 48) | 88 | 1,400 |
+
+In the vanilla game a missile can't take a line teleport, so the second
+telefrag can't happen there. The other way round, the analysis assumes the
+inner `P_SetMobjState` queues. A 0-tic state, or any state once the queue is
+full, still runs its action on top (see
+[Deferred state actions](#deferred-state-actions)); a DeHackEd patch that
+gives a 0-tic state a deep action can nest one more. The same tool gives 1,472 B on `37dbcc7`; the
+~1,600 B it replaces was the hand-built 2026-10-09 figure, adjusted since.
 
 ### Deferred state actions
 
@@ -188,7 +253,8 @@ and that monster walks over a teleport line and telefrags something (its
 death state runs `A_Scream`). Two and three nested actions were 2,416 and
 3,232 B.
 
-In the state data the chain is at most four actions deep. The
+In vanilla's state data the chain is at most four actions deep, but a
+DeHackEd patch can put any action on any state. The
 enemy-rockets cheat (`CF_ENEMY_ROCKETS`, which turns every monster attack
 into `A_CyberAttack`) makes it a loop, limited only by the number of idle
 monsters in reach.
@@ -248,15 +314,18 @@ whatever depth the main loop is at when VBlank arrives.
 | Path | Depth |
 |---|---|
 | `lr` pushed by `IntrMain` in System mode | 4 |
-| `I_SoundVBlank` (`S_MixFrame` / `mid_song_render` inlined) | 72 |
+| `I_SoundVBlank` (`S_MixFrame` inlined) | 48 |
+| → `mid_song_render` | 64 |
 | → `_timi_mix_voice` (IWRAM) | 40 |
 | → `ramp_out` (ROM, voice ending) | 40 |
 | → `_timi_resample_voice` (IWRAM) | 104 (96 at Os) |
-| → `S_MixResample` (IWRAM) | 32 |
-| **Total added to the main stack** | **~292** |
+| → `update_vibrato` 16 → `__aeabi_lmul` 24 (`S_MixResample` is 36) | 40 |
+| **Total added to the main stack** | **~340** |
 
-The earlier figure (244 B) missed `ramp_out`, which `_timi_mix_voice` reaches
-through a long call that the direct-call analysis doesn't follow. Its frame
+Until `89f805b`, `mid_song_render` was inlined into `I_SoundVBlank` (72 B
+together, ~292 B for the mixer). The figure before that (244 B) missed
+`ramp_out`, which `_timi_mix_voice` reaches through a long call that the
+old direct-call analysis didn't follow. Its frame
 was 120 B, with an 80 B `tmp[MAX_DIE_TIME]` buffer on the stack (the mixer
 measured 356 B at the Doom 2 demo3 peak). That buffer is now
 `MidSong.ramp_tmp`, in the zone-allocated song state in EWRAM (uncommitted).
@@ -278,15 +347,14 @@ and exit: 12,231 entries, 0 re-entries, IME off at every entry.
 
 ### Combined worst case (main + sound IRQ)
 
-| Scenario | Depth | Spare of 3,712 |
+| Scenario | Depth | Spare of 5,040 |
 |---|---|---|
-| Level load with `lprintf` | ~980 | ~2,730 |
-| Render | ~1,108 | ~2,600 |
-| Gameplay, one state action | ~1,892 | ~1,820 |
+| Level load with `lprintf` | ~1,000 | ~4,040 |
+| Render | ~1,160 | ~3,880 |
+| Level load with a state action | ~1,560 | ~3,480 |
+| Gameplay, one state action | ~1,740 | ~3,300 |
 
-With the old 120 B `ramp_out` frame the render row was ~1,204 B, which
-matched the measured Doom 2 demo1 peak (1,200 B: the mixer over sprite
-drawing). The measured peaks below predate the `ramp_out` change.
+RENDER_MEASURED_NOTE
 
 ### `I_Error`
 
@@ -303,8 +371,9 @@ drawing). The measured peaks below predate the `ramp_out` change.
 Its own depth is 272 B. The deepest part is `consoleDemoInit` →
 `consoleInit` → `setvbuf` → `__swhatbuf_r`. Printing the message is 224 B:
 `I_Error` 48 → `L_Format` 56 → `write` 16 → `_write_r` 24 → `con_write` 56
-→ `consolePrintChar` 24. Called from the deepest one-action gameplay path, it
-reaches about 1.9 KB.
+→ `consolePrintChar` 24. Called from the deepest one-action gameplay path (a
+`Z_Malloc` failure in `P_SpawnMobj` after the second telefrag), it reaches
+1,648 B. It turns off the sound IRQ first, so the mixer doesn't add to that.
 
 The old `I_Error` used `vsnprintf` into a 256 B stack buffer and needed
 1,656 B. The timedemo result's `%f` made `_dtoa_r` call `Balloc`. Its malloc
@@ -426,8 +495,15 @@ peak, 1,272 B):
 | **O2 (chosen)** | 25,928 | 3,712 | 1,881 | 15.09 (+1.3%) |
 | O3 | 27,824 | 1,816 | 1,857 | 15.29 (+2.6%) |
 
-O3 needs the stack worst case cut by roughly 300 B first (to fit the 2 KB
-reserve and the ~1,890 B static worst case).
+At the time O3 needed the stack worst case cut by roughly 300 B first (to
+fit the 2 KB reserve and the then ~1,890 B static worst case).
+
+**O3 now fits.** On `a4ffab9` with ARM default at O3, IWRAM code is 27,624 B
+(+1,976 over O2) and the stack 3,064 B, which passes the 2 KB reserve. O3
+also makes the paths shallower: render 820 → 712 B (`R_RenderPlayerView`'s
+chain 660 → 552) and the mixer ~340 → ~312 B (`_timi_mix_voice`'s chain
+224 → 196). The gameplay worst case stays ~1,400 B, so with the mixer it is
+~1,712 B, leaving ~1,350 B. Not timed yet.
 
 The HOT functions come out the same size at O2 and O3. Changing a level
 changes which functions can inline into each other (GCC won't inline across
@@ -455,17 +531,17 @@ names are `char[8]` and aren't terminated when a name is 8 characters long.
 
 - **Every byte added to IWRAM comes off the stack.** That includes code or
   statics in `r_hotpath.iwram.c`, `s_mix_gba.s` and `TIMI_IWRAM` functions.
-  At the realistic worst case (~1.89 KB), about 1.8 KB can still be added
+  At the static worst case (~1.74 KB), about 3.3 KB can still be added
   before the stack has no margin. The old ~4 KB floor came from the
   three-nested-action case (3,476 B), which the action queue removed. No
   path found so far grows with the map or the data.
 - **The link fails below a 2 KB stack.** `gbadoom.ld` sets
   `__stack_reserve = 0x800` and asserts `__iheap_start + __stack_reserve <=
-  __sp_usr`. IWRAM code and data can grow by 1,664 B (3,712 − 2,048) before
+  __sp_usr`. IWRAM code and data can grow by 2,992 B (5,040 − 2,048) before
   the build stops with "IWRAM overflow: less than __stack_reserve (2 KB) left
-  for the main stack". That leaves ~160 B above the ~1.89 KB static worst
-  case and ~680 B above the deepest measured peak (1,368 B). Raise the
-  reserve if a new path turns out deeper.
+  for the main stack". That leaves ~300 B above the ~1.74 KB static worst
+  case and RESERVE_OVER_MEASURED above the deepest measured peak
+  (MEASURED_MAX). Raise the reserve if a new path turns out deeper.
 - **Avoid recursion whose depth depends on the map** (sector, line or BSP
   walks driven by game logic). `P_RecursiveSound` was one, and it set the
   deepest measured peak until it was replaced (see [Sound flood](#sound-flood)).
@@ -478,11 +554,13 @@ names are `char[8]` and aren't terminated when a name is 8 characters long.
   They set `_g->runningaction`, which is what makes nested state changes
   queue. An action calling another action directly (as `A_Hoof` calls
   `A_Chase`) is fine; it runs on the same level.
-- **`main`'s frame (168 B) is under every path.** LTO inlines `D_DoomLoop`,
+- **`main` + `D_DoomLoop` (160 B) is under every path.** LTO inlines
   `D_Display` and many of the drawers (`WI_*`, `ST*`, `HU*`, `AM_*`,
-  `M_Drawer`) into `main`. Their locals stay reserved during `G_Ticker` too.
+  `M_Drawer`) into `D_DoomLoop`. Their locals stay reserved during
+  `G_Ticker` too. Until `-fno-inline-functions-called-once` (`89f805b`) all
+  of it was in `main`, 168 B.
 - **Big stack frames on the render path.** O3 inlining made `R_Subsector`'s
-  frame 224 B, and it sits under `R_RenderBSPNode` (184 B). Inlining more
+  frame 224 B, and it sits under `R_RenderBSPNode` (176 B). Inlining more
   into that chain grows the render depth as well as the code.
 - **Large stack locals** in code that runs during gameplay or in the VBlank
   handler. The mixer runs on top of the deepest game path, so keep

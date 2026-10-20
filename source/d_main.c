@@ -260,8 +260,6 @@ static void D_Display (void)
 
 static void D_DoomLoop(void)
 {
-    _g->fps_show = true;
-
     for (;;)
     {
         // frame syncronous IO operations

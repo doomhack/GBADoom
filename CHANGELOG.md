@@ -4,8 +4,8 @@
 
 V3 is a large rework of GBADoom: the ROM no longer has a WAD built in, music and
 sound come straight from the WAD instead of a Maxmod soundbank, and most of the
-renderer has been optimised. GbaWadUtil now lives in this repository and does much
-more of the work ahead of time.
+renderer has been optimised. Vanilla DeHackEd patches work. GbaWadUtil now lives in
+this repository and does much more of the work ahead of time.
 
 ### Highlights
 
@@ -18,6 +18,14 @@ more of the work ahead of time.
   tracker music are gone. The music is the game's own `D_*` lumps, played by a
   fixed-point, mono port of libtimidity using GUS instrument patches (`GUSBANK`). Sound
   effects are the WAD's `DS*` lumps. This means PWADs with custom music and sounds work.
+- **DeHackEd support.** GbaWadUtil applies vanilla DeHackEd patches (patch format 6, for
+  Doom 1.9): a PWAD's `DEHACKED` lumps, then any `-deh` files. Supported blocks are `Thing`,
+  `Frame`, `Pointer`, `Weapon`, `Ammo`, `Misc` and `Text`. The game's state, thing,
+  weapon and misc tables and its texts are no longer compiled into the engine. They
+  come from the WAD (`GBASTATE`, `GBAMOBJ`, `GBAWEAP`, `GBAMISC`, `GBATEXT`), so
+  the GBA and Qt builds get the same patched game. BEX, `Sound`, `Sprite`, `Cheat` and
+  binary patches are skipped with a warning. `Max Health` now means what it does in
+  vanilla (the health bonus cap, default 200). PrBoom had used it as the medikit cap.
 - **Full-resolution floors and ceilings.** Flats were drawn at half horizontal
   resolution. They are now drawn at full resolution.
 - **Distance lighting restored.** Floors and ceilings get Doom's diminishing light
@@ -56,8 +64,19 @@ more of the work ahead of time.
 - Sprite clipping against drawsegs uses a summary of each drawseg's screen range.
 - The status bar redraws only the widgets that changed, then copies them to the other
   screen buffer. Previously the whole bar was redrawn.
-- Things that never think (decorations and the like) are no longer kept in the thinker
-  list, so the game doesn't step over them every tic.
+- Things that never think are no longer kept in the thinker list, so the game doesn't
+  step over them every tic.
+- Decorations animate from the game tic instead of running a thinker, worth 0.5–1%.
+- Corpses stop thinking once they come to rest. An Arch-Vile can still raise them, and
+  they can still be crushed into gibs.
+- Hitscan traces (`P_PathTraverse`) stop early once nothing further along can be hit.
+  This fixes the frame drop when firing the Super Shotgun.
+- Autoaim is back to vanilla's simpler version. Chaingun fire went from 7% of a frame to
+  4%.
+- Monster noise alerts skip the sector flood fill when nothing has changed since the
+  last one. This makes firing the plasma gun cheaper.
+- The automap overlay is faster: lines are rejected before they are rotated, rotation
+  uses a matrix multiply, and line drawing is optimised.
 - IWRAM code is now built at `-O2` (it was `-Os`). The per-pixel loops and the BSP
   chain are built at `-O3`. The levels are set in `include/code_opt.h`.
 - Windows/Qt builds of the hot path are no longer optimised, which makes debugging
@@ -97,7 +116,7 @@ more of the work ahead of time.
 - Lowercase flat names, as used in TNT, are fixed.
 - New `rom-build-all.bat`/`wad-build-all.bat` scripts build every supported game in one
   go.
-- A window for building ROMs, WADs and C files: run GbaWadUtil with no arguments (or
+- A window for building ROMs and WADs: run GbaWadUtil with no arguments (or
   double-click it). It checks the inputs before the build (missing files, an engine ROM
   without the IWAD header, DeHackEd blocks that will be skipped), estimates the ROM
   size, shows the equivalent command line, and shows each build's stages, log and
@@ -115,6 +134,16 @@ more of the work ahead of time.
   with them when overridden maps were removed, which broke the maps after them.
 - Fixed a crash when a PWAD has a flat named like a wall patch (INVASIO2's WOOD1):
   patches now come from outside the flat and sprite namespaces, and are checked.
+- More warnings:
+  - when a PWAD's maps are for the other game than its IWAD (Doom 1 maps on Doom II,
+    or the other way round);
+  - when a map has too many things and sectors to fit in the GBA's memory;
+  - when a DeHackEd file is a binary patch.
+- Lines flagged two-sided that have no back side are made one-sided with a warning, as
+  PrBoom does. They used to crash the game, for example in Requiem MAP01.
+- Namespace markers that don't pair up are handled within each WAD: a start with no end
+  is closed at the end of its WAD, and an end with no start is dropped. Before, a lone
+  `PP_START` (STARSNDS.WAD) took every lump after it.
 - The command line now warns about arguments it ignores and stops with an error if a
   WAD can't be read.
 
@@ -122,8 +151,9 @@ more of the work ahead of time.
 
 - Map data structures were shrunk. Doom II MAP15 dropped from 272 KB to 220 KB of
   heap.
-- Removed: the block allocator (`z_bmalloc`), leftover netcode, unused strings, and HUD
-  messages too long for the screen.
+- Removed: the block allocator (`z_bmalloc`), leftover netcode, MBF's friendly-monster
+  code, unused strings, and HUD messages too long for the screen.
+- Removed the enemy-rockets cheat, which doesn't work with DeHackEd-patched tables.
 - Other changes made the ROM smaller.
 - The number of flats allowed went up from 256 to 1024. Some PWADs were hitting the old
   limit.
