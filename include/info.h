@@ -1525,95 +1525,95 @@ typedef enum {
 //
 
 // Call P_SpecialThing when touched.
-#define MF_SPECIAL      (unsigned int)(0x0000000000000001)
+#define MF_SPECIAL      0x00000001u
 // Blocks.
-#define MF_SOLID        (unsigned int)(0x0000000000000002)
+#define MF_SOLID        0x00000002u
 // Can be hit.
-#define MF_SHOOTABLE    (unsigned int)(0x0000000000000004)
+#define MF_SHOOTABLE    0x00000004u
 // Don't use the sector links (invisible but touchable).
-#define MF_NOSECTOR     (unsigned int)(0x0000000000000008)
+#define MF_NOSECTOR     0x00000008u
 // Don't use the blocklinks (inert but displayable)
-#define MF_NOBLOCKMAP   (unsigned int)(0x0000000000000010)
+#define MF_NOBLOCKMAP   0x00000010u
 
 // Not to be activated by sound, deaf monster.
-#define MF_AMBUSH       (unsigned int)(0x0000000000000020)
+#define MF_AMBUSH       0x00000020u
 // Will try to attack right back.
-#define MF_JUSTHIT      (unsigned int)(0x0000000000000040)
+#define MF_JUSTHIT      0x00000040u
 // Will take at least one step before attacking.
-#define MF_JUSTATTACKED (unsigned int)(0x0000000000000080)
+#define MF_JUSTATTACKED 0x00000080u
 // On level spawning (initial position),
 //  hang from ceiling instead of stand on floor.
-#define MF_SPAWNCEILING (unsigned int)(0x0000000000000100)
+#define MF_SPAWNCEILING 0x00000100u
 // Don't apply gravity (every tic),
 //  that is, object will float, keeping current height
 //  or changing it actively.
-#define MF_NOGRAVITY    (unsigned int)(0x0000000000000200)
+#define MF_NOGRAVITY    0x00000200u
 
 // Movement flags.
 // This allows jumps from high places.
-#define MF_DROPOFF      (unsigned int)(0x0000000000000400)
+#define MF_DROPOFF      0x00000400u
 // For players, will pick up items.
-#define MF_PICKUP       (unsigned int)(0x0000000000000800)
+#define MF_PICKUP       0x00000800u
 // Player cheat. ???
-#define MF_NOCLIP       (unsigned int)(0x0000000000001000)
+#define MF_NOCLIP       0x00001000u
 // Player: keep info about sliding along walls.
-#define MF_SLIDE        (unsigned int)(0x0000000000002000)
+#define MF_SLIDE        0x00002000u
 // Allow moves to any height, no gravity.
 // For active floaters, e.g. cacodemons, pain elementals.
-#define MF_FLOAT        (unsigned int)(0x0000000000004000)
+#define MF_FLOAT        0x00004000u
 // Don't cross lines
 //   ??? or look at heights on teleport.
-#define MF_TELEPORT     (unsigned int)(0x0000000000008000)
+#define MF_TELEPORT     0x00008000u
 // Don't hit same species, explode on block.
 // Player missiles as well as fireballs of various kinds.
-#define MF_MISSILE      (unsigned int)(0x0000000000010000)
+#define MF_MISSILE      0x00010000u
 // Dropped by a demon, not level spawned.
 // E.g. ammo clips dropped by dying former humans.
-#define MF_DROPPED      (unsigned int)(0x0000000000020000)
+#define MF_DROPPED      0x00020000u
 // Use fuzzy draw (shadow demons or spectres),
 //  temporary player invisibility powerup.
-#define MF_SHADOW       (unsigned int)(0x0000000000040000)
+#define MF_SHADOW       0x00040000u
 // Flag: don't bleed when shot (use puff),
 //  barrels and shootable furniture shall not bleed.
-#define MF_NOBLOOD      (unsigned int)(0x0000000000080000)
+#define MF_NOBLOOD      0x00080000u
 // Don't stop moving halfway off a step,
 //  that is, have dead bodies slide down all the way.
-#define MF_CORPSE       (unsigned int)(0x0000000000100000)
+#define MF_CORPSE       0x00100000u
 // Floating to a height for a move, ???
 //  don't auto float to target's height.
-#define MF_INFLOAT      (unsigned int)(0x0000000000200000)
+#define MF_INFLOAT      0x00200000u
 
 // On kill, count this enemy object
 //  towards intermission kill total.
 // Happy gathering.
-#define MF_COUNTKILL    (unsigned int)(0x0000000000400000)
+#define MF_COUNTKILL    0x00400000u
 
 // On picking up, count this item object
 //  towards intermission item total.
-#define MF_COUNTITEM    (unsigned int)(0x0000000000800000)
+#define MF_COUNTITEM    0x00800000u
 
 // Special handling: skull in flight.
 // Neither a cacodemon nor a missile.
-#define MF_SKULLFLY     (unsigned int)(0x0000000001000000)
+#define MF_SKULLFLY     0x01000000u
 
 // Don't spawn this object
 //  in death match mode (e.g. key cards).
-#define MF_NOTDMATCH    (unsigned int)(0x0000000002000000)
+#define MF_NOTDMATCH    0x02000000u
 
 // Player sprites in multiplayer modes are modified
 //  using an internal color lookup table for re-indexing.
 // If 0x4 0x8 or 0xc,
 //  use a translation table for player colormaps
-#define MF_TRANSLATION  (unsigned int)(0x000000000c000000)
-#define MF_TRANSLATION1 (unsigned int)(0x0000000004000000)
-#define MF_TRANSLATION2 (unsigned int)(0x0000000008000000)
+#define MF_TRANSLATION  0x0c000000u
+#define MF_TRANSLATION1 0x04000000u
+#define MF_TRANSLATION2 0x08000000u
 // Hmm ???.
 #define MF_TRANSSHIFT 26
 
-#define MF_POOLED      (unsigned int)(0x0000000010000000)
+#define MF_POOLED      0x10000000u
 // Animated at draw time from leveltime (P_AnimatedState) instead of by a
 // thinker; set by P_SpawnMapThing, never taken from mobjinfo.
-#define MF_DRAWANIM     (unsigned int)(0x0000000020000000)
+#define MF_DRAWANIM     0x20000000u
 
 /********************************************************************
  * Definition of the Thing structure
