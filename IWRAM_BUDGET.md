@@ -7,7 +7,7 @@ palette RAM, which also hold renderer tables.
 
 The layout (memory map, `.bss`, per-function code sizes), the static stack
 analysis and the measured peaks are from the GBA build of 2026-10-20:
-`a4ffab9`. VRAM, OAM and palette RAM are unchanged since the 2026-10-12
+`5390152`. VRAM, OAM and palette RAM are unchanged since the 2026-10-12
 snapshot (`37dbcc7`). Sizes are bytes.
 
 ## Summary
@@ -17,9 +17,10 @@ snapshot (`37dbcc7`). Sizes are bytes.
 | Static IWRAM (code + data) | 27,472 |
 | **Main stack (free gap)** | **5,040** |
 | Stack the link guarantees (`__stack_reserve`) | 2,048 |
-| Static worst case (one state action + sound IRQ) | ~1,740 |
-| Headroom at the static worst case | ~3,300 |
-| Deepest measured peak, 6 timedemos (Doom 2 and Ultimate Doom demo1–3) | MEASURED_MAX |
+| Static worst case (one state action + sound IRQ), sight checks aside | ~1,740 |
+| Headroom at that worst case | ~3,300 |
+| Deepest measured peak, 6 timedemos (Doom 2 and Ultimate Doom demo1–3) | 1,364 |
+| Sight check, deepest Doom 2 line + sound IRQ (grows with the map, see [Sight checks](#sight-checks)) | ~2,280–2,890 |
 
 The goal of the stack work is to make the deepest path shallower. That
 frees IWRAM for building more of the hot code at O2/O3 or moving more of it
@@ -35,10 +36,10 @@ into IWRAM. ARM code at O3 now fits (see
   |---|---|---|---|---|
   | `R_RenderPlayerView` | 4,136 | 3,764 | −372 | `R_MakeSpans` no longer inlined into it (`83bf164`) |
   | `R_MakeSpans` | (inlined) | 320 | +320 | |
-  | `P_MobjThinker` | 344 | 244 | −100 | corpses and decorations stop thinking (`cfaa515`, `50ea3ef`) |
-  | `R_Subsector` | 7,192 | 7,112 | −80 | `R_RenderSegLoop` rewrite (`1f8cb44`) |
-  | `R_AddSprites` | 1,112 | 1,160 | +48 | |
-  | `R_RenderMaskedSegRange` | 1,044 | 1,032 | −12 | |
+  | `P_MobjThinker` | 344 | 244 | −100 | corpses stop thinking (`cfaa515`) |
+  | `R_Subsector` | 7,192 | 7,112 | −80 | `R_RenderSegLoop` rewrite (`1f8cb44`), light tables (`96a6403`) |
+  | `R_AddSprites` | 1,112 | 1,160 | +48 | decorations animate from the game tic in `R_ProjectSprite` (`50ea3ef`) |
+  | `R_RenderMaskedSegRange` | 1,044 | 1,032 | −12 | light tables (`96a6403`) |
   | others | | | +4 | `P_CrossBSPNode` +8, `R_FindPlane` +4, `R_DivSmall` −4, `update_signal` −4 |
 
 - **Thumb code is built with `-fno-inline-functions-called-once`
@@ -240,8 +241,10 @@ telefrag can't happen there. The other way round, the analysis assumes the
 inner `P_SetMobjState` queues. A 0-tic state, or any state once the queue is
 full, still runs its action on top (see
 [Deferred state actions](#deferred-state-actions)); a DeHackEd patch that
-gives a 0-tic state a deep action can nest one more. The same tool gives 1,472 B on `37dbcc7`; the
-~1,600 B it replaces was the hand-built 2026-10-09 figure, adjusted since.
+gives a 0-tic state a deep action can nest one more.
+
+The same tool gives 1,472 B on `37dbcc7`. The ~1,600 B it replaces was the
+hand-built 2026-10-09 figure, adjusted since.
 
 ### Deferred state actions
 
@@ -274,9 +277,9 @@ returns:
 
 Some states still run straight away, as before:
 
-- **0-tic states.** A queued 0-tic state would never count down. Only
-  Revenant and Arch-vile attack states are 0-tic, and they're always set by
-  the mobj on itself.
+- **0-tic states.** A queued 0-tic state would never count down. In
+  vanilla's data only Revenant and Arch-vile attack states are 0-tic, and
+  they're always set by the mobj on itself. DeHackEd patches can add more.
 - **Everything when the queue is full.** Correctness doesn't depend on its
   size.
 
@@ -328,7 +331,7 @@ together, ~292 B for the mixer). The figure before that (244 B) missed
 old direct-call analysis didn't follow. Its frame
 was 120 B, with an 80 B `tmp[MAX_DIE_TIME]` buffer on the stack (the mixer
 measured 356 B at the Doom 2 demo3 peak). That buffer is now
-`MidSong.ramp_tmp`, in the zone-allocated song state in EWRAM (uncommitted).
+`MidSong.ramp_tmp`, in the zone-allocated song state in EWRAM.
 A `static` would have gone to IWRAM `.bss`, just moving the bytes.
 
 On Doom 2 demo2 (the heaviest music) all 73 `ramp_out` calls produce the
@@ -354,7 +357,10 @@ and exit: 12,231 entries, 0 re-entries, IME off at every entry.
 | Level load with a state action | ~1,560 | ~3,480 |
 | Gameplay, one state action | ~1,740 | ~3,300 |
 
-RENDER_MEASURED_NOTE
+The render row matches the measured peak of four of the six timedemos
+(1,128–1,156 B, the mixer over sprite projection; see [Measured](#measured)).
+A sight check can go deeper than all of these; see
+[Sight checks](#sight-checks).
 
 ### `I_Error`
 
@@ -384,7 +390,24 @@ was never shown.
 ## Measured
 
 The stack was painted with `0xDEADBEEF` at `main` via mGBA's GDB stub, a
-timedemo was run, and the low-water mark was read back:
+timedemo was run, and the low-water mark was read back.
+
+`5390152`, 2026-10-20 (all with the sound IRQ; Ultimate Doom demo4 no longer
+runs, since GbaWadUtil keeps only DEMO1–3):
+
+| Timedemo | Gametics / realtics | Peak | What set the peak |
+|---|---|---|---|
+| Doom 2 demo1 | 1,198 / 1,965 | 1,156 | mixer over sprite projection (`R_AddSprites` → `P_AnimatedState`, ~812) |
+| Doom 2 demo2 | 1,994 / 2,896 | **1,364** | mixer over a sight check, `P_CrossBSPNode` recursing (~1,100 B before the mixer) |
+| Doom 2 demo3 | 4,464 / 6,203 | 1,240 | mixer over a sight check (`P_CrossBSPNode`, ~830) |
+| Ultimate Doom demo1 | 1,703 / 2,675 | 1,156 | mixer over sprite projection |
+| Ultimate Doom demo2 | 2,340 / 3,090 | 1,128 | mixer over sprite projection |
+| Ultimate Doom demo3 | 3,856 / 4,793 | 1,156 | mixer over sprite projection |
+
+The render rows match the static figures (820 + ~340 = ~1,160). Doom 2
+demo1 ends in the same state as on 2026-10-16 (health 79, leveltime 207).
+
+Earlier builds:
 
 | Build | Gameplay peak | Peak including the final `I_Error` |
 |---|---|---|
@@ -464,6 +487,47 @@ entries. It is allocated with the sectors in `P_LoadSectors` (PU_LEVEL,
 runs no more often than before. The last `open*` values it leaves differ,
 but every reader calls `P_LineOpening` first.
 
+## Sight checks
+
+`P_CheckSight` (`p_sight.c`) calls `P_CrossBSPNode` (`r_hotpath.iwram.c`),
+which walks the BSP along the sight line. Where the line crosses a node's
+partition it recurses into the start side and then loops on to the end side.
+That makes it the one remaining recursion whose depth depends on the map.
+Each level is an 80 B frame (36 B of registers, 44 B of locals, with
+`P_CrossSubsector` inlined), plus 32 B for `P_InterceptVector2` at the
+bottom.
+
+The nesting can't exceed the BSP tree's depth, and for a given line it is
+the number of crossed partitions stacked on one start side. The simulation
+below ran the same walk for the line between every pair of things on every
+map, in both directions. It ignores REJECT and the walls that end a check
+early, so for those lines it is an upper bound, but monsters and the player
+move off their start spots, so other lines are possible:
+
+| WAD | BSP tree depth (map) | Deepest nesting (map) | Median map |
+|---|---|---|---|
+SIGHT_TABLE
+
+Stack at a sight check is the entry depth + 80 B a level + 32 B, plus ~340 B
+when the mixer interrupts it:
+
+- **Usual entry, 384 B:** a monster's `A_Chase` / `A_Look` from its
+  thinker (`main` 24 → `D_DoomLoop` 136 → `G_Ticker` 72 → `P_RunThinkers`
+  16 → `P_MobjThinker` 16 → `P_SetMobjState` 40 → `A_Chase` 24 →
+  `P_LookForPlayers` 32 → `P_CheckSight` 24). 19 levels (Doom 2 MAP24) is
+  then 384 + 1,520 + 32 + 340 = **2,276 B**.
+- **Deepest entry, 1,000 B:** `P_RadiusAttack` from an action at the bottom
+  of the telefrag path in [Main loop](#main-loop). 19 levels is then
+  **2,892 B**.
+
+Doom 2 demo2's measured peak (1,364 B) is the mixer over a sight check that
+had reached ~1,100 B, about 9 levels from `A_Chase`.
+
+Replacing the recursion with an explicit stack of node numbers, as
+`R_RenderBSPNode` does, would cost 2 B a level instead of 80. That loop's
+own stack is fixed at `MAX_BSP_DEPTH` (64) entries and it stops descending
+when the stack is full; TNT MAP16's tree is 86 deep.
+
 ## Optimisation levels
 
 `include/code_opt.h` sets three levels for the ARM code in IWRAM:
@@ -498,7 +562,7 @@ peak, 1,272 B):
 At the time O3 needed the stack worst case cut by roughly 300 B first (to
 fit the 2 KB reserve and the then ~1,890 B static worst case).
 
-**O3 now fits.** On `a4ffab9` with ARM default at O3, IWRAM code is 27,624 B
+**O3 now fits.** On `5390152` with ARM default at O3, IWRAM code is 27,624 B
 (+1,976 over O2) and the stack 3,064 B, which passes the 2 KB reserve. O3
 also makes the paths shallower: render 820 → 712 B (`R_RenderPlayerView`'s
 chain 660 → 552) and the mixer ~340 → ~312 B (`_timi_mix_voice`'s chain
@@ -533,18 +597,21 @@ names are `char[8]` and aren't terminated when a name is 8 characters long.
   statics in `r_hotpath.iwram.c`, `s_mix_gba.s` and `TIMI_IWRAM` functions.
   At the static worst case (~1.74 KB), about 3.3 KB can still be added
   before the stack has no margin. The old ~4 KB floor came from the
-  three-nested-action case (3,476 B), which the action queue removed. No
-  path found so far grows with the map or the data.
+  three-nested-action case (3,476 B), which the action queue removed. The
+  one path that grows with the map is the sight check (see
+  [Sight checks](#sight-checks)).
 - **The link fails below a 2 KB stack.** `gbadoom.ld` sets
   `__stack_reserve = 0x800` and asserts `__iheap_start + __stack_reserve <=
   __sp_usr`. IWRAM code and data can grow by 2,992 B (5,040 − 2,048) before
   the build stops with "IWRAM overflow: less than __stack_reserve (2 KB) left
   for the main stack". That leaves ~300 B above the ~1.74 KB static worst
-  case and RESERVE_OVER_MEASURED above the deepest measured peak
-  (MEASURED_MAX). Raise the reserve if a new path turns out deeper.
+  case and ~680 B above the deepest measured peak (1,364 B). Raise the
+  reserve if a new path turns out deeper.
 - **Avoid recursion whose depth depends on the map** (sector, line or BSP
   walks driven by game logic). `P_RecursiveSound` was one, and it set the
   deepest measured peak until it was replaced (see [Sound flood](#sound-flood)).
+  `P_CrossBSPNode` is the one left, 80 B a level (see
+  [Sight checks](#sight-checks)).
 - **Keep buffers off the mixer's stack.** The mixer runs on top of whatever
   the game is doing when VBlank hits, and can't re-enter (see
   [Sound interrupt](#sound-interrupt)). Scratch buffers belong in `MidSong`

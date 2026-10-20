@@ -4,15 +4,17 @@ A port of prBoom to the GBA.
 
 **What's hot?**
 
-- Supports Doom Shareware, Retail, Ultimate and Doom2 IWADS.
+- Supports Doom Shareware, Retail, Ultimate and Doom2 IWADS. Plutonia and TNT should mostly work.
 
-- Renderer is largely intact. Z-Depth lighting is gone and there is mip-mapping but it's otherwise complete.
+- No WAD is built into the ROM. GbaWadUtil patches a WAD into the prebuilt engine ROM, with no compiler needed. PWADs (Eg: Sigil) go on top of their IWAD.
+
+- Renderer is intact, including Doom's distance lighting and full resolution floors and ceilings.
 
 - Monster behaviour is all intact. (I.e sound propagation etc.)
 
-- Framerate is pretty variable. Simple areas run at ~35fps. Complex areas (Eg: E4M2) chug along at about 10 FPS. It's running around the same as the original GBA Doom1 and Doom2 ports. Doom1 Episodes 1-3 are all completely playable. Episode 4 chugs.
+- Framerate is pretty variable. Simple areas run at ~35fps and complex areas slow down, but V3's renderer is much faster than earlier versions. Doom1 Episodes 1-3 are all completely playable.
 
-- Sound and music support. Big thanks to BloodShedder for his Chiptune Doom MOD files.
+- Music and sound effects come from the WAD: the game's own music, played with GUS instrument patches, and its own sound effects. PWADs with custom music and sounds work.
 
 - Vanilla DeHackEd patches. GbaWadUtil applies a WAD's DEHACKED lump, or a .deh file with -deh, when it builds the ROM.
 
@@ -24,7 +26,7 @@ A port of prBoom to the GBA.
 
 - General optimisation. We're never going to get a perfect 35FPS but I think there is still another 25% left without changing the visual quality/correctness/game behaviour. For reference, the first time I ran a build under the emulator it ran at about 3FPS.
 
-- Although it is based on prBoom, most of the engine enhancements (BEX, limit removing etc) have been reverted back to Vanilla. This is either for memory or performance reasons. Sadly, NUTS.wad and Okuplok are right out!
+- Although it is based on prBoom, most of the engine enhancements (BEX, limit removing etc) have been reverted back to Vanilla. This is either for memory or performance reasons. Sadly, NUTS.wad and Okuplok are right out! Binary DeHackEd patches aren't supported either.
 
 - No multiplayer. 
 
@@ -57,38 +59,49 @@ KippyKip is maintaining an upstream fork with new features and fixes. [KippyKip 
 **Weapon down:** A + L  
 **Menu:** Start  
 
-## Building:
+## Patching a ROM:
 
-To build the GBA version, you will need DevKitArm. The easiest way to get up and running for Windows users is download the installer from here (https://github.com/devkitPro/installer/releases) and install the GBA dev components.
+The GBADoom ROM has no WAD built in. GbaWadUtil converts a WAD and attaches it to the engine-only ROM (GBADoom.gba), so you can play any supported WAD without building anything. A Windows (x64) build of GbaWadUtil is included in the "GbaWadUtil\" directory (and in the release zip). Retail, Ultimate and Doom2 WADs have been tested. Plutonia and TNT should mostly work.
 
-You will also need GbaWadUtil. A Windows (x64) build is included in the "GbaWadUtil\" directory, and its source is in "tools\GbaWadUtil\" (open GbaWadUtil.pro in Qt Creator, Qt 6.12; release builds are written straight into "GbaWadUtil\").
+**With the window:** double-click GbaWadUtil.exe. Pick your WAD (and any PWADs or DeHackEd patches), check the engine ROM (it finds GBADoom.gba in the folder above its own), choose where to write the ROM and press **Build**.
 
-1) Download or Clone GBADoom source code.
-Extract the contents to a folder: (Eg: C:\DevKitPro\Projects\GBADoom)
+**From the command line:** open a command prompt in the GbaWadUtil folder and type:
 
-2) Use GBAWadUtil to create a header file with the WAD data. Retail, Ultimate and Doom2 wads have been tested. Plutonia and TNT should mostly work. 
-Open a command prompt.
-Type the following:
-**GbaWadUtil.exe -in doom.wad -cfile doom.wad.c**
-And copy it to the **source\\iwad\\** directory.
-Alternatively just run the **build_XXXX.bat** files and it'll create it in the source\iwad\ path.
+    GbaWadUtil.exe -in doom1.wad -rom ..\GBADoom.gba -romout ..\GBADoom1.gba -gus timidity.cfg
 
-3) Open C:\DevKitPro\Projects\GBADoom\source\doom_iwad.h in text editor or code editor of your choice.
-4) Change the first line to #include "iwad/**yourfile**.c" e.g.
-#include "iwad/doom1.c"
-#include "iwad/doom.c"
-#include "iwad/doom2.c"
-#include "iwad/tnt.c"
-#include "iwad/plutonia.c"
+- **-gus** builds the music instrument bank from the GUS patches in "data\dgguspat\". Without it there is no music. timidity.cfg sounds the most modern; timid_d1.cfg and timid_d2.cfg are retro-sounding alternatives.
+- **-pwad** adds PWADs on top of the IWAD, e.g. Sigil: **-in doomu.wad -pwad sigil.wad**
+- **-deh** applies DeHackEd patches (.deh files). DEHACKED lumps in the WADs are applied automatically.
+- **-oversample 4** resamples the instruments to 4 times as many samples, for more accurate music at the cost of a bigger ROM (each doubling doubles the instruments' size).
 
-5) Run msys2.bat and type **make**
-You may need to edit the msys2.bat with notepad and change the path to go to your real "**msys2\msys2_shell.bat**" file within it if it doesn't work.
+A ROM that already has a WAD attached can be patched again with a different one. Copy the new .gba file to your flash cart or run it in an emulator.
 
-6) The project should build GBADoom.gba and GBADoom.elf. It will take about 5 minutes or so. You may see a lot of warning messages on the screen. These are normal.
+## Building the GBA version:
 
-7) Copy GBADoom.gba (this is the rom file) to your flash cart or run in a emulator.
+1) Install devkitPro with the GBA development components. The easiest way on Windows is the installer from here (https://github.com/devkitPro/installer/releases). build.bat expects it in C:\devkitPro; edit the paths at the top of build.bat if it's somewhere else.
 
+2) Download or clone the GBADoom source code.
 
-## Developers:
+3) Open a command prompt (or PowerShell) in the GBADoom folder and type **build**. Use **build clean** to start from scratch.
 
-For development, this project also builds for Windows with Qt 6.12, using the MinGW 64-bit kit. The .pro file at the root of the source tree can be opened in Qt Creator.
+4) This builds GBADoom.gba and GBADoom.elf. GBADoom.gba is the engine only: attach a WAD to it with GbaWadUtil (see "Patching a ROM" above) before playing it.
+
+**release** builds the engine, attaches the shareware doom1.wad and puts the ROMs, GbaWadUtil and its files in "release\GBADoom\" and "release\GBADoom.zip". **release name** uses a different name.
+
+## Building the Qt (Windows) version:
+
+For development, the game also builds as a Windows app with Qt, which is much quicker to test with than the GBA.
+
+1) Install Qt 6.12 with the MinGW 64-bit kit (MSVC can't compile the engine).
+
+2) Open GBADoom.pro, at the root of the source tree, in Qt Creator and build it.
+
+3) The Qt version loads a processed WAD file instead of a ROM. Make one with GbaWadUtil:
+
+       GbaWadUtil.exe -in doom1.wad -out ..\wads\doom1.wad -gus timidity.cfg
+
+   (or run one of the **build-XXXX.bat** files in "GbaWadUtil\", which write to "wads\").
+
+4) Run GBADoom with **-iwad** and the path to that file, e.g. **-iwad C:\Projects\GBADoom\wads\doom1.wad** (set it in Qt Creator's run settings, under Command line arguments). A relative path is from the working directory, which in Qt Creator is the build folder by default.
+
+GbaWadUtil's own source is in "tools\GbaWadUtil\": open GbaWadUtil.pro in Qt Creator with the same kit. Release builds are written straight into "GbaWadUtil\".
