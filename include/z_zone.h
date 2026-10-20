@@ -56,7 +56,6 @@ void    Z_CheckHeap (void);
 void*   Z_Calloc(size_t count, size_t size, int tag, void **user);
 char*   Z_Strdup(const char* s);
 void*   Z_Realloc(void *ptr, size_t n, int tag, void **user);
-void    Z_CheckHeap (void);
 
 
 
