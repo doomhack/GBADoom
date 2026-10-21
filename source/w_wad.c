@@ -104,9 +104,10 @@ static void W_AddFile()
 }
 
 //Return -1 if not found.
-//Set lump ptr if found.
+//Pure, so it must not write anything: with an out pointer GCC tail called it
+//with the address of a dead local, which overwrote a saved register.
 
-static int PUREFUNC FindLumpByName(const char* name, const filelump_t** lump)
+static int PUREFUNC FindLumpByName(const char* name)
 {
     const wadinfo_t* header = (const wadinfo_t*)&doom_iwad[0];
     const filelump_t* fileinfo = (const filelump_t*)&doom_iwad[header->infotableofs];
@@ -126,13 +127,9 @@ static int PUREFUNC FindLumpByName(const char* name, const filelump_t** lump)
         int_64_t nameint2 = *(int_64_t*)fileinfo[i].name;
 
         if(nameint == nameint2)
-        {
-            *lump = &fileinfo[i];
             return i;
-        }
     }
 
-    *lump = NULL;
     return -1;
 }
 
@@ -169,9 +166,7 @@ static const filelump_t* PUREFUNC FindLumpByNum(int num)
 
 int PUREFUNC W_CheckNumForName(const char *name)
 {
-    const filelump_t* lump = NULL;
-
-    return FindLumpByName(name, &lump);
+    return FindLumpByName(name);
 }
 
 // W_GetNumForName
