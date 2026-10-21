@@ -3307,31 +3307,57 @@ static bool P_CrossSubsector(int num)
     return true;
 }
 
+//Non recursive: where the partition is crossed, the ending side is
+//pushed and crossed once the starting side is done, in the same order
+//as the recursive version. A full stack falls back to recursion.
 bool P_CrossBSPNode(int bspnum)
 {
-    while (!(bspnum & NF_SUBSECTOR))
+    unsigned short stack[MAX_BSP_DEPTH];
+    int sp = 0;
+
+    while(true)
     {
-        const mapnode_t *bsp = nodes + bspnum;
+        while (!(bspnum & NF_SUBSECTOR))
+        {
+            const mapnode_t *bsp = nodes + bspnum;
 
-        divline_t dl;
-        dl.x = ((fixed_t)bsp->x << FRACBITS);
-        dl.y = ((fixed_t)bsp->y << FRACBITS);
-        dl.dx = ((fixed_t)bsp->dx << FRACBITS);
-        dl.dy = ((fixed_t)bsp->dy << FRACBITS);
+            divline_t dl;
+            dl.x = ((fixed_t)bsp->x << FRACBITS);
+            dl.y = ((fixed_t)bsp->y << FRACBITS);
+            dl.dx = ((fixed_t)bsp->dx << FRACBITS);
+            dl.dy = ((fixed_t)bsp->dy << FRACBITS);
 
-        int side,side2;
-        side = P_DivlineSide(_g->los.strace.x,_g->los.strace.y,&dl)&1;
-        side2= P_DivlineSide(_g->los.t2x, _g->los.t2y, &dl);
+            int side,side2;
+            side = P_DivlineSide(_g->los.strace.x,_g->los.strace.y,&dl)&1;
+            side2= P_DivlineSide(_g->los.t2x, _g->los.t2y, &dl);
 
-        if (side == side2)
-            bspnum = bsp->children[side]; // doesn't touch the other side
-        else         // the partition plane is crossed here
-            if (!P_CrossBSPNode(bsp->children[side]))
-                return 0;  // cross the starting side
-            else
-                bspnum = bsp->children[side^1];  // cross the ending side
+            if (side == side2)
+                bspnum = bsp->children[side]; // doesn't touch the other side
+            else         // the partition plane is crossed here
+            {
+                if (sp == MAX_BSP_DEPTH)
+                {
+                    if (!P_CrossBSPNode(bsp->children[side]))
+                        return false;
+
+                    bspnum = bsp->children[side^1];
+                }
+                else
+                {
+                    stack[sp++] = bsp->children[side^1]; // cross the ending side later
+                    bspnum = bsp->children[side];  // cross the starting side
+                }
+            }
+        }
+
+        if (!P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR))
+            return false;
+
+        if (sp == 0)
+            return true;
+
+        bspnum = stack[--sp];
     }
-    return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
 }
 
 
