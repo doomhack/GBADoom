@@ -97,9 +97,7 @@ void S_SetSfxVolume(int volume);
 typedef struct
 {
   const sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
-  int tickend;
   void *origin;        // origin of sound
-  short handle;          // handle of the sound being played
   short is_pickup;       // killough 4/25/98: whether sound is a player's weapon
 } channel_t;
 

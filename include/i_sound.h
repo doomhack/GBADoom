@@ -48,6 +48,9 @@ void I_InitSound(void);
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id, int channel, int vol, int sep);
 
+// Whether the sound in a channel is still playing.
+int I_SoundIsPlaying(int channel);
+
 
 //
 //  MUSIC I/O

@@ -21,10 +21,15 @@ static_assert(SND_MIX_FRACBITS == 12 && SND_MIX_SAMPLES == 224, "s_mix_gba.s has
 
 // Sound effect volume (0-127) to mixer amp. A full scale sample at the
 // loudest volume uses about half of the output range, leaving room for music.
+// Sound effects hardly ever clip (two loud ones at once): it's the music that
+// does, so this sets the balance against MUSIC_AMP_MAX, not the headroom.
 #define SFX_AMP_SCALE 32
 
-// Music volume 15 is libtimidity's default amplification.
-#define MUSIC_AMP_MAX 70
+// libtimidity amplification (percent) at music volume 15: as loud as the IWAD
+// songs go without clipping much. Here the median song peaks at full scale and
+// 0.01% of samples clip, the loudest song (D_RUNNIN) 0.2%. Clipping grows
+// about 1.5x per 5% above it.
+#define MUSIC_AMP_MAX 95
 
 void S_MixInit(void)
 {
@@ -94,6 +99,14 @@ void S_MixStartSfx(int voice, const void* lump, int volume)
     v->amp = volume * SFX_AMP_SCALE;
 
     v->data = (const int8_t*)(p + 8);
+}
+
+int S_MixSfxPlaying(int voice)
+{
+    if(voice < 0 || voice >= SND_SFX_VOICES)
+        return false;
+
+    return _g->mix_sfx[voice].data != NULL;
 }
 
 void S_MixStartMusic(const void* midi, unsigned int size, int looping)

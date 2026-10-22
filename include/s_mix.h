@@ -63,6 +63,9 @@ void S_MixFrame(int8_t* out);
 // Start a processed DS lump (see GbaWadUtil) on a voice, replacing what it was playing.
 void S_MixStartSfx(int voice, const void* lump, int volume);
 
+// Whether a sound effect voice is still playing.
+int S_MixSfxPlaying(int voice);
+
 void S_MixStartMusic(const void* midi, unsigned int size, int looping);
 void S_MixStopMusic(void);
 void S_MixPauseMusic(int paused);

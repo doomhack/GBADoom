@@ -223,12 +223,7 @@ void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume)
     if (cnum<0)
         return;
 
-    int h = I_StartSound(sfx_id, cnum, volume, sep);
-    if (h != -1)
-    {
-        _g->channels[cnum].handle = h;
-        _g->channels[cnum].tickend = (_g->gametic + sfx->ticks);
-    }
+    I_StartSound(sfx_id, cnum, volume, sep);
 }
 
 void S_StartSound(mobj_t *origin, int sfx_id)
@@ -311,20 +306,6 @@ void S_ResumeSound(void)
     }
 }
 
-static bool S_SoundIsPlaying(int cnum)
-{
-    const channel_t* channel = &_g->channels[cnum];
-
-    if(channel->sfxinfo)
-    {
-        int ticknow = _g->gametic;
-
-        return (channel->tickend < ticknow);
-    }
-
-    return false;
-}
-
 //
 // Updates music & sounds
 //
@@ -341,7 +322,8 @@ void S_UpdateSounds()
 
         if ((sfx = c->sfxinfo))
         {
-            if (S_SoundIsPlaying(c->handle))
+            // Each channel plays on the mixer voice of the same number.
+            if (I_SoundIsPlaying(cnum))
             {
                 // initialize parameters
                 int volume = _g->snd_SfxVolume;
@@ -464,7 +446,6 @@ void S_StopChannel(unsigned int cnum)
 
         // degrade usefulness of sound data
         c->sfxinfo = 0;
-        c->tickend = 0;
     }
 }
 

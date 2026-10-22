@@ -186,6 +186,12 @@ int I_StartSound(int id, int channel, int vol, int sep)
     return channel;
 }
 
+// The mixer frees a voice when its sound ends. Reading that pointer needs no lock.
+int I_SoundIsPlaying(int channel)
+{
+    return S_MixSfxPlaying(channel);
+}
+
 void I_PlaySong(int handle, int looping)
 {
     if(handle <= mus_None || handle >= NUMMUSIC)
